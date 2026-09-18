@@ -65,7 +65,7 @@ export function PositionCard({
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           Your position
         </h3>
-        <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
           derived from real activity
         </span>
       </div>
@@ -79,13 +79,13 @@ export function PositionCard({
               {missed} proposal{missed === 1 ? '' : 's'} you made went to someone else
             </p>
             {firstMissed && (
-              <p className="text-[11px] truncate flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px] truncate flex items-center gap-1.5" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="truncate min-w-0">“{firstMissed.title}” — the buyer selected another option.</span>
                 {firstMissed.evidence && <CopyId value={firstMissed.evidence.id} label={firstMissed.evidence.table} className="shrink-0" />}
               </p>
             )}
             {pos.missedCapture.value && (
-              <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
                 {pos.missedCapture.value.sampleCount} of your own priced offer
                 {pos.missedCapture.value.sampleCount === 1 ? '' : 's'} in {pos.missedCapture.value.over} = KES{' '}
                 {Number(pos.missedCapture.value.amount).toLocaleString('en-KE')}. What a winner charged is not
@@ -105,7 +105,7 @@ export function PositionCard({
               {expiring.length} proposal{expiring.length === 1 ? '' : 's'} expiring
             </p>
             {firstExpiring && (
-              <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px] truncate" style={{ color: 'var(--color-text-muted)' }}>
                 “{firstExpiring.title}” — valid until {firstExpiring.validUntil ?? 'soon'}.
               </p>
             )}
@@ -123,7 +123,7 @@ export function PositionCard({
                 : `#${firstWait.position ?? '—'} in line for “${firstWait.campaignTitle}”`}
             </p>
             {firstWait.hoursLeft != null && (
-              <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
                 {firstWait.status === 'offered' ? `Expires in ${firstWait.hoursLeft}h — accept it or it goes to the next person.` : `${firstWait.hoursLeft}h to respond.`}
               </p>
             )}
@@ -158,7 +158,7 @@ export function PositionCard({
               {openTotal} request{openTotal === 1 ? '' : 's'} still open near you
             </p>
             {firstOpen && (
-              <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px] truncate" style={{ color: 'var(--color-text-muted)' }}>
                 “{firstOpen.title}” · {firstOpen.severityLabel}
                 {firstOpen.closesMonthly ? ` · this category has closed ${firstOpen.closesMonthly}× this month` : ''}.
               </p>

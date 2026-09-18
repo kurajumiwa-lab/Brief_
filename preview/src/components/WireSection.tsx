@@ -32,12 +32,12 @@ function Row({ item }: { item: WireItem }) {
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 transition-colors hover:border-[#06B6D4]"
+      className="group flex min-h-16 items-center gap-3 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 transition-colors hover:border-[#0891B2]"
     >
       {item.image && (
         <img src={item.image} alt="" aria-hidden="true" loading="lazy" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
       )}
-      <h3 className="min-w-0 truncate px-1 text-[14px] font-semibold leading-snug text-[var(--brief-ink)]">
+      <h3 className="min-w-0 truncate px-1 text-[15px] font-semibold leading-snug text-[var(--brief-ink)]">
         {item.title}
       </h3>
     </a>
@@ -88,8 +88,8 @@ export function WireSection() {
     <section className="space-y-3 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-well)] p-3">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--ink-60)]">News</h2>
-          <p className="mt-1 px-1 text-[10px] leading-snug text-[var(--ink-60)]">
+          <h2 className="px-1 text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--ink-60)]">News</h2>
+          <p className="mt-1 px-1 text-[11px] leading-snug text-[var(--ink-60)]">
             {wire?.source ? `Live from ${wire.source}` : 'Live news wire'}
             {time ? ` · checked ${time}` : ''}
           </p>
@@ -98,22 +98,22 @@ export function WireSection() {
           type="button"
           onClick={() => setRefreshToken((value) => value + 1)}
           disabled={refreshing}
-          className="min-h-9 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[10px] font-extrabold text-[var(--brief-ink)] disabled:opacity-50"
+          className="min-h-9 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[11px] font-extrabold text-[var(--brief-ink)] disabled:opacity-50"
         >
           {refreshing ? 'Checking…' : 'Refresh'}
         </button>
       </div>
 
       {wire?.error && (
-        <p className="rounded-xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[10px] leading-snug text-[var(--ink-60)]">
+        <p className="rounded-xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[11px] leading-snug text-[var(--ink-60)]">
           The live news request returned an error: {wire.error}
         </p>
       )}
 
       {headlines.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-3">
-          <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">No current news returned.</p>
-          <p className="mt-1 text-[10px] leading-snug text-[var(--ink-55)]">
+          <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">No current news returned.</p>
+          <p className="mt-1 text-[11px] leading-snug text-[var(--ink-55)]">
             {wire?.note ?? 'The wire is empty right now. Brief will not fill it with old or invented news.'}
           </p>
         </div>
@@ -121,7 +121,7 @@ export function WireSection() {
         <>
           {wire?.kenya?.length ? (
             <div className="space-y-2">
-              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">Kenya</p>
+              <p className="px-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">Kenya</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {wire.kenya.slice(0, 6).map((item) => <Row key={item.id} item={item} />)}
               </div>
@@ -129,7 +129,7 @@ export function WireSection() {
           ) : null}
           {wire?.world?.length ? (
             <div className="space-y-2">
-              <p className="px-1 text-[9px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">World</p>
+              <p className="px-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">World</p>
               <div className="grid gap-2 sm:grid-cols-2">
                 {wire.world.slice(0, 6).map((item) => <Row key={item.id} item={item} />)}
               </div>

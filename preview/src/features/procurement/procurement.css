@@ -12,7 +12,7 @@
   margin: 0 0 8px;
 }
 .procurement-card {
-  border: 1px solid var(--brief-line, #E4DACB);
+  border: 1px solid var(--brief-line, #DCE1E8);
   border-radius: 16px;
   background: var(--brief-card, #ffffff);
   padding: 14px 16px;
@@ -106,7 +106,7 @@
 }
 .procurement-form input,
 .procurement-form textarea {
-  border: 1px solid var(--brief-line, #E4DACB);
+  border: 1px solid var(--brief-line, #DCE1E8);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 14px;
@@ -133,7 +133,7 @@
   font-weight: 500;
 }
 .procurement-empty {
-  border: 1px dashed var(--brief-line, #E4DACB);
+  border: 1px dashed var(--brief-line, #DCE1E8);
   border-radius: 16px;
   padding: 32px 20px;
   text-align: center;

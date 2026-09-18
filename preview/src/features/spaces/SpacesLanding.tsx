@@ -58,7 +58,7 @@ export function SpacesLanding({
   return (
     <div className={`space-y-6 max-w-3xl mx-auto ${className}`}>
       <header className="space-y-1">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
+        <p className="text-[12px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
           Spaces
         </p>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ color: 'var(--brief-ink)' }}>
@@ -71,7 +71,7 @@ export function SpacesLanding({
         {!mine ? (
           <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>Reading your spaces…</p>
         ) : mineError ? (
-          <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
+          <p className="text-[13px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
             {mineError}{' '}
             <button type="button" onClick={load} className="underline cursor-pointer">Retry</button>
           </p>
@@ -81,7 +81,7 @@ export function SpacesLanding({
             <button
               type="button"
               onClick={() => { soundEngine.play('heavyTap'); setCreateOpen(true); }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[12px] font-black cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
             >
               <Plus className="w-4 h-4" /> Create your first space
@@ -103,8 +103,8 @@ export function SpacesLanding({
                   {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : null}
                 </div>
                 <div className="p-3">
-                  <p className="text-[14px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</p>
-                  <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
+                  <p className="text-[15px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</p>
+                  <p className="text-[12px] truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                     {s.metrics?.offersCount ?? 0} live offer{s.metrics?.offersCount === 1 ? '' : 's'}
                     {s.visibility === 'public' ? ' · public' : ' · private'}
                   </p>
@@ -118,7 +118,7 @@ export function SpacesLanding({
                       />
                     )}
                     {(s.editorialOpen ?? 0) > 0 && (
-                      <span className="text-[10px] font-bold font-mono" style={{ color: (s.editorialBreakdown?.overdue ?? 0) > 0 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
+                      <span className="text-[11px] font-bold font-mono" style={{ color: (s.editorialBreakdown?.overdue ?? 0) > 0 ? 'var(--color-warning)' : 'var(--color-text-muted)' }}>
                         {s.editorialOpen} to answer
                       </span>
                     )}
@@ -132,7 +132,7 @@ export function SpacesLanding({
           <button
             type="button"
             onClick={() => { soundEngine.play('tap'); setCreateOpen(true); }}
-            className="text-[12px] font-black cursor-pointer"
+            className="text-[13px] font-black cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             + New space
@@ -144,14 +144,14 @@ export function SpacesLanding({
       <section className="space-y-2" aria-label="Spaces you follow">
         <div className="flex items-center gap-2">
           <Users className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
-          <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+          <h2 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
             Spaces you follow
           </h2>
         </div>
         {!following ? (
           <p className="text-xs" style={{ color: 'var(--brief-muted)' }}>Reading your follows…</p>
         ) : following.length === 0 ? (
-          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
+          <p className="text-[13px]" style={{ color: 'var(--brief-muted)' }}>
             You follow nobody yet. Follow a shop from its page and its updates land in your notifications.
           </p>
         ) : (
@@ -164,8 +164,8 @@ export function SpacesLanding({
                   className="w-full text-left p-3 rounded-2xl bg-[color:var(--color-paper)] flex items-center gap-3 cursor-pointer brief-lift-1"
                                   >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</span>
-                    <span className="block text-[11px] font-mono truncate" style={{ color: 'var(--brief-muted)' }}>
+                    <span className="block text-[14px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</span>
+                    <span className="block text-[12px] font-mono truncate" style={{ color: 'var(--brief-muted)' }}>
                       {s.followers ?? 0} follow · {s.activeOfferCount} offer{s.activeOfferCount === 1 ? '' : 's'}
                       {(s.broadcasts?.length ?? 0) > 0 && ' · update up'}
                     </span>

@@ -212,7 +212,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           <button
             type="button"
             onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1 text-[12px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
           >
             Browse everything
             <ArrowRight className="w-3.5 h-3.5" />
@@ -241,7 +241,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       </div>
 
       <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)]" style={{ boxShadow: 'var(--lift-signal)' }}>
-        <p className="text-[11px] leading-snug" style={{ color: "var(--color-text)" }}>
+        <p className="text-[12px] leading-snug" style={{ color: "var(--color-text)" }}>
           <strong style={{ color: "var(--color-primary)" }}>Tip:</strong> a space is your project — add an offer, take orders, track the money. Make it <strong>Public</strong> to be found by others, or keep it <strong>Private</strong>.
         </p>
       </div>
@@ -291,7 +291,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 {/* ── NEEDS YOUR ATTENTION — the real check-in queue, never mock ── */}
                 <div className="space-y-2" aria-label="Needs your attention">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-text-muted)]">
+                    <h3 className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-text-muted)]">
                       Needs your attention
                     </h3>
                     <button
@@ -307,7 +307,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                     <div className="p-3 rounded-2xl bg-[color:var(--color-paper)] brief-lift-1 flex items-center gap-2.5">
                       <CheckCircle2 className="w-4 h-4 text-[color:var(--color-success)]" />
                       <span className="text-xs font-bold text-[color:var(--color-text)]">All caught up.</span>
-                      <span className="text-[10px] text-[color:var(--color-text-muted)]">No open conversations, draft offers or orders to fulfil.</span>
+                      <span className="text-[11px] text-[color:var(--color-text-muted)]">No open conversations, draft offers or orders to fulfil.</span>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -324,7 +324,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                           </div>
                           <div className="flex flex-wrap gap-1.5">
                             {items.map((it) => (
-                              <span key={it.kind} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-bold">
+                              <span key={it.kind} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-bold">
                                 {ATTENTION_ICON[it.kind]} {it.label}
                               </span>
                             ))}
@@ -338,7 +338,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 {/* ── MY SPACES ── */}
                 <div className="space-y-2" aria-label="My spaces">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-text-muted)]">
+                    <h3 className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-text-muted)]">
                       Active spaces
                       {upkeepItems > 0 && (
                         <span className="ml-1.5 normal-case font-bold" style={{ color: 'var(--color-primary)' }}>
@@ -350,7 +350,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                       <button
                         type="button"
                         onClick={() => { soundEngine.play('tap'); onGetPaid(); }}
-                        className="text-[11px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
+                        className="text-[12px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
                       >
                         Money →
                       </button>
@@ -374,7 +374,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                               <span className="text-xs font-bold text-[color:var(--color-text)] block truncate">
                                 {s.name}
                               </span>
-                              <span className="text-[10px] text-[color:var(--color-text-muted)] block">
+                              <span className="text-[11px] text-[color:var(--color-text-muted)] block">
                                 {attention.length === 0
                                   ? 'All caught up'
                                   : attention.map((a) => a.label).join(' · ')}
@@ -383,7 +383,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                               </span>
                               {s.maintenance?.state && s.maintenance.state !== 'unstarted' && (
                                 <span
-                                  className="text-[9px] font-black uppercase tracking-wider"
+                                  className="text-[11px] font-black uppercase tracking-wider"
                                   style={{
                                     color:
                                       s.maintenance.state === 'fresh' ? 'var(--color-success)'
@@ -440,7 +440,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                               disabled={busyId === s.id}
                               onClick={() => setStatus(s, 'active')}
                               aria-label={`Restore ${s.name}`}
-                              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-subtle)] transition-all cursor-pointer"
+                              className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold text-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-subtle)] transition-all cursor-pointer"
                             >
                               <RotateCcw className="w-3 h-3" /> Restore
                             </button>

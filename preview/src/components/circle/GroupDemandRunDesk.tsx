@@ -78,7 +78,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white tracking-wider">
+              <span className="text-[11px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white tracking-wider">
                 COMMUNITY DEMAND AGGREGATION
               </span>
               <span className="text-xs text-gray-300 font-bold flex items-center space-x-1">
@@ -140,10 +140,10 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-[10px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
+                <span className="text-[11px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
                   {activeRun.groupName}
                 </span>
-                <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 font-bold">
+                <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 font-bold">
                   {activeRun.groupCategory.replace('_', ' ')}
                 </span>
               </div>
@@ -153,11 +153,11 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               </h3>
 
               {activeRun.creatorName && (
-                <div className="flex items-center space-x-1.5 mt-1 text-[11px] text-[var(--brief-muted)]">
+                <div className="flex items-center space-x-1.5 mt-1 text-[12px] text-[var(--brief-muted)]">
                   <Award className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                   <span>Organized by: <strong>{activeRun.creatorName}</strong></span>
                   {activeRun.creatorReferralCode && (
-                    <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded">
+                    <span className="text-[11px] font-mono font-bold bg-amber-50 text-amber-800 px-1.5 py-0.2 rounded">
                       REF: {activeRun.creatorReferralCode}
                     </span>
                   )}
@@ -200,7 +200,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
                 }}
               />
             </div>
-            <span className="text-[10px] font-mono text-[var(--brief-muted)] block">
+            <span className="text-[11px] font-mono text-[var(--brief-muted)] block">
               Deadline: {activeRun.deadlineIso}
             </span>
           </div>
@@ -208,15 +208,15 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
           {/* Savings Matrix */}
           <div className="grid grid-cols-3 gap-3 pt-3 border-t border-black/5">
             <div className="p-3 rounded-xl bg-[#F0EDE8]">
-              <span className="text-[9px] font-bold text-[var(--brief-muted)] block uppercase">Group Wholesale</span>
+              <span className="text-[11px] font-bold text-[var(--brief-muted)] block uppercase">Group Wholesale</span>
               <span className="text-sm font-black text-[var(--brief-ink)]">KES {activeRun.unitWholesaleKes.toLocaleString()}</span>
             </div>
             <div className="p-3 rounded-xl bg-[#F0EDE8]">
-              <span className="text-[9px] font-bold text-[var(--brief-muted)] block uppercase">Retail Store Price</span>
+              <span className="text-[11px] font-bold text-[var(--brief-muted)] block uppercase">Retail Store Price</span>
               <span className="text-sm font-bold text-gray-500 line-through">KES {activeRun.unitRetailKes.toLocaleString()}</span>
             </div>
             <div className="p-3 rounded-xl bg-emerald-500/10">
-              <span className="text-[9px] font-bold text-emerald-800 block uppercase">You Save</span>
+              <span className="text-[11px] font-bold text-emerald-800 block uppercase">You Save</span>
               <span className="text-sm font-black text-emerald-700">KES {activeRun.savingsKesPerUnit.toLocaleString()} / unit</span>
             </div>
           </div>
@@ -234,9 +234,9 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               </span>
             </div>
             <p className="text-xs font-bold text-[var(--brief-ink)]">{activeRun.supplier.name}</p>
-            <p className="text-[11px] text-[var(--brief-muted)]">{activeRun.supplier.location}</p>
+            <p className="text-[12px] text-[var(--brief-muted)]">{activeRun.supplier.location}</p>
             {activeRun.supplier.paybillOrTill && (
-              <div className="flex items-center space-x-1.5 text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded">
+              <div className="flex items-center space-x-1.5 text-[12px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded">
                 <CreditCard className="w-3.5 h-3.5" />
                 <span>{activeRun.supplier.paybillOrTill}</span>
               </div>
@@ -261,11 +261,11 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               </span>
             </div>
             <p className="text-xs font-bold text-[var(--brief-ink)]">{activeRun.wairoCarrierInfo?.carrierName}</p>
-            <p className="text-[11px] text-[var(--brief-muted)]">Vehicle Plate: {activeRun.wairoCarrierInfo?.vehiclePlate}</p>
+            <p className="text-[12px] text-[var(--brief-muted)]">Vehicle Plate: {activeRun.wairoCarrierInfo?.vehiclePlate}</p>
             {activeRun.wairoCarrierInfo?.trackingNumber && (
-              <p className="text-[10px] font-mono text-gray-500">Tracking: {activeRun.wairoCarrierInfo.trackingNumber}</p>
+              <p className="text-[11px] font-mono text-gray-500">Tracking: {activeRun.wairoCarrierInfo.trackingNumber}</p>
             )}
-            <div className="inline-flex items-center space-x-1 text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
+            <div className="inline-flex items-center space-x-1 text-[11px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded">
               <span>● Scheduled bulk gate drop</span>
             </div>
           </div>
@@ -278,7 +278,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
               <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Recent Group Pledges ({activeRun.pledges.length})
               </span>
-              <span className="text-[10px] font-mono font-bold text-emerald-700">
+              <span className="text-[11px] font-mono font-bold text-emerald-700">
                 Direct M-Pesa Confirmed
               </span>
             </div>
@@ -288,7 +288,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
                 <div key={idx} className="p-2.5 rounded-xl bg-[#F0EDE8] flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-[var(--brief-ink)] block">{p.userName}</span>
-                    <span className="text-[10px] text-[var(--brief-muted)]">{p.pledgedAt}</span>
+                    <span className="text-[11px] text-[var(--brief-muted)]">{p.pledgedAt}</span>
                   </div>
                   <span className="text-xs font-black text-[#B8621F] px-2 py-0.5 rounded bg-white shadow-xs">
                     {p.quantity} {p.quantity === 1 ? 'pack' : 'packs'}
@@ -337,7 +337,7 @@ export const GroupDemandRunDesk: React.FC<GroupDemandRunDeskProps> = ({
 
         {/* Non-Promise Disclaimer */}
         <div className="p-3.5 rounded-2xl bg-black/[0.03] space-y-1 text-center">
-          <p className="text-[10px] text-[var(--brief-muted)] leading-relaxed">
+          <p className="text-[11px] text-[var(--brief-muted)] leading-relaxed">
             Brief aggregates group demand and connects you directly with verified suppliers. Payments settle directly via M-Pesa. Brief is not the merchant of record and holds zero retail inventory.
           </p>
         </div>

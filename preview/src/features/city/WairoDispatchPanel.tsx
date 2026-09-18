@@ -95,7 +95,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
 
       {/* ── Origins — the onboarded shops a rider can be routed to ── */}
       <div className="space-y-1.5">
-        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>
+        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>
           <Bike className="w-3 h-3 inline mr-1" /> Pickup origins
         </p>
         {origins === null ? (
@@ -115,7 +115,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
               >
                 <div className="min-w-0">
                   <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{o.shopName}</p>
-                  <p className="text-[10px] truncate" style={{ color: "var(--color-text-muted)" }}>
+                  <p className="text-[11px] truncate" style={{ color: "var(--color-text-muted)" }}>
                     {[o.businessType, o.location].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -128,7 +128,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
 
       {/* ── Assign a pickup ── */}
       <div className="p-3 rounded-2xl border" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }}>
-        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
           <Package className="w-3 h-3 inline mr-1" /> Assign a pickup
         </p>
         <div className="mt-2 space-y-1.5">
@@ -162,7 +162,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
 
       {/* ── Pickups + origin fee ── */}
       <div className="space-y-1.5">
-        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
           <ArrowRight className="w-3 h-3 inline mr-1" /> Your pickups
         </p>
         {pickups === null ? (
@@ -175,12 +175,12 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
               <div key={p.id} className="p-2.5 rounded-xl border flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)" }}>
                 <div className="min-w-0">
                   <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{p.receiverName} → {p.destinationTown}</p>
-                  <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{p.status}</p>
+                  <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{p.status}</p>
                 </div>
                 {p.status === 'delivered' ? (
                   <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: "var(--color-success)" }} />
                 ) : (
-                  <button type="button" onClick={() => complete(p)} className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+                  <button type="button" onClick={() => complete(p)} className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
                     Delivered
                   </button>
                 )}
@@ -194,10 +194,10 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
       {fee && (
         <div className="p-3 rounded-2xl flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)", border: "1px solid var(--color-border)" }}>
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
               <Wallet className="w-3 h-3 inline mr-1" /> Your origin fee
             </p>
-            <p className="text-[10px] leading-snug" style={{ color: "var(--color-text-muted)" }}>{fee.note}</p>
+            <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-muted)" }}>{fee.note}</p>
             {(settlements ?? []).length > 0 && (() => {
               const latest = settlements![0];
               const color = latest.status === "confirmed"
@@ -206,7 +206,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
               const label = latest.status === "confirmed"
                 ? `KES ${latest.originFeeKes.toLocaleString()} settled by finance`
                 : latest.status === "refused" ? "Last settlement refused by finance" : "Settlement pending — awaiting finance";
-              return <p className="text-[10px] font-bold mt-0.5" style={{ color }}>{label}</p>;
+              return <p className="text-[11px] font-bold mt-0.5" style={{ color }}>{label}</p>;
             })()}
           </div>
           <span className="shrink-0 text-sm font-black" style={{ color: "var(--color-success)" }}>KES {fee.originFeeKes.toLocaleString()}</span>

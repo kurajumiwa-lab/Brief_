@@ -1,112 +1,120 @@
 /* =============================================================================
-   ONE BRIEF. ONE ROOM.
+   ONE BRIEF. ONE ROOM. — cool light, deep shadow (2026-09-19 revision)
 
-   The LIGHT system, warmed. This is not "white page + grey border": a page with
-   no temperature reads as a wireframe no matter how good the components are. So
-   every neutral here is a plaster/paper warm, every surface is lifted by shadow
-   rather than outlined by a stroke, and the accent stays the brand's indigo and
-   cyan — used for ACTIONS and for the one thing a user has selected, never as
-   wall decoration.
+   WHAT CHANGED, AND WHY, written down because this file has now flipped twice
+   and nobody should have to guess which turn was the mistake: the 2026-09-17
+   revision warmed every neutral toward plaster (#F4EEE3 ground, #FDFAF3 cards,
+   warm ink) on a daylight-legibility argument. It was then looked at for a day
+   on an Android phone in Nairobi, and the verdict was that the app read as a
+   newspaper or an admin noticeboard — because warm ink on a warm ground at 9px,
+   under all-caps labels, is precisely how print looks. So the neutrals go cool
+   and the type goes up.
 
-   Rejected alternative (and why, so nobody re-litigates it in a later turn):
-   the deep-warm-dark room (#14110D ground, #1E1A15 cards). It photographs
-   beautifully and it is out of the question for Brief: a tool people use to
-   settle money, read their obligations and run a shop during a working day in
-   Nairobi, on an Android phone in daylight, is a daylight instrument. A dark
-   theme was considered and turned down on product grounds, not on taste grounds.
+   The palette (every ratio measured, not asserted):
+     ground    #F7F8FA   a cool near-white; only 1.06:1 against a card, so a
+                         card is separated by its shadow and never by a stroke
+     card      #FFFFFF   pure white. The old rule "no surface is pure white"
+                         belonged to a warm ground; on a cool one, white IS the
+                         surface
+     well      #EEF1F5   input wells, inset rows
+     surface-3 #E4E8EE   hover / raised
+     hairline  #DCE1E8   dividers, input rings, underlines ONLY
+     ink       #0A0E14   primary text   19.34:1 on card, 18.20:1 on ground
+     ink-dim   #5A6472   secondary text  6.00:1 on card
+     ink-faint #6B7684   meta / stamps   4.62:1 on card, 4.34:1 on ground
+     quiet     #8A94A3   3.07:1 — legal ONLY at 20px+ numerals, never body copy
+     accent    #2563EB   the one action colour, 5.17:1 with white on it
+     accent-2  #0891B2   supporting cyan, darker than #06B6D4 so it survives on
+                         white (3.68:1); it also carries "in transit"
+     success   #059669   3.77:1 — a dot, a bar, an icon; its text form is
+                         --state-live-ink #047857 at 5.48:1
+     warning   #B45309   5.02:1 as text (#D97706 is 3.19:1 and stays a dot hue)
+     danger    #DC2626   4.83:1
 
-   Palette (light, warm — 2026-09-17 "room" revision):
-     ground    #F4EEE3   warm plaster — the page is a room, not a canvas
-     paper     #FDFAF3   a card: warm paper, never pure #FFFFFF
-     well      #F0E9DE   a slightly deeper warm for input wells / inset rows
-     surface-3 #EAE2D6   elevated / hover
-     hairline  #E4DACB   for dividers and input rings ONLY. A card does not use
-                        it: a card gets --lift-* (see "The one rule" below).
-     ink       #241C12   primary text — warm ink (contrast 15.4:1 on paper)
-     ink-dim   #6E6152   secondary text (5.8:1 on paper)
-     ink-faint #7E7057   meta / timestamps (4.6:1 on paper — clears AA)
-     quiet     #A08D74   a zero, a dash: 3.1:1, legal at 20px+ ONLY (the tile
-                        numerals); never body copy, never a claim
-     accent    #4F46E5   electric indigo — the brand, unchanged
-     accent-2  #06B6D4   terminal cyan — the brand, unchanged
-     success   #16A34A   money received
-     warning   #B45309   stale / expiring
-     danger    #C2483C   failed — warm brick, not pure red
-     on paper  #FFFFFF   only ever ON an accent: a filled button, a dark scrim
+   ELEVATION (the one rule, unchanged): a surface is separated by LIGHT, not by
+   a stroke. `border: 1px solid` on a card is banned. The drop is now the ink
+   itself (10 14 20) — a cool shadow on a cool ground, which a warm drop could
+   not be on warm paper. The inset top light stays but is faint, because white
+   on white does nothing; the light cue lives on the wells instead.
 
-   THE ONE RULE (§10 of the room brief): a surface is separated from the room by
-   LIGHT, not by a stroke. `border: 1px solid <line>` on a card is banned — a
-   border says "these two things are apart"; a shadow says "these two things are
-   in the same light". Hairlines survive only where they are genuinely a line
-   (a divider, an underline, an input ring).
+   TYPE FLOOR: `text-xs` is remapped to 13px in tailwind.config.js and every
+   sub-12px arbitrary size was lifted, so the smallest type in the app is 11px
+   (uppercase micro-labels only) and body copy is 15-16px.
 
-   `--brief-green` is a legacy name; it resolves to the indigo accent. All
-   consumers were migrated by the palette remap, so the name is the ONLY thing
-   that stays "green".
+   REFUSED IN THE SAME BREATH: stock photography to make cards feel alive — a
+   picture of a shop that does not exist is a lie a buyer walks into, so a
+   missing photo is still a plate that says it is waiting — and numbers that
+   "tick up" as decoration. A count animates when the count changed, never to
+   look alive.
+
+   `--brief-green` is a legacy name; it resolves to the blue accent. All
+   consumers were migrated by the palette remap, so the name is the only thing
+   that stays green.
    ========================================================================== */
 
 :root {
   /* --- Canonical Brief tokens --- */
-  --brief-bg: #F4EEE3;
-  --brief-card: #FDFAF3;
-  --brief-ink: #241C12;
-  --brief-muted: #6E6152;
-  --brief-faint: #7E7057;
-  --brief-line: #E4DACB;
-  --brief-green: #4F46E5;   /* primary accent = electric indigo (legacy name kept) */
+  --brief-bg: #F7F8FA;
+  --brief-card: #FFFFFF;
+  --brief-ink: #0A0E14;
+  --brief-muted: #5A6472;
+  --brief-faint: #6B7684;
+  --brief-line: #DCE1E8;
+  --brief-green: #2563EB;   /* primary accent = the blue (legacy name kept) */
   --brief-green-ink: #FFFFFF;  /* text on the indigo accent — white, for contrast */
   --brief-warn: #B45309;
-  --brief-danger: #C2483C;
-  --brief-success: #16A34A;
+  --brief-danger: #DC2626;
+  --brief-success: #059669;
 
   /* --- Surfaces, named for what they are --- */
-  --paper: #FDFAF3;         /* a card */
-  --well: #F0E9DE;          /* an input well, an inset row */
-  --plaster: #F4EEE3;       /* the room itself */
+  --paper: #FFFFFF;         /* a card */
+  --well: #EEF1F5;          /* an input well, an inset row */
+  --plaster: #F7F8FA;       /* the room itself — the name outlived the warmth */
 
   /* --- Semantic aliases (kept stable so consumers never broke) --- */
   --ground: var(--brief-bg);
   --surface: var(--brief-card);
   --surface-2: var(--well);
-  --surface-3: #EAE2D6;
-  --elevated: #E4DACB;
+  --surface-3: #E4E8EE;
+  --elevated: #DCE1E8;
   --hairline: var(--brief-line);
-  --overlay-scrim: #241C12;   /* the scrim IS the room's ink: this is how a
+  --overlay-scrim: #0A0E14;   /* the scrim IS the room's ink: this is how a
                                  photo stops being dropped in and starts being
                                  lit by the room it sits in */
   --ink: var(--brief-ink);
   --ink-dim: var(--brief-muted);
   --ink-faint: var(--brief-faint);
-  --signal-live: #16A34A;     /* live/fresh — success green */
-  --signal-urgent: #C2483C;  /* countdown / closing soon — danger (warm) */
+  --signal-live: #059669;     /* live/fresh — success green */
+  --signal-urgent: #DC2626;  /* countdown / closing soon — danger */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent: #4F46E5;
-  --accent-2: #06B6D4;
-  --accent-ink: #FFFFFF;  /* text on indigo — white, for contrast */
-  --success: #16A34A;
+  --accent: #2563EB;
+  --accent-2: #0891B2;
+  --accent-ink: #FFFFFF;  /* text on the accent — white, 5.17:1 */
+  --success: #059669;
   --warning: #B45309;
-  --danger: #C2483C;
+  --danger: #DC2626;
 
-  /* --- Elevation (§3 of the room brief): light, not stroke -----------------
-       The inset line at the top of every surface is what makes a still screen
-       look lit from above instead of printed. --room-shadow is warm because a
-       cold grey shadow on a warm page is the exact thing that reads as "mock".
+  /* --- Elevation: light, not stroke ---------------------------------------
+       A card is lifted, never outlined. The drop uses the ink's own rgb triple
+       so a shadow on this ground is the same substance as the text, which is
+       what a cool palette needs in place of the warmth: depth, not tint.
      ------------------------------------------------------------------------ */
-  --room-light: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --room-light-dim: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  --room-shadow: 60 46 30;      /* rgb triple, so alpha can vary per tier */
-  --lift-1: var(--room-light), 0 1px 2px rgba(var(--room-shadow), 0.05);
-  --lift-2: var(--room-light), 0 2px 6px rgba(var(--room-shadow), 0.07),
-            0 10px 24px -10px rgba(var(--room-shadow), 0.12);
-  --lift-3: var(--room-light), 0 4px 10px rgba(var(--room-shadow), 0.09),
-            0 20px 40px -16px rgba(var(--room-shadow), 0.18);
-  --lift-4: var(--room-light), 0 10px 22px rgba(var(--room-shadow), 0.13),
-            0 34px 60px -24px rgba(var(--room-shadow), 0.24);
+  --room-light: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --room-light-dim: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --room-shadow: 10 14 20;      /* rgb triple — the ink, so a drop is a shadow in
+                                   this room and not a grey smudge */
+  --lift-1: var(--room-light), 0 1px 2px rgba(var(--room-shadow), 0.05),
+            0 1px 1px rgba(var(--room-shadow), 0.03);
+  --lift-2: var(--room-light), 0 1px 3px rgba(var(--room-shadow), 0.04),
+            0 4px 12px rgba(var(--room-shadow), 0.06);
+  --lift-3: var(--room-light), 0 4px 16px rgba(var(--room-shadow), 0.06),
+            0 12px 32px rgba(var(--room-shadow), 0.08);
+  --lift-4: var(--room-light), 0 24px 48px rgba(var(--room-shadow), 0.12);
   /* A selected surface glows with the accent. That is the difference between
      a filter the user happened to land on and a signal the user chose. */
-  --lift-signal: 0 0 0 1px rgba(79, 70, 229, 0.4),
-                 0 10px 28px -6px rgba(79, 70, 229, 0.34),
+  --lift-signal: 0 0 0 1px rgba(37, 99, 235, 0.35),
+                 0 8px 24px -6px rgba(37, 99, 235, 0.30),
                  var(--room-light-dim);
 
 
@@ -120,63 +128,63 @@
      a faded label everywhere, including where the app is old.
      Only three of these are ever below AA on their own: the <=30% steps, which
      are hairline strokes and washes, never text. */
-  --ink-10: rgba(36, 28, 18, 0.10);
-  --ink-15: rgba(36, 28, 18, 0.15);
-  --ink-20: rgba(36, 28, 18, 0.20);
-  --ink-25: rgba(36, 28, 18, 0.25);
-  --ink-30: rgba(36, 28, 18, 0.30);
-  --ink-40: rgba(36, 28, 18, 0.40);
-  --ink-45: rgba(36, 28, 18, 0.45);
-  --ink-50: rgba(36, 28, 18, 0.50);
-  --ink-55: rgba(36, 28, 18, 0.55);
-  --ink-60: rgba(36, 28, 18, 0.60);
-  --ink-65: rgba(36, 28, 18, 0.65);
-  --ink-70: rgba(36, 28, 18, 0.70);
-  --ink-75: rgba(36, 28, 18, 0.75);
-  --ink-80: rgba(36, 28, 18, 0.80);
-  --ink-85: rgba(36, 28, 18, 0.85);
-  --ink-90: rgba(36, 28, 18, 0.90);
-  --ink-95: rgba(36, 28, 18, 0.95);
-  --paper-40: rgba(253, 250, 243, 0.40);
-  --paper-90: rgba(253, 250, 243, 0.90);
-  --paper-85: rgba(253, 250, 243, 0.85);
-  --paper-95: rgba(253, 250, 243, 0.95);
-  --well-50: rgba(240, 233, 222, 0.50);
-  --well-60: rgba(240, 233, 222, 0.60);
-  --well-95: rgba(240, 233, 222, 0.95);
-  --line-25: rgba(228, 218, 203, 0.25);
-  --line-30: rgba(228, 218, 203, 0.30);
-  --line-35: rgba(228, 218, 203, 0.35);
-  --line-60: rgba(228, 218, 203, 0.60);
+  --ink-10: rgba(10, 14, 20, 0.10);
+  --ink-15: rgba(10, 14, 20, 0.15);
+  --ink-20: rgba(10, 14, 20, 0.20);
+  --ink-25: rgba(10, 14, 20, 0.25);
+  --ink-30: rgba(10, 14, 20, 0.30);
+  --ink-40: rgba(10, 14, 20, 0.40);
+  --ink-45: rgba(10, 14, 20, 0.45);
+  --ink-50: rgba(10, 14, 20, 0.50);
+  --ink-55: rgba(10, 14, 20, 0.55);
+  --ink-60: rgba(10, 14, 20, 0.60);
+  --ink-65: rgba(10, 14, 20, 0.65);
+  --ink-70: rgba(10, 14, 20, 0.70);
+  --ink-75: rgba(10, 14, 20, 0.75);
+  --ink-80: rgba(10, 14, 20, 0.80);
+  --ink-85: rgba(10, 14, 20, 0.85);
+  --ink-90: rgba(10, 14, 20, 0.90);
+  --ink-95: rgba(10, 14, 20, 0.95);
+  --paper-40: rgba(255, 255, 255, 0.40);
+  --paper-90: rgba(255, 255, 255, 0.90);
+  --paper-85: rgba(255, 255, 255, 0.85);
+  --paper-95: rgba(255, 255, 255, 0.95);
+  --well-50: rgba(238, 241, 245, 0.50);
+  --well-60: rgba(238, 241, 245, 0.60);
+  --well-95: rgba(238, 241, 245, 0.95);
+  --line-25: rgba(220, 225, 232, 0.25);
+  --line-30: rgba(220, 225, 232, 0.30);
+  --line-35: rgba(220, 225, 232, 0.35);
+  --line-60: rgba(220, 225, 232, 0.60);
 
   /* --- STATE COLOURS (§4 of the readability pass) --------------------------------
      State is a colour before it is a word. A dot is the entire explanation, so the
      sentences that used to describe state come out of the flow. The hues are chosen
      for what they MEAN, and each is a graphic token — a dot, a bar, a ring. Body
-     text never wears them, because amber-on-cream is 2.1:1 and unreadable: the word
-     next to a dot stays ink.
+     text never wears them: amber on white is 3.2:1, which is a fine dot and an
+     unreadable sentence, so a state that must be WRITTEN takes the -ink shade.
        live    money in, verified activity — warm green
        quiet   a true zero, nothing pending — warm amber
        moving  in transit, in flight, being carried — cool blue
        stale   past its refresh window, expiring — warm brick
-     The brand accent stays indigo (#4F46E5) and cyan (#06B6D4): these are semantic
+     The brand accent stays indigo (#2563EB) and cyan (#0891B2): these are semantic
      state hues layered on top, not a re-skin of the identity. */
-  --state-live: #4C9A54;
-  --state-quiet: #E0A13C;
-  --state-moving: #2B6CFF;
-  --state-stale: #D97757;
-  --state-empty: #B9AC97;
+  --state-live: #059669;
+  --state-quiet: #D97706;
+  --state-moving: #0891B2;
+  --state-stale: #EA580C;
+  --state-empty: #94A3B8;
 
   /* The same hues, dark enough to be TEXT. The five above clear 3:1 (a dot, an
      icon, a bar) but not 4.5:1 — an amber dot at 2.2:1 is perfectly legible as a
      shape and unreadable as a sentence. So a state that must be *written* takes
      the -ink shade, and the bright one stays reserved for graphics. Measured in
      room.jsx: every -ink pair clears 4.5:1 on paper, every graphic clears 3:1. */
-  --state-live-ink: #3B7A43;
-  --state-quiet-ink: #8A5A12;
-  --state-moving-ink: #1F4FB8;
-  --state-stale-ink: #A2492B;
-  --state-empty-ink: #7E7057;
+  --state-live-ink: #047857;
+  --state-quiet-ink: #B45309;
+  --state-moving-ink: #0E7490;
+  --state-stale-ink: #C2410C;
+  --state-empty-ink: #6B7684;
 
   /* --- Shape language (§5) --- */
   --radius-card: 24px;
@@ -186,18 +194,18 @@
   --radius-pill: 999px;
 
   /* --- Type scale (§4) --- */
-  --text-display: 34px;
-  --text-page: 26px;
-  --text-section: 21px;
-  --text-card: 18px;
-  --text-body: 15px;
-  --text-meta: 12px;
+  --text-display: 38px;
+  --text-page: 30px;
+  --text-section: 24px;
+  --text-card: 20px;
+  --text-body: 16px;
+  --text-meta: 13px;
 
   /* --- M3 aliases, mapped onto the warm light system --- */
   --m3-surface: var(--brief-bg);
   --m3-surface-container: var(--brief-card);
   --m3-surface-container-low: var(--well);
-  --m3-primary: #4F46E5;
+  --m3-primary: #2563EB;
   --m3-on-primary: #FFFFFF;
   --m3-secondary-container: var(--well);
   --m3-on-surface: var(--brief-ink);
@@ -206,9 +214,9 @@
   --m3-outline-variant: var(--brief-line);
   --m3-font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
 
-  --brief-text: 15px;
-  --brief-ui: 13px;
-  --brief-label: 12px;
+  --brief-text: 16px;
+  --brief-ui: 14px;
+  --brief-label: 13px;
   --dur-tap: 100ms;
 
   /* --- Canonical color names (the --color-* set, §1). Components reference
@@ -230,7 +238,7 @@
   --color-text-secondary: #55493A;         /* between ink and dim, for card bodies */
   --color-text-muted: var(--brief-muted);
   --color-text-faint: var(--brief-faint);
-  --color-quiet: #A08D74;                  /* a zero, a dash, an arrow: present,
+  --color-quiet: #8A94A3;                  /* a zero, a dash, an arrow: present,
                                               unbothered. A zero must not shout.
                                               3.1:1 — big numerals and glyphs
                                               only, never body text. */
@@ -271,8 +279,8 @@ html, body, #root {
    the user can act on. */
 body {
   background:
-    radial-gradient(120% 52% at 50% -14%, rgba(79, 70, 229, 0.055), transparent 62%),
-    radial-gradient(90% 40% at 100% 0%, rgba(6, 182, 212, 0.045), transparent 60%),
+    radial-gradient(120% 52% at 50% -14%, rgba(37, 99, 235, 0.055), transparent 62%),
+    radial-gradient(90% 40% at 100% 0%, rgba(8, 145, 178, 0.045), transparent 60%),
     var(--brief-bg);
   background-attachment: fixed;
 }

@@ -42,7 +42,7 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
       role="status"
       aria-label="Active event entry"
     >
-      <div className="overflow-hidden rounded-2xl border border-[#06B6D4] bg-[color:var(--color-paper)] shadow-lg">
+      <div className="overflow-hidden rounded-2xl border border-[#0891B2] bg-[color:var(--color-paper)] shadow-lg">
         {/* the locked gate pass */}
         <div className="flex items-center gap-3 px-3.5 py-2.5">
           <div
@@ -51,13 +51,13 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
           >
             <span
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
-              style={{ background: t.entryState === 'upcoming' ? 'var(--color-well)' : '#4F46E5', border: '1px solid #4F46E5' }}
+              style={{ background: t.entryState === 'upcoming' ? 'var(--color-well)' : '#2563EB', border: '1px solid #2563EB' }}
             >
-              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#4F46E5' : 'var(--color-paper)' }} />
+              <Ticket className="h-4 w-4" style={{ color: t.entryState === 'upcoming' ? '#2563EB' : 'var(--color-paper)' }} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[12px] font-extrabold text-[var(--brief-ink)]">{t.eventTitle}</p>
-              <p className="text-[10px] font-mono text-[var(--ink-60)]">
+              <p className="truncate text-[13px] font-extrabold text-[var(--brief-ink)]">{t.eventTitle}</p>
+              <p className="text-[11px] font-mono text-[var(--ink-60)]">
                 Event Entry: {stateLabel} — Ticket #{shortCode}
               </p>
             </div>
@@ -77,15 +77,15 @@ export function TicketBar({ onOpenTickets }: { onOpenTickets?: () => void } = {}
           <div className="flex items-start gap-2 border-t border-dashed border-[var(--brief-line)] bg-[color:var(--color-well)] px-3.5 py-2">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--brief-ink)]" />
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold leading-snug text-[var(--brief-ink)]">
+              <p className="text-[11px] font-bold leading-snug text-[var(--brief-ink)]">
                 Event details changed since your ticket was issued.
               </p>
-              <p className="text-[9px] leading-snug text-[var(--ink-60)]">Check the event page — your entry stays valid.</p>
+              <p className="text-[11px] leading-snug text-[var(--ink-60)]">Check the event page — your entry stays valid.</p>
             </div>
             <button
               type="button"
               onClick={() => setDismissedDelta(`${t.registrationId}:${delta.at}`)}
-              className="shrink-0 text-[9px] font-extrabold text-[var(--ink-70)] cursor-pointer hover:text-[var(--brief-ink)]"
+              className="shrink-0 text-[11px] font-extrabold text-[var(--ink-70)] cursor-pointer hover:text-[var(--brief-ink)]"
             >
               Got it
             </button>

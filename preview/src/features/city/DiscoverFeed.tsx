@@ -64,7 +64,7 @@ const BOARD_ICONS: Record<string, string> = { bulk: 'box', direct: 'bike', niche
     tints: the same flow is always the same colour, so the colour teaches the
     taxonomy. It is never hashed from a title, and an untagged listing gets the
     room's default rather than a guessed hue. */
-const FLOW_ACCENT: Record<string, string> = { bulk: '#4F46E5', direct: '#0E7C86', niche: '#8A5A2B', group: '#16A34A' };
+const FLOW_ACCENT: Record<string, string> = { bulk: '#2563EB', direct: '#0E7C86', niche: '#8A5A2B', group: '#059669' };
 
 const ICONS: Record<string, React.ReactNode> = {
   box: <Package className="w-6 h-6" />,
@@ -140,7 +140,7 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
 
       {item.priceLabel && (
         <span
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-full font-mono text-[11px] font-black"
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full font-mono text-[12px] font-black"
           style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--brief-ink)' }}
         >
           {item.priceLabel}
@@ -149,7 +149,7 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
       )}
       {dateLabel && (
         <span
-          className={`absolute ${item.priceLabel ? 'top-12' : 'top-3'} right-3 px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1`}
+          className={`absolute ${item.priceLabel ? 'top-12' : 'top-3'} right-3 px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1`}
           style={{ background: 'rgba(24,19,12,0.6)', color: 'var(--accent-ink)' }}
         >
           <CalendarDays className="w-3 h-3" /> {dateLabel}
@@ -158,10 +158,10 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
 
       {!item.mediaUrl && (
         <span className="absolute left-3 top-3 block pointer-events-none">
-          <span className="block font-mono text-[26px] font-black leading-none" style={{ color: 'var(--brief-ink)' }}>
+          <span className="block font-mono text-[30px] font-black leading-none" style={{ color: 'var(--brief-ink)' }}>
             {item.interest.count}
           </span>
-          <span className="block text-[9px] font-black uppercase tracking-[0.14em] mt-0.5" style={{ color: 'var(--brief-muted)' }}>
+          <span className="block text-[11px] font-black uppercase tracking-[0.14em] mt-0.5" style={{ color: 'var(--brief-muted)' }}>
             {item.interest.label}
           </span>
         </span>
@@ -169,22 +169,22 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
 
       <span className="absolute left-3 right-3 bottom-3 block text-white">
         <span className="flex items-center gap-2 flex-wrap">
-          <span className="px-2 py-0.5 rounded-md text-[9px] font-mono uppercase font-black" style={{ background: 'rgba(255,255,255,0.22)' }}>
+          <span className="px-2 py-0.5 rounded-md text-[11px] font-mono uppercase font-black" style={{ background: 'rgba(255,255,255,0.22)' }}>
             {item.flow ?? item.kind}
           </span>
           {item.origin && item.destination && (
-            <span className="text-[11px] font-mono truncate">
+            <span className="text-[12px] font-mono truncate">
               {item.origin} → {item.destination}
             </span>
           )}
           {!item.origin && item.location && (
-            <span className="text-[11px] inline-flex items-center gap-1 truncate">
+            <span className="text-[12px] inline-flex items-center gap-1 truncate">
               <MapPin className="w-3 h-3" /> {item.location}
             </span>
           )}
         </span>
         <span className="block text-[16px] font-extrabold leading-snug mt-1 line-clamp-2">{item.title}</span>
-        <span className="block text-[11px] opacity-90 mt-0.5 truncate">
+        <span className="block text-[12px] opacity-90 mt-0.5 truncate">
           {item.minOrder ? `min ${item.minOrder}${item.unit ? ` ${item.unit}` : ''} · ` : ''}
           {interestLine(item)}{stamp ? ` · ${stamp}` : ''}
         </span>
@@ -216,14 +216,14 @@ function RouteCard({
       }}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-extrabold leading-snug min-w-0" style={{ color: 'var(--brief-ink)' }}>
+        <p className="text-[14px] font-extrabold leading-snug min-w-0" style={{ color: 'var(--brief-ink)' }}>
           {route.origin}
           <span className="mx-1.5 font-mono" style={{ color: 'var(--color-quiet)' }}>→</span>
           {route.destination}
         </p>
         {route.openDemand > 0 ? (
           <span
-            className="shrink-0 px-2 py-1 rounded-full text-[10px] font-black font-mono"
+            className="shrink-0 px-2 py-1 rounded-full text-[11px] font-black font-mono"
             style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
           >
             {route.openDemand} open ask{route.openDemand === 1 ? '' : 's'}
@@ -231,24 +231,24 @@ function RouteCard({
         ) : null}
       </div>
 
-      <p className="text-[11px] font-mono mt-1.5 truncate" style={{ color: 'var(--brief-muted)' }}>
+      <p className="text-[12px] font-mono mt-1.5 truncate" style={{ color: 'var(--brief-muted)' }}>
         {route.listings} listing{route.listings === 1 ? '' : 's'}
         {route.sellers.length ? ` · ${route.sellers.length} seller${route.sellers.length === 1 ? '' : 's'}` : ''}
         {route.minOrderFrom ? ` · min ${route.minOrderFrom}${route.unit ? ` ${route.unit}` : ''}` : ''}
       </p>
       {route.topCommodities.length > 0 && (
-        <p className="text-[11px] mt-1 truncate" style={{ color: 'var(--brief-ink)' }}>
+        <p className="text-[12px] mt-1 truncate" style={{ color: 'var(--brief-ink)' }}>
           moving: {route.topCommodities.join(', ')}
         </p>
       )}
       {route.openDemandQuantity != null && (
-        <p className="text-[11px] font-mono mt-1" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[12px] font-mono mt-1" style={{ color: 'var(--brief-muted)' }}>
           {route.openDemandQuantity}
           {route.unit ? ` ${route.unit}` : ''} asked for, from the quantities buyers typed
         </p>
       )}
       {route.commodityUndeclared ? (
-        <p className="text-[10px] mt-1" style={{ color: '#B45309' }}>
+        <p className="text-[11px] mt-1" style={{ color: '#B45309' }}>
           {route.commodityUndeclared} listing{route.commodityUndeclared === 1 ? '' : 's'} on this route declare no commodity, so no
           demand is counted against it.
         </p>
@@ -257,7 +257,7 @@ function RouteCard({
       <button
         type="button"
         onClick={() => { soundEngine.play('tap'); onBrowse(); }}
-        className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[12px] font-black cursor-pointer"
+        className="mt-2.5 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-black cursor-pointer"
         style={{
           background: active ? 'var(--color-primary)' : 'var(--color-well)',
           color: active ? 'var(--accent-ink)' : 'var(--brief-ink)'
@@ -313,17 +313,17 @@ function FeedSheet({ item, onClose, onOpenFull }: {
 
         <div className="p-5 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+            <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               {item.flow ?? item.kind}
             </span>
-            {item.origin && <span className="text-[11px] font-mono" style={{ color: 'var(--brief-muted)' }}>from {item.origin}{item.originKind ? ` (${item.originKind})` : ''}</span>}
-            {item.destination && <span className="text-[11px] font-mono" style={{ color: 'var(--brief-muted)' }}>to {item.destination}{item.destinationKind ? ` (${item.destinationKind})` : ''}</span>}
+            {item.origin && <span className="text-[12px] font-mono" style={{ color: 'var(--brief-muted)' }}>from {item.origin}{item.originKind ? ` (${item.originKind})` : ''}</span>}
+            {item.destination && <span className="text-[12px] font-mono" style={{ color: 'var(--brief-muted)' }}>to {item.destination}{item.destinationKind ? ` (${item.destinationKind})` : ''}</span>}
           </div>
 
           <h2 className="text-[21px] font-extrabold leading-tight" style={{ color: 'var(--brief-ink)' }}>{item.title}</h2>
-          {item.description && <p className="text-[13px] leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
+          {item.description && <p className="text-[14px] leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{item.description}</p>}
 
-          <dl className="grid grid-cols-2 gap-2 text-[12px]">
+          <dl className="grid grid-cols-2 gap-2 text-[13px]">
             {[
               ['price', item.priceLabel ?? 'not stated'],
               ['per', item.unit ?? 'not stated'],
@@ -335,34 +335,34 @@ function FeedSheet({ item, onClose, onOpenFull }: {
               ['stock', item.stock != null ? String(item.stock) : 'not tracked']
             ].map(([k, v]) => (
               <div key={k} className="p-2.5 rounded-xl" style={{ background: 'var(--color-well)' }}>
-                <dt className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-quiet)' }}>{k}</dt>
+                <dt className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-quiet)' }}>{k}</dt>
                 <dd className="font-mono font-bold mt-0.5 truncate" style={{ color: 'var(--brief-ink)' }}>{v}</dd>
               </div>
             ))}
           </dl>
 
-          <p className="text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+          <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
             {item.why} — by a stated rule, not a ranking.
           </p>
 
           {whatsapp ? (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
                 The contact this seller put on their own listing
               </p>
               <a
                 href={whatsapp}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-black"
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[14px] font-black"
                 style={{ background: '#25D366', color: '#04310F' }}
               >
                 <MessageCircle className="w-4 h-4" /> Message {item.seller ?? 'the seller'} on WhatsApp
               </a>
-              <p className="text-[10px]" style={{ color: 'var(--color-quiet)' }}>{item.contactNote ?? ''}</p>
+              <p className="text-[11px]" style={{ color: 'var(--color-quiet)' }}>{item.contactNote ?? ''}</p>
             </div>
           ) : (
-            <p className="text-[11px] leading-snug p-3 rounded-xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
+            <p className="text-[12px] leading-snug p-3 rounded-xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
               No contact number on this listing, so none is shown — Brief will not guess one or borrow one from
               somewhere else. Use the enquiry below: it becomes a message the seller can answer in the app.
             </p>
@@ -371,7 +371,7 @@ function FeedSheet({ item, onClose, onOpenFull }: {
           <button
             type="button"
             onClick={() => onOpenFull(item)}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl text-[13px] font-black cursor-pointer"
+            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl text-[14px] font-black cursor-pointer"
             style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
           >
             {item.kind === 'event' ? 'Open the event page' : 'Open the listing & enquire'}
@@ -473,7 +473,7 @@ export function DiscoverFeed({
       {/* ── the four flows ───────────────────────────────────────────────── */}
       <section className="space-y-2.5">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-ink)' }}>
+          <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-ink)' }}>
             The flows
           </h2>
           <button
@@ -516,7 +516,7 @@ export function DiscoverFeed({
                   <span className="w-9 h-9 rounded-2xl grid place-items-center" style={{ background: isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)', color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
                     {ICONS[f.icon]}
                   </span>
-                  <span className="font-mono text-[20px] font-extrabold leading-none" style={{ color: isActive ? 'var(--accent-ink)' : empty ? 'var(--color-quiet)' : 'var(--brief-ink)' }}>
+                  <span className="font-mono text-[32px] font-extrabold leading-none" style={{ color: isActive ? 'var(--accent-ink)' : empty ? 'var(--color-quiet)' : 'var(--brief-ink)' }}>
                     {countFor(f.key)}
                   </span>
                 </span>
@@ -527,12 +527,12 @@ export function DiscoverFeed({
                   <StateDot state={empty ? 'unknown' : 'quiet'} label={empty ? 'none here' : src?.sub ?? ''} />
                 </span>
                 {empty && onPostListing && (
-                  <span className="block mt-1.5 text-[10px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
+                  <span className="block mt-1.5 text-[11px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
                     {src?.zeroReason === 'untagged_only' ? 'Tag one' : 'Post one'} →
                   </span>
                 )}
                 {src && src.openDemand > 0 && (
-                  <span className="absolute -bottom-0.5 right-3 text-[9px] font-mono" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--color-quiet)' }}>
+                  <span className="absolute -bottom-0.5 right-3 text-[11px] font-mono" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--color-quiet)' }}>
                     {src.openDemand} ask{src.openDemand === 1 ? '' : 's'} name it
                   </span>
                 )}
@@ -561,7 +561,7 @@ export function DiscoverFeed({
                 }}
               >
                 <span className="block">{t.label}</span>
-                <span className="block text-[10px] font-mono mt-0.5" style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-quiet)' }}>
+                <span className="block text-[11px] font-mono mt-0.5" style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-quiet)' }}>
                   {countFor(t.key)}
                 </span>
               </button>
@@ -573,7 +573,7 @@ export function DiscoverFeed({
       </section>
 
       {failed && (
-        <p className="text-[12px] font-bold" role="alert" style={{ color: '#E53935' }}>
+        <p className="text-[13px] font-bold" role="alert" style={{ color: '#E53935' }}>
           {failed} <button type="button" onClick={() => void load()} className="underline cursor-pointer">Try again</button>
         </p>
       )}
@@ -585,7 +585,7 @@ export function DiscoverFeed({
             type="button"
             onClick={() => setSubFilter(null)}
             aria-pressed={!subFilter}
-            className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-shadow"
+            className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-shadow"
             style={{
               background: subFilter ? 'var(--color-paper)' : 'var(--color-well)',
               color: 'var(--brief-ink)',
@@ -602,7 +602,7 @@ export function DiscoverFeed({
                 type="button"
                 onClick={() => { soundEngine.play('tap'); setSubFilter(on ? null : sf); }}
                 aria-pressed={on}
-                className="shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer transition-shadow"
+                className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-shadow"
                 style={{
                   background: on ? 'var(--color-primary)' : 'var(--color-paper)',
                   color: on ? 'var(--accent-ink)' : 'var(--brief-muted)',
@@ -622,20 +622,20 @@ export function DiscoverFeed({
       {isFlowRoom(room) && (
         <section className="space-y-2">
           <div className="flex items-baseline justify-between">
-            <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+            <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
               Routes on the board
             </h3>
             {routeFilter && (
-              <button type="button" onClick={() => setRouteFilter(null)} className="text-[10px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)' }}>
+              <button type="button" onClick={() => setRouteFilter(null)} className="text-[11px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)' }}>
                 clear route filter
               </button>
             )}
           </div>
           {routes.length === 0 ? (
             <div className="p-4 rounded-2xl border border-dashed" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}>
-              <p className="text-[13px] font-bold" style={{ color: 'var(--brief-ink)' }}>No {flow?.label ?? room} routes</p>
+              <p className="text-[14px] font-bold" style={{ color: 'var(--brief-ink)' }}>No {flow?.label ?? room} routes</p>
               {onPostListing && (
-                <button type="button" onClick={onPostListing} className="mt-2.5 px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer transition-shadow" style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}>
+                <button type="button" onClick={onPostListing} className="mt-2.5 px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer transition-shadow" style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}>
                   Post an offer
                 </button>
               )}
@@ -673,7 +673,7 @@ export function DiscoverFeed({
                     if (subFilter || routeFilter) { setSubFilter(null); setRouteFilter(null); }
                     else onRoomChange?.('all');
                   }}
-                  className="px-4 py-2 rounded-full text-[12px] font-black cursor-pointer transition-shadow"
+                  className="px-4 py-2 rounded-full text-[13px] font-black cursor-pointer transition-shadow"
                   style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
                 >
                   {subFilter || routeFilter ? 'Clear the filters' : 'See everything'}
@@ -691,14 +691,14 @@ export function DiscoverFeed({
       {/* ── the market's own shelf, still one tap away ─────────────────── */}
       {(room === 'all') && (
         <section className="p-4 rounded-3xl bg-[color:var(--color-paper)] brief-card--raised space-y-3">
-          <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>The counter</h3>
+          <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>The counter</h3>
           <Marketplace key={counterKey} initialSection={counterSection} />
         </section>
       )}
 
       {room === 'events' && (
         <section className="space-y-2">
-          <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>What's on — published events</h3>
+          <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>What's on — published events</h3>
           <MuseumGallery />
         </section>
       )}
@@ -720,7 +720,7 @@ export function DiscoverFeed({
       {(room === 'all' || isFlowRoom(room)) && gaps.length > 0 && (
         <section className="space-y-2" aria-label="Demand with no route">
           <div className="flex items-baseline justify-between">
-            <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+            <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
               Asked for, no route says it
             </h3>
 
@@ -729,19 +729,19 @@ export function DiscoverFeed({
             {gaps.slice(0, 5).map((g) => (
               <li key={g.requestId} className="p-3 rounded-2xl brief-card" style={{ background: 'var(--color-paper)' }}>
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[13px] font-bold leading-snug min-w-0" style={{ color: 'var(--brief-ink)' }}>{g.title}</p>
-                  <span className="shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: '#FEF3C7', color: '#92400E' }}>
+                  <p className="text-[14px] font-bold leading-snug min-w-0" style={{ color: 'var(--brief-ink)' }}>{g.title}</p>
+                  <span className="shrink-0 text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: '#FEF3C7', color: '#92400E' }}>
                     {g.coverage === 'listing_without_route' ? 'listed, unrouted' : 'no route declared'}
                   </span>
                 </div>
-                <p className="text-[11px] font-mono mt-1 truncate" style={{ color: 'var(--brief-muted)' }}>
+                <p className="text-[12px] font-mono mt-1 truncate" style={{ color: 'var(--brief-muted)' }}>
                   {[g.category, g.quantity ? `${g.quantity} ${g.unit ?? 'units'}` : null, g.location, g.requiredBy ? `by ${shortDate(g.requiredBy)}` : null]
                     .filter(Boolean).join(' · ')}
                 </p>
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('tap'); window.location.hash = `requests/${encodeURIComponent(g.requestId)}`; }}
-                  className="mt-2 text-[11px] font-black cursor-pointer"
+                  className="mt-2 text-[12px] font-black cursor-pointer"
                   style={{ color: 'var(--color-primary)' }}
                 >
                   Open the ask →
@@ -763,7 +763,7 @@ export function DiscoverFeed({
               <button
                 type="button"
                 onClick={() => { soundEngine.play('heavyTap'); onHostEvent(); }}
-                className="inline-flex items-center gap-2 pl-4 pr-5 py-3 rounded-full text-[13px] font-black cursor-pointer active:scale-95 transition"
+                className="inline-flex items-center gap-2 pl-4 pr-5 py-3 rounded-full text-[14px] font-black cursor-pointer active:scale-95 transition"
                 style={{ background: 'var(--brief-ink)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-4)' }}
               >
                 <Plus className="w-5 h-5" /> Host an event
@@ -773,7 +773,7 @@ export function DiscoverFeed({
               <button
                 type="button"
                 onClick={() => { soundEngine.play('tap'); onPostListing(); }}
-                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full text-[12px] font-black cursor-pointer active:scale-95 transition"
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full text-[13px] font-black cursor-pointer active:scale-95 transition"
                 style={{ background: 'var(--color-paper)', color: 'var(--brief-ink)', boxShadow: 'var(--room-light), var(--lift-3), inset 0 0 0 1px var(--brief-line)' }}
               >
                 <ShoppingBag className="w-4 h-4" /> Post a listing

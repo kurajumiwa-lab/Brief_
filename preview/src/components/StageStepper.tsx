@@ -33,31 +33,31 @@ export function StageStepper({ stages, currentIndex, compact = false }: StageSte
           <React.Fragment key={stage.id}>
             <div className="flex min-w-[72px] flex-1 flex-col items-center text-center">
               <div
-                className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-extrabold transition-all"
+                className="flex h-8 w-8 items-center justify-center rounded-full border text-[12px] font-extrabold transition-all"
                 style={{
-                  background: done || active ? '#4F46E5' : 'var(--color-paper)',
+                  background: done || active ? '#2563EB' : 'var(--color-paper)',
                   color: done || active ? 'var(--brief-ink)' : 'rgba(17,17,17,0.4)',
-                  borderColor: done || active ? '#4F46E5' : 'var(--brief-line)',
+                  borderColor: done || active ? '#2563EB' : 'var(--brief-line)',
                   opacity: active ? 1 : done ? 0.9 : 1
                 }}
               >
                 {done ? '✓' : i + 1}
               </div>
               <p
-                className="mt-1.5 text-[9px] font-extrabold leading-tight"
+                className="mt-1.5 text-[11px] font-extrabold leading-tight"
                 style={{ color: active ? 'var(--brief-ink)' : done ? 'rgba(17,17,17,0.7)' : 'rgba(17,17,17,0.4)' }}
               >
                 {stage.label}
               </p>
               {!compact && stage.blurb && (
-                <p className="mt-0.5 hidden text-[8px] leading-tight text-[var(--ink-60)] sm:block">{stage.blurb}</p>
+                <p className="mt-0.5 hidden text-[11px] leading-tight text-[var(--ink-60)] sm:block">{stage.blurb}</p>
               )}
             </div>
             {!isLast && (
               <div className="flex items-center pt-[15px] px-0.5" aria-hidden="true">
                 <div
                   className="h-[2px] w-3 rounded-full sm:w-6"
-                  style={{ background: i < currentIndex ? '#4F46E5' : 'var(--brief-line)' }}
+                  style={{ background: i < currentIndex ? '#2563EB' : 'var(--brief-line)' }}
                 />
               </div>
             )}

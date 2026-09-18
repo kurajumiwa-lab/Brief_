@@ -37,9 +37,9 @@ import { soundEngine } from '../../utils/SoundEngine';
 export const AppColors = {
   primary: '#0D1117',
   primaryHover: '#1E293B',
-  accent: '#4F46E5',
+  accent: '#2563EB',
   accentHover: '#E04D18',
-  secondary: '#4F46E5',
+  secondary: '#2563EB',
   teal: '#00BFEF',
   emerald: '#00D26A',
   surfaceLight: 'var(--color-paper)',
@@ -178,7 +178,7 @@ export function CustomTextField({
           {required && <span className="text-red-500 font-bold">*</span>}
         </label>
         {maxLength && (
-          <span className="text-[10px] text-slate-400 font-mono">
+          <span className="text-[11px] text-slate-400 font-mono">
             {value.length}/{maxLength}
           </span>
         )}
@@ -188,7 +188,7 @@ export function CustomTextField({
         className={`relative flex items-center rounded-2xl transition-all duration-200 ${
           hasError
             ? 'bg-red-50/70 dark:bg-red-950/30 border-2 border-red-500'
-            : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus-within:border-[#06B6D4] focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30'
+            : 'bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 focus-within:border-[#0891B2] focus-within:ring-2 focus-within:ring-blue-100 dark:focus-within:ring-blue-900/30'
         }`}
       >
         {icon && (
@@ -235,12 +235,12 @@ export function CustomTextField({
       </div>
 
       {hasError ? (
-        <p className="text-[11px] font-medium text-red-600 dark:text-red-400 flex items-center space-x-1 animate-fadeIn">
+        <p className="text-[12px] font-medium text-red-600 dark:text-red-400 flex items-center space-x-1 animate-fadeIn">
           <AlertTriangle className="w-3 h-3 shrink-0" />
           <span>{errorMessage}</span>
         </p>
       ) : helperText ? (
-        <p className="text-[10px] text-slate-500 dark:text-slate-400">{helperText}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{helperText}</p>
       ) : null}
     </div>
   );
@@ -364,11 +364,11 @@ export function MultiImagePicker({
           <label className="font-bold text-slate-800 dark:text-slate-200 block">
             Photos & Media
           </label>
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[11px] text-slate-500">
             Tap thumbnail to preview full-screen. First image serves as the primary cover tile.
           </p>
         </div>
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
+        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono font-bold bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md">
           {images.length}/{maxImages} images
         </span>
       </div>
@@ -383,7 +383,7 @@ export function MultiImagePicker({
               onClick={() => setActiveViewerIdx(idx)}
               className={`relative aspect-square rounded-2xl overflow-hidden border cursor-pointer transition-all hover:shadow-md group ${
                 isCover
-                  ? 'border-2 border-[#4F46E5] ring-2 ring-orange-100 dark:ring-orange-950/40'
+                  ? 'border-2 border-[#2563EB] ring-2 ring-orange-100 dark:ring-orange-950/40'
                   : 'border-slate-200 dark:border-slate-700'
               }`}
             >
@@ -395,7 +395,7 @@ export function MultiImagePicker({
 
               {/* Cover Badge */}
               {isCover && (
-                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#4F46E5] text-white text-[9px] font-black uppercase tracking-wider shadow-sm flex items-center space-x-0.5">
+                <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-[#2563EB] text-white text-[11px] font-black uppercase tracking-wider shadow-sm flex items-center space-x-0.5">
                   <Star className="w-2.5 h-2.5 fill-current" />
                   <span>Cover</span>
                 </div>
@@ -409,7 +409,7 @@ export function MultiImagePicker({
                       type="button"
                       onClick={(e) => handleSetAsCover(idx, e)}
                       title="Set as Cover Photo"
-                      className="px-1.5 py-1 rounded-lg bg-black/70 hover:bg-[#4F46E5] text-white text-[9px] font-bold flex items-center space-x-0.5 transition-colors"
+                      className="px-1.5 py-1 rounded-lg bg-black/70 hover:bg-[#2563EB] text-white text-[11px] font-bold flex items-center space-x-0.5 transition-colors"
                     >
                       <span>★ Cover</span>
                     </button>
@@ -435,12 +435,12 @@ export function MultiImagePicker({
                       type="button"
                       onClick={(e) => handleMoveLeft(idx, e)}
                       title="Move Left"
-                      className="px-1.5 py-0.5 rounded bg-black/70 hover:bg-black text-white text-[9px] font-mono"
+                      className="px-1.5 py-0.5 rounded bg-black/70 hover:bg-black text-white text-[11px] font-mono"
                     >
                       ← Left
                     </button>
                   )}
-                  <span className="text-[10px] text-white/90 font-mono ml-auto">
+                  <span className="text-[11px] text-white/90 font-mono ml-auto">
                     <Maximize2 className="w-3 h-3" />
                   </span>
                 </div>
@@ -453,17 +453,17 @@ export function MultiImagePicker({
         {isUploadingSample ? (
           <div className="aspect-square rounded-2xl bg-slate-100 dark:bg-slate-800 border-2 border-dashed border-blue-400 animate-pulse flex flex-col items-center justify-center text-blue-500">
             <RefreshCw className="w-5 h-5 animate-spin" />
-            <span className="text-[9px] font-bold mt-1">Uploading…</span>
+            <span className="text-[11px] font-bold mt-1">Uploading…</span>
           </div>
         ) : (
           images.length < maxImages && (
             <button
               type="button"
               onClick={handleAddSampleImage}
-              className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#06B6D4] hover:bg-blue-50/50 dark:hover:bg-blue-950/20 flex flex-col items-center justify-center text-slate-500 hover:text-[#06B6D4] cursor-pointer transition-all duration-200"
+              className="aspect-square rounded-2xl bg-slate-50 dark:bg-slate-800/60 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#0891B2] hover:bg-blue-50/50 dark:hover:bg-blue-950/20 flex flex-col items-center justify-center text-slate-500 hover:text-[#0891B2] cursor-pointer transition-all duration-200"
             >
               <ImagePlus className="w-5 h-5" />
-              <span className="text-[10px] font-bold mt-1">Add Photo</span>
+              <span className="text-[11px] font-bold mt-1">Add Photo</span>
             </button>
           )
         )}
@@ -566,7 +566,7 @@ export function LiveCardPreview({ post }: LiveCardPreviewProps) {
           />
           <div className="absolute top-2.5 left-2.5">
             <span
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider text-white shadow-md ${
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider text-white shadow-md ${
                 post.type === 'event'
                   ? 'bg-blue-600'
                   : post.type === 'product'
@@ -578,7 +578,7 @@ export function LiveCardPreview({ post }: LiveCardPreviewProps) {
             </span>
           </div>
 
-          <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-mono">
+          <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[11px] font-mono">
             {post.district}
           </div>
         </div>
@@ -626,7 +626,7 @@ export function LiveCardPreview({ post }: LiveCardPreviewProps) {
               <Megaphone className="w-4 h-4 text-amber-600" />
               <span className="font-bold uppercase tracking-wider">{post.priority} Civic Alert</span>
             </div>
-            <span className="text-[10px] text-amber-700 dark:text-amber-300 font-mono">
+            <span className="text-[11px] text-amber-700 dark:text-amber-300 font-mono">
               Verified Member
             </span>
           </div>
@@ -953,10 +953,10 @@ export function UniversalCreatePostModal({
         <div className="bg-[color:var(--brief-ink)] text-white p-4 sm:p-5 flex items-center justify-between border-b border-white/10">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#4F46E5] font-black">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#2563EB] font-black">
                 UNIVERSAL PUBLISHER
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-white/10 text-slate-300">
                 Step {currentStep} of 3
               </span>
             </div>
@@ -998,16 +998,16 @@ export function UniversalCreatePostModal({
                 }}
                 className={`flex items-center space-x-1.5 text-xs font-bold transition-colors cursor-pointer ${
                   isActive
-                    ? 'text-[#4F46E5] font-black'
+                    ? 'text-[#2563EB] font-black'
                     : isCompleted
                     ? 'text-slate-700 dark:text-slate-300 hover:text-[var(--brief-ink)]'
                     : 'text-slate-400 dark:text-slate-600'
                 }`}
               >
                 <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-black ${
+                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-mono font-black ${
                     isActive
-                      ? 'bg-[#4F46E5] text-white'
+                      ? 'bg-[#2563EB] text-white'
                       : isCompleted
                       ? 'bg-emerald-600 text-white'
                       : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
@@ -1032,7 +1032,7 @@ export function UniversalCreatePostModal({
               <button
                 type="button"
                 onClick={handleRestoreDraft}
-                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] cursor-pointer transition-colors"
+                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] cursor-pointer transition-colors"
               >
                 Resume
               </button>
@@ -1083,7 +1083,7 @@ export function UniversalCreatePostModal({
             <button
               type="button"
               onClick={() => setBannerError(null)}
-              className="font-bold text-red-700 underline text-[11px] cursor-pointer"
+              className="font-bold text-red-700 underline text-[12px] cursor-pointer"
             >
               Retry
             </button>
@@ -1145,7 +1145,7 @@ export function UniversalCreatePostModal({
                 <select
                   value={district}
                   onChange={(e) => setDistrict(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs text-slate-800 dark:text-slate-200 outline-none focus:border-[#0891B2]"
                 >
                   {kenyanDistricts.map((d) => (
                     <option key={d} value={d}>
@@ -1232,7 +1232,7 @@ export function UniversalCreatePostModal({
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs outline-none focus:border-[#06B6D4]"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl py-3 px-3 text-xs outline-none focus:border-[#0891B2]"
                       >
                         {categories.map((c) => (
                           <option key={c} value={c}>
@@ -1252,7 +1252,7 @@ export function UniversalCreatePostModal({
                     <Megaphone className="w-4 h-4 text-amber-600" />
                     <span>Civic & Community Scope</span>
                   </div>
-                  <p className="text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
+                  <p className="text-[12px] text-amber-800 dark:text-amber-300 leading-relaxed">
                     Announcements are highlighted in the local neighborhood bulletin and town district feed with verified member authorship.
                   </p>
                 </div>
@@ -1286,7 +1286,7 @@ export function UniversalCreatePostModal({
                           soundEngine.play('tap');
                           setEventDate(preset);
                         }}
-                        className={`px-2.5 py-1 rounded-xl text-[11px] font-bold transition-all ${
+                        className={`px-2.5 py-1 rounded-xl text-[12px] font-bold transition-all ${
                           eventDate === preset
                             ? 'bg-blue-600 text-white'
                             : 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800'
@@ -1397,14 +1397,14 @@ export function UniversalCreatePostModal({
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   Live Feed Preview
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[11px] text-slate-400 font-mono">
                   District: {district}
                 </span>
               </div>
 
               <LiveCardPreview post={currentPreviewPost} />
 
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start space-x-2 text-[11px] text-slate-600 dark:text-slate-400">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start space-x-2 text-[12px] text-slate-600 dark:text-slate-400">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
                   By publishing, you confirm adherence to Brief Kenya community guidelines. Your post will be synchronized across local offline mesh and online channels.
@@ -1450,7 +1450,7 @@ export function UniversalCreatePostModal({
               className="flex-1 max-w-[220px] py-3 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-md cursor-pointer transition-all active:scale-95"
             >
               <span>Next: {currentStep === 1 ? 'Media & Details' : 'Preview'}</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#4F46E5]" />
+              <ArrowRight className="w-3.5 h-3.5 text-[#2563EB]" />
             </button>
           ) : (
             <button
@@ -1459,7 +1459,7 @@ export function UniversalCreatePostModal({
               disabled={isSubmitting}
               className="flex-1 max-w-[240px] py-3.5 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E293B] text-white font-black text-xs uppercase tracking-wider shadow-lg flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50 transition-all active:scale-95"
             >
-              <Sparkles className="w-4 h-4 text-[#4F46E5]" />
+              <Sparkles className="w-4 h-4 text-[#2563EB]" />
               <span>{isSubmitting ? 'Publishing…' : `Publish ${postType.toUpperCase()}`}</span>
             </button>
           )}

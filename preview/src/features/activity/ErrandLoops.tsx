@@ -62,14 +62,14 @@ export function ErrandLoops({ onOpenLobby }: { onOpenLobby?: () => void; classNa
         <h2 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           Errands you are in
         </h2>
-        <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
           {open.length} mid-flight · {rows.length} total
         </span>
         {onOpenLobby && (
           <button
             type="button"
             onClick={onOpenLobby}
-            className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+            className="ml-auto inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             Open the lobby <ArrowRight className="w-3 h-3" />
@@ -81,14 +81,14 @@ export function ErrandLoops({ onOpenLobby }: { onOpenLobby?: () => void; classNa
         {rows.slice(0, 4).map((e) => (
           <li key={e.id} className="p-3 rounded-2xl border" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
             <div className="flex items-start justify-between gap-2">
-              <p className="text-[13px] font-bold leading-snug min-w-0" style={{ color: 'var(--color-text)' }}>
+              <p className="text-[14px] font-bold leading-snug min-w-0" style={{ color: 'var(--color-text)' }}>
                 {e.what}
               </p>
-              <span className="shrink-0 text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+              <span className="shrink-0 text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                 {e.isMine ? (e.iAmTheCarrier ? 'you are carrying' : 'you posted') : ''} {e.status.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-[11px] truncate mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[12px] truncate mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
               {e.pickup} → {e.dropoff}
               {e.offeredFeeKes != null ? ` · ${e.currency} ${e.offeredFeeKes.toLocaleString('en-KE')}` : ''}
             </p>
@@ -96,7 +96,7 @@ export function ErrandLoops({ onOpenLobby }: { onOpenLobby?: () => void; classNa
               {e.loop.map((s) => (
                 <span
                   key={s.key}
-                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold"
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold"
                   style={{
                     border: `1px solid ${s.done ? 'var(--color-primary)' : 'var(--color-border)'}`,
                     background: s.done ? 'var(--color-primary-subtle)' : 'transparent',
@@ -109,7 +109,7 @@ export function ErrandLoops({ onOpenLobby }: { onOpenLobby?: () => void; classNa
               ))}
             </div>
             {e.ratings.length > 0 && (
-              <p className="text-[10px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[11px] mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
                 {e.ratings.map((r) => `${r.stars}/5 by ${r.by} on ${r.about}`).join(' · ')} — listed as said, never averaged
               </p>
             )}

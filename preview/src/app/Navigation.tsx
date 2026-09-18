@@ -251,7 +251,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   {item.icon}
                 </div>
                 <span
-                  className={`text-[10px] tracking-tight mt-1 transition-colors ${
+                  className={`text-[11px] tracking-tight mt-1 transition-colors ${
                     isSelected
                       ? 'text-[color:var(--color-text)] font-extrabold'
                       : 'text-[color:var(--color-text-muted)] font-medium group-hover:text-[color:var(--color-text)]'
@@ -291,7 +291,7 @@ export const Navigation: React.FC<NavigationProps> = ({
                   {spaceName}
                 </span>
               </div>
-              <span className="text-[10px] text-[color:var(--color-text-muted)]">▾</span>
+              <span className="text-[11px] text-[color:var(--color-text-muted)]">▾</span>
             </div>
           </div>
 
@@ -319,12 +319,12 @@ export const Navigation: React.FC<NavigationProps> = ({
                   </div>
 
                   {item.id === 'activity' && revenueKes > 0 && (
-                    <span className="text-[10px] font-black text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
+                    <span className="text-[11px] font-black text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
                       KES {(revenueKes / 1000).toFixed(1)}k
                     </span>
                   )}
                   {item.id === 'discover' && (
-                    <span className="text-[10px] font-black bg-black/5 px-2 py-0.5 rounded-full text-[color:var(--color-text)]">
+                    <span className="text-[11px] font-black bg-black/5 px-2 py-0.5 rounded-full text-[color:var(--color-text)]">
                       {offersCount}
                     </span>
                   )}

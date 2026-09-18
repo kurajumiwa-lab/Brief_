@@ -51,7 +51,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
       {edges.map((edge) => (
         <section key={`${edge.verb}_${edge.label}`} aria-label={edge.label} className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h4 className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">
+            <h4 className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">
               {EDGE_ICON[edge.verb]}
               {edge.label}
               <span className="text-[var(--ink-60)]">· {edge.objects.length}</span>
@@ -60,7 +60,7 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
               <button
                 type="button"
                 onClick={() => onOpenLocation(edge.location?.name ?? '')}
-                className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-2.5 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] transition-colors hover:bg-[#C2410C]"
+                className="flex items-center gap-1 rounded-full bg-[#2563EB] px-2.5 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] transition-colors hover:bg-[#C2410C]"
               >
                 View area <ArrowUpRight className="h-3 w-3" />
               </button>
@@ -75,18 +75,18 @@ export function RelatedContent({ edges, onOpenObject, onOpenLocation }: {
                   key={o.id}
                   type="button"
                   onClick={() => onOpenObject(o)}
-                  className="group flex items-center gap-2.5 rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4]"
+                  className="group flex items-center gap-2.5 rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#0891B2]"
                 >
                   {image ? (
                     <img src={image} alt="" aria-hidden="true" loading="lazy" className="h-11 w-11 shrink-0 rounded-lg object-cover" />
                   ) : (
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#EFF1F4] to-[var(--brief-line)] text-[9px] font-bold uppercase text-[#5A6472]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#EFF1F4] to-[var(--brief-line)] text-[11px] font-bold uppercase text-[#5A6472]">
                       {o.type.slice(0, 4)}
                     </div>
                   )}
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[11px] font-semibold text-[var(--brief-ink)] group-hover:text-[#4F46E5]">{o.title}</span>
-                    <span className="flex flex-wrap items-center gap-1 text-[9px] font-semibold text-[var(--ink-55)]">
+                    <span className="block truncate text-[12px] font-semibold text-[var(--brief-ink)] group-hover:text-[#2563EB]">{o.title}</span>
+                    <span className="flex flex-wrap items-center gap-1 text-[11px] font-semibold text-[var(--ink-55)]">
                       {l && <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{l}</span>}
                       {(o.area || o.county) && <span>{[o.area, o.county].filter(Boolean).join(', ')}</span>}
                     </span>

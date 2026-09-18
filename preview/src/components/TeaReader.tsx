@@ -57,14 +57,14 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
   return (
     <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--ink-90)] backdrop-blur-md" onClick={onClose}>
       <div className="mx-auto min-h-full max-w-2xl px-4 py-8" onClick={(e) => e.stopPropagation()}>
-        <button onClick={onClose} className="mb-4 text-[12px] font-bold text-[var(--ink-60)] cursor-pointer">← Back</button>
+        <button onClick={onClose} className="mb-4 text-[13px] font-bold text-[var(--ink-60)] cursor-pointer">← Back</button>
 
         {state.status === 'loading' && <p className="text-sm text-[var(--ink-60)]">Loading…</p>}
 
         {state.status === 'missing' && (
           <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-5">
             <p className="text-sm font-bold text-[var(--brief-ink)]">This story is not available.</p>
-            <p className="mt-1 text-[12px] text-[var(--ink-60)]">It may be unpublished, expired, or the link is wrong.</p>
+            <p className="mt-1 text-[13px] text-[var(--ink-60)]">It may be unpublished, expired, or the link is wrong.</p>
           </div>
         )}
 
@@ -80,7 +80,7 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
               {/* the gallery: every photo the editor added, for the viewer */}
               {gallery.length > 0 && (
                 <section className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
                     Gallery · {gallery.length} photo{gallery.length === 1 ? '' : 's'}
                   </p>
                   <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -97,18 +97,18 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
               <section className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[12px] font-bold text-[var(--brief-ink)]">
+                    <p className="text-[13px] font-bold text-[var(--brief-ink)]">
                       {likeState.count} like{likeState.count === 1 ? '' : 's'}
                     </p>
-                    <p className="text-[10px] text-[var(--ink-70)]">The public rating — recorded by readers, derived from real rows.</p>
+                    <p className="text-[11px] text-[var(--ink-70)]">The public rating — recorded by readers, derived from real rows.</p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void toggleLike()}
                     disabled={likeState.busy}
-                    className="flex h-10 items-center gap-2 rounded-xl border px-4 text-[12px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
+                    className="flex h-10 items-center gap-2 rounded-xl border px-4 text-[13px] font-extrabold cursor-pointer disabled:opacity-40 transition-all"
                     style={{
-                      background: likeState.liked ? '#4F46E5' : 'var(--color-paper)',
+                      background: likeState.liked ? '#2563EB' : 'var(--color-paper)',
                       color: likeState.liked ? 'var(--brief-ink)' : 'var(--brief-ink)',
                       borderColor: 'var(--brief-ink)'
                     }}
@@ -121,21 +121,21 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
                     {likeState.liked ? 'Liked' : 'Like'}
                   </button>
                 </div>
-                {likeState.note && <p className="mt-2 text-[10px] text-[var(--ink-60)]">{likeState.note}</p>}
+                {likeState.note && <p className="mt-2 text-[11px] text-[var(--ink-60)]">{likeState.note}</p>}
               </section>
 
               {a.source && (
-                <p className="border-t pt-3 text-[11px]" style={{ color: theme.inkDim, borderColor: theme.line }}>
+                <p className="border-t pt-3 text-[12px]" style={{ color: theme.inkDim, borderColor: theme.line }}>
                   Source: {a.source}
                   {a.sourceUrl ? ` · ${a.sourceUrl}` : ''}
                 </p>
               )}
               {(a.relatedContent?.length > 0 || a.relatedPlaces?.length > 0 || a.relatedEvents?.length > 0) && (
                 <div className="rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--brief-ink)]">Related</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--brief-ink)]">Related</p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {[...(a.relatedPlaces ?? []), ...(a.relatedEvents ?? []), ...(a.relatedContent ?? [])].map((r: string, i: number) => (
-                      <span key={i} className="rounded-full border border-[var(--brief-line)] px-2 py-0.5 text-[10px] text-[var(--ink-60)]">{r}</span>
+                      <span key={i} className="rounded-full border border-[var(--brief-line)] px-2 py-0.5 text-[11px] text-[var(--ink-60)]">{r}</span>
                     ))}
                   </div>
                 </div>

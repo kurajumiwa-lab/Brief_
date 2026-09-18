@@ -21,14 +21,18 @@
 import { plateGlow, roomPlate } from './room';
 
 export const CATEGORY_PALETTE: Record<string, { accent: string; label: string }> = {
-  popup: { accent: '#4F46E5', label: 'Popups & markets' },
+  // No hue here may equal the action accent (#2563EB): a wing colour that is
+  // also "the primary button" makes every CTA look like a category label. The
+  // palette flip found exactly that — the sweep had quietly turned popup into the
+  // accent. Measured apart: violet, teal, rose, deep indigo, brown.
+  popup: { accent: '#7C3AED', label: 'Popups & markets' },
   session: { accent: '#0E7C86', label: 'Sessions & classes' },
-  drop: { accent: '#6D4AA6', label: 'Drops' },
-  event: { accent: '#4338CA', label: 'Events' },
+  drop: { accent: '#BE123C', label: 'Drops' },
+  event: { accent: '#3730A3', label: 'Events' },
   contribution: { accent: '#8A5A2B', label: 'Causes & pots' }
 };
 
-const NEUTRAL = '#5A4B39';
+const NEUTRAL = '#64748B';
 
 /** The wing's colour itself — for a 1px mark, a dot, an icon. */
 export function categoryAccent(category: string | null | undefined): string {

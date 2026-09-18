@@ -271,19 +271,19 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                           <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{cl.vendorName ?? "Vendor"}</p>
                           <span className="text-sm font-bold shrink-0 ml-2" style={{ color: "var(--color-success)" }}>KES {cl.overrideKes.toLocaleString()}</span>
                         </div>
-                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                        <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
                           {[cl.businessType, cl.location].filter(Boolean).join(' · ')} · {cl.settledOrders} settled order{cl.settledOrders === 1 ? "" : "s"}
                         </p>
                         {/* The direct contact the agent captured — call or WhatsApp. */}
                         <div className="mt-2 flex items-center justify-between gap-2">
-                          <p className="text-[11px] min-w-0 truncate" style={{ color: "var(--color-text-muted)" }}>
+                          <p className="text-[12px] min-w-0 truncate" style={{ color: "var(--color-text-muted)" }}>
                             <strong style={{ color: "var(--color-text)" }}>{cl.contactName ?? "Contact"}</strong>
                             {cl.contactMethod ? ` · ${cl.contactMethod}` : ""}
                           </p>
                           {links.call && (
                             <div className="flex gap-1.5 shrink-0">
-                              <a href={links.call} className="rounded-full px-2.5 py-1 text-[10px] font-bold no-underline" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Call</a>
-                              {links.wa && <a href={links.wa} target="_blank" rel="noopener noreferrer" className="rounded-full px-2.5 py-1 text-[10px] font-bold no-underline" style={{ background: "#16A34A", color: "#fff" }}>WhatsApp</a>}
+                              <a href={links.call} className="rounded-full px-2.5 py-1 text-[11px] font-bold no-underline" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Call</a>
+                              {links.wa && <a href={links.wa} target="_blank" rel="noopener noreferrer" className="rounded-full px-2.5 py-1 text-[11px] font-bold no-underline" style={{ background: "#059669", color: "#fff" }}>WhatsApp</a>}
                             </div>
                           )}
                         </div>
@@ -291,7 +291,7 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                     );
                   })}
                 </MotionList>
-                <p className="text-[10px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.override.note}</p>
+                <p className="text-[11px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.override.note}</p>
               </>
             )}
 
@@ -300,7 +300,7 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                 shop is real. This must NEVER disappear after the first move. */}
             <div className="mt-4 rounded-xl p-3 border" style={{ borderColor: "var(--color-border)", background: "var(--color-surface-elevated)" }}>
               <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>Make a connection</p>
-              <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+              <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
                 Every shop you onboard is proof it is real and a contact Google Maps can't give you. Do it as many times as you like.
               </p>
               <button
@@ -315,8 +315,8 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                 <div className="mt-3 space-y-2">
                   {/* Onboard a NEW vendor — the door-to-door agent's primary act. */}
                   <div className="rounded-lg p-2 border space-y-1.5" style={{ borderColor: "var(--color-border)" }}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Make the initial connection</p>
-                    <p className="text-[9px]" style={{ color: "var(--color-text-muted)" }}>
+                    <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Make the initial connection</p>
+                    <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                       Name, what it is, where it is, and who you reached — so a false shop never counts in the vendor list.
                     </p>
                     <input
@@ -371,7 +371,7 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                       type="button"
                       disabled={onboardBusy}
                       onClick={onboardNewVendor}
-                      className="w-full rounded-full px-3 py-1.5 text-[10px] font-bold"
+                      className="w-full rounded-full px-3 py-1.5 text-[11px] font-bold"
                       style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
                     >
                       {onboardBusy ? "…" : "Save connection"}
@@ -389,13 +389,13 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                       <div key={v.id} className="rounded-lg p-2 flex items-center justify-between gap-2 border" style={{ borderColor: "var(--color-border)" }}>
                         <div className="min-w-0">
                           <p className="text-xs font-bold truncate" style={{ color: "var(--color-text)" }}>{v.displayName}</p>
-                          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{v.activeListingCount} active listing{v.activeListingCount === 1 ? "" : "s"}</p>
+                          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{v.activeListingCount} active listing{v.activeListingCount === 1 ? "" : "s"}</p>
                         </div>
                         <div className="flex gap-1 shrink-0">
-                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "full_registration")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
+                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "full_registration")} className="rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>
                             {claimBusy[v.id] ? "…" : "Claim territory"}
                           </button>
-                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "menu_upload")} className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                          <button type="button" disabled={claimBusy[v.id]} onClick={() => claim(v, "menu_upload")} className="rounded-full px-2.5 py-1 text-[11px] font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
                             Menu
                           </button>
                         </div>

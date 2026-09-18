@@ -155,7 +155,7 @@ export function CommitteeDesk({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#B8621F] text-white">
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#B8621F] text-white">
                 FAMILY SOLIDARITY CIRCLE · PRIVATE
               </span>
               <span className="text-xs text-[#DCE2E6]/70 flex items-center space-x-1">
@@ -211,7 +211,7 @@ export function CommitteeDesk({
           {/* Financial Harambee Stepper Card */}
           <div className="bg-[color:var(--brief-bg)] border border-[var(--brief-line)] rounded-2xl p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-black text-gray-500 uppercase">
+              <span className="text-[11px] font-mono font-black text-gray-500 uppercase">
                 HARAMBEE CONTRIBUTION SNAPSHOT
               </span>
               <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -222,28 +222,28 @@ export function CommitteeDesk({
             {/* Progress Bar */}
             <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden p-0.5">
               <div 
-                className="h-full bg-gradient-to-r from-[#4F46E5] via-[#FF8A00] to-emerald-500 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-[#2563EB] via-[#FF8A00] to-emerald-500 rounded-full transition-all duration-500"
                 style={{ width: `${percentFunded}%` }}
               />
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
               <div className="p-2.5 bg-white rounded-xl border border-gray-200">
-                <span className="text-[9px] text-gray-400 block uppercase">TOTAL TARGET</span>
+                <span className="text-[11px] text-gray-400 block uppercase">TOTAL TARGET</span>
                 <span className="text-xs sm:text-sm font-black text-[var(--brief-ink)]">
                   KES {targetBudgetKes.toLocaleString()}
                 </span>
               </div>
 
               <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800">
-                <span className="text-[9px] text-emerald-600 block uppercase">RECEIVED</span>
+                <span className="text-[11px] text-emerald-600 block uppercase">RECEIVED</span>
                 <span className="text-xs sm:text-sm font-black text-emerald-700">
                   KES {totalReceivedKes.toLocaleString()}
                 </span>
               </div>
 
               <div className="p-2.5 bg-rose-50 rounded-xl border border-rose-200 text-rose-800">
-                <span className="text-[9px] text-rose-600 block uppercase">OUTSTANDING</span>
+                <span className="text-[11px] text-rose-600 block uppercase">OUTSTANDING</span>
                 <span className="text-xs sm:text-sm font-black text-rose-700">
                   KES {totalOutstandingKes.toLocaleString()}
                 </span>
@@ -267,7 +267,7 @@ export function CommitteeDesk({
               onClick={() => setIsLogPayOpen(true)}
               className="py-3 px-5 rounded-2xl bg-[color:var(--brief-ink)] hover:bg-[#1E2633] text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-md cursor-pointer transition-all"
             >
-              <Plus className="w-4 h-4 text-[#4F46E5]" />
+              <Plus className="w-4 h-4 text-[#2563EB]" />
               <span>Log M-Pesa</span>
             </button>
           </div>
@@ -280,7 +280,7 @@ export function CommitteeDesk({
               </h3>
               <button
                 onClick={() => setActiveTab('tasks')}
-                className="text-[11px] font-bold text-[#4F46E5] hover:underline cursor-pointer"
+                className="text-[12px] font-bold text-[#2563EB] hover:underline cursor-pointer"
               >
                 View all ({tasks.length}) →
               </button>
@@ -291,7 +291,7 @@ export function CommitteeDesk({
                 <div 
                   key={t.id}
                   onClick={() => toggleTaskStatus(t.id)}
-                  className="p-3 bg-white border border-[var(--brief-line)] rounded-2xl flex items-center justify-between cursor-pointer hover:border-[#4F46E5] transition-colors"
+                  className="p-3 bg-white border border-[var(--brief-line)] rounded-2xl flex items-center justify-between cursor-pointer hover:border-[#2563EB] transition-colors"
                 >
                   <div className="flex items-center space-x-2.5">
                     <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${
@@ -307,13 +307,13 @@ export function CommitteeDesk({
                       <span className={`text-xs font-bold block ${t.status === 'completed' ? 'line-through text-gray-400' : 'text-[var(--brief-ink)]'}`}>
                         {t.title}
                       </span>
-                      <span className="text-[10px] text-gray-500">
+                      <span className="text-[11px] text-gray-500">
                         {t.assignee} • Due {t.dueDate}
                       </span>
                     </div>
                   </div>
 
-                  <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
+                  <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
                     t.status === 'completed'
                       ? 'bg-emerald-50 text-emerald-700'
                       : t.status === 'in_progress'
@@ -338,13 +338,13 @@ export function CommitteeDesk({
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Committee Task Board
               </h3>
-              <p className="text-[11px] text-gray-500">Tap any item to cycle status (To Do → In Progress → Completed)</p>
+              <p className="text-[12px] text-gray-500">Tap any item to cycle status (To Do → In Progress → Completed)</p>
             </div>
 
             <button
               type="button"
               onClick={() => setIsAddTaskOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#4F46E5] text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-[#2563EB] text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Task</span>
@@ -356,7 +356,7 @@ export function CommitteeDesk({
               <div 
                 key={t.id}
                 onClick={() => toggleTaskStatus(t.id)}
-                className="p-3.5 bg-white border border-[var(--brief-line)] rounded-2xl flex items-center justify-between cursor-pointer hover:border-[#4F46E5] transition-all shadow-xs"
+                className="p-3.5 bg-white border border-[var(--brief-line)] rounded-2xl flex items-center justify-between cursor-pointer hover:border-[#2563EB] transition-all shadow-xs"
               >
                 <div className="flex items-center space-x-3">
                   <div className={`w-5 h-5 rounded-lg flex items-center justify-center border ${
@@ -372,13 +372,13 @@ export function CommitteeDesk({
                     <span className={`text-xs font-bold block ${t.status === 'completed' ? 'line-through text-gray-400' : 'text-[var(--brief-ink)]'}`}>
                       {t.title}
                     </span>
-                    <span className="text-[10px] text-gray-500">
+                    <span className="text-[11px] text-gray-500">
                       Assigned to: <b className="text-gray-700">{t.assignee}</b> • Due: {t.dueDate}
                     </span>
                   </div>
                 </div>
 
-                <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
+                <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded uppercase ${
                   t.status === 'completed'
                     ? 'bg-emerald-50 text-emerald-700'
                     : t.status === 'in_progress'
@@ -401,7 +401,7 @@ export function CommitteeDesk({
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 M-Pesa Contribution Ledger
               </h3>
-              <p className="text-[11px] text-gray-500">Transparent Harambee ledger with verified references</p>
+              <p className="text-[12px] text-gray-500">Transparent Harambee ledger with verified references</p>
             </div>
 
             <button
@@ -409,7 +409,7 @@ export function CommitteeDesk({
               onClick={() => setIsLogPayOpen(true)}
               className="px-3.5 py-1.5 rounded-xl bg-[color:var(--brief-ink)] text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5 text-[#4F46E5]" />
+              <Plus className="w-3.5 h-3.5 text-[#2563EB]" />
               <span>Log M-Pesa</span>
             </button>
           </div>
@@ -424,7 +424,7 @@ export function CommitteeDesk({
                   <span className="text-xs font-bold text-[var(--brief-ink)] block">
                     {c.contributor}
                   </span>
-                  <div className="flex items-center space-x-2 text-[10px] text-gray-500 font-mono mt-0.5">
+                  <div className="flex items-center space-x-2 text-[11px] text-gray-500 font-mono mt-0.5">
                     <span>{c.date}</span>
                     {c.mpesaRef && (
                       <span className="text-emerald-700 bg-emerald-50 px-1.5 rounded border border-emerald-200">
@@ -438,7 +438,7 @@ export function CommitteeDesk({
                   <span className="text-sm font-mono font-black text-[var(--brief-ink)] block">
                     KES {c.amountKes.toLocaleString()}
                   </span>
-                  <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
+                  <span className={`text-[11px] font-mono font-bold px-1.5 py-0.5 rounded uppercase ${
                     c.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                   }`}>
                     {c.status.toUpperCase()}
@@ -457,7 +457,7 @@ export function CommitteeDesk({
           {/* Venue Card */}
           <div className="p-4 rounded-2xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] space-y-3">
             <div className="flex items-center space-x-2">
-              <MapPin className="w-4 h-4 text-[#4F46E5]" />
+              <MapPin className="w-4 h-4 text-[#2563EB]" />
               <h4 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Service & Burial Venue
               </h4>
@@ -465,12 +465,12 @@ export function CommitteeDesk({
 
             <div className="text-xs space-y-1 text-gray-700">
               <p className="font-bold text-[var(--brief-ink)]">St. Peter's Church, Kisii Town</p>
-              <p className="text-[11px] text-gray-500">Service begins promptly at 10:00 AM, followed by procession to Nyamataro family homestead.</p>
+              <p className="text-[12px] text-gray-500">Service begins promptly at 10:00 AM, followed by procession to Nyamataro family homestead.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div className="p-2.5 bg-white rounded-xl border border-gray-200 text-xs">
-                <span className="text-[10px] text-gray-400 block font-mono">PARKING:</span>
+                <span className="text-[11px] text-gray-400 block font-mono">PARKING:</span>
                 <span className="font-bold text-gray-800 flex items-center space-x-1">
                   <Car className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Available at church compound</span>
@@ -478,7 +478,7 @@ export function CommitteeDesk({
               </div>
 
               <div className="p-2.5 bg-white rounded-xl border border-gray-200 text-xs">
-                <span className="text-[10px] text-gray-400 block font-mono">LIVESTREAM:</span>
+                <span className="text-[11px] text-gray-400 block font-mono">LIVESTREAM:</span>
                 <span className="font-bold text-[#00BFEF] flex items-center space-x-1">
                   <Video className="w-3.5 h-3.5" />
                   <span>Zoom / YouTube Live</span>
@@ -493,14 +493,14 @@ export function CommitteeDesk({
               <Building2 className="w-4 h-4 text-[#00BFEF]" />
               <span>Accommodation & Catering</span>
             </h4>
-            <p className="text-[11px] text-gray-600">
+            <p className="text-[12px] text-gray-600">
               For relatives arriving from Nairobi & Mombasa, discount rates arranged at Kisii Sports Club. Catering handled by <b>Nyaboke Catering Services</b>.
             </p>
             {onOpenVendor && (
               <button
                 type="button"
                 onClick={() => onOpenVendor('Nyaboke Catering')}
-                className="text-xs font-bold text-[#4F46E5] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#2563EB] hover:underline cursor-pointer"
               >
                 View Nyaboke Catering Profile →
               </button>
@@ -523,44 +523,44 @@ export function CommitteeDesk({
 
             <form onSubmit={handleAddTask} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Task Title</label>
+                <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Task Title</label>
                 <input
                   type="text"
                   required
                   value={newTaskTitle}
                   onChange={e => setNewTaskTitle(e.target.value)}
                   placeholder="e.g. Order flowers & wreaths"
-                  className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Assignee</label>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Assignee</label>
                   <input
                     type="text"
                     value={newTaskAssignee}
                     onChange={e => setNewTaskAssignee(e.target.value)}
                     placeholder="e.g. James N."
-                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Due Date</label>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Due Date</label>
                   <input
                     type="text"
                     value={newTaskDueDate}
                     onChange={e => setNewTaskDueDate(e.target.value)}
                     placeholder="e.g. May 23"
-                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl bg-[#4F46E5] hover:bg-[#ff4805] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
+                className="w-full py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#ff4805] text-white text-xs font-bold uppercase tracking-wider cursor-pointer"
               >
                 Save Task
               </button>
@@ -582,37 +582,37 @@ export function CommitteeDesk({
 
             <form onSubmit={handleLogContribution} className="space-y-3">
               <div>
-                <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Contributor Name / Handle</label>
+                <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Contributor Name / Handle</label>
                 <input
                   type="text"
                   required
                   value={newPayName}
                   onChange={e => setNewPayName(e.target.value)}
                   placeholder="e.g. Nyaboke Moraa"
-                  className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#4F46E5]"
+                  className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Amount (KES)</label>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">Amount (KES)</label>
                   <input
                     type="number"
                     required
                     value={newPayAmount}
                     onChange={e => setNewPayAmount(e.target.value)}
-                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs font-mono font-bold focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">M-Pesa Reference</label>
+                  <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">M-Pesa Reference</label>
                   <input
                     type="text"
                     value={newPayRef}
                     onChange={e => setNewPayRef(e.target.value)}
                     placeholder="e.g. QKZ99120A"
-                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#4F46E5]"
+                    className="w-full bg-[color:var(--brief-bg)] border border-gray-300 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none focus:border-[#2563EB]"
                   />
                 </div>
               </div>
@@ -629,7 +629,7 @@ export function CommitteeDesk({
       )}
 
       {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
-      <div className="mt-6 p-4 rounded-2xl bg-black/5 text-[11px] text-gray-500 leading-relaxed space-y-1">
+      <div className="mt-6 p-4 rounded-2xl bg-black/5 text-[12px] text-gray-500 leading-relaxed space-y-1">
         <span className="font-bold text-gray-700 block">Voluntary Community Support</span>
         <p>
           This is a voluntary community support fund. Contributions are gifts, not investments. Brief does not manage funds or guarantee outcomes.

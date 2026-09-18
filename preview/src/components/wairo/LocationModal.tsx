@@ -38,7 +38,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-sm text-white">Select Drop Location</h3>
-              <p className="text-[11px] text-[#DCE2E6]/60">Nairobi Metro & Inter-County Corridors</p>
+              <p className="text-[12px] text-[#DCE2E6]/60">Nairobi Metro & Inter-County Corridors</p>
             </div>
           </div>
           <button
@@ -65,7 +65,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 playSound('click');
                 setFilterMode(tab.id as any);
               }}
-              className={`px-3 py-1 rounded-xl text-[11px] font-semibold transition-colors cursor-pointer ${
+              className={`px-3 py-1 rounded-xl text-[12px] font-semibold transition-colors cursor-pointer ${
                 filterMode === tab.id
                   ? 'bg-[#00BFEF] text-[#0B1B2A] font-bold'
                   : 'bg-white/5 text-gray-300 hover:bg-white/10'
@@ -103,12 +103,12 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="font-bold text-sm text-white">{loc.name}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-black/40 text-[#DCE2E6]/80 font-mono">
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-black/40 text-[#DCE2E6]/80 font-mono">
                         {loc.county}
                       </span>
                     </div>
                     <p className="text-xs text-[#DCE2E6]/70 mt-0.5">{loc.fullName}</p>
-                    <div className="flex items-center space-x-3 text-[10px] font-mono text-[#00BFEF] mt-1">
+                    <div className="flex items-center space-x-3 text-[11px] font-mono text-[#00BFEF] mt-1">
                       <span className="flex items-center space-x-1">
                         <Clock className="w-3 h-3 text-[#F58220]" />
                         <span>{loc.etaMins} mins ETA</span>
@@ -120,7 +120,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 </div>
 
                 <div className="text-right">
-                  <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${
+                  <span className={`text-[11px] px-2 py-1 rounded-full font-bold ${
                     isSelected ? 'bg-[#F58220] text-white' : 'bg-[#00BFEF]/20 text-[#00BFEF]'
                   }`}>
                     {isSelected ? 'ACTIVE' : 'SELECT'}

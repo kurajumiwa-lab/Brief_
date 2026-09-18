@@ -43,7 +43,7 @@ export function ListingDetail({
     <div className="space-y-3">
       <button
         onClick={onBack}
-        className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+        className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
       >
         Back to marketplace
       </button>
@@ -59,11 +59,11 @@ export function ListingDetail({
         )}
 
         {listing.locationName && (
-          <p className="text-[10px] text-[var(--ink-60)]">Location: {listing.locationName}</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Location: {listing.locationName}</p>
         )}
 
         {listing.quantityAvailable !== null && (
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             {listing.quantityAvailable > 0
               ? `${listing.quantityAvailable} available`
               : 'None available'}
@@ -73,7 +73,7 @@ export function ListingDetail({
         {listing.vendor && (
           <button
             onClick={() => onViewVendor(listing.vendor!.id)}
-            className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+            className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
           >
             Sold by {listing.vendor.displayName}
           </button>
@@ -83,7 +83,7 @@ export function ListingDetail({
       {listing.orderable ? (
         <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold text-[var(--ink-60)]">
+            <span className="text-[11px] font-extrabold text-[var(--ink-60)]">
               Quantity
             </span>
             <button
@@ -101,7 +101,7 @@ export function ListingDetail({
             </button>
           </div>
 
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Estimated total {money(previewTotal, listing.currency)} - confirmed by the server when
             you order
           </p>
@@ -109,12 +109,12 @@ export function ListingDetail({
           <button
             onClick={onOrder}
             disabled={busy}
-            className="w-full py-2 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#2563EB] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             {busy ? 'Placing order...' : 'Place order'}
           </button>
 
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Placing an order does not pay for it. You arrange payment with the seller directly.
           </p>
         </div>
@@ -126,7 +126,7 @@ export function ListingDetail({
         </div>
       )}
 
-      {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
+      {notice && <p className="text-[11px] text-[var(--brief-ink)]">{notice}</p>}
     </div>
   );
 }

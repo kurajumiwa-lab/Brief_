@@ -49,7 +49,7 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
       <div>
         <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Rewards</h2>
-        <p className="text-[11px] text-[var(--ink-60)] leading-snug mt-1">
+        <p className="text-[12px] text-[var(--ink-60)] leading-snug mt-1">
           Bring people, products, services or traffic. One level deep — nobody
           above you, nobody below you paying you. No entry fee. Points become
           cash only from a pool backed by money Brief actually earned.
@@ -60,66 +60,66 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
           a different currency with a different story. */}
       <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
         <div className="flex items-baseline justify-between gap-3">
-          <span className="text-[10px] text-[var(--ink-60)]">Contribution Points</span>
+          <span className="text-[11px] text-[var(--ink-60)]">Contribution Points</span>
           <span className="text-lg font-extrabold text-[var(--brief-ink)]">{settledPoints.toLocaleString()}</span>
         </div>
-        <p className="text-[10px] text-[var(--ink-60)]">Progress {rank} - {accepted} accepted contributions</p>
-        {pending > 0 && <p className="text-[10px] text-[var(--brief-ink)]">{pending} submitted, awaiting review. Worth nothing yet.</p>}
+        <p className="text-[11px] text-[var(--ink-60)]">Progress {rank} - {accepted} accepted contributions</p>
+        {pending > 0 && <p className="text-[11px] text-[var(--brief-ink)]">{pending} submitted, awaiting review. Worth nothing yet.</p>}
       </div>
 
       {data && (
         <>
           <section aria-label="Your referral code" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />
-              <h3 className="text-[13px] font-extrabold text-[var(--brief-ink)]">Your code</h3>
+              <Users className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+              <h3 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Your code</h3>
             </div>
-            <p className="text-lg font-extrabold tracking-widest text-[#4F46E5]">{data.code}</p>
-            <p className="text-[10px] text-[var(--ink-60)] break-all">{data.link}</p>
+            <p className="text-lg font-extrabold tracking-widest text-[#2563EB]">{data.code}</p>
+            <p className="text-[11px] text-[var(--ink-60)] break-all">{data.link}</p>
             <button type="button" onClick={() => { soundEngine.play('tap'); void copyShare(); }}
-              className="rounded-lg bg-[#4F46E5] px-3 py-2 text-[11px] font-extrabold text-[var(--accent-ink)]">
+              className="rounded-lg bg-[#2563EB] px-3 py-2 text-[12px] font-extrabold text-[var(--accent-ink)]">
               Copy WhatsApp share message
             </button>
             {shareMsg && (
-              <p className="text-[9px] text-[var(--ink-60)] whitespace-pre-line border border-[var(--brief-line)] rounded-xl p-2">{shareMsg}</p>
+              <p className="text-[11px] text-[var(--ink-60)] whitespace-pre-line border border-[var(--brief-line)] rounded-xl p-2">{shareMsg}</p>
             )}
           </section>
 
           <section aria-label="Points balance" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-[10px] text-[var(--ink-60)]">Referral points</span>
+              <span className="text-[11px] text-[var(--ink-60)]">Referral points</span>
               <span className="text-lg font-extrabold text-[var(--brief-ink)]">{data.balance.available.toLocaleString()}</span>
             </div>
-            <p className="text-[10px] text-[var(--ink-60)]">
+            <p className="text-[11px] text-[var(--ink-60)]">
               {data.balance.earned.toLocaleString()} earned · {data.balance.locked.toLocaleString()} locked in payouts
             </p>
             <div className="flex gap-2 pt-1">
               <input value={points} onChange={(e) => setPoints(e.target.value.replace(/[^0-9]/g, ''))}
                 placeholder={`at least ${data.conversion.minPoints} points`}
                 aria-label="Points to convert"
-                className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)]" />
+                className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[13px] text-[var(--brief-ink)]" />
               <button type="button" onClick={() => { soundEngine.play('heavyTap'); void convert(); }} disabled={busy || !points}
-                className="rounded-lg bg-[#4F46E5] px-3 py-2 text-[11px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
+                className="rounded-lg bg-[#2563EB] px-3 py-2 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
                 Convert
               </button>
             </div>
-            <p className="text-[10px] text-[var(--ink-60)]">
+            <p className="text-[11px] text-[var(--ink-60)]">
               1 point = KES {data.conversion.ptsToKes} · pool holds KES {data.pool.availableKes.toLocaleString()} right now
               {data.pool.availableKes === 0 && ' — conversions open when the business earns; they are never printed from nothing.'}
             </p>
-            {note && <p className="text-[11px] font-bold text-[var(--brief-ink)]" role="status">{note}</p>}
+            {note && <p className="text-[12px] font-bold text-[var(--brief-ink)]" role="status">{note}</p>}
           </section>
 
           {data.conversions.length > 0 && (
             <section aria-label="Payouts" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
-              <h3 className="text-[13px] font-extrabold text-[var(--brief-ink)]">Payouts</h3>
+              <h3 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Payouts</h3>
               {data.conversions.slice(0, 8).map((c) => (
                 <div key={c.id} className="rounded-xl border border-[var(--brief-line)] px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] font-bold text-[var(--brief-ink)]">{c.points.toLocaleString()} points → KES {c.kes.toLocaleString()}</p>
-                    <p className={`text-[10px] font-extrabold uppercase ${c.status === 'confirmed' ? 'text-[#16A34A]' : c.status === 'refused' ? 'text-[#DC2626]' : 'text-[var(--ink-60)]'}`}>{c.status}</p>
+                    <p className="text-[12px] font-bold text-[var(--brief-ink)]">{c.points.toLocaleString()} points → KES {c.kes.toLocaleString()}</p>
+                    <p className={`text-[11px] font-extrabold uppercase ${c.status === 'confirmed' ? 'text-[#059669]' : c.status === 'refused' ? 'text-[#DC2626]' : 'text-[var(--ink-60)]'}`}>{c.status}</p>
                   </div>
-                  {c.status === 'refused' && c.refusedReason && <p className="text-[9px] text-[#DC2626]">Refused: {c.refusedReason}</p>}
+                  {c.status === 'refused' && c.refusedReason && <p className="text-[11px] text-[#DC2626]">Refused: {c.refusedReason}</p>}
                 </div>
               ))}
             </section>
@@ -127,9 +127,9 @@ export default function RewardsDesk({ settledPoints, rank, accepted, pending }: 
 
           {data.events.length > 0 && (
             <section aria-label="How your points were earned" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-1.5">
-              <h3 className="text-[13px] font-extrabold text-[var(--brief-ink)]">How they were earned</h3>
+              <h3 className="text-[14px] font-extrabold text-[var(--brief-ink)]">How they were earned</h3>
               {data.events.slice(0, 10).map((e) => (
-                <p key={e.id} className="text-[10px] text-[var(--ink-70)]">
+                <p key={e.id} className="text-[11px] text-[var(--ink-70)]">
                   +{e.points} · {e.kind === 'signup' ? 'someone joined with your code'
                     : e.kind === 'purchase' ? 'your own fulfilled order'
                       : e.kind === 'referral_order' ? 'an order by someone you brought'

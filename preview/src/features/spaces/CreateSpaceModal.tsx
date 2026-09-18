@@ -145,7 +145,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)]" />
-            <span className="text-[10px] font-mono font-bold text-[color:var(--color-text-muted)] uppercase tracking-wider">
+            <span className="text-[11px] font-mono font-bold text-[color:var(--color-text-muted)] uppercase tracking-wider">
               Step {step} of 5
             </span>
           </div>
@@ -196,7 +196,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                       {opt.label}
                     </span>
                     <span
-                      className={`text-[10px] block mt-0.5 line-clamp-1 ${
+                      className={`text-[11px] block mt-0.5 line-clamp-1 ${
                         selectedType === opt.type ? 'text-white/80' : 'text-[color:var(--color-text-muted)]'
                       }`}
                     >

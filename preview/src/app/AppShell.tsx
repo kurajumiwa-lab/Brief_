@@ -442,7 +442,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
                   City Feed Post
                 </span>
                 <h3 className="text-base font-black text-[color:var(--color-text)] mt-1">Share with Nairobi</h3>
@@ -493,7 +493,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
+                <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                   Quick Manual Order
                 </span>
                 <h3 className="text-base font-black text-[color:var(--color-text)]">New Walk-in Customer</h3>

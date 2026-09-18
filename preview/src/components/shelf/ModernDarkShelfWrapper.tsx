@@ -193,13 +193,13 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
 
         {gradeToken ? (
           <span
-            className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[#1F232D] text-[#7D818F] border border-white/10"
+            className="text-[11px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[3px] bg-[#1F232D] text-[#7D818F] border border-white/10"
           >
             {gradeToken}
           </span>
         ) : badge ? (
           <span
-            className="ml-auto text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[2px]"
+            className="ml-auto text-[11px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-[2px]"
             style={{
               backgroundColor: 'rgba(15, 16, 19, 0.92)',
               color: badgeColor,
@@ -215,7 +215,7 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
       <div className="absolute inset-x-3 bottom-2.5 z-20">
         {category && (
           <p
-            className="text-[8px] font-black uppercase tracking-[0.15em] line-clamp-1 mb-0.5"
+            className="text-[11px] font-black uppercase tracking-[0.15em] line-clamp-1 mb-0.5"
             style={{ color: accentColor }}
           >
             {category}
@@ -291,7 +291,7 @@ export const ShelfRow: React.FC<ShelfRowProps> = ({
             )}
             {countLabel && (
               <span
-                className="text-[11px] font-medium"
+                className="text-[12px] font-medium"
                 style={{ color: DARK_SHELF_TOKENS.mutedText }}
               >
                 ({countLabel})
@@ -369,7 +369,7 @@ export const ModernDarkShelfWrapper: React.FC<ModernDarkShelfWrapperProps> = ({
           </div>
           {badge && (
             <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+              className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
               style={{
                 backgroundColor: 'rgba(58, 60, 68, 0.5)',
                 color: '#E8985E',

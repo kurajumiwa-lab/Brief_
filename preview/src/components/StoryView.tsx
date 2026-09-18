@@ -33,7 +33,7 @@ export interface StoryViewProps {
 
 function Meta({ a, inkDim, accent }: { a: StoryViewArticle; inkDim: string; accent: string }) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.16em]" style={{ color: inkDim }}>
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-[0.16em]" style={{ color: inkDim }}>
       <span style={{ color: accent }}>{a.category ?? 'story'}</span>
       {a.location ? <span>· {a.location}</span> : null}
       {a.readingTime ? <span>· {a.readingTime} min</span> : null}
@@ -48,8 +48,8 @@ export function StoryView({ article: a, design, mode = 'read' }: StoryViewProps)
   const accent = accentFor(design);
   const d = designOf({ design });
   const hero = a.heroImage ?? null;
-  const bodyClass = mode === 'preview' ? 'text-[11px] leading-relaxed' : 'text-[15px] leading-relaxed';
-  const dekClass = mode === 'preview' ? 'text-[11px] leading-snug' : 'text-[15px] leading-relaxed';
+  const bodyClass = mode === 'preview' ? 'text-[12px] leading-relaxed' : 'text-[15px] leading-relaxed';
+  const dekClass = mode === 'preview' ? 'text-[12px] leading-snug' : 'text-[15px] leading-relaxed';
   const titleClass = mode === 'preview'
     ? `${theme.titleClass} text-xl`
     : theme.titleClass;

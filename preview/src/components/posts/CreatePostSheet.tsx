@@ -115,7 +115,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
       >
         {/* Drag Handle */}
         <div className="w-full flex justify-center pt-3 pb-2">
-          <div className="w-10 h-1 rounded-full bg-[rgba(36, 28, 18, 0.20)]" />
+          <div className="w-10 h-1 rounded-full bg-[rgba(10, 14, 20, 0.20)]" />
         </div>
 
         {/* Header with Back/Close and Step Indicator */}
@@ -206,7 +206,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                   <span className="text-sm font-bold text-[#0B6E6E]">
                     Tap to add photos
                   </span>
-                  <span className="text-[11px] text-[var(--color-quiet)] mt-0.5">
+                  <span className="text-[12px] text-[var(--color-quiet)] mt-0.5">
                     Up to 5 images
                   </span>
                 </div>
@@ -242,7 +242,7 @@ export const CreatePostSheet: React.FC<CreatePostSheetProps> = ({
                       aria-label="Add more photos"
                     >
                       <Plus className="w-6 h-6 text-[var(--color-quiet)]" />
-                      <span className="text-[10px] text-[var(--color-quiet)] font-bold mt-1">Add More</span>
+                      <span className="text-[11px] text-[var(--color-quiet)] font-bold mt-1">Add More</span>
                     </button>
                   )}
                 </div>

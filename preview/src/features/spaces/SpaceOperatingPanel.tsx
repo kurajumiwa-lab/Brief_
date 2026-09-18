@@ -170,18 +170,18 @@ export function SpaceOperatingPanel({
       >
         <div className="flex items-center gap-2">
           <span
-            className="text-[9px] font-black uppercase tracking-[0.14em] px-2 py-1 rounded-full"
+            className="text-[11px] font-black uppercase tracking-[0.14em] px-2 py-1 rounded-full"
             style={{ color: tone.fg, background: tone.bg, border: '1px solid var(--color-border)' }}
           >
             {tone.label}
           </span>
-          <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
             {derived ? `last touched ${ago(derived.ageHours)}` : 'not read yet'}
           </span>
           <button
             type="button"
             onClick={() => void load()}
-            className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+            className="ml-auto inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             <RefreshCw className="w-3 h-3" /> Re-read
@@ -189,7 +189,7 @@ export function SpaceOperatingPanel({
         </div>
 
         {derived && (
-          <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text)' }}>
+          <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text)' }}>
             {derived.answered}/{derived.fields.length} answers on record · {derived.overdue} overdue ·{' '}
             {derived.due} coming due · {derived.unanswered} never answered
           </p>
@@ -198,14 +198,14 @@ export function SpaceOperatingPanel({
         {/* Only consequences a row actually supports, stated as facts. */}
         <ul className="space-y-1">
           {(derived?.facts ?? []).map((f) => (
-            <li key={f} className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+            <li key={f} className="text-[12px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
               · {f}
             </li>
           ))}
         </ul>
-        {notice && <p className="text-[11px] font-bold" style={{ color: 'var(--color-success)' }}>{notice}</p>}
-        {error && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>{derived?.note}</p>
+        {notice && <p className="text-[12px] font-bold" style={{ color: 'var(--color-success)' }}>{notice}</p>}
+        {error && <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>{derived?.note}</p>
       </section>
 
       {/* ── OVERVIEW / EDITOR ─────────────────────────────────────────────── */}
@@ -217,7 +217,7 @@ export function SpaceOperatingPanel({
           <button
             type="button"
             onClick={() => { soundEngine.play('tap'); editing ? setEditing(false) : startEdit(); }}
-            className="text-[11px] font-bold cursor-pointer"
+            className="text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             {editing ? 'Cancel' : 'Edit answers'}
@@ -229,13 +229,13 @@ export function SpaceOperatingPanel({
             {fields.map((f) => (
               <div key={f.key} className="p-3 flex items-start gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                     {f.question}
                   </p>
                   <p className="text-sm font-bold mt-0.5" style={{ color: f.answer ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
                     {f.answer ?? 'never answered'}
                   </p>
-                  <p className="text-[10px] mt-0.5 flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
+                  <p className="text-[11px] mt-0.5 flex items-center gap-1" style={{ color: 'var(--color-text-muted)' }}>
                     <Clock className="w-3 h-3" />
                     {f.lastConfirmedAt ? `confirmed ${ago(f.ageHours ?? null)}` : 'no timestamp'}
                     {f.confirmations > 0 ? ` · ${f.confirmations} confirmation${f.confirmations === 1 ? '' : 's'}` : ''}
@@ -247,7 +247,7 @@ export function SpaceOperatingPanel({
                     type="button"
                     onClick={() => void confirm(f.key)}
                     disabled={busy}
-                    className="shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-full cursor-pointer border disabled:opacity-50"
+                    className="shrink-0 text-[11px] font-bold px-2.5 py-1.5 rounded-full cursor-pointer border disabled:opacity-50"
                     style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text-muted)', boxShadow: 'var(--room-light-dim)' }}
                     title="Record that this answer still stands"
                   >
@@ -276,7 +276,7 @@ export function SpaceOperatingPanel({
             >
               {busy ? 'Saving…' : 'Save answers'}
             </button>
-            <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
               Only the fields you change are written, and each keeps its own timestamp. Leaving one blank does
               not delete it.
             </p>
@@ -290,7 +290,7 @@ export function SpaceOperatingPanel({
           <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
             Editorial queue
           </h3>
-          <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
             {queue.length} open item{queue.length === 1 ? '' : 's'}
           </span>
         </div>
@@ -313,10 +313,10 @@ export function SpaceOperatingPanel({
                   background: 'var(--color-paper)'
                 }}
               >
-                <p className="text-[13px] font-bold leading-snug" style={{ color: 'var(--color-text)' }}>
+                <p className="text-[14px] font-bold leading-snug" style={{ color: 'var(--color-text)' }}>
                   {item.label}
                 </p>
-                <p className="text-[11px] mt-0.5 leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="text-[12px] mt-0.5 leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                   {item.detail}
                 </p>
                 <div className="flex items-center gap-2 mt-2">
@@ -325,7 +325,7 @@ export function SpaceOperatingPanel({
                       type="button"
                       onClick={() => void confirm(item.field!)}
                       disabled={busy}
-                      className="text-[11px] font-black px-3 py-1.5 rounded-full cursor-pointer disabled:opacity-50"
+                      className="text-[12px] font-black px-3 py-1.5 rounded-full cursor-pointer disabled:opacity-50"
                       style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                     >
                       Still true
@@ -335,7 +335,7 @@ export function SpaceOperatingPanel({
                     <button
                       type="button"
                       onClick={() => { startEdit(); }}
-                      className="text-[11px] font-black px-3 py-1.5 rounded-full cursor-pointer"
+                      className="text-[12px] font-black px-3 py-1.5 rounded-full cursor-pointer"
                       style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                     >
                       Answer it
@@ -345,7 +345,7 @@ export function SpaceOperatingPanel({
                     <button
                       type="button"
                       onClick={() => { soundEngine.play('tap'); onSwitchTab(item.action === 'inbox' ? 'pipeline' : 'catalog'); }}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
+                      className="inline-flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
                       style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
                     >
                       {item.action === 'inbox' ? 'Open inbox' : 'Open offers'}
@@ -356,14 +356,14 @@ export function SpaceOperatingPanel({
                     <button
                       type="button"
                       onClick={() => { soundEngine.play('tap'); requestPath(item.requestId!); }}
-                      className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
+                      className="inline-flex items-center gap-1 text-[12px] font-bold px-3 py-1.5 rounded-full cursor-pointer border"
                       style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
                     >
                       Open the request
                       <ArrowRight className="w-3 h-3" />
                     </button>
                   )}
-                  <span className="ml-auto text-[9px] font-mono truncate" style={{ color: 'var(--color-text-muted)' }}>
+                  <span className="ml-auto text-[11px] font-mono truncate" style={{ color: 'var(--color-text-muted)' }}>
                     {item.evidence.table}
                   </span>
                 </div>
@@ -408,22 +408,22 @@ export function SpaceOperatingPanel({
               }
             />
             <Row label="Work orders" value={`${pipeline.workOrders} live or completed`} />
-            <p className="text-[10px] leading-snug pt-1" style={{ color: 'var(--color-text-muted)' }}>{pipeline.note}</p>
+            <p className="text-[11px] leading-snug pt-1" style={{ color: 'var(--color-text-muted)' }}>{pipeline.note}</p>
           </div>
 
           {pipeline.needs.length > 0 && (
             <div className="p-3 rounded-2xl border space-y-2" style={{ borderColor: 'var(--brief-line)' }}>
-              <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
                 Your declared needs
               </p>
               {pipeline.needs.map((n) => (
                 <div key={n.text} className="flex items-start gap-2">
-                  <p className="text-[12px] flex-1 leading-snug" style={{ color: 'var(--color-text)' }}>{n.text}</p>
+                  <p className="text-[13px] flex-1 leading-snug" style={{ color: 'var(--color-text)' }}>{n.text}</p>
                   <button
                     type="button"
                     onClick={() => void postNeedAsRequest(n.text)}
                     disabled={busy}
-                    className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full cursor-pointer border disabled:opacity-50"
+                    className="shrink-0 text-[12px] font-bold px-2.5 py-1 rounded-full cursor-pointer border disabled:opacity-50"
                     style={{ borderColor: 'var(--brief-line)', color: 'var(--color-primary)' }}
                     title="Creates a draft request you own — it goes live only when you submit it"
                   >
@@ -431,7 +431,7 @@ export function SpaceOperatingPanel({
                   </button>
                 </div>
               ))}
-              <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                 A need does not become demand on its own: it becomes a draft you can review, price and submit.
               </p>
             </div>
@@ -446,10 +446,10 @@ function Row({ label, value, icon }: { label: string; value: string; icon?: Reac
   return (
     <div className="flex items-baseline gap-2">
       {icon}
-      <span className="text-[10px] font-black uppercase tracking-wider shrink-0" style={{ color: 'var(--color-text-muted)' }}>
+      <span className="text-[11px] font-black uppercase tracking-wider shrink-0" style={{ color: 'var(--color-text-muted)' }}>
         {label}
       </span>
-      <span className="text-[11px] font-semibold flex-1 text-right leading-snug" style={{ color: 'var(--color-text)' }}>
+      <span className="text-[12px] font-semibold flex-1 text-right leading-snug" style={{ color: 'var(--color-text)' }}>
         {value}
       </span>
     </div>

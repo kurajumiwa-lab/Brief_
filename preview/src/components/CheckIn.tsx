@@ -81,7 +81,7 @@ export function CheckIn() {
     <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">The Gate</h2>
-        <p className="text-[9px] text-[var(--ink-60)]">check-in</p>
+        <p className="text-[11px] text-[var(--ink-60)]">check-in</p>
       </div>
 
       <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3 space-y-2">
@@ -90,12 +90,12 @@ export function CheckIn() {
           onChange={(e) => { setCode(e.target.value); setTicket(null); setError(null); setResult(null); }}
           onKeyDown={(e) => { if (e.key === 'Enter') void lookup(code); }}
           placeholder="Ticket code, e.g. BRF-XXXX-XXXX-XXXX"
-          className="w-full bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-lg px-3 py-2.5 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#06B6D4]"
+          className="w-full bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-lg px-3 py-2.5 text-xs text-[var(--brief-ink)] placeholder:text-[var(--ink-60)] outline-none focus:border-[#0891B2]"
         />
         <button
           onClick={() => void lookup(code)}
           disabled={busy || !code.trim()}
-          className="w-full py-2 rounded-lg bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold border border-[var(--brief-line)] cursor-pointer disabled:opacity-40"
+          className="w-full py-2 rounded-lg bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold border border-[var(--brief-line)] cursor-pointer disabled:opacity-40"
         >
           {busy ? 'Looking up…' : 'Look up ticket'}
         </button>
@@ -103,8 +103,8 @@ export function CheckIn() {
 
       {error && (
         <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3">
-          <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Not admitted</p>
-          <p className="text-[11px] text-[var(--ink-60)] mt-0.5">{error}</p>
+          <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">Not admitted</p>
+          <p className="text-[12px] text-[var(--ink-60)] mt-0.5">{error}</p>
         </div>
       )}
 
@@ -113,9 +113,9 @@ export function CheckIn() {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">{ticket.name ?? 'Guest'}</p>
-              <p className="text-[10px] text-[var(--ink-60)] truncate">{ticket.campaignTitle ?? '—'}</p>
+              <p className="text-[11px] text-[var(--ink-60)] truncate">{ticket.campaignTitle ?? '—'}</p>
             </div>
-            <span className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
+            <span className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full ${
               ticket.status === 'checked_in'
                 ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]'
                 : ticket.paid
@@ -129,9 +129,9 @@ export function CheckIn() {
           <div className="flex items-center gap-3">
             <TicketQr code={ticket.code} />
             <div className="space-y-1 min-w-0">
-              <p className="text-[9px] text-[var(--ink-60)]">Ticket code</p>
-              <p className="text-[11px] text-[var(--brief-ink)] break-all select-all">{ticket.code}</p>
-              <p className={`text-[10px] ${ticket.paid ? TONE.accent : TONE.danger}`}>
+              <p className="text-[11px] text-[var(--ink-60)]">Ticket code</p>
+              <p className="text-[12px] text-[var(--brief-ink)] break-all select-all">{ticket.code}</p>
+              <p className={`text-[11px] ${ticket.paid ? TONE.accent : TONE.danger}`}>
                 {ticket.paid ? 'Paid' : 'Unpaid'}
                 {ticket.checkedInAt ? ` · in at ${new Date(ticket.checkedInAt).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}` : ''}
               </p>
@@ -139,26 +139,26 @@ export function CheckIn() {
           </div>
 
           {result?.already ? (
-            <p className="text-[10px] text-[var(--brief-ink)] font-bold">
+            <p className="text-[11px] text-[var(--brief-ink)] font-bold">
               Already checked in{result.checkedInCount !== undefined ? ` · ${result.checkedInCount} admitted` : ''}
             </p>
           ) : ticket.status !== 'checked_in' && (
             <button
               onClick={checkIn}
               disabled={busy}
-              className="w-full py-2.5 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-40"
+              className="w-full py-2.5 rounded-lg bg-[#2563EB] text-[var(--accent-ink)] text-[12px] font-extrabold cursor-pointer disabled:opacity-40"
             >
               {busy ? 'Checking in…' : 'Check in'}
             </button>
           )}
 
           {result?.already && result.checkedInCount !== undefined && (
-            <p className="text-[10px] text-[var(--ink-60)]">Total admitted: {result.checkedInCount}</p>
+            <p className="text-[11px] text-[var(--ink-60)]">Total admitted: {result.checkedInCount}</p>
           )}
         </div>
       )}
 
-      <p className="text-[9px] text-[var(--ink-60)] leading-snug">
+      <p className="text-[11px] text-[var(--ink-60)] leading-snug">
         The code is the scannable value. A gate operator can scan it with any
         QR reader, or type it by hand. Admission is recorded once and never
         double-counted.

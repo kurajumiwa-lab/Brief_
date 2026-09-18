@@ -73,7 +73,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#E8985E] text-[#1E1B4B] tracking-wider">
+              <span className="text-[11px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#E8985E] text-[#1E1B4B] tracking-wider">
                 COMMUNITY EVENT OPERATIONS
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -113,7 +113,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
         <div className="p-5 rounded-2xl bg-white shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase text-indigo-600 tracking-wide">
+              <span className="text-[11px] font-mono font-black uppercase text-indigo-600 tracking-wide">
                 {activeEvent.groupName}
               </span>
               <h3 className="text-lg font-black text-[var(--brief-ink)] leading-snug">
@@ -140,7 +140,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">
                 {activeEvent.rosterCount} Confirmed Attendees
               </p>
-              <p className="text-[11px] text-[var(--brief-muted)]">
+              <p className="text-[12px] text-[var(--brief-muted)]">
                 All roles assigned (Singers, Logistics, Welfare)
               </p>
             </div>
@@ -154,7 +154,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">
                 KES {activeEvent.pledgedBudgetKes.toLocaleString()} / {activeEvent.targetBudgetKes.toLocaleString()}
               </p>
-              <p className="text-[11px] text-emerald-700 font-bold">
+              <p className="text-[12px] text-emerald-700 font-bold">
                 {percentFunded}% funded via direct M-Pesa gifts
               </p>
             </div>
@@ -168,7 +168,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">
                 WAIRO Cargo Van Assigned
               </p>
-              <p className="text-[11px] text-[var(--brief-muted)]">
+              <p className="text-[12px] text-[var(--brief-muted)]">
                 Sound gear, robes & kitchen items tracked
               </p>
             </div>
@@ -182,7 +182,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">
                 3 Vetted Operators
               </p>
-              <p className="text-[11px] text-[var(--brief-muted)]">
+              <p className="text-[12px] text-[var(--brief-muted)]">
                 Vouched by Stage Champions
               </p>
             </div>
@@ -196,7 +196,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
             <div className="space-y-1.5">
               {activeEvent.itinerary.map((step, idx) => (
                 <div key={idx} className="flex items-start space-x-2 text-xs text-[var(--brief-muted)]">
-                  <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="w-4 h-4 rounded-full bg-indigo-100 text-indigo-700 text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                     {idx + 1}
                   </span>
                   <span>{step}</span>
@@ -216,11 +216,11 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
             {activeEvent.suppliers.map((sup, idx) => (
               <div key={idx} className="p-4 rounded-2xl bg-white shadow-sm space-y-2 flex flex-col justify-between">
                 <div>
-                  <span className="text-[9px] font-mono font-bold uppercase text-[#B8621F] block">
+                  <span className="text-[11px] font-mono font-bold uppercase text-[#B8621F] block">
                     {sup.category}
                   </span>
                   <h4 className="text-xs font-black text-[var(--brief-ink)] leading-snug">{sup.name}</h4>
-                  <p className="text-[10px] text-[var(--brief-muted)] mt-0.5">Vouched by {sup.vouchedBy}</p>
+                  <p className="text-[11px] text-[var(--brief-muted)] mt-0.5">Vouched by {sup.vouchedBy}</p>
                 </div>
 
                 <button
@@ -263,7 +263,7 @@ export const GroupEventLogisticsDesk: React.FC<GroupEventLogisticsDeskProps> = (
 
         {/* Non-Promise Disclaimer */}
         <div className="p-3.5 rounded-2xl bg-black/[0.03] space-y-1 text-center">
-          <p className="text-[10px] text-[var(--brief-muted)] leading-relaxed">
+          <p className="text-[11px] text-[var(--brief-muted)] leading-relaxed">
             Brief coordinates event operations for existing groups. Contributions move directly between members and suppliers via M-Pesa. Brief is not a travel agency or event guarantor.
           </p>
         </div>

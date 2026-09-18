@@ -47,14 +47,14 @@ export function AwaitingPayment({
   return (
     <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">
+        <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">
           {held.length} awaiting payment
         </p>
-        <p className="text-[9px] text-[var(--ink-60)]">
+        <p className="text-[11px] text-[var(--ink-60)]">
           Spot held
         </p>
       </div>
-      <p className="text-[10px] text-[var(--ink-60)] leading-snug">
+      <p className="text-[11px] text-[var(--ink-60)] leading-snug">
         These spots are held but unpaid. No online payment is connected, so
         confirm here once you have actually received the money.
       </p>
@@ -67,13 +67,13 @@ export function AwaitingPayment({
           <div className="min-w-0">
             <p className="text-xs text-[var(--brief-ink)] truncate">{r.name || r.attendeeRef}</p>
             {r.contact && (
-              <p className="text-[9px] text-[var(--ink-60)] truncate mt-0.5">{r.contact}</p>
+              <p className="text-[11px] text-[var(--ink-60)] truncate mt-0.5">{r.contact}</p>
             )}
           </div>
           <button
             disabled={busy}
             onClick={() => onConfirmPayment(r.id)}
-            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+            className="shrink-0 px-2.5 py-1.5 rounded-lg bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
           >
             Confirm {currency} {price.toLocaleString()}
           </button>

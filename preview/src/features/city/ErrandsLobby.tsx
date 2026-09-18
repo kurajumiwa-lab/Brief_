@@ -180,7 +180,7 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
     <div className={`brief-lobby p-4 sm:p-5 space-y-5 ${className}`}>
       {/* ── The room ─────────────────────────────────────────────────────── */}
       <header className="space-y-1.5">
-        <p className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
+        <p className="text-[12px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
           The lobby
         </p>
         <h2 className="text-2xl font-black leading-tight" style={{ color: '#241F1A' }}>
@@ -213,12 +213,12 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
             ))}
           </div>
         ) : (
-          <p className="text-[11px] max-w-md" style={{ color: 'rgba(36,31,26,0.6)' }}>{eligibility.howToJoin}</p>
+          <p className="text-[12px] max-w-md" style={{ color: 'rgba(36,31,26,0.6)' }}>{eligibility.howToJoin}</p>
         )}
       </section>
 
       {notice && (
-        <p role="status" className="text-[12px] font-bold" style={{ color: 'var(--color-success)' }}>
+        <p role="status" className="text-[13px] font-bold" style={{ color: 'var(--color-success)' }}>
           {notice}
         </p>
       )}
@@ -230,7 +230,7 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         </button>
       ) : (
         <form className="brief-lobby-card p-4 space-y-3" onSubmit={submit}>
-          <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
+          <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
             Post an errand
           </p>
           <input className="brief-lobby-input" aria-label="What needs carrying" placeholder="What needs carrying?"
@@ -251,14 +251,14 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
           </div>
           <input className="brief-lobby-input" aria-label="Note for carriers" placeholder="Anything a carrier needs to know (cash on arrival, call first)"
             value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} />
-          {errors.post && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{errors.post}</p>}
+          {errors.post && <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{errors.post}</p>}
           <div className="flex gap-2">
             <button type="submit" disabled={busy === 'post'} className="brief-lobby-btn brief-lobby-btn--primary flex-1 disabled:opacity-50">
               {busy === 'post' ? 'Posting…' : 'Put it on the board'}
             </button>
             <button type="button" className="brief-lobby-btn brief-lobby-btn--quiet" onClick={() => setPosting(false)}>Cancel</button>
           </div>
-          <p className="text-[10px]" style={{ color: 'rgba(36,31,26,0.6)' }}>
+          <p className="text-[11px]" style={{ color: 'rgba(36,31,26,0.6)' }}>
             Leave the fee blank if it is a favour. Whatever you write is a statement to a carrier, not a payment Brief makes or holds.
           </p>
         </form>
@@ -272,7 +272,7 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         {board.open.length === 0 ? (
           <div className="brief-lobby-card p-4" data-urgency="quiet">
             <p className="text-sm font-bold" style={{ color: '#241F1A' }}>Nothing is posted right now.</p>
-            <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
+            <p className="text-[13px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
               No errands have been put on this board yet. Post one, or push a bike below — and if nobody answers it, that is the truth of the board, not a hidden queue.
             </p>
           </div>
@@ -328,43 +328,43 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {(providers?.integrated ?? []).map((p) => (
             <div key={p.key} className="brief-lobby-card p-3">
-              <p className="text-[13px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
+              <p className="text-[14px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
                 <Bike className="w-4 h-4" style={{ color: 'var(--color-primary)' }} /> {p.name}
               </p>
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
-              <p className="text-[11px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
+              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
+              <p className="text-[12px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
                 {p.agentsOnRecord ?? 0} agent{p.agentsOnRecord === 1 ? '' : 's'} on record · {p.deliveredPickups ?? 0} delivered
               </p>
-              <p className="text-[10px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
+              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
             </div>
           ))}
           {(providers?.usedHere ?? []).map((p) => (
             <div key={p.key} className="brief-lobby-card p-3" data-urgency="quiet">
-              <p className="text-[13px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
+              <p className="text-[14px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
                 <Truck className="w-4 h-4" /> {p.name}
               </p>
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
-              <p className="text-[11px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
+              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
+              <p className="text-[12px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
                 {p.dispatchesRecorded} dispatch{p.dispatchesRecorded === 1 ? '' : 'es'} posted here · {p.waybillsCaptured} waybill
                 {p.waybillsCaptured === 1 ? '' : 's'} recorded
               </p>
-              <p className="text-[10px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
+              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
             </div>
           ))}
           {(providers?.external ?? []).map((p) => (
             <div key={p.key} className="brief-lobby-card p-3" data-urgency="quiet">
-              <p className="text-[13px] font-bold" style={{ color: '#241F1A' }}>{p.name}</p>
+              <p className="text-[14px] font-bold" style={{ color: '#241F1A' }}>{p.name}</p>
               {/* One clause on the card, the reason a tap away: three cards each
                   carrying the same disclaimer is what made this screen read as
                   paperwork. Nothing is deleted — the sentence moves. */}
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
+              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
                 Outside Brief — book them directly.
               </p>
             </div>
           ))}
         </div>
         {providers && (
-          <p className="text-[10px] leading-snug" style={{ color: 'rgba(36,31,26,0.55)' }}>{providers.disclosure}</p>
+          <p className="text-[11px] leading-snug" style={{ color: 'rgba(36,31,26,0.55)' }}>{providers.disclosure}</p>
         )}
       </section>
 
@@ -373,7 +373,7 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: '#241F1A' }}>
           Push for a bike (WAIRO dispatch)
         </h3>
-        <p className="text-[11px] mb-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
+        <p className="text-[12px] mb-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
         </p>
         <WairoDispatchPanel />
       </section>
@@ -415,21 +415,21 @@ function ErrandCard({
         <h4 className="text-[15px] font-black leading-snug min-w-0" style={{ color: '#241F1A' }}>
           {e.what}
         </h4>
-        <span className="shrink-0 text-[10px] font-black uppercase tracking-wider" style={{ color: 'rgba(36,31,26,0.55)' }}>
+        <span className="shrink-0 text-[11px] font-black uppercase tracking-wider" style={{ color: 'rgba(36,31,26,0.55)' }}>
           {e.status.replace('_', ' ')}
         </span>
       </div>
 
-      <p className="text-[13px] font-semibold" style={{ color: '#241F1A' }}>
+      <p className="text-[14px] font-semibold" style={{ color: '#241F1A' }}>
         {e.pickup} <span aria-hidden="true">→</span> {e.dropoff}
       </p>
-      <p className="text-[12px] font-mono" style={{ color: 'rgba(36,31,26,0.66)' }}>
+      <p className="text-[13px] font-mono" style={{ color: 'rgba(36,31,26,0.66)' }}>
         {money(e.offeredFeeKes, e.currency)}
         {e.sizeOrWeight ? ` · ${e.sizeOrWeight}` : ''}
         {e.whenNeeded ? ` · by ${day(e.whenNeeded)}` : ''}
         {` · posted ${ago(e.createdAt) ?? '—'}`}
       </p>
-      {e.note && <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.7)' }}>{e.note}</p>}
+      {e.note && <p className="text-[13px]" style={{ color: 'rgba(36,31,26,0.7)' }}>{e.note}</p>}
 
       {/* The loop. A stage without a timestamp is simply not there yet. */}
       <div className="flex flex-wrap gap-1.5 pt-0.5">
@@ -438,27 +438,27 @@ function ErrandCard({
           return (
             <span key={s.key} className="brief-lobby-stage" data-done={row?.done ? 'true' : 'false'}>
               {s.label}
-              {row?.done ? <span className="font-mono text-[10px]">{ago(row.at)}</span> : <span className="font-mono text-[10px] opacity-60">—</span>}
+              {row?.done ? <span className="font-mono text-[11px]">{ago(row.at)}</span> : <span className="font-mono text-[11px] opacity-60">—</span>}
             </span>
           );
         })}
       </div>
 
       {e.carrierName && (
-        <p className="text-[11px]" style={{ color: 'rgba(36,31,26,0.66)' }}>
+        <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.66)' }}>
           Carried by <strong>{e.carrierName}</strong>
           {e.carrierBasis.length > 0 ? ` (${e.carrierBasis.join(', ')})` : ''}
         </p>
       )}
       {e.settlement && (
-        <p className="text-[11px] font-bold" style={{ color: 'var(--color-text)' }}>
+        <p className="text-[12px] font-bold" style={{ color: 'var(--color-text)' }}>
           Fee {money(e.settlement.amountKes, e.settlement.currency)} confirmed by {settledNames.join(' + ') || 'nobody yet'}
           {e.settlement.at ? ` · ${ago(e.settlement.at)}` : ' · waiting on the other side'}
           {'. Brief moved nothing.'}
         </p>
       )}
 
-      {error && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
+      {error && <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
       {/* Actions: only what this row and this person allow. */}
       <div className="flex flex-wrap gap-2 pt-0.5">
@@ -469,7 +469,7 @@ function ErrandCard({
               Take this errand
             </button>
           ) : (
-            <span className="text-[11px] font-bold" style={{ color: 'rgba(36,31,26,0.6)' }}>
+            <span className="text-[12px] font-bold" style={{ color: 'rgba(36,31,26,0.6)' }}>
               Only agents and partners on record can take an errand.
             </span>
           )
@@ -503,7 +503,7 @@ function ErrandCard({
       {e.ratings.length > 0 && (
         <ul className="space-y-1 pt-1">
           {e.ratings.map((r) => (
-            <li key={r.id} className="text-[11px]" style={{ color: 'rgba(36,31,26,0.7)' }}>
+            <li key={r.id} className="text-[12px]" style={{ color: 'rgba(36,31,26,0.7)' }}>
               <Star className="w-3 h-3 inline" style={{ color: 'var(--color-primary)' }} />{' '}
               <strong>{r.stars}</strong>/5 on {r.about === 'carrier' ? 'the carrier' : 'the poster'} · {r.by}
               {r.note ? ` — “${r.note}”` : ''} · {ago(r.createdAt)}
@@ -513,7 +513,7 @@ function ErrandCard({
       )}
       {e.canRate && onRate && (
         <div className="flex items-center gap-1.5 flex-wrap pt-1">
-          <span className="text-[11px] font-bold" style={{ color: '#241F1A' }}>
+          <span className="text-[12px] font-bold" style={{ color: '#241F1A' }}>
             Rate this delivery:
           </span>
           {[1, 2, 3, 4, 5].map((n) => (
@@ -529,7 +529,7 @@ function ErrandCard({
               {n}
             </button>
           ))}
-          <span className="text-[10px]" style={{ color: 'rgba(36,31,26,0.6)' }}>{e.ratingsNote}</span>
+          <span className="text-[11px]" style={{ color: 'rgba(36,31,26,0.6)' }}>{e.ratingsNote}</span>
         </div>
       )}
     </article>

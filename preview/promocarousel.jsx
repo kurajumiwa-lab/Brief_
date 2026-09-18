@@ -82,8 +82,8 @@ async function main() {
     assert.equal(container.querySelector('img'), null, 'no img when no cover, and no stock photo substituted');
     const els = Array.from(container.querySelectorAll('div, span'));
     const attr = (el) => el.getAttribute('style') || '';
-    assert.ok(els.some((el) => attr(el).includes('#F1E8DA')), 'the fallback is the room\'s warm plaster');
-    assert.ok(els.some((el) => /radial-gradient/.test(attr(el)) && attr(el).includes('#4F46E5')),
+    assert.ok(els.some((el) => attr(el).includes('#EDF1F6')), 'the fallback is the room\'s warm plaster');
+    assert.ok(els.some((el) => /radial-gradient/.test(attr(el)) && attr(el).includes('#7C3AED')),
       'lit by popup\'s hue — the category on the row, not a hash of its title');
     assert.equal(els.find((el) => el.textContent.trim() === 'K'), undefined, 'no oversized title initial is rendered');
     assert.ok(!/4F46E5, #06B6D4|#06B6D4, #10B981|#8B5CF6/.test(els.map(attr).join('')),

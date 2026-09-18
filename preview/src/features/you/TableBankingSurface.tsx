@@ -253,8 +253,8 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
             <input type="radio" name="template" checked={createTemplate === t.id} onChange={() => setCreateTemplate(t.id)} />
             <span className="min-w-0">
               <span className="block text-xs font-bold" style={{ color: "var(--color-text)" }}>{t.label}</span>
-              <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>{t.description}</span>
-              <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>KES {t.defaults.contributionAmount.toLocaleString()} / cycle{t.defaults.welfareContributionAmount > 0 ? ` · welfare KES ${t.defaults.welfareContributionAmount.toLocaleString()}` : ""}</span>
+              <span className="block text-[11px]" style={{ color: "var(--color-text-muted)" }}>{t.description}</span>
+              <span className="block text-[11px]" style={{ color: "var(--color-text-muted)" }}>KES {t.defaults.contributionAmount.toLocaleString()} / cycle{t.defaults.welfareContributionAmount > 0 ? ` · welfare KES ${t.defaults.welfareContributionAmount.toLocaleString()}` : ""}</span>
             </span>
           </label>
         ))}
@@ -359,16 +359,16 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         <span className="text-xs font-bold" style={{ color: "var(--color-text)" }}>Pool</span>
                         <span className="text-xs font-bold" style={{ color: "var(--color-text)" }}>KES {treasurer[c.id]!.summary.cashOnHand.toLocaleString()}</span>
                       </div>
-                      <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Next to receive: {treasurer[c.id]!.rotation.nextMemberId ? (treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.displayName ?? treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.handle ?? "—") : "—"}</p>
+                      <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Next to receive: {treasurer[c.id]!.rotation.nextMemberId ? (treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.displayName ?? treasurer[c.id]!.rotation.order.find((o) => o.userId === treasurer[c.id]!.rotation.nextMemberId)?.handle ?? "—") : "—"}</p>
                       <ul className="space-y-0.5">
                         {treasurer[c.id]!.members.map((m) => (
-                          <li key={m.userId} className="flex items-center justify-between text-[10px]">
+                          <li key={m.userId} className="flex items-center justify-between text-[11px]">
                             <span style={{ color: "var(--color-text)" }}>{m.displayName ?? m.handle ?? "Member"}</span>
                             <span style={{ color: "var(--color-text-muted)" }}>{m.contributed ? "contributed ✓" : "not contributed"}{m.owesKes > 0 ? ` · owes KES ${m.owesKes.toLocaleString()}` : ""}</span>
                           </li>
                         ))}
                       </ul>
-                      <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                      <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                         Welfare: KES {treasurer[c.id]!.welfare.balance.toLocaleString()} · {treasurer[c.id]!.pendingInvites} pending invite{treasurer[c.id]!.pendingInvites === 1 ? "" : "s"} · {treasurer[c.id]!.activeLoans.length} active loan{treasurer[c.id]!.activeLoans.length === 1 ? "" : "s"}
                       </p>
                     </div>
@@ -394,21 +394,21 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
                           What the group asked for
                         </p>
                         {ops[c.id]!.collective.placed === 0 ? (
-                          <p className="text-[11px] mt-1" style={{ color: "var(--color-text)" }}>
+                          <p className="text-[12px] mt-1" style={{ color: "var(--color-text)" }}>
                             No collective request has been placed yet. Until one is, there is nothing to quote, settle or count.
                           </p>
                         ) : (
                           <>
-                            <p className="text-[11px] mt-1" style={{ color: "var(--color-text)" }}>
+                            <p className="text-[12px] mt-1" style={{ color: "var(--color-text)" }}>
                               {ops[c.id]!.collective.placed} placed · {ops[c.id]!.collective.open} still open · {ops[c.id]!.collective.quoted} with quotes · {ops[c.id]!.collective.accepted} accepted
                             </p>
                             <ul className="mt-1 space-y-1">
                               {ops[c.id]!.collective.items.slice(0, 4).map((it) => (
-                                <li key={it.requestId} className="text-[11px]" style={{ color: "var(--color-text)" }}>
+                                <li key={it.requestId} className="text-[12px]" style={{ color: "var(--color-text)" }}>
                                   <span className="font-bold">{it.title}</span>
                                   {it.quantity != null ? <span className="font-mono"> · {it.quantity}{it.unit ? ` ${it.unit}` : ""}</span> : null}
                                   <span className="font-mono"> · {it.quotes} quote{it.quotes === 1 ? "" : "s"}</span>
@@ -421,12 +421,12 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
                           Settled through Brief · last {ops[c.id]!.settledThroughBrief.windowDays} days
                         </p>
-                        <p className="text-[13px] font-mono font-black mt-0.5" style={{ color: "var(--color-text)" }}>
+                        <p className="text-[14px] font-mono font-black mt-0.5" style={{ color: "var(--color-text)" }}>
                           {money(ops[c.id]!.settledThroughBrief.settledKes, ops[c.id]!.settledThroughBrief.currency ?? ops[c.id]!.currency)}
-                          <span className="text-[10px] font-sans font-bold ml-1.5" style={{ color: "var(--color-text-muted)" }}>
+                          <span className="text-[11px] font-sans font-bold ml-1.5" style={{ color: "var(--color-text-muted)" }}>
                             over {ops[c.id]!.settledThroughBrief.settlements} settlement{ops[c.id]!.settledThroughBrief.settlements === 1 ? "" : "s"}
                             {ops[c.id]!.settledThroughBrief.settledKes === null && ops[c.id]!.settledThroughBrief.settlements > 0
                               ? " · mixed currencies, so no single total is shown"
@@ -436,15 +436,15 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       </div>
 
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+                        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
                           Members' public shopfronts
                         </p>
                         {!ops[c.id]!.memberBusiness.visible ? (
-                          <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>{ops[c.id]!.memberBusiness.reason}</p>
+                          <p className="text-[12px] mt-1" style={{ color: "var(--color-text-muted)" }}>{ops[c.id]!.memberBusiness.reason}</p>
                         ) : (
                           <ul className="mt-1 space-y-1">
                             {ops[c.id]!.memberBusiness.rows.map((r) => (
-                              <li key={r.userId} className="flex items-baseline justify-between gap-2 text-[11px]" style={{ color: "var(--color-text)" }}>
+                              <li key={r.userId} className="flex items-baseline justify-between gap-2 text-[12px]" style={{ color: "var(--color-text)" }}>
                                 <span className="truncate font-bold">{r.displayName ?? "a member"}</span>
                                 <span className="shrink-0 font-mono" style={{ color: "var(--color-text-muted)" }}>
                                   {r.publicSpaces.length === 0
@@ -457,7 +457,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         )}
                       </div>
 
-                      <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                      <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                         {ops[c.id]!.unavailable.length} figures an operator asks for are not computable here — see How Brief works.
                       </p>
                     </div>
@@ -514,7 +514,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                           <MotionNumber value={welfare[c.id]!.fund.balance} currency="KES" tier="consequential" />
                           <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>in the pot</span>
                         </div>
-                        <p className="text-[10px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                        <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
                           {welfare[c.id]!.fund.totalContributed.toLocaleString()} contributed · {welfare[c.id]!.fund.paidOut.toLocaleString()} paid out
                         </p>
 
@@ -532,7 +532,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
 
                         {/* Resolved claims (approved/declined), shown honestly. */}
                         {welfare[c.id]!.claims.filter((cl) => cl.status !== "pending").map((cl) => (
-                          <p key={cl.id} className="text-[10px] mt-1" style={{ color: "var(--color-text-muted)" }}>
+                          <p key={cl.id} className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>
                             {cl.status === "approved" ? "Approved" : "Declined"}: {cl.reason} — KES {cl.amount.toLocaleString()}
                           </p>
                         ))}
@@ -570,9 +570,9 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         {minutes[c.id]!.map((m) => (
                           <li key={m.id}>
                             <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>{m.title}</p>
-                            <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{m.body}</p>
+                            <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{m.body}</p>
                             {m.decisions && m.decisions.length > 0 && (
-                              <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>Decisions: {m.decisions.join(" · ")}</p>
+                              <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>Decisions: {m.decisions.join(" · ")}</p>
                             )}
                           </li>
                         ))}
@@ -600,14 +600,14 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                     {invites[c.id] && invites[c.id]!.length > 0 && (
                       <ul className="mt-1 space-y-0.5">
                         {invites[c.id]!.map((inv) => (
-                          <li key={inv.id} className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                          <li key={inv.id} className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                             {inv.name ?? inv.phone} · {inv.status === "accepted" ? "accepted ✓" : "pending (code " + inv.code + ")"}
                           </li>
                         ))}
                       </ul>
                     )}
                     {lastInvite[c.id] && (
-                      <p className="text-[10px] mt-1" style={{ color: "var(--color-text-muted)" }}>
+                      <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>
                         "{lastInvite[c.id]!.message}" — {lastInvite[c.id]!.delivery}
                       </p>
                     )}
@@ -630,7 +630,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                       {groupQuotes[c.id]!.map((q) => (
                         <div key={q.quoteId} className="mt-1.5 rounded-lg p-2 border" style={{ borderColor: "var(--color-border)" }}>
                           <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>{q.requestTitle}</p>
-                          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                             {q.vote.approveCount} approve · {q.vote.declineCount} decline · needs {q.quorum} to accept
                           </p>
                           <div className="mt-1 flex gap-2">
@@ -693,7 +693,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                     )}
                   </div>
 
-                  <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>{s.note}</p>
+                  <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>{s.note}</p>
                 </div>
               )}
               </Presence>

@@ -108,13 +108,13 @@ export function NextMoveCard({
         role="status"
         aria-label="Your next step is unavailable"
       >
-        <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
           Your next step
         </p>
         <p className="text-sm font-bold mt-1.5" style={{ color: 'var(--color-text)' }}>
           Your position could not be read just now.
         </p>
-        <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
           Nothing is shown in its place — no suggested move, no safe-sounding &ldquo;all clear&rdquo;.
         </p>
         <button
@@ -139,13 +139,13 @@ export function NextMoveCard({
         style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}
         aria-label="Your next step"
       >
-        <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
           Your next step
         </p>
         <p className="text-sm font-bold mt-1.5" style={{ color: 'var(--color-text)' }}>
           No open demand on the ledger right now.
         </p>
-        <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
           Nothing is waiting on a quote, so there is no move to recommend. When a request lands, it appears here.
         </p>
         <button
@@ -165,13 +165,13 @@ export function NextMoveCard({
     return (
       <section className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 ${className}`} style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}>
         <EyeOff className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
-        <p className="text-[11px] flex-1" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] flex-1" style={{ color: 'var(--color-text-muted)' }}>
           Next step hidden on this device.
         </p>
         <button
           type="button"
           onClick={() => { writeHidden(null); setHidden(null); }}
-          className="text-[11px] font-bold cursor-pointer"
+          className="text-[12px] font-bold cursor-pointer"
           style={{ color: 'var(--color-primary)' }}
         >
           Show
@@ -213,10 +213,10 @@ export function NextMoveCard({
     >
       <div className="px-4 py-2 flex items-center gap-1.5" style={{ background: 'var(--color-primary-subtle)' }}>
         <Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
-        <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
           Your next step
         </p>
-        <span className="ml-auto text-[10px] font-semibold truncate" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="ml-auto text-[11px] font-semibold truncate" style={{ color: 'var(--color-text-muted)' }}>
           {move.why}
         </span>
       </div>
@@ -226,31 +226,31 @@ export function NextMoveCard({
           {move.title}
         </h2>
 
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
           {move.location && <span>{move.location}</span>}
           {move.location && <span aria-hidden="true">·</span>}
           <span>{meta.join(' · ')}</span>
         </div>
 
-        <p className="text-[11px] font-semibold" style={{ color: 'var(--color-text)' }}>
+        <p className="text-[12px] font-semibold" style={{ color: 'var(--color-text)' }}>
           {move.severityLabel}
         </p>
 
         {/* Deadline — only ever the requester's own date, never a fake countdown */}
         {move.requiredBy && (
-          <p className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--color-warning)' }}>
+          <p className="flex items-center gap-1.5 text-[12px] font-bold" style={{ color: 'var(--color-warning)' }}>
             <Clock className="w-3.5 h-3.5" />
             needed by {move.requiredBy}
             {move.hoursUntilRequiredBy ? ` · ${move.hoursUntilRequiredBy}h left` : ''}
           </p>
         )}
 
-        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
           {priceLine}
         </p>
 
         {/* Precedent — counts of real rows, so the jump is a calculation */}
-        <p className="text-[11px] leading-snug font-semibold" style={{ color: 'var(--color-text)' }}>
+        <p className="text-[12px] leading-snug font-semibold" style={{ color: 'var(--color-text)' }}>
           Precedent: {precedent.join(' · ')}
         </p>
 
@@ -258,7 +258,7 @@ export function NextMoveCard({
           <button
             type="button"
             onClick={() => { soundEngine.play('heavyTap'); requestPath(move.requestId); }}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[13px] font-extrabold cursor-pointer active:scale-[0.99] transition"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-2xl text-[14px] font-extrabold cursor-pointer active:scale-[0.99] transition"
             style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
           >
             {move.myQuote ? 'Open your proposal' : 'Respond to this demand'}
@@ -267,14 +267,14 @@ export function NextMoveCard({
           <button
             type="button"
             onClick={() => { writeHidden(move.requestId); setHidden(move.requestId); }}
-            className="px-3 py-3 rounded-2xl text-[11px] font-bold cursor-pointer"
+            className="px-3 py-3 rounded-2xl text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-text-muted)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
           >
             Not now
           </button>
         </div>
 
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
           Derived from request <span className="font-mono">{move.evidence.id}</span> — every figure here is a
           field of that row or a count over it.
         </p>

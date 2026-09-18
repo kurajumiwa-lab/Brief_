@@ -228,7 +228,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               Profit & Cash Flow
             </h3>
           </div>
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-black animate-pulse">
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-black animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-[color:var(--color-primary)]" />
             <span>Server Authoritative</span>
           </div>
@@ -238,28 +238,28 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Money In */}
           <div className="p-4 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-1">
-            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[11px] font-bold uppercase tracking-wider">
               <TrendingUp className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
               <span>Money In (Sales)</span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalRev.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[color:var(--color-text-muted)]">
+            <p className="text-[11px] text-[color:var(--color-text-muted)]">
               Completed space orders
             </p>
           </div>
 
           {/* Money Out */}
           <div className="p-4 rounded-2xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-accent)] space-y-1">
-            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[10px] font-bold uppercase tracking-wider">
+            <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[11px] font-bold uppercase tracking-wider">
               <ArrowUp className="w-3.5 h-3.5 text-rose-700" />
               <span>Money Out (Supplies)</span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalExp.toLocaleString()}
             </p>
-            <p className="text-[10px] text-[color:var(--color-text-muted)]">
+            <p className="text-[11px] text-[color:var(--color-text-muted)]">
               Ingredients & costs
             </p>
           </div>
@@ -267,17 +267,17 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           {/* Net Profit */}
           <div className="p-4 rounded-2xl bg-[color:var(--color-text)] text-white space-y-1 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">
                 Net Profit
               </span>
-              <span className="text-[9px] font-extrabold bg-white/20 text-[color:var(--color-primary)] px-1.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-extrabold bg-white/20 text-[color:var(--color-primary)] px-1.5 py-0.5 rounded-full">
                 {marginPct}% Margin
               </span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-primary)]">
               KES {netProfit.toLocaleString()}
             </p>
-            <p className="text-[10px] text-white/70">
+            <p className="text-[11px] text-white/70">
               Clear operator take-home
             </p>
           </div>
@@ -315,11 +315,11 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
         {/* ── EXPENSE QUICK-LOGGER (<3s entry) ── */}
         <div className="p-3.5 rounded-2xl bg-[color:var(--color-surface)] border border-black/5 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-text)] flex items-center space-x-1">
+            <span className="text-[12px] font-black uppercase tracking-wider text-[color:var(--color-text)] flex items-center space-x-1">
               <Zap className="w-3.5 h-3.5 text-[color:var(--color-warning)]" />
               <span>Quick-Log Outflow (&lt; 3s)</span>
             </span>
-            <span className="text-[10px] text-[color:var(--color-text-muted)]">Instant ledger update</span>
+            <span className="text-[11px] text-[color:var(--color-text-muted)]">Instant ledger update</span>
           </div>
 
           <form onSubmit={handleQuickLogExpense} className="space-y-2">
@@ -329,7 +329,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                   key={cat.id}
                   type="button"
                   onClick={() => setQuickCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-[12px] font-bold shrink-0 transition-all cursor-pointer ${
                     quickCategory === cat.id
                       ? 'bg-[color:var(--color-text)] text-[color:var(--color-primary)]'
                       : 'bg-[color:var(--color-paper)] border border-black/5 text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]'
@@ -372,7 +372,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             <button
               type="button"
               onClick={() => setShowExpenseForm(false)}
-              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+              className="text-[12px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
             >
               Cancel
             </button>
@@ -414,7 +414,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             <button
               type="button"
               onClick={() => setShowTabForm(false)}
-              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+              className="text-[12px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
             >
               Cancel
             </button>
@@ -475,7 +475,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             <button
               type="button"
               onClick={() => setActivePayingTab(null)}
-              className="text-[11px] text-[color:var(--color-text-muted)]"
+              className="text-[12px] text-[color:var(--color-text-muted)]"
             >
               Cancel
             </button>
@@ -519,7 +519,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
             </h3>
           </div>
           {receivables > 0 && (
-            <span className="text-[11px] font-bold text-[color:var(--color-accent)]">
+            <span className="text-[12px] font-bold text-[color:var(--color-accent)]">
               KES {receivables.toLocaleString()} outstanding
             </span>
           )}
@@ -539,10 +539,10 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold text-[color:var(--color-text)]">{tab.customerName}</h4>
-                    {tab.notes && <p className="text-[10px] text-[color:var(--color-text-muted)]">{tab.notes}</p>}
+                    {tab.notes && <p className="text-[11px] text-[color:var(--color-text-muted)]">{tab.notes}</p>}
                   </div>
                   <span
-                    className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+                    className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${
                       tab.status === 'cleared'
                         ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)]'
                         : 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)]'
@@ -573,7 +573,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
                         setActivePayingTab(tab);
                         setPaymentAmount(String(tab.balanceKes));
                       }}
-                      className="flex-1 py-1.5 rounded-lg bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-success)] text-[10px] font-bold transition-colors cursor-pointer border border-black/5"
+                      className="flex-1 py-1.5 rounded-lg bg-[color:var(--color-surface)] hover:bg-black/5 text-[color:var(--color-success)] text-[11px] font-bold transition-colors cursor-pointer border border-black/5"
                     >
                       Record Payment
                     </button>
@@ -618,7 +618,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               >
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-[color:var(--color-text)] truncate">{exp.description}</p>
-                  <p className="text-[10px] text-[color:var(--color-text-muted)]">
+                  <p className="text-[11px] text-[color:var(--color-text-muted)]">
                     {exp.category} · {exp.date}
                   </p>
                 </div>

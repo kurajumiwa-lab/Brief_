@@ -81,7 +81,7 @@ export function MoneyPanel() {
     <section className="space-y-4">
       <div>
         <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Money</h2>
-        <p className="text-[11px] text-[var(--ink-60)] leading-snug mt-1">
+        <p className="text-[12px] text-[var(--ink-60)] leading-snug mt-1">
           Every figure here is derived from real transactions. Brief stores no
           balance and cannot move money.
         </p>
@@ -93,12 +93,12 @@ export function MoneyPanel() {
 
       {wallet.status === 'error' && (
         <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-2xl p-4">
-          <p className="text-[11px] text-[var(--brief-ink)] leading-snug">
+          <p className="text-[12px] text-[var(--brief-ink)] leading-snug">
             Couldn't load your wallet. {wallet.error}
           </p>
           <button
             onClick={load}
-            className="mt-2 text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+            className="mt-2 text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
           >
             Try again
           </button>
@@ -109,31 +109,31 @@ export function MoneyPanel() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4">
-              <p className="text-[10px] text-[var(--ink-60)]">
+              <p className="text-[11px] text-[var(--ink-60)]">
                 Available
               </p>
               <p className="text-2xl font-extrabold text-[var(--brief-ink)] mt-1">
                 {money(wallet.data.balance, wallet.data.currency)}
               </p>
-              <p className="text-[10px] text-[var(--brief-ink)] mt-1">
+              <p className="text-[11px] text-[var(--brief-ink)] mt-1">
                 Settled transactions only
               </p>
             </div>
 
             <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4">
-              <p className="text-[10px] text-[var(--ink-60)]">
+              <p className="text-[11px] text-[var(--ink-60)]">
                 Pending
               </p>
               <p className="text-2xl font-extrabold text-[var(--brief-ink)] mt-1">
                 {money(wallet.data.pending, wallet.data.currency)}
               </p>
-              <p className="text-[10px] text-[var(--brief-ink)] mt-1">
+              <p className="text-[11px] text-[var(--brief-ink)] mt-1">
                 Not yet settled
               </p>
             </div>
           </div>
 
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Derived from {wallet.data.transactionCount}{' '}
             {wallet.data.transactionCount === 1 ? 'transaction' : 'transactions'}.
           </p>
@@ -142,10 +142,10 @@ export function MoneyPanel() {
               such -- Brief never implies money can move when it cannot. */}
           {!wallet.data.provider.configured && (
             <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-4">
-              <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">
+              <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">
                 No payment provider connected
               </p>
-              <p className="text-[10px] text-[var(--ink-60)] mt-1 leading-snug">
+              <p className="text-[11px] text-[var(--ink-60)] mt-1 leading-snug">
                 {wallet.data.provider.reason}
               </p>
             </div>
@@ -155,12 +155,12 @@ export function MoneyPanel() {
 
       {/* LEDGER */}
       <div>
-        <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">
+        <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">
           Transactions
         </h3>
 
         {ledger.status === 'error' && (
-          <p className="text-[11px] text-[var(--brief-ink)]">
+          <p className="text-[12px] text-[var(--brief-ink)]">
             Couldn't load transactions. {ledger.error}
           </p>
         )}
@@ -178,7 +178,7 @@ export function MoneyPanel() {
               className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 flex items-center gap-3"
             >
               <span
-                className={`text-[9px] shrink-0 ${
+                className={`text-[11px] shrink-0 ${
                   STATUS_TONE[tx.status] ?? 'text-[var(--ink-60)]'
                 }`}
               >
@@ -197,8 +197,8 @@ export function MoneyPanel() {
 
       {/* PAYOUTS -- explicitly unavailable, using the server's own reason. */}
       <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-4">
-        <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Payouts</p>
-        <p className="text-[10px] text-[var(--ink-60)] mt-1 leading-snug">
+        <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">Payouts</p>
+        <p className="text-[11px] text-[var(--ink-60)] mt-1 leading-snug">
           {disbursements.reason}
         </p>
       </div>

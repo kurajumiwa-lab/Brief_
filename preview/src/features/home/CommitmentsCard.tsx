@@ -51,21 +51,21 @@ export function CommitmentsCard({
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: 'var(--color-text)' }}>
           <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Your commitments
         </h3>
-        <span className="text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
           tap a reference to copy the row id
         </span>
       </div>
 
       {c.owedToMe.length > 0 && (
         <div>
-          <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: 'var(--color-success)' }}>
+          <p className="text-[12px] font-bold flex items-center gap-1.5" style={{ color: 'var(--color-success)' }}>
             <ArrowDown className="w-3.5 h-3.5" />
             Owed to you · {c.owedToMe.length} commitment{c.owedToMe.length === 1 ? '' : 's'}
             {c.owedToMeKes > 0 && <span className="font-black">· KES {c.owedToMeKes.toLocaleString()}</span>}
           </p>
           <ul className="mt-1 space-y-1">
             {c.owedToMe.slice(0, 3).map((x) => (
-              <li key={x.id} className="text-[11px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
+              <li key={x.id} className="text-[12px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="truncate min-w-0">
                   {KIND_LABEL[x.kind] ?? x.kind}
                   {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}
@@ -80,14 +80,14 @@ export function CommitmentsCard({
 
       {c.owedByMe.length > 0 && (
         <div>
-          <p className="text-[11px] font-bold flex items-center gap-1.5" style={{ color: 'var(--color-warning)' }}>
+          <p className="text-[12px] font-bold flex items-center gap-1.5" style={{ color: 'var(--color-warning)' }}>
             <ArrowUpRight className="w-3.5 h-3.5" />
             You owe · {c.owedByMe.length} commitment{c.owedByMe.length === 1 ? '' : 's'}
             {c.owedByMeKes > 0 && <span className="font-black">· KES {c.owedByMeKes.toLocaleString()}</span>}
           </p>
           <ul className="mt-1 space-y-1">
             {c.owedByMe.slice(0, 3).map((x) => (
-              <li key={x.id} className="text-[11px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
+              <li key={x.id} className="text-[12px] flex items-center gap-1.5 min-w-0" style={{ color: 'var(--color-text-muted)' }}>
                 <span className="truncate min-w-0">
                   {KIND_LABEL[x.kind] ?? x.kind}
                   {x.value ? ` · KES ${x.value.amount.toLocaleString()}` : ''}

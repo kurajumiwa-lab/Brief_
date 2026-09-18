@@ -66,7 +66,7 @@ export function WorldStrip({ className = '' }: { className?: string }) {
         style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
       >
         <StateDot state="unknown" />
-        <span className="text-[12px] font-semibold flex-1" style={{ color: 'var(--color-text-muted)' }}>World read unavailable</span>
+        <span className="text-[13px] font-semibold flex-1" style={{ color: 'var(--color-text-muted)' }}>World read unavailable</span>
         <RefreshCw className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
       </button>
     );
@@ -86,14 +86,14 @@ export function WorldStrip({ className = '' }: { className?: string }) {
         <span className="text-[12.5px] font-bold truncate flex-1" style={{ color: 'var(--color-text)' }}>
           {data.available === false ? String(data.error ?? 'No read').split(/[,.(]/)[0] : head(facts)}
         </span>
-        <span className="shrink-0 text-[9px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="shrink-0 text-[11px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
           {(data.resolvedPlace?.name ?? data.place ?? '')}{data.stale ? ` · ${Math.round(data.ageHours ?? 0)}h` : ''}
         </span>
         {data.available === false ? (
           <button
             type="button"
             onClick={() => { setAttempt((a) => a + 1); soundEngine.play('tap'); }}
-            className="shrink-0 text-[11px] font-black cursor-pointer"
+            className="shrink-0 text-[12px] font-black cursor-pointer"
             style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
           >
             Retry
@@ -116,7 +116,7 @@ export function WorldStrip({ className = '' }: { className?: string }) {
         <div className="px-3 pb-2.5 space-y-1.5" style={{ borderTop: '1px solid var(--brief-line)' }}>
           <ul className="pt-2 space-y-1">
             {facts.length === 0 ? (
-              <li className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{data.error ?? 'Nothing in the window worth a sentence.'}</li>
+              <li className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>{data.error ?? 'Nothing in the window worth a sentence.'}</li>
             ) : facts.map((f, i) => (
               <li key={`${f.kind}-${i}`} className="flex items-start gap-2 text-[11.5px]" style={{ color: 'var(--color-text)' }}>
                 <StateDot state={f.kind === 'rain' || f.kind === 'rain-due' || f.kind === 'wet-count' ? 'moving' : f.kind === 'cold' ? 'unknown' : 'quiet'} />
@@ -125,7 +125,7 @@ export function WorldStrip({ className = '' }: { className?: string }) {
             ))}
           </ul>
           {data.available === false && (
-            <button type="button" onClick={() => setAttempt((a) => a + 1)} className="text-[11px] font-black cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
+            <button type="button" onClick={() => setAttempt((a) => a + 1)} className="text-[12px] font-black cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
               Retry
             </button>
           )}
@@ -144,14 +144,14 @@ export function WorldStrip({ className = '' }: { className?: string }) {
               onChange={(e) => setDraft(e.target.value)}
               placeholder={data.placeIsDefault ? 'Another place…' : 'Change place'}
               aria-label="Place"
-              className="flex-1 min-w-0 text-[11px] rounded-lg px-2 py-1"
+              className="flex-1 min-w-0 text-[12px] rounded-lg px-2 py-1"
               style={{ background: 'var(--color-well)', color: 'var(--color-text)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
             />
-            <button type="submit" className="text-[11px] font-black px-2 py-1 rounded-lg cursor-pointer" style={{ background: draft.trim() ? 'var(--color-primary)' : 'var(--color-well)', color: draft.trim() ? 'var(--accent-ink)' : 'var(--color-text-muted)' }}>
+            <button type="submit" className="text-[12px] font-black px-2 py-1 rounded-lg cursor-pointer" style={{ background: draft.trim() ? 'var(--color-primary)' : 'var(--color-well)', color: draft.trim() ? 'var(--accent-ink)' : 'var(--color-text-muted)' }}>
               Go
             </button>
             {place ? (
-              <button type="button" onClick={() => { setPlace(''); setDraft(''); try { localStorage.removeItem(PLACE_KEY); } catch { /* ignore */ } }} className="text-[11px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
+              <button type="button" onClick={() => { setPlace(''); setDraft(''); try { localStorage.removeItem(PLACE_KEY); } catch { /* ignore */ } }} className="text-[12px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
                 reset
               </button>
             ) : null}

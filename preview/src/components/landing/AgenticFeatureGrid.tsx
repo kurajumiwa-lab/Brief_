@@ -46,11 +46,11 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           {/* Top Interactive Mock Window */}
           <div className="w-full aspect-[16/10] rounded-2xl bg-gradient-to-br from-[#1E3A5F] to-[#0F172A] p-3 sm:p-4 text-white shadow-inner flex flex-col justify-between overflow-hidden relative group">
             <div className="flex items-center justify-between z-10">
-              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-mono font-bold">
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-mono font-bold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>KICD APPROVED</span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-200">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-200">
                 FARGO KES 50
               </span>
             </div>
@@ -63,7 +63,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
               <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                 <div className="bg-[#93EE34] h-full w-[84%]" />
               </div>
-              <div className="flex items-center justify-between text-[9px] text-gray-300 font-mono">
+              <div className="flex items-center justify-between text-[11px] text-gray-300 font-mono">
                 <span>42/50 Parents Pledged</span>
                 <span className="text-[#93EE34] font-bold">-28% WHOLESALE</span>
               </div>
@@ -108,11 +108,11 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           {/* Top Interactive Mock Window */}
           <div className="w-full aspect-[16/10] rounded-2xl bg-gradient-to-br from-[#0C221F] to-[#173830] p-3 sm:p-4 text-white shadow-inner flex flex-col justify-between overflow-hidden relative">
             <div className="flex items-center justify-between z-10">
-              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#93EE34] text-[9px] font-mono font-bold">
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#93EE34] text-[11px] font-mono font-bold">
                 <Coins className="w-3 h-3 text-[#93EE34]" />
                 <span>PEZESHA 740</span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
                 100% REPAYMENT
               </span>
             </div>
@@ -122,7 +122,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
                 <span className="text-xs font-black text-white">Rotational Table Bank</span>
                 <span className="text-xs font-mono font-black text-[#93EE34]">KES 60,000</span>
               </div>
-              <div className="p-2 rounded-xl bg-white/10 flex items-center justify-between text-[10px]">
+              <div className="p-2 rounded-xl bg-white/10 flex items-center justify-between text-[11px]">
                 <span className="text-gray-200">Cycle 5 Payout:</span>
                 <span className="font-bold text-white">Wanjiku M. (Tomorrow)</span>
               </div>
@@ -166,11 +166,11 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
           {/* Top Interactive Mock Window */}
           <div className="w-full aspect-[16/10] rounded-2xl bg-gradient-to-br from-[#1E1B4B] to-[#312E81] p-3 sm:p-4 text-white shadow-inner flex flex-col justify-between overflow-hidden relative">
             <div className="flex items-center justify-between z-10">
-              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#93EE34] text-[9px] font-mono font-bold">
+              <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#93EE34] text-[11px] font-mono font-bold">
                 <Truck className="w-3 h-3 text-[#93EE34]" />
                 <span>LORI BACKHAUL</span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-200">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/10 text-gray-200">
                 47 COUNTIES
               </span>
             </div>
@@ -180,7 +180,7 @@ export const AgenticFeatureGrid: React.FC<AgenticFeatureGridProps> = ({
                 <span className="text-xs font-black text-white">Nairobi ➔ Kisumu Cargo</span>
                 <span className="text-xs font-mono font-black text-[#93EE34]">-50% RATE</span>
               </div>
-              <div className="p-2 rounded-xl bg-white/10 flex items-center justify-between text-[10px]">
+              <div className="p-2 rounded-xl bg-white/10 flex items-center justify-between text-[11px]">
                 <span className="text-gray-200">Return deadhead eliminated</span>
                 <span className="font-bold text-emerald-400">Escrow Locked</span>
               </div>

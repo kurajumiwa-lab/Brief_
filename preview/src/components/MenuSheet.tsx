@@ -170,12 +170,12 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           aria-label="Open your profile"
           className="flex min-w-0 flex-1 items-center gap-3 text-left cursor-pointer"
         >
-          <span className="h-10 w-10 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] flex items-center justify-center text-[13px] font-black shrink-0" aria-hidden="true">
+          <span className="h-10 w-10 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] flex items-center justify-center text-[14px] font-black shrink-0" aria-hidden="true">
             {initials(displayName)}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14px] font-extrabold text-[var(--brief-ink)] leading-tight">{displayName}</span>
-            <span className="mt-0.5 flex items-center gap-1.5 text-[10px] leading-none min-w-0">
+            <span className="block truncate text-[15px] font-extrabold text-[var(--brief-ink)] leading-tight">{displayName}</span>
+            <span className="mt-0.5 flex items-center gap-1.5 text-[11px] leading-none min-w-0">
               <span className="px-1.5 py-0.5 rounded-full bg-[#B45309] text-[var(--accent-ink)] font-extrabold tracking-wide shrink-0">
                 Platinum Member
               </span>
@@ -187,7 +187,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-extrabold text-[#4F46E5] hover:bg-[color:var(--color-well)] cursor-pointer"
+          className="shrink-0 rounded-lg px-2 py-1 text-[12px] font-extrabold text-[#2563EB] hover:bg-[color:var(--color-well)] cursor-pointer"
         >
           {open ? 'Close' : 'View'} →
         </button>
@@ -199,7 +199,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             {standing.map((s) => (
               <div key={s.label} className="rounded-xl bg-[color:var(--color-well)] px-2.5 py-2">
                 <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[var(--ink-70)]">{s.label}</p>
-                <p className="text-[12px] font-extrabold text-[var(--brief-ink)] mt-0.5 truncate">{s.value}</p>
+                <p className="text-[13px] font-extrabold text-[var(--brief-ink)] mt-0.5 truncate">{s.value}</p>
               </div>
             ))}
           </div>
@@ -207,7 +207,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             <button
               type="button"
               onClick={() => void shareCard()}
-              className="flex-1 h-9 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
+              className="flex-1 h-9 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] text-[11.5px] font-extrabold flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <Share2 className="h-3.5 w-3.5" /> Share profile
             </button>
@@ -259,12 +259,12 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
             key={label}
             type="button"
             onClick={() => onSelect(target)}
-            className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 text-left hover:border-[#4F46E5] transition-colors cursor-pointer"
+            className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 text-left hover:border-[#2563EB] transition-colors cursor-pointer"
           >
             <span className="h-8 w-8 rounded-xl bg-[color:var(--color-well)] flex items-center justify-center">
-              <Icon className="h-4 w-4 text-[#4F46E5]" />
+              <Icon className="h-4 w-4 text-[#2563EB]" />
             </span>
-            <p className="mt-2 text-[13px] font-extrabold text-[var(--brief-ink)] leading-tight">{label}</p>
+            <p className="mt-2 text-[14px] font-extrabold text-[var(--brief-ink)] leading-tight">{label}</p>
             <p className="mt-0.5 text-[9.5px] text-[var(--ink-55)] leading-snug">{detail}</p>
           </button>
         ))}
@@ -298,14 +298,14 @@ function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => 
           }`}
         >
           <span className="h-7 w-7 rounded-lg bg-[color:var(--color-well)] flex items-center justify-center shrink-0">
-            <Icon className="h-3.5 w-3.5 text-[#4F46E5]" />
+            <Icon className="h-3.5 w-3.5 text-[#2563EB]" />
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[12.5px] font-extrabold text-[var(--brief-ink)] leading-tight">{label}</span>
             <span className="block text-[9.5px] text-[var(--ink-70)] truncate">{detail}</span>
           </span>
           {rowUnread !== undefined && unread > 0 && (
-            <span className="shrink-0 rounded-full bg-[#DC2626] px-1.5 py-0.5 text-[9px] font-extrabold text-white">
+            <span className="shrink-0 rounded-full bg-[#DC2626] px-1.5 py-0.5 text-[11px] font-extrabold text-white">
               {unread > 99 ? '99+' : unread}
             </span>
           )}
@@ -345,12 +345,12 @@ function RegionGallery({
               aria-pressed={selected}
               className={`rounded-xl border p-2.5 text-center transition-colors cursor-pointer ${
                 selected
-                  ? 'border-[#4F46E5] bg-[color:var(--color-paper)] shadow-sm'
-                  : 'border-[var(--brief-line)] bg-[color:var(--color-paper)] hover:border-[#4F46E5]'
+                  ? 'border-[#2563EB] bg-[color:var(--color-paper)] shadow-sm'
+                  : 'border-[var(--brief-line)] bg-[color:var(--color-paper)] hover:border-[#2563EB]'
               }`}
             >
-              <span className="block text-[20px] leading-none" aria-hidden="true">{region.flag}</span>
-              <span className={`mt-1 block truncate text-[10px] font-extrabold ${selected ? 'text-[#4F46E5]' : 'text-[var(--brief-ink)]'}`}>
+              <span className="block text-[32px] leading-none" aria-hidden="true">{region.flag}</span>
+              <span className={`mt-1 block truncate text-[11px] font-extrabold ${selected ? 'text-[#2563EB]' : 'text-[var(--brief-ink)]'}`}>
                 {region.label}
               </span>
             </button>
@@ -364,7 +364,7 @@ function RegionGallery({
 // --- The page ----------------------------------------------------------------
 
 const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="px-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">{children}</p>
+  <p className="px-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">{children}</p>
 );
 
 export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocation, unread = 0, canOperate = false }: MenuSheetProps) {
@@ -401,7 +401,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         type="button"
         onClick={onClose}
         aria-label="Dismiss menu"
-        className="flex-1 min-h-0 bg-[rgba(36, 28, 18, 0.25)] backdrop-blur-[2px] cursor-pointer"
+        className="flex-1 min-h-0 bg-[rgba(10, 14, 20, 0.25)] backdrop-blur-[2px] cursor-pointer"
       />
 
       {/* The sheet: exactly two-thirds of the screen, sliding up from the
@@ -411,10 +411,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
         <div className="flex items-center gap-2.5">
           {/* §13 — the Brief mark: a small, ownable brand mark, not another
               product's logo. */}
-          <span className="h-8 w-8 shrink-0 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] flex items-center justify-center text-[14px] font-black" aria-hidden="true">B</span>
+          <span className="h-8 w-8 shrink-0 rounded-lg bg-[#2563EB] text-[var(--accent-ink)] flex items-center justify-center text-[15px] font-black" aria-hidden="true">B</span>
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--ink-60)]">Brief · Menu</p>
-            <h1 className="mt-0.5 text-[19px] sm:text-[21px] font-black tracking-tight text-[var(--brief-ink)]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[var(--ink-60)]">Brief · Menu</p>
+            <h1 className="mt-0.5 text-[30px] sm:text-[21px] font-black tracking-tight text-[var(--brief-ink)]">
               Your shortcuts, tools and account
             </h1>
           </div>
@@ -424,7 +424,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           type="button"
           onClick={onClose}
           aria-label="Close menu"
-          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] text-[20px] font-light hover:border-[#4F46E5] transition-colors cursor-pointer"
+          className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] text-[32px] font-light hover:border-[#2563EB] transition-colors cursor-pointer"
         >
           ×
         </button>
@@ -452,10 +452,10 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <button
             type="button"
             onClick={() => onSelect({ tab: 'operate' })}
-            className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#4F46E5] transition-colors cursor-pointer"
+            className="w-full bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl px-3.5 py-2.5 flex items-center gap-3 hover:border-[#2563EB] transition-colors cursor-pointer"
           >
             <span className="h-7 w-7 rounded-lg bg-[color:var(--color-well)] flex items-center justify-center shrink-0">
-              <Settings className="h-3.5 w-3.5 text-[#4F46E5]" />
+              <Settings className="h-3.5 w-3.5 text-[#2563EB]" />
             </span>
             <span className="flex-1 min-w-0 text-left">
               <span className="block text-[12.5px] font-extrabold text-[var(--brief-ink)] leading-tight">Operate</span>
@@ -475,7 +475,7 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
           <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)] block">
             How Brief Works · Neighborhood Trust OS
           </span>
-          <ul className="text-[11px] text-[#4A5568] space-y-1.5 leading-relaxed">
+          <ul className="text-[12px] text-[#4A5568] space-y-1.5 leading-relaxed">
             <li className="flex items-start gap-1.5">
               <span>•</span>
               <span><strong>Brief is not a bank:</strong> Brief does not hold your money or deposit funds.</span>

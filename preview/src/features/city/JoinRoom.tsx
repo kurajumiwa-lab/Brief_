@@ -73,7 +73,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
       <button
         type="button"
         onClick={onOpenCircles}
-        className="text-[11px] font-bold cursor-pointer"
+        className="text-[12px] font-bold cursor-pointer"
         style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}
       >
         ← Circles
@@ -84,13 +84,13 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
       {state === 'gone' && (
         <div className="rounded-3xl p-6 text-center space-y-1" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>
           <p className="text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>This link does not open a room</p>
-          <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
             Ask whoever sent it for a fresh link, or look for the room in Circles.
           </p>
           <button
             type="button"
             onClick={onOpenCircles}
-            className="mt-2 px-4 py-2 rounded-full text-[12px] font-black cursor-pointer"
+            className="mt-2 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer"
             style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
           >
             Browse rooms
@@ -99,7 +99,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
       )}
 
       {state === 'error' && (
-        <p role="alert" className="text-[12px] font-bold" style={{ color: 'var(--color-danger)' }}>
+        <p role="alert" className="text-[13px] font-bold" style={{ color: 'var(--color-danger)' }}>
           {error ?? 'The room could not be read.'}{' '}
           <button type="button" onClick={() => setAttempt((a) => a + 1)} className="underline cursor-pointer">Try again</button>
         </p>
@@ -117,11 +117,11 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
               >
                 {String(room.name ?? '?').trim().slice(0, 1).toUpperCase()}
               </span>
-              <h1 className="text-[20px] font-extrabold leading-tight" style={{ color: 'var(--brief-ink)' }}>{room.name}</h1>
+              <h1 className="text-[32px] font-extrabold leading-tight" style={{ color: 'var(--brief-ink)' }}>{room.name}</h1>
               {room.purpose && (
-                <p className="text-[12px] leading-snug mt-1" style={{ color: 'var(--color-text-secondary)' }}>{room.purpose}</p>
+                <p className="text-[13px] leading-snug mt-1" style={{ color: 'var(--color-text-secondary)' }}>{room.purpose}</p>
               )}
-              <p className="text-[10px] font-mono mt-2" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[11px] font-mono mt-2" style={{ color: 'var(--color-text-muted)' }}>
                 {room.memberCount} {room.memberCount === 1 ? 'member' : 'members'}
                 {room.openTaskCount ? ` · ${room.openTaskCount} job${room.openTaskCount === 1 ? '' : 's'} waiting` : ''}
                 {room.liveVoteCount ? ` · ${room.liveVoteCount} vote${room.liveVoteCount === 1 ? '' : 's'} open` : ''}
@@ -134,9 +134,9 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
           {room.targetValue != null && room.targetValue > 0 && (
             <div className="rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Settled through Brief</span>
-                <span className="text-[13px] font-mono font-black" style={{ color: 'var(--state-live-ink)' }}>
-                  {money(room.currentValue, room.currency)} <span className="text-[10px] font-sans" style={{ color: 'var(--color-text-muted)' }}>of {money(room.targetValue, room.currency)}</span>
+                <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Settled through Brief</span>
+                <span className="text-[14px] font-mono font-black" style={{ color: 'var(--state-live-ink)' }}>
+                  {money(room.currentValue, room.currency)} <span className="text-[11px] font-sans" style={{ color: 'var(--color-text-muted)' }}>of {money(room.targetValue, room.currency)}</span>
                 </span>
               </div>
               <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
@@ -150,11 +150,11 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
 
           {joined ? (
             <div className="rounded-2xl p-4 text-center space-y-1" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>
-              <p className="text-[14px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>You are in the room</p>
+              <p className="text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>You are in the room</p>
               <button
                 type="button"
                 onClick={onOpenCircles}
-                className="mt-1 inline-flex items-center gap-1 px-4 py-2 rounded-full text-[12px] font-black cursor-pointer"
+                className="mt-1 inline-flex items-center gap-1 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer"
                 style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
               >
                 Open it <ArrowRight className="w-3.5 h-3.5" />
@@ -168,7 +168,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
                     type="button"
                     onClick={() => void join()}
                     disabled={joining}
-                    className="w-full px-4 py-3 rounded-2xl text-[13px] font-black cursor-pointer"
+                    className="w-full px-4 py-3 rounded-2xl text-[14px] font-black cursor-pointer"
                     style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
                   >
                     {joining ? 'Letting you in…' : 'Join this room'}
@@ -177,33 +177,33 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
                   <button
                     type="button"
                     onClick={onRequireAuth}
-                    className="w-full px-4 py-3 rounded-2xl text-[13px] font-black cursor-pointer"
+                    className="w-full px-4 py-3 rounded-2xl text-[14px] font-black cursor-pointer"
                     style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
                   >
                     Sign in to join
                   </button>
                 )
               ) : (
-                <p className="text-[12px] leading-snug rounded-2xl p-3" style={{ background: 'var(--color-well)', color: 'var(--color-text-secondary)' }}>
+                <p className="text-[13px] leading-snug rounded-2xl p-3" style={{ background: 'var(--color-well)', color: 'var(--color-text-secondary)' }}>
                   This room does not take self-joins — a coordinator adds people. Use the link below to reach them, or ask for an invite.
                 </p>
               )}
 
-              {error && !room.canJoin && <p role="alert" className="text-[11px] font-bold" style={{ color: 'var(--color-danger)' }}>{error}</p>}
+              {error && !room.canJoin && <p role="alert" className="text-[12px] font-bold" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
               {room.externalLink && (
                 <a
                   href={room.externalLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-black"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-[14px] font-black"
                   style={{ background: 'rgba(37,211,102,0.12)', color: '#128C41', boxShadow: 'inset 0 0 0 1px rgba(37,211,102,0.35)' }}
                 >
                   <MessageCircle className="w-4 h-4" /> Open the group they use today
                 </a>
               )}
               {room.externalLink && room.externalLinkNote && (
-                <p className="flex items-start gap-1.5 text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                <p className="flex items-start gap-1.5 text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
                   <ShieldAlert className="w-3 h-3 shrink-0 mt-0.5" />
                   {room.externalLinkNote}
                 </p>
@@ -211,7 +211,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
             </div>
           )}
 
-          <p className="text-[10px] leading-snug px-1" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] leading-snug px-1" style={{ color: 'var(--color-text-muted)' }}>
             What is said inside a room stays inside it. This page shows how many people are in
             {` ${room.name ?? 'the room'}`} and what is live — not what they have written.
           </p>

@@ -56,14 +56,14 @@ export interface PositionHeroProps {
 function Tile({ label, value, sub, evidence }: { label: string; value: string; sub?: string | null; evidence?: { table: string; id: string } | null }) {
   return (
     <div className="p-3 rounded-xl" style={{ background: 'var(--color-surface)' }}>
-      <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+      <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
         {label}
       </p>
       <p className="text-lg font-mono font-extrabold brief-countdown truncate" style={{ color: 'var(--color-text)' }}>
         {value}
       </p>
       {sub && (
-        <p className="text-[10px] leading-snug truncate" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[11px] leading-snug truncate" style={{ color: 'var(--color-text-muted)' }}>
           {sub}
         </p>
       )}
@@ -96,7 +96,7 @@ export function PositionHero({
         <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
           {denied ? 'No session, so there is no position to read.' : 'Your position could not be read.'}
         </p>
-        <p className="text-[11px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
           {denied
             ? 'Sign in and this becomes your own ledger: what is owed to you, what is expiring, what you defended.'
             : 'Nothing is shown in its place — no reassuring zero, no invented standing.'}
@@ -174,10 +174,10 @@ export function PositionHero({
       {/* Hero band */}
       <div className="p-4 space-y-1.5" style={{ borderLeft: `3px solid var(--color-primary)` }}>
         <div className="flex items-center gap-1.5">
-          <p className="text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
+          <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-primary)' }}>
             Your position
           </p>
-          <span className="text-[9px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
             derived from your rows
           </span>
         </div>
@@ -188,7 +188,7 @@ export function PositionHero({
               {headline.text}
             </p>
             {headline.sub && (
-              <p className="text-[11px] leading-snug truncate" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[12px] leading-snug truncate" style={{ color: 'var(--color-text-muted)' }}>
                 {headline.sub}
               </p>
             )}
@@ -198,7 +198,7 @@ export function PositionHero({
           <button
             type="button"
             onClick={() => { window.location.hash = `requests/${encodeURIComponent(expiring[0].requestId)}`; }}
-            className="inline-flex items-center gap-1 text-[11px] font-black cursor-pointer"
+            className="inline-flex items-center gap-1 text-[12px] font-black cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             Defend it now
@@ -211,7 +211,7 @@ export function PositionHero({
           the state is legible without relying on hue alone. */}
       {spacePills.length > 0 && (
         <div className="px-4 py-3 space-y-1.5 border-t" style={{ borderColor: 'var(--color-border)' }}>
-          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
             Your spaces
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -220,7 +220,7 @@ export function PositionHero({
               return (
                 <span
                   key={p.id}
-                  className="inline-flex items-center gap-1.5 max-w-full px-2 py-1 rounded-full text-[10px] font-bold"
+                  className="inline-flex items-center gap-1.5 max-w-full px-2 py-1 rounded-full text-[11px] font-bold"
                   style={{ border: `1px solid ${tone.rail}`, color: tone.fg, background: 'var(--color-surface)' }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: tone.rail }} aria-hidden="true" />
@@ -293,7 +293,7 @@ export function PositionHero({
       {/* Defended, from closed rows — with its sample size, and the caveat that
           the stricter cohort version is not measurable yet. */}
       <div className="px-4 py-3 border-t space-y-1" style={{ borderColor: 'var(--color-border)', background: 'var(--color-surface)' }}>
-        <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
           Defended
         </p>
         {closed === 0 ? (
@@ -301,11 +301,11 @@ export function PositionHero({
           // measure is, what row starts it, and where to go — no invented
           // "you're #1 because nobody else is here", which is a rank dressed as
           // an encouragement.
-          <p className="text-[12px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[13px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
             No commitments closed yet
           </p>
         ) : (
-          <p className="text-[11px] leading-snug font-mono brief-countdown" style={{ color: 'var(--color-text)' }}>
+          <p className="text-[12px] leading-snug font-mono brief-countdown" style={{ color: 'var(--color-text)' }}>
             {fulfilled.length} fulfilled · {lapsed.length} lapsed · {defended}% defended across {closed} closed commitment{closed === 1 ? '' : 's'}
           </p>
         )}
@@ -316,22 +316,22 @@ export function PositionHero({
           and not a testimonial. */}
       {precedent && (precedent.fill.closed > 0 || precedent.movement.settledOrders > 0) && (
         <div className="px-4 py-3 border-t space-y-1" style={{ borderColor: 'var(--color-border)' }}>
-          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
             Precedent on Brief · {precedent.fill.windowDays} days
           </p>
-          <p className="text-[11px] font-mono brief-countdown leading-snug" style={{ color: 'var(--color-text)' }}>
+          <p className="text-[12px] font-mono brief-countdown leading-snug" style={{ color: 'var(--color-text)' }}>
             {precedent.fill.closed} request{precedent.fill.closed === 1 ? '' : 's'} reached an accepted quote ·{' '}
             {precedent.movement.settledOrders} order{precedent.movement.settledOrders === 1 ? '' : 's'} settled
             {precedent.movement.settledCurrency ? ` for ${kes(precedent.movement.settledOrdersKes)}` : ''} ·{' '}
             {precedent.movement.completedWorkOrders} work order{precedent.movement.completedWorkOrders === 1 ? '' : 's'} completed
           </p>
           {typeof precedent.fill.avgHoursToFill === 'number' && (
-            <p className="text-[10px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] font-mono" style={{ color: 'var(--color-text-muted)' }}>
               took {precedent.fill.avgHoursToFill}h on average across {precedent.fill.hoursSampleCount} row
               {precedent.fill.hoursSampleCount === 1 ? '' : 's'}
             </p>
           )}
-          <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>{precedent.note}</p>
+          <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>{precedent.note}</p>
         </div>
       )}
     </section>

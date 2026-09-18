@@ -125,13 +125,13 @@ export function SignalBar({
         aria-label="Signals unavailable"
       >
         <Activity className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
-        <p className="text-[11px] font-semibold flex-1" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[12px] font-semibold flex-1" style={{ color: 'var(--color-text-muted)' }}>
           Signals unavailable — the ledger could not be read.
         </p>
         <button
           type="button"
           onClick={() => setAttempt((a) => a + 1)}
-          className="shrink-0 flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+          className="shrink-0 flex items-center gap-1 text-[12px] font-bold cursor-pointer"
           style={{ color: 'var(--color-primary)' }}
         >
           <RefreshCw className="w-3 h-3" /> Retry
@@ -153,26 +153,26 @@ export function SignalBar({
           aria-hidden="true"
         />
         <span
-          className="text-[10px] font-black uppercase tracking-[0.14em] shrink-0"
+          className="text-[11px] font-black uppercase tracking-[0.14em] shrink-0"
           style={{ color: 'var(--color-primary)' }}
         >
           What's moving
         </span>
-        <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[12px] font-mono shrink-0" style={{ color: 'var(--color-text-muted)' }}>
           {stamp ? `newest row ${stamp}` : 'no rows yet'}
         </span>
 
         <div className="min-w-0 flex-1 text-right">
           {current ? (
             <p
-              className="brief-countdown text-[11px] font-semibold truncate transition-opacity duration-300"
+              className="brief-countdown text-[12px] font-semibold truncate transition-opacity duration-300"
               style={{ color: 'var(--color-text)', opacity: fading ? 0 : 1 }}
               title={current.text}
             >
               {current.text}
             </p>
           ) : (
-            <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--color-text-muted)' }}>
               Nothing has moved on the ledger yet.
             </p>
           )}
@@ -183,7 +183,7 @@ export function SignalBar({
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
             aria-expanded={detailsOpen}
-            className="shrink-0 flex items-center gap-0.5 text-[10px] font-black uppercase tracking-wider cursor-pointer"
+            className="shrink-0 flex items-center gap-0.5 text-[11px] font-black uppercase tracking-wider cursor-pointer"
             style={{ color: 'var(--color-text-muted)' }}
           >
             {facts.length} signals
@@ -195,11 +195,11 @@ export function SignalBar({
       {detailsOpen && (
         <div className="px-4 pb-3 space-y-1.5 border-t" style={{ borderColor: 'var(--brief-line)' }}>
           {facts.map((f) => (
-            <p key={f.id} className="text-[11px] leading-snug" style={{ color: 'var(--color-text)' }}>
+            <p key={f.id} className="text-[12px] leading-snug" style={{ color: 'var(--color-text)' }}>
               {f.text}
             </p>
           ))}
-          <p className="text-[10px] leading-snug pt-1" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] leading-snug pt-1" style={{ color: 'var(--color-text-muted)' }}>
             A snapshot of real rows, not a feed: no market price index is wired in, and a listing holds
             one price — so no percentage movement is shown.
           </p>
@@ -207,7 +207,7 @@ export function SignalBar({
             <button
               type="button"
               onClick={onOpenPulse}
-              className="text-[11px] font-bold cursor-pointer"
+              className="text-[12px] font-bold cursor-pointer"
               style={{ color: 'var(--color-primary)' }}
             >
               Open Pulse →
@@ -218,7 +218,7 @@ export function SignalBar({
 
       {!detailsOpen && counts && facts.length === 0 && (
         <div className="px-4 pb-2.5">
-          <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
             {counts}
           </p>
         </div>

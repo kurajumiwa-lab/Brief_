@@ -151,12 +151,12 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
       <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-[#4F46E5]" aria-hidden="true" />
-            <h2 className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--brief-ink)]">
+            <TrendingUp className="h-4 w-4 text-[#2563EB]" aria-hidden="true" />
+            <h2 className="text-[12px] font-extrabold uppercase tracking-[0.18em] text-[var(--brief-ink)]">
               Money opportunities
             </h2>
           </div>
-          <p className="text-[10px] font-semibold text-[var(--ink-70)]">
+          <p className="text-[11px] font-semibold text-[var(--ink-70)]">
             {areaHint ? `around ${areaHint}` : 'across Brief — set your area to focus'}
           </p>
         </div>
@@ -167,14 +167,14 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
             return (
               <div key={row.key} className="rounded-xl border border-[var(--surface-3)] bg-[color:var(--color-paper)] p-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="flex items-center gap-1.5 text-[12px] font-extrabold text-[var(--brief-ink)]">
-                    <Icon className="h-3.5 w-3.5 text-[#4F46E5]" aria-hidden="true" />
+                  <p className="flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--brief-ink)]">
+                    <Icon className="h-3.5 w-3.5 text-[#2563EB]" aria-hidden="true" />
                     {row.count} {row.label}
                   </p>
                   <button
                     type="button"
                     onClick={() => onOpenSection(row.section)}
-                    className="cursor-pointer rounded-full border border-[var(--brief-line)] px-2.5 py-1 text-[10px] font-extrabold text-[#4F46E5] hover:bg-[var(--color-well)]"
+                    className="cursor-pointer rounded-full border border-[var(--brief-line)] px-2.5 py-1 text-[11px] font-extrabold text-[#2563EB] hover:bg-[var(--color-well)]"
                   >
                     Open
                   </button>
@@ -187,9 +187,9 @@ export function MoneyBand({ objects, areaHint, onOpenSection, onOpenItem, minTot
                         onClick={() => onOpenItem?.(row, item)}
                         className="flex w-full cursor-pointer items-baseline justify-between gap-2 text-left"
                       >
-                        <span className="min-w-0 truncate text-[11px] font-semibold text-[var(--ink-80)]">{item.title}</span>
+                        <span className="min-w-0 truncate text-[12px] font-semibold text-[var(--ink-80)]">{item.title}</span>
                         {/* A sub-line is only rendered when the detail really exists. */}
-                        {item.sub && <span className="shrink-0 text-[10px] font-bold text-[var(--ink-55)]">{item.sub}</span>}
+                        {item.sub && <span className="shrink-0 text-[11px] font-bold text-[var(--ink-55)]">{item.sub}</span>}
                       </button>
                     </li>
                   ))}

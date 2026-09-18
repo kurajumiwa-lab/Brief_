@@ -89,12 +89,12 @@ export function ResaleDesk() {
         <div className="text-xs bg-[color:var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2.5 text-[var(--brief-ink)]">{notice}</div>
       )}
       {actionError && (
-        <div className="text-xs border border-[#06B6D4] rounded-xl px-3 py-2.5 text-[var(--brief-ink)]">{actionError}</div>
+        <div className="text-xs border border-[#0891B2] rounded-xl px-3 py-2.5 text-[var(--brief-ink)]">{actionError}</div>
       )}
 
       {/* --- your seats ------------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Seats you can list</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Seats you can list</h3>
         {tickets.status === 'loading' && <p className="text-xs text-[var(--ink-70)]">Loading your seats…</p>}
         {tickets.status === 'error' && (
           <div className="border border-[var(--brief-line)] rounded-xl p-4 text-center space-y-2">
@@ -105,7 +105,7 @@ export function ResaleDesk() {
         {tickets.status === 'ready' && listable.length === 0 && (
           <div className="border border-[var(--brief-line)] rounded-xl p-5 text-center">
             <p className="text-xs font-bold text-[var(--brief-ink)]">Nothing to list right now</p>
-            <p className="text-[11px] text-[var(--ink-60)] mt-1">
+            <p className="text-[12px] text-[var(--ink-60)] mt-1">
               Seats you hold appear here (My Layer → Kept → My tickets) unless they are already listed.
             </p>
           </div>
@@ -114,7 +114,7 @@ export function ResaleDesk() {
           <div key={t.id} className="border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <p className="text-xs font-extrabold text-[var(--brief-ink)] truncate">{t.eventTitle ?? 'Event'}</p>
-              <span className="text-[10px] text-[var(--ink-70)] shrink-0">code v{t.codeVersion}</span>
+              <span className="text-[11px] text-[var(--ink-70)] shrink-0">code v{t.codeVersion}</span>
             </div>
             {listFor === t.id ? (
               <div className="space-y-2">
@@ -124,13 +124,13 @@ export function ResaleDesk() {
                     onChange={(e) => setPrice(e.target.value)}
                     inputMode="numeric"
                     placeholder="price in whole KES"
-                    className="text-xs bg-[color:var(--color-paper)] text-[var(--brief-ink)] rounded-xl px-3 py-2 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none w-40"
+                    className="text-xs bg-[color:var(--color-paper)] text-[var(--brief-ink)] rounded-xl px-3 py-2 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none w-40"
                   />
                   <input
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="why you're selling (optional)"
-                    className="flex-1 min-w-40 text-xs bg-[color:var(--color-paper)] text-[var(--brief-ink)] rounded-xl px-3 py-2 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                    className="flex-1 min-w-40 text-xs bg-[color:var(--color-paper)] text-[var(--brief-ink)] rounded-xl px-3 py-2 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -140,7 +140,7 @@ export function ResaleDesk() {
                       () => briefApi.createResaleListing(t.id, Number(price), note.trim() || undefined),
                       `Listed at ${money(Number(price), 'KES')}. Buyers see it in the event's resale section.`
                     )}
-                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
+                    className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
                   >
                     Put it up for sale
                   </button>
@@ -148,14 +148,14 @@ export function ResaleDesk() {
                     Not now
                   </button>
                 </div>
-                <p className="text-[10px] text-[var(--ink-70)]">
+                <p className="text-[11px] text-[var(--ink-70)]">
                   Whole shillings only. The server refuses anything else — a fraction is a price nobody set.
                 </p>
               </div>
             ) : (
               <button
                 onClick={() => { setListFor(t.id); setActionError(null); }}
-                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer"
+                className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] cursor-pointer"
               >
                 List this seat
               </button>
@@ -166,11 +166,11 @@ export function ResaleDesk() {
 
       {/* --- active listings --------------------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Your listings</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Your listings</h3>
         {desk.status === 'loading' && <p className="text-xs text-[var(--ink-70)]">Loading listings…</p>}
         {desk.status === 'error' && <p className="text-xs text-[var(--ink-70)]">{desk.error}</p>}
         {desk.status === 'ready' && activeListings.length === 0 && (
-          <p className="text-[11px] text-[var(--ink-60)] border border-[var(--brief-line)] rounded-xl p-4">
+          <p className="text-[12px] text-[var(--ink-60)] border border-[var(--brief-line)] rounded-xl p-4">
             No active listings. When you list a seat it appears here with its orders.
           </p>
         )}
@@ -181,7 +181,7 @@ export function ResaleDesk() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[var(--brief-ink)]">{money(l.price, l.currency)}</p>
-                  <p className="text-[10px] text-[var(--ink-70)] mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
+                  <p className="text-[11px] text-[var(--ink-70)] mt-0.5">{LISTING_LABEL[l.status] ?? l.status}</p>
                 </div>
                 {l.status === 'active' && (
                   <button
@@ -195,7 +195,7 @@ export function ResaleDesk() {
               </div>
               {held && (
                 <div className="border-t border-[var(--brief-line)] pt-2 space-y-2">
-                  <p className="text-[11px] text-[var(--ink-80)]">
+                  <p className="text-[12px] text-[var(--ink-80)]">
                     A buyer is holding this seat at {money(held.total, held.currency)} ({ORDER_LABEL[held.status]}).
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -205,7 +205,7 @@ export function ResaleDesk() {
                         () => briefApi.confirmTicketOrderReceived(held.id),
                         `Payment confirmed — the seat moved to the buyer and their code is live. Recorded in the ledger.`
                       )}
-                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
                     >
                       I received {money(held.total, held.currency)}
                     </button>
@@ -217,7 +217,7 @@ export function ResaleDesk() {
                       Refund instead
                     </button>
                   </div>
-                  <p className="text-[10px] text-[var(--ink-70)]">
+                  <p className="text-[11px] text-[var(--ink-70)]">
                     Only confirm money that actually arrived. The confirmation writes a settled row to
                     the ledger under your name — it is your attestation, auditable.
                   </p>
@@ -229,7 +229,7 @@ export function ResaleDesk() {
         {desk.status === 'ready' && finishedListings.length > 0 && (
           <div className="space-y-1">
             {finishedListings.map((l) => (
-              <p key={l.id} className="text-[10px] text-[var(--ink-70)] flex items-center justify-between border-b border-[#EFF1F4] pb-1">
+              <p key={l.id} className="text-[11px] text-[var(--ink-70)] flex items-center justify-between border-b border-[#EFF1F4] pb-1">
                 <span>{money(l.price, l.currency)} · {LISTING_LABEL[l.status] ?? l.status}{l.removedReason ? ` — ${l.removedReason}` : ''}</span>
                 <span>{new Date(l.createdAt).toLocaleDateString()}</span>
               </p>
@@ -240,7 +240,7 @@ export function ResaleDesk() {
 
       {/* --- orders where you are the buyer -------------------------------- */}
       <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Seats you are buying</h3>
+        <h3 className="text-[11px] font-bold uppercase tracking-wide text-[var(--ink-70)]">Seats you are buying</h3>
         {desk.status !== 'ready' && <p className="text-xs text-[var(--ink-70)]">Loading orders…</p>}
         {(() => {
           if (desk.status !== 'ready') return null;
@@ -250,7 +250,7 @@ export function ResaleDesk() {
           const asBuyer = orders.filter((o) => !myListingIds.has(o.listingId));
           if (asBuyer.length === 0) {
             return (
-              <p className="text-[11px] text-[var(--ink-60)] border border-[var(--brief-line)] rounded-xl p-4">
+              <p className="text-[12px] text-[var(--ink-60)] border border-[var(--brief-line)] rounded-xl p-4">
                 No open purchases. When you buy a resale seat from an event's page, payment happens with
                 the seller and is tracked here until the seat is yours.
               </p>
@@ -263,7 +263,7 @@ export function ResaleDesk() {
               </p>
               {o.status === 'pending' ? (
                 <>
-                  <p className="text-[11px] text-[var(--ink-70)]">
+                  <p className="text-[12px] text-[var(--ink-70)]">
                     Arrange {money(o.total, o.currency)} with the seller. When they confirm receiving it, the
                     seat moves to you and your code appears in My tickets. Brief cannot collect this payment
                     itself — no provider is connected.
@@ -277,12 +277,12 @@ export function ResaleDesk() {
                   </button>
                 </>
               ) : o.status === 'completed' ? (
-                <p className="text-[11px] text-[var(--ink-70)]">
+                <p className="text-[12px] text-[var(--ink-70)]">
                   Completed — the seat is in My tickets under your code. A refund returns it to the seller;
                   ask here and the seller confirms it from their listing.
                 </p>
               ) : (
-                <p className="text-[11px] text-[var(--ink-70)]">This order is closed.</p>
+                <p className="text-[12px] text-[var(--ink-70)]">This order is closed.</p>
               )}
             </div>
           ));

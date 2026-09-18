@@ -40,19 +40,19 @@ const TABS: { id: Tab; label: string }[] = [
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">{title}</p>
-      {note && <p className="text-[10px] leading-snug text-[var(--ink-60)]">{note}</p>}
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">{title}</p>
+      {note && <p className="text-[11px] leading-snug text-[var(--ink-60)]">{note}</p>}
       {children}
     </div>
   );
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] text-[var(--ink-70)]">{children}</p>;
+  return <p className="text-[12px] text-[var(--ink-70)]">{children}</p>;
 }
 
 function Row({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--ink-80)]">{children}</div>;
+  return <div className="flex items-center justify-between gap-2 text-[12px] text-[var(--ink-80)]">{children}</div>;
 }
 
 /** A labelled yes/no that never invents a third state. */
@@ -78,13 +78,13 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#4F46E5]/30 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 bg-[#2563EB]/30 backdrop-blur-sm overflow-y-auto">
       <div className="max-w-3xl mx-auto min-h-full bg-[color:var(--color-well)]">
-        <div className="sticky top-0 z-10 bg-[rgba(240, 233, 222, 0.95)] border-b border-[var(--brief-line)] px-4 pt-5 pb-3">
+        <div className="sticky top-0 z-10 bg-[rgba(238, 241, 245, 0.95)] border-b border-[var(--brief-line)] px-4 pt-5 pb-3">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Operate</h2>
-              <p className="text-[10px] text-[var(--ink-60)] leading-snug">
+              <p className="text-[11px] text-[var(--ink-60)] leading-snug">
                 The operator desk. Every action here is capability-checked again
                 on the server and written to the audit log. You carry:
                 <span className="font-bold"> {caps.length > 0 ? caps.join(', ') : 'no operator capability'}</span>.
@@ -98,8 +98,8 @@ export function AdminDesk({ open, onClose, me }: { open: boolean; onClose: () =>
           <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
             {TABS.map((t) => (
               <button key={t.id} onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-extrabold cursor-pointer ${
-                  tab === t.id ? 'bg-[#4F46E5] text-[var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border border-[var(--brief-line)]'
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-extrabold cursor-pointer ${
+                  tab === t.id ? 'bg-[#2563EB] text-[var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border border-[var(--brief-line)]'
                 }`}>
                 {t.label}
               </button>
@@ -205,7 +205,7 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
                 {Object.keys(funnel.funnel).length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-1">
                     {Object.entries(funnel.funnel).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, n]) => (
-                      <span key={name} className="rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[9px] font-bold text-[var(--ink-70)]">{name} · {n}</span>
+                      <span key={name} className="rounded-full bg-[color:var(--color-well)] px-2 py-0.5 text-[11px] font-bold text-[var(--ink-70)]">{name} · {n}</span>
                     ))}
                   </div>
                 )}
@@ -218,26 +218,26 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="search members…"
-              className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[11px] outline-none focus:border-[#4F46E5]"
+              className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[12px] outline-none focus:border-[#2563EB]"
             />
             {page === null ? <Empty>loading…</Empty>
               : page.rows.length === 0 ? <Empty>No members match “{query}”.</Empty>
               : page.rows.map((m) => (
                 <button key={m.id} type="button" onClick={() => { setSelected(m); setNote(null); setReason(''); }}
-                  className={`w-full rounded-xl border px-2.5 py-2 text-left cursor-pointer ${selected?.id === m.id ? 'border-[#4F46E5] bg-[color:var(--color-paper)]' : 'border-[var(--brief-line)] bg-[color:var(--color-paper)]'}`}>
+                  className={`w-full rounded-xl border px-2.5 py-2 text-left cursor-pointer ${selected?.id === m.id ? 'border-[#2563EB] bg-[color:var(--color-paper)]' : 'border-[var(--brief-line)] bg-[color:var(--color-paper)]'}`}>
                   <Row>
                     <span className="min-w-0 truncate font-extrabold">{m.displayName}</span>
-                    <span className="shrink-0 text-[9px] text-[var(--ink-60)]">{String(m.createdAt ?? '').slice(0, 10)}</span>
+                    <span className="shrink-0 text-[11px] text-[var(--ink-60)]">{String(m.createdAt ?? '').slice(0, 10)}</span>
                   </Row>
                   <Row>
-                    <span className="text-[9px] text-[var(--ink-70)]">@{m.handle}</span>
+                    <span className="text-[11px] text-[var(--ink-70)]">@{m.handle}</span>
                     <span className="flex gap-1">
-                      {m.status !== 'active' && <span className="rounded-full bg-[#DC2626]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#DC2626]">{m.status}</span>}
-                      {m.verification === 'approved' && <span className="rounded-full bg-[#16A34A]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#16A34A]">verified</span>}
-                      {m.platformRoles.map((r) => <span key={r} className="rounded-full bg-[#4F46E5]/10 px-1.5 py-0.5 text-[8px] font-extrabold text-[#4F46E5]">{r}</span>)}
+                      {m.status !== 'active' && <span className="rounded-full bg-[#DC2626]/10 px-1.5 py-0.5 text-[11px] font-extrabold text-[#DC2626]">{m.status}</span>}
+                      {m.verification === 'approved' && <span className="rounded-full bg-[#059669]/10 px-1.5 py-0.5 text-[11px] font-extrabold text-[#059669]">verified</span>}
+                      {m.platformRoles.map((r) => <span key={r} className="rounded-full bg-[#2563EB]/10 px-1.5 py-0.5 text-[11px] font-extrabold text-[#2563EB]">{r}</span>)}
                     </span>
                   </Row>
-                  <p className="mt-0.5 text-[9px] text-[var(--ink-70)] truncate">
+                  <p className="mt-0.5 text-[11px] text-[var(--ink-70)] truncate">
                     {m.onboarding.rung ? `Climbed to: ${RUNG_LABEL[m.onboarding.rung] ?? m.onboarding.rung}` : 'No rung yet'}
                     {m.onboarding.latestEvent ? ` · last: ${m.onboarding.latestEvent}` : ''}
                   </p>
@@ -250,16 +250,16 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
             <Card title={`@${selected.handle}`} note="Roles and suspension are audited with before/after. A suspension needs a reason.">
               <Row>
                 <span>Status</span>
-                <span className={`font-extrabold ${selected.status === 'active' ? 'text-[#16A34A]' : 'text-[#DC2626]'}`}>{selected.status}</span>
+                <span className={`font-extrabold ${selected.status === 'active' ? 'text-[#059669]' : 'text-[#DC2626]'}`}>{selected.status}</span>
               </Row>
               <div className="pt-1">
-                <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-60)] pt-1">Platform roles</p>
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--ink-60)] pt-1">Platform roles</p>
                 <div className="flex flex-wrap gap-1 pt-1">
                   {['operator', 'reviewer', 'finance', 'admin'].map((role) => (
                     <button key={role} type="button" onClick={() => toggleRole(selected, role)}
-                      className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold cursor-pointer border ${
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold cursor-pointer border ${
                         selected.platformRoles.includes(role)
-                          ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#4F46E5]'
+                          ? 'bg-[#2563EB] text-[var(--accent-ink)] border-[#2563EB]'
                           : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
                       }`}>
                       {role}
@@ -271,15 +271,15 @@ function MembersTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
                 <div className="space-y-1.5 pt-2">
                   <input value={reason} onChange={(e) => setReason(e.target.value)}
                     placeholder="why suspend? (audited)"
-                    className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[10px] outline-none focus:border-[#4F46E5]" />
+                    className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2.5 py-1.5 text-[11px] outline-none focus:border-[#2563EB]" />
                   <button type="button" onClick={() => suspend(selected)} disabled={busy || reason.trim().length < 4}
-                    className="rounded-lg border border-[#DC2626]/30 bg-[#DC2626]/5 px-3 py-1.5 text-[10px] font-extrabold text-[#DC2626] cursor-pointer disabled:opacity-40">
+                    className="rounded-lg border border-[#DC2626]/30 bg-[#DC2626]/5 px-3 py-1.5 text-[11px] font-extrabold text-[#DC2626] cursor-pointer disabled:opacity-40">
                     Suspend — locks them out now
                   </button>
                 </div>
               ) : (
                 <button type="button" onClick={() => reinstate(selected)} disabled={busy}
-                  className="mt-2 rounded-lg border border-[#16A34A]/30 bg-[#16A34A]/5 px-3 py-1.5 text-[10px] font-extrabold text-[#16A34A] cursor-pointer disabled:opacity-40">
+                  className="mt-2 rounded-lg border border-[#059669]/30 bg-[#059669]/5 px-3 py-1.5 text-[11px] font-extrabold text-[#059669] cursor-pointer disabled:opacity-40">
                   Reinstate
                 </button>
               )}
@@ -335,13 +335,13 @@ function HealthTab({ tick, can, refresh }: { tick: number; can: (c: string) => b
         {errors.length === 0 ? <Empty>No recorded errors.</Empty> : errors.slice(-8).reverse().map((e, i) => (
           <Row key={e.id ?? i}>
             <span className="min-w-0 truncate">{String(e.kind ?? e.action ?? 'error')}</span>
-            <span className="shrink-0 text-[9px] text-[var(--ink-60)]">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
+            <span className="shrink-0 text-[11px] text-[var(--ink-60)]">{String(e.at ?? e.createdAt ?? '').slice(0, 16)}</span>
           </Row>
         ))}
       </Card>
       {can('ops.run') ? (
         <button onClick={() => void backup()}
-          className="w-full rounded-xl bg-[#4F46E5] px-3 py-2.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer">
+          className="w-full rounded-xl bg-[#2563EB] px-3 py-2.5 text-[12px] font-extrabold text-[var(--accent-ink)] cursor-pointer">
           Take a backup now (audited)
         </button>
       ) : (
@@ -395,8 +395,8 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : reports.length === 0 ? <Empty>No open reports.</Empty>
           : reports.map((r) => (
             <div key={r.id} className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1">
-              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[9px] text-[var(--ink-60)]">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
-              <p className="text-[10px] text-[var(--ink-70)]">
+              <Row><span>{String(r.reason ?? r.kind ?? 'report')}</span><span className="text-[11px] text-[var(--ink-60)]">{String(r.createdAt ?? '').slice(0, 10)}</span></Row>
+              <p className="text-[11px] text-[var(--ink-70)]">
                 {r.target?.title ? `“${String(r.target.title)}”` : `object ${String(r.objectId ?? r.targetId ?? '?')}`}
                 {r.target?.type ? ` · ${String(r.target.type)}` : ''}
                 {r.note ? ` — “${String(r.note)}”` : ''}
@@ -404,9 +404,9 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
               {can('moderate') ? (
                 <div className="flex gap-1.5 pt-1">
                   <button onClick={() => void act(() => briefApi.resolveOpsReport(r.id, 'dismiss', 'reviewed at the desk'), 'dismissed')}
-                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Dismiss</button>
+                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-extrabold cursor-pointer">Dismiss</button>
                   <button onClick={() => void act(() => briefApi.resolveOpsReport(r.id, 'remove', 'removed from discovery at the desk'), 'removed from discovery')}
-                    className="rounded-lg bg-[#4F46E5] px-2 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Remove from discovery</button>
+                    className="rounded-lg bg-[#2563EB] px-2 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Remove from discovery</button>
                 </div>
               ) : <Empty>Deciding needs the moderate capability.</Empty>}
             </div>
@@ -420,33 +420,33 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
             <div key={c.id} className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(c.field)}</span>
-                <span className="text-[9px] text-[var(--ink-60)]">
+                <span className="text-[11px] text-[var(--ink-60)]">
                   {String(c.status)} · {String(c.createdAt ?? '').slice(0, 10)}
                 </span>
               </Row>
-              <p className="text-[10px] text-[var(--ink-70)]">
+              <p className="text-[11px] text-[var(--ink-70)]">
                 {String(c.objectId ?? '?')} — {c.originalValue === null ? 'no prior value' : `was “${String(c.originalValue)}”`}
                 {' '}→ now “{String(c.correctedValue)}”
               </p>
               {c.status === 'applied' && can('moderate') && (
                 <div className="flex gap-1.5 pt-1">
                   <button onClick={() => void act(() => briefApi.opsRejectCorrection(c.id, 'rejected at the desk'), 'correction rejected')}
-                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Reject</button>
+                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-extrabold cursor-pointer">Reject</button>
                 </div>
               )}
             </div>
           ))}
         {can('moderate') && (
           <div className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1.5">
-            <p className="text-[10px] font-extrabold text-[var(--ink-60)]">Correct a field</p>
+            <p className="text-[11px] font-extrabold text-[var(--ink-60)]">Correct a field</p>
             <div className="flex flex-wrap gap-1.5">
               <input
                 value={corrObjectId}
                 onChange={(e) => setCorrObjectId(e.target.value)}
                 placeholder="object id"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[10px]"
+                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px]"
               />
-              <select value={corrField} onChange={(e) => setCorrField(e.target.value)} className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[10px]">
+              <select value={corrField} onChange={(e) => setCorrField(e.target.value)} className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px]">
                 {['title', 'type', 'summary', 'category', 'locationName', 'venue', 'organizer', 'dateCanonical', 'eventStart', 'eventEnd', 'deadlineCanonical', 'operatingHours', 'price'].map((f) => (
                   <option key={f} value={f}>{f}</option>
                 ))}
@@ -455,13 +455,13 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 value={corrValue}
                 onChange={(e) => setCorrValue(e.target.value)}
                 placeholder="corrected value"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[10px]"
+                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px]"
               />
               <input
                 value={corrReason}
                 onChange={(e) => setCorrReason(e.target.value)}
                 placeholder="why (audited)"
-                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[10px]"
+                className="min-w-0 flex-1 rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px]"
               />
               <button
                 onClick={() => {
@@ -476,7 +476,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                   );
                   setCorrValue(''); setCorrReason('');
                 }}
-                className="rounded-lg bg-[#4F46E5] px-2.5 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
+                className="rounded-lg bg-[#2563EB] px-2.5 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
               >
                 Apply
               </button>
@@ -492,9 +492,9 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
             <div key={s.id} className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(s.name)}</span>
-                <span className="text-[9px] font-extrabold uppercase text-[var(--ink-60)]">{String(s.trustStatus)}</span>
+                <span className="text-[11px] font-extrabold uppercase text-[var(--ink-60)]">{String(s.trustStatus)}</span>
               </Row>
-              <p className="text-[10px] text-[var(--ink-70)]">
+              <p className="text-[11px] text-[var(--ink-70)]">
                 {String(s.type ?? '?')} · {Number(s.objectsCreated ?? 0)} objects
                 {s.trustReason ? ` — “${String(s.trustReason)}”` : ''}
               </p>
@@ -502,8 +502,8 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 <div className="flex gap-1.5 pt-1">
                   {(['trusted', 'normal', 'degraded', 'disabled'] as const).map((st) => (
                     <button key={st} onClick={() => void act(() => briefApi.opsSetSourceTrust(s.id, st, `set to ${st} at the desk`), `source ${st}`)}
-                      className={`rounded-lg border px-2 py-1 text-[9px] font-extrabold cursor-pointer ${
-                        s.trustStatus === st ? 'bg-[#4F46E5] border-[#4F46E5] text-[var(--accent-ink)]' : 'border-[var(--brief-line)] text-[var(--ink-70)]'
+                      className={`rounded-lg border px-2 py-1 text-[11px] font-extrabold cursor-pointer ${
+                        s.trustStatus === st ? 'bg-[#2563EB] border-[#2563EB] text-[var(--accent-ink)]' : 'border-[var(--brief-line)] text-[var(--ink-70)]'
                       }`}>
                       {st}
                     </button>
@@ -521,13 +521,13 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
             <div key={r.id} className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1">
               <Row>
                 <span className="font-extrabold">{String(r.kind)}</span>
-                <span className="text-[9px] text-[var(--ink-60)]">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
+                <span className="text-[11px] text-[var(--ink-60)]">submitted {String(r.submittedAt ?? '').slice(0, 10)}</span>
               </Row>
-              <p className="text-[10px] text-[var(--ink-70)]">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
+              <p className="text-[11px] text-[var(--ink-70)]">user {String(r.userId ?? '?')}{r.note ? ` — “${String(r.note)}”` : ''}</p>
               {/* White-label KYC assist: the provider's outcome codes, shown as
                   EVIDENCE for the reviewer -- never an auto-verdict. */}
               {r.providerAssist && (
-                <p className="text-[9px] text-[var(--ink-60)]">
+                <p className="text-[11px] text-[var(--ink-60)]">
                   provider check ({String(r.providerAssist.provider)}):{' '}
                   {r.providerAssist.ok
                     ? `${String(r.providerAssist.resultCode ?? '')} ${String(r.providerAssist.resultText ?? '')}`.trim() || 'no detail returned'
@@ -548,7 +548,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
           : disputes.slice(0, 10).map((d) => (
             <Row key={d.id}>
               <span className="min-w-0 truncate">{String(d.reason ?? 'dispute')}</span>
-              <span className="shrink-0 text-[9px] text-[var(--ink-60)]">order {String(d.orderId ?? '?').slice(0, 12)}</span>
+              <span className="shrink-0 text-[11px] text-[var(--ink-60)]">order {String(d.orderId ?? '?').slice(0, 12)}</span>
             </Row>
           ))}
       </Card>
@@ -562,7 +562,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
                 {String(l.status)}
                 {l.status === 'removed' && l.removedReason ? ` — ${String(l.removedReason)}` : ''}
               </span>
-              <span className="shrink-0 text-[9px] text-[var(--ink-60)]">KES {String(l.priceKes ?? l.price ?? '?')}</span>
+              <span className="shrink-0 text-[11px] text-[var(--ink-60)]">KES {String(l.priceKes ?? l.price ?? '?')}</span>
             </Row>
           ))}
       </Card>
@@ -576,13 +576,13 @@ function DecideRow({ onDecide }: { onDecide: (decision: 'approved' | 'rejected',
     <div className="space-y-1.5 pt-1">
       <input value={reason} onChange={(e) => setReason(e.target.value)}
         placeholder="reason (a rejection without one is refused)"
-        className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[10px]" />
+        className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[11px]" />
       <div className="flex gap-1.5">
         <button onClick={() => onDecide('approved', reason || 'approved at the desk')}
-          className="rounded-lg bg-[#4F46E5] px-2 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Approve</button>
+          className="rounded-lg bg-[#2563EB] px-2 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Approve</button>
         <button onClick={() => onDecide('rejected', reason)}
           disabled={!reason.trim()}
-          className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-extrabold cursor-pointer disabled:opacity-40">Reject</button>
+          className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-extrabold cursor-pointer disabled:opacity-40">Reject</button>
       </div>
     </div>
   );
@@ -609,7 +609,7 @@ function IngestionTab({ tick }: { tick: number }) {
       </Card>
       <Card title="Ingest status" note="What the sources layer reports about itself right now.">
         {ingest === null ? <Empty>loading…</Empty> : (
-          <pre className="overflow-x-auto rounded-xl bg-[#4F46E5] px-3 py-2 text-[9px] leading-relaxed text-[var(--accent-ink)]">
+          <pre className="overflow-x-auto rounded-xl bg-[#2563EB] px-3 py-2 text-[11px] leading-relaxed text-[var(--accent-ink)]">
             {JSON.stringify(ingest, null, 2).slice(0, 1200)}
           </pre>
         )}
@@ -643,12 +643,12 @@ function ContentTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
           : cols.length === 0 ? <Empty>No collections.</Empty>
           : cols.map((c) => (
             <div key={c.id ?? c.key} className="rounded-xl border border-[var(--brief-line)] p-2.5 space-y-1">
-              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[9px] text-[var(--ink-60)]">{String(c.status ?? '')}</span></Row>
+              <Row><span className="font-extrabold">{String(c.title ?? c.key)}</span><span className="text-[11px] text-[var(--ink-60)]">{String(c.status ?? '')}</span></Row>
               {can('moderate') && (
                 <div className="flex gap-1.5 pt-1">
                   {['publish', 'archive'].map((a) => (
                     <button key={a} onClick={() => void transition(String(c.key), a)}
-                      className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-extrabold cursor-pointer">{a}</button>
+                      className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-extrabold cursor-pointer">{a}</button>
                   ))}
                 </div>
               )}
@@ -659,9 +659,9 @@ function ContentTab({ tick, can, refresh }: { tick: number; can: (c: string) => 
         {!can('admin') ? <Empty>Seeding needs the admin capability.</Empty> : (
           <div className="flex gap-1.5">
             <button onClick={async () => { const r = await briefApi.seedDemo(); setNote(r.ok ? 'demo content seeded' : r.error); refresh(); }}
-              className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-extrabold cursor-pointer">Seed demo</button>
+              className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-extrabold cursor-pointer">Seed demo</button>
             <button onClick={async () => { const r = await briefApi.clearDemo(); setNote(r.ok ? 'demo content cleared' : r.error); refresh(); }}
-              className="rounded-lg bg-[#4F46E5] px-2 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Clear demo</button>
+              className="rounded-lg bg-[#2563EB] px-2 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Clear demo</button>
           </div>
         )}
       </Card>
@@ -706,10 +706,10 @@ function MediaTab({ tick, can, refresh }: { tick: number; can: (c: string) => bo
           <div className="space-y-1.5">
             {(['kind', 'key', 'url', 'alt'] as const).map((f) => (
               <input key={f} value={(form as any)[f]} onChange={(e) => setForm({ ...form, [f]: e.target.value })}
-                placeholder={f} className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[10px]" />
+                placeholder={f} className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[11px]" />
             ))}
             <button onClick={() => void record()}
-              className="rounded-lg bg-[#4F46E5] px-2 py-1.5 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Record</button>
+              className="rounded-lg bg-[#2563EB] px-2 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer">Record</button>
           </div>
         </Card>
       ) : <Empty>Recording media needs the ops.run capability.</Empty>}
@@ -743,7 +743,7 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
             <Row><span>checked (settled orders)</span><span className="font-extrabold">{String(settle.checked ?? settle.settledOrders ?? '?')}</span></Row>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((settle.discrepancies ?? []).length)}</span></Row>
             {(settle.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[var(--brief-ink)]">{String(d.kind)}</span><span className="text-[9px] text-[var(--ink-60)]">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[var(--brief-ink)]">{String(d.kind)}</span><span className="text-[11px] text-[var(--ink-60)]">{String(d.orderId ?? d.intentId ?? '')}</span></Row>
             ))}
           </>
         )}
@@ -753,13 +753,13 @@ function CommerceTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           <>
             <Row><span>discrepancies</span><span className="font-extrabold">{String((pay.discrepancies ?? []).length)}</span></Row>
             {(pay.discrepancies ?? []).slice(0, 8).map((d: any, i: number) => (
-              <Row key={i}><span className="text-[var(--brief-ink)]">{String(d.kind)}</span><span className="text-[9px] text-[var(--ink-60)]">{String(d.intentId ?? '')}</span></Row>
+              <Row key={i}><span className="text-[var(--brief-ink)]">{String(d.kind)}</span><span className="text-[11px] text-[var(--ink-60)]">{String(d.intentId ?? '')}</span></Row>
             ))}
             {(pay.discrepancies ?? []).length === 0 && <Empty>No intent discrepancies.</Empty>}
           </>
         )}
       </Card>
-      <button onClick={refresh} className="w-full rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[11px] font-extrabold cursor-pointer">
+      <button onClick={refresh} className="w-full rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-2 text-[12px] font-extrabold cursor-pointer">
         Re-run reconciliation
       </button>
     </>
@@ -794,13 +794,13 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
         {!can('admin') ? <Empty>Assigning roles needs the admin capability.</Empty> : (
           <div className="space-y-1.5">
             <input value={roles.userId} onChange={(e) => setRoles({ ...roles, userId: e.target.value })}
-              placeholder="user id or handle" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[10px]" />
+              placeholder="user id or handle" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[11px]" />
             <input value={roles.roles} onChange={(e) => setRoles({ ...roles, roles: e.target.value })}
-              placeholder="roles (viewer, operator, reviewer, finance, admin)" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[10px]" />
+              placeholder="roles (viewer, operator, reviewer, finance, admin)" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[11px]" />
             <input value={roles.reason} onChange={(e) => setRoles({ ...roles, reason: e.target.value })}
-              placeholder="reason (written to the audit log)" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[10px]" />
+              placeholder="reason (written to the audit log)" className="w-full rounded-lg border border-[var(--brief-line)] px-2 py-1.5 text-[11px]" />
             <button onClick={() => void submit()} disabled={!roles.userId.trim() || !roles.reason.trim()}
-              className="rounded-lg bg-[#4F46E5] px-2 py-1.5 text-[9px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40">
+              className="rounded-lg bg-[#2563EB] px-2 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40">
               Write roles
             </button>
           </div>
@@ -812,7 +812,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : audit.slice(0, 15).map((a, i) => (
             <Row key={a.id ?? i}>
               <span className="min-w-0 truncate font-bold">{String(a.action)}</span>
-              <span className="shrink-0 text-[9px] text-[var(--ink-60)]">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[11px] text-[var(--ink-60)]">{String(a.at ?? a.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>
@@ -822,7 +822,7 @@ function SecurityTab({ tick, can, refresh }: { tick: number; can: (c: string) =>
           : mailLog.map((m, i) => (
             <Row key={m.id ?? i}>
               <span className="min-w-0 truncate">{String(m.kind ?? m.event ?? 'email event')}</span>
-              <span className="shrink-0 text-[9px] text-[var(--ink-60)]">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
+              <span className="shrink-0 text-[11px] text-[var(--ink-60)]">{String(m.at ?? m.createdAt ?? '').slice(0, 16)}</span>
             </Row>
           ))}
       </Card>

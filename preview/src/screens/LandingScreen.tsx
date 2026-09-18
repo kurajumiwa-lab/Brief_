@@ -199,7 +199,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               L
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--brief-muted)]">
+              <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--brief-muted)]">
                 AROUND YOU
               </span>
               <button
@@ -227,8 +227,8 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[var(--brief-ink)] text-xs font-black shadow-sm transition-transform active:scale-95 cursor-pointer"
           >
             <span className="text-sm">{activeNeighborhood.champion.avatar}</span>
-            <span className="hidden sm:inline text-[11px]">{activeNeighborhood.champion.name}</span>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 font-extrabold uppercase">
+            <span className="hidden sm:inline text-[12px]">{activeNeighborhood.champion.name}</span>
+            <span className="text-[11px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-800 font-extrabold uppercase">
               Champion
             </span>
           </button>
@@ -297,11 +297,11 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 <span className="text-xs font-black text-white truncate">
                   {activeNeighborhood.name} Micro-Hub
                 </span>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] font-bold">
+                <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] font-bold">
                   {activeNeighborhood.stats.activeRidersCount} BODA RIDERS
                 </span>
               </div>
-              <p className="text-[11px] text-gray-300 truncate">
+              <p className="text-[12px] text-gray-300 truncate">
                 {activeNeighborhood.recentActivity[0]?.text || activeNeighborhood.tagline}
               </p>
             </div>
@@ -313,7 +313,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
               soundEngine.play('tap');
               setIsNeighborhoodPickerOpen(true);
             }}
-            className="ml-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold text-gray-200 transition-colors cursor-pointer shrink-0"
+            className="ml-2 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[11px] font-bold text-gray-200 transition-colors cursor-pointer shrink-0"
           >
             Switch
           </button>
@@ -383,7 +383,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   Today in {activeNeighborhood.name}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[var(--brief-muted)]">Live · 3km Radius</span>
+              <span className="text-[12px] font-semibold text-[var(--brief-muted)]">Live · 3km Radius</span>
             </div>
 
             {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
@@ -483,7 +483,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                   Town Centre Districts · {activeNeighborhood.name}
                 </span>
               </div>
-              <span className="text-[11px] font-semibold text-[var(--brief-muted)]">4 Core Pillars</span>
+              <span className="text-[12px] font-semibold text-[var(--brief-muted)]">4 Core Pillars</span>
             </div>
 
             {/* 2-Column IronSheet Grid (WAIRO · Circles · Gigs · Events) */}
@@ -572,7 +572,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
 
             {/* Subcategory Metal Tags Band */}
             <div className="pt-3 space-y-2">
-              <span className="text-[11px] font-extrabold tracking-wider uppercase text-[var(--brief-muted)] block">
+              <span className="text-[12px] font-extrabold tracking-wider uppercase text-[var(--brief-muted)] block">
                 Quick Access
               </span>
               <div className="flex items-center space-x-2 overflow-x-auto pb-2">
@@ -669,7 +669,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 countLabel="4 items"
                 actionButton={
                   <span
-                    className="text-[10px] font-bold text-[#E8985E] cursor-pointer hover:underline"
+                    className="text-[11px] font-bold text-[#E8985E] cursor-pointer hover:underline"
                     onClick={() => setDemandRunOpen(true)}
                   >
                     Bulk Runs Desk →
@@ -857,7 +857,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
                 <Icon className="w-5 h-5" />
               </div>
               <span
-                className={`text-[10px] font-bold mt-0.5 transition-colors ${
+                className={`text-[11px] font-bold mt-0.5 transition-colors ${
                   isSelected ? 'text-[#E8985E]' : 'text-[var(--brief-muted)]'
                 }`}
               >
@@ -886,7 +886,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           >
             {/* Top Badge & Close */}
             <div className="flex items-center justify-between">
-              <div className="px-3 py-1 rounded-lg bg-white/20 text-white text-[10px] font-black tracking-wider uppercase">
+              <div className="px-3 py-1 rounded-lg bg-white/20 text-white text-[11px] font-black tracking-wider uppercase">
                 WAIRO · 90/10 PAYOUT
               </div>
 
@@ -965,7 +965,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
             </div>
 
             {/* Non-Promises Disclaimer */}
-            <p className="mt-4 text-[10px] text-white/70 leading-snug text-center">
+            <p className="mt-4 text-[11px] text-white/70 leading-snug text-center">
               You are booking a rider directly. Brief connects you and records the trip — resolving issues is between you and the rider, with support from your Community Champion if needed.
             </p>
           </div>
@@ -1080,7 +1080,7 @@ export const LandingScreen: React.FC<LandingScreenProps> = ({
           <div className="w-full max-w-md my-auto bg-white rounded-3xl p-6 text-center text-[var(--brief-ink)]">
             <p className="text-sm font-black">Table banking lives in your You tab</p>
             <p className="text-xs text-gray-500 mt-1">Open the You tab to run contributions, rotation, loans, welfare and minutes — every number derived from real rows.</p>
-            <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#4F46E5] text-white text-xs font-bold">Close</button>
+            <button onClick={() => setCircleOpen(false)} className="mt-4 px-4 py-2 rounded-xl bg-[#2563EB] text-white text-xs font-bold">Close</button>
           </div>
         </div>
       )}

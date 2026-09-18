@@ -472,7 +472,7 @@ export function InterCountyDesk({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] uppercase tracking-wider">
+              <span className="text-[11px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] uppercase tracking-wider">
                 INTER-COUNTY CROSS-DOCKING
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -483,7 +483,7 @@ export function InterCountyDesk({
 
             <h2 className="text-xl sm:text-2xl font-black mt-2 text-white tracking-tight flex items-center space-x-2">
               <span>Long-Distance Traveler & Cargo Matching</span>
-              <Sparkles className="w-5 h-5 text-[#4F46E5]" />
+              <Sparkles className="w-5 h-5 text-[#2563EB]" />
             </h2>
             <p className="text-xs text-indigo-200/80 mt-0.5 max-w-xl">
               WAIRO multi-tier freight ecosystem: Lori Systems 50% backhaul arbitrage, Fargo KES 50 pickup counters, Sendy Freight, and Bolt Rapid.
@@ -502,8 +502,8 @@ export function InterCountyDesk({
         </div>
 
         {/* Tier Badges Banner */}
-        <div className="mt-4 pt-3 border-t border-white/10 flex items-center space-x-2 overflow-x-auto text-[11px] font-bold">
-          <span className="text-gray-400 text-[10px] uppercase tracking-wider">Integrated Tiers:</span>
+        <div className="mt-4 pt-3 border-t border-white/10 flex items-center space-x-2 overflow-x-auto text-[12px] font-bold">
+          <span className="text-gray-400 text-[11px] uppercase tracking-wider">Integrated Tiers:</span>
           <span className="px-2.5 py-0.5 rounded-full bg-blue-500/25 text-cyan-300 border border-cyan-400/40 flex items-center space-x-1 shrink-0">
             <Repeat className="w-3 h-3 text-cyan-400" />
             <span>Lori Systems Backhaul (50% Off Return Trip)</span>
@@ -542,8 +542,8 @@ export function InterCountyDesk({
             >
               <span>{tab.label}</span>
               {tab.count !== undefined && (
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                  activeTab === tab.id ? 'bg-[#4F46E5] text-white' : 'bg-white/20 text-white'
+                <span className={`text-[11px] px-1.5 py-0.2 rounded-full font-mono ${
+                  activeTab === tab.id ? 'bg-[#2563EB] text-white' : 'bg-white/20 text-white'
                 }`}>
                   {tab.count}
                 </span>
@@ -609,7 +609,7 @@ export function InterCountyDesk({
                   placeholder="Search Lori, Fargo, Sendy, Bolt, plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#06B6D4] w-full sm:w-56"
+                  className="pl-8 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:border-[#0891B2] w-full sm:w-56"
                 />
               </div>
             </div>
@@ -644,34 +644,34 @@ export function InterCountyDesk({
                       <div className="flex items-center space-x-1.5">
                         <span className="font-bold text-xs text-[var(--brief-ink)]">{route.driverName}</span>
                         {isLori && (
-                          <span className="bg-blue-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded flex items-center space-x-1">
+                          <span className="bg-blue-600 text-white text-[11px] font-mono font-black px-1.5 py-0.5 rounded flex items-center space-x-1">
                             <Repeat className="w-2.5 h-2.5" />
                             <span>LORI BACKHAUL -50%</span>
                           </span>
                         )}
                         {isFargo && (
-                          <span className="bg-[#0B6E6E] text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                          <span className="bg-[#0B6E6E] text-white text-[11px] font-mono font-black px-1.5 py-0.5 rounded">
                             FARGO 200+ POINTS
                           </span>
                         )}
                         {isSendy && (
-                          <span className="bg-emerald-600 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                          <span className="bg-emerald-600 text-white text-[11px] font-mono font-black px-1.5 py-0.5 rounded">
                             SENDY EXPRESS
                           </span>
                         )}
                         {isBolt && (
-                          <span className="bg-amber-500 text-white text-[9px] font-mono font-black px-1.5 py-0.5 rounded">
+                          <span className="bg-amber-500 text-white text-[11px] font-mono font-black px-1.5 py-0.5 rounded">
                             BOLT RAPID
                           </span>
                         )}
                         {route.hasLogbookVerified && (
-                          <span className="inline-flex items-center space-x-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-200" title="Verified Logbook">
+                          <span className="inline-flex items-center space-x-0.5 bg-emerald-50 text-emerald-700 text-[11px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-200" title="Verified Logbook">
                             <ShieldCheck className="w-2.5 h-2.5 text-emerald-600" />
                             <span>LOGBOOK VERIFIED</span>
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center space-x-2 text-[10px] text-gray-500 font-mono">
+                      <div className="flex items-center space-x-2 text-[11px] text-gray-500 font-mono">
                         <span>{route.plateNumber}</span>
                         <span>•</span>
                         <span>{route.vehicleType}</span>
@@ -684,7 +684,7 @@ export function InterCountyDesk({
                       <span className="text-xs font-black font-mono text-[var(--brief-ink)] bg-white px-2 py-1 rounded-lg border border-gray-200 block">
                         KES {route.baseFeeKes}+
                       </span>
-                      <span className="text-[9px] text-gray-500 font-mono">
+                      <span className="text-[11px] text-gray-500 font-mono">
                         KES {route.pricePerKgKes}/kg
                       </span>
                     </div>
@@ -693,17 +693,17 @@ export function InterCountyDesk({
                   {/* Route Path Indicator */}
                   <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
                     <div className="space-y-0.5">
-                      <span className="text-[10px] font-mono text-gray-400 uppercase block">From</span>
+                      <span className="text-[11px] font-mono text-gray-400 uppercase block">From</span>
                       <span className="font-bold text-[var(--brief-ink)]">{route.fromCounty}</span>
-                      <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.fromHub}</span>
+                      <span className="text-[11px] text-gray-500 block truncate max-w-[120px]">{route.fromHub}</span>
                     </div>
 
                     <ArrowRight className="w-4 h-4 text-[#00BFEF] shrink-0" />
 
                     <div className="space-y-0.5 text-right">
-                      <span className="text-[10px] font-mono text-gray-400 uppercase block">To</span>
+                      <span className="text-[11px] font-mono text-gray-400 uppercase block">To</span>
                       <span className="font-bold text-[var(--brief-ink)]">{route.toCounty}</span>
-                      <span className="text-[10px] text-gray-500 block truncate max-w-[120px]">{route.toHub}</span>
+                      <span className="text-[11px] text-gray-500 block truncate max-w-[120px]">{route.toHub}</span>
                     </div>
                   </div>
 
@@ -711,18 +711,18 @@ export function InterCountyDesk({
                   <div className="flex items-center justify-between text-xs text-gray-600 pt-1 border-t border-gray-100 font-mono">
                     <div className="flex items-center space-x-1">
                       <Clock className="w-3.5 h-3.5 text-gray-400" />
-                      <span className="text-[11px] font-bold text-gray-700">{route.departureDate}</span>
+                      <span className="text-[12px] font-bold text-gray-700">{route.departureDate}</span>
                     </div>
 
                     <div className="flex items-center space-x-1">
                       <Package className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-[11px] font-black text-emerald-700">{route.availableCapacityKg} kg space</span>
+                      <span className="text-[12px] font-black text-emerald-700">{route.availableCapacityKg} kg space</span>
                     </div>
                   </div>
 
                   {/* SLA guarantee or Insurance text */}
                   {route.slaGuarantee && (
-                    <div className="p-1.5 rounded-lg bg-blue-50/70 text-blue-900 text-[10px] font-mono flex items-center justify-between">
+                    <div className="p-1.5 rounded-lg bg-blue-50/70 text-blue-900 text-[11px] font-mono flex items-center justify-between">
                       <span className="font-bold">⚡ SLA: {route.slaGuarantee}</span>
                       {route.insuranceCoverKes && (
                         <span className="text-emerald-700 font-bold">Insured up to KES {route.insuranceCoverKes.toLocaleString()}</span>
@@ -751,7 +751,7 @@ export function InterCountyDesk({
         <div className="p-5 sm:p-6 space-y-5">
           <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 flex items-start justify-between gap-3">
             <div className="space-y-1">
-              <span className="text-[10px] font-mono font-bold text-[#4F46E5] uppercase tracking-wider">
+              <span className="text-[11px] font-mono font-bold text-[#2563EB] uppercase tracking-wider">
                 COMMISSION TRANSPARENCY
               </span>
               <h4 className="text-sm font-black text-[var(--brief-ink)]">
@@ -761,9 +761,9 @@ export function InterCountyDesk({
                 Traveling to Mombasa, Kisumu, Nakuru, or Eldoret? Carry vetted boxes and parcels. Get paid directly to your M-Pesa upon recipient PIN verification.
               </p>
             </div>
-            <div className="p-3 rounded-2xl bg-[#4F46E5] text-white font-mono font-black text-center shrink-0">
+            <div className="p-3 rounded-2xl bg-[#2563EB] text-white font-mono font-black text-center shrink-0">
               <span className="text-lg block leading-none">90%</span>
-              <span className="text-[9px] uppercase tracking-wider">PAYOUT</span>
+              <span className="text-[11px] uppercase tracking-wider">PAYOUT</span>
             </div>
           </div>
 
@@ -777,7 +777,7 @@ export function InterCountyDesk({
                   placeholder="e.g. Samuel Kimani"
                   value={driverNameInput}
                   onChange={(e) => setDriverNameInput(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                 />
               </div>
 
@@ -789,7 +789,7 @@ export function InterCountyDesk({
                   placeholder="e.g. KDF 123A"
                   value={plateInput}
                   onChange={(e) => setPlateInput(e.target.value.toUpperCase())}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase outline-none focus:border-[#0891B2]"
                 />
               </div>
             </div>
@@ -804,14 +804,14 @@ export function InterCountyDesk({
                     placeholder="From County"
                     value={fromCountyInput}
                     onChange={(e) => setFromCountyInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                   <input
                     type="text"
                     placeholder="Staging Hub"
                     value={fromHubInput}
                     onChange={(e) => setFromHubInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                 </div>
               </div>
@@ -825,14 +825,14 @@ export function InterCountyDesk({
                     placeholder="To County"
                     value={toCountyInput}
                     onChange={(e) => setToCountyInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                   <input
                     type="text"
                     placeholder="Drop Hub"
                     value={toHubInput}
                     onChange={(e) => setToHubInput(e.target.value)}
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                 </div>
               </div>
@@ -844,7 +844,7 @@ export function InterCountyDesk({
                 <select
                   value={vehicleTypeInput}
                   onChange={(e) => setVehicleTypeInput(e.target.value as any)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                 >
                   <option value="Car Trunk">Private Car Boot (Trunk)</option>
                   <option value="Van / Pickup">Pickup Bed / Commercial Van</option>
@@ -860,7 +860,7 @@ export function InterCountyDesk({
                   placeholder="e.g. Tomorrow, 6:00 AM"
                   value={departureDateInput}
                   onChange={(e) => setDepartureDateInput(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                 />
               </div>
 
@@ -872,7 +872,7 @@ export function InterCountyDesk({
                   max="2000"
                   value={capacityKgInput}
                   onChange={(e) => setCapacityKgInput(Number(e.target.value))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-none focus:border-[#0891B2]"
                 />
               </div>
             </div>
@@ -880,7 +880,7 @@ export function InterCountyDesk({
             <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="font-bold text-gray-800 text-xs block">I Own this Vehicle (Logbook Verified)</span>
-                <span className="text-[10px] text-gray-500">Verified owners receive 5-star priority ranking & instant escrow release.</span>
+                <span className="text-[11px] text-gray-500">Verified owners receive 5-star priority ranking & instant escrow release.</span>
               </div>
               <input
                 type="checkbox"
@@ -908,7 +908,7 @@ export function InterCountyDesk({
             <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               Active Cross-County Parcel Escrows
             </h3>
-            <span className="text-[10px] font-mono text-gray-500">4-Digit PIN Release Active</span>
+            <span className="text-[11px] font-mono text-gray-500">4-Digit PIN Release Active</span>
           </div>
 
           {bookings.map((b) => (
@@ -920,21 +920,21 @@ export function InterCountyDesk({
                 <div>
                   <div className="flex items-center space-x-2">
                     <span className="font-mono font-black text-xs text-[var(--brief-ink)]">{b.id}</span>
-                    <span className="text-[10px] bg-blue-50 text-[#06B6D4] font-bold px-2 py-0.5 rounded border border-blue-200">
+                    <span className="text-[11px] bg-blue-50 text-[#0891B2] font-bold px-2 py-0.5 rounded border border-blue-200">
                       {b.fromCounty} ➔ {b.toCounty}
                     </span>
                     {b.partnerBrand && (
-                      <span className="text-[9px] font-mono font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                      <span className="text-[11px] font-mono font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
                         {b.partnerBrand}
                       </span>
                     )}
                   </div>
                   <p className="font-bold text-xs mt-1 text-[var(--brief-ink)]">{b.itemDescription}</p>
-                  <p className="text-[10px] text-gray-500">Weight: {b.weightKg} kg • Fee: KES {b.feeKes}</p>
+                  <p className="text-[11px] text-gray-500">Weight: {b.weightKg} kg • Fee: KES {b.feeKes}</p>
                 </div>
 
                 <div className="text-right">
-                  <span className={`text-[10px] font-mono font-bold px-2 py-1 rounded-full uppercase ${
+                  <span className={`text-[11px] font-mono font-bold px-2 py-1 rounded-full uppercase ${
                     b.escrowStatus === 'delivered_and_released'
                       ? 'bg-emerald-100 text-emerald-800'
                       : 'bg-amber-100 text-amber-800'
@@ -947,14 +947,14 @@ export function InterCountyDesk({
               {/* 4-digit PIN verification card */}
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="space-y-0.5">
-                  <span className="text-[10px] font-mono text-gray-500 uppercase block font-bold">
+                  <span className="text-[11px] font-mono text-gray-500 uppercase block font-bold">
                     Recipient Drop-off Release PIN:
                   </span>
                   <div className="flex items-center space-x-2">
                     <span className="text-base font-black font-mono tracking-widest text-[var(--brief-ink)] bg-white px-3 py-1 rounded-lg border border-gray-300">
                       {b.pinCode}
                     </span>
-                    <span className="text-[10px] text-gray-500">Share with driver or Fargo/Lori agent upon parcel collection</span>
+                    <span className="text-[11px] text-gray-500">Share with driver or Fargo/Lori agent upon parcel collection</span>
                   </div>
                 </div>
 
@@ -966,12 +966,12 @@ export function InterCountyDesk({
                       placeholder="Enter PIN"
                       value={enteredPin}
                       onChange={(e) => setEnteredPin(e.target.value)}
-                      className="w-24 bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 font-mono text-xs text-center outline-none focus:border-[#06B6D4]"
+                      className="w-24 bg-white border border-gray-300 rounded-xl px-2.5 py-1.5 font-mono text-xs text-center outline-none focus:border-[#0891B2]"
                     />
                     <button
                       type="button"
                       onClick={() => handleVerifyDeliveryPin(b.id)}
-                      className="px-3 py-1.5 rounded-xl bg-[#16A34A] hover:bg-[#15803D] text-white font-bold text-xs cursor-pointer shadow-xs whitespace-nowrap"
+                      className="px-3 py-1.5 rounded-xl bg-[#059669] hover:bg-[#15803D] text-white font-bold text-xs cursor-pointer shadow-xs whitespace-nowrap"
                     >
                       Release Escrow
                     </button>
@@ -980,7 +980,7 @@ export function InterCountyDesk({
               </div>
 
               {pinSuccessMsg && (
-                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold">
+                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-800 text-[12px] font-bold">
                   {pinSuccessMsg}
                 </div>
               )}
@@ -999,7 +999,7 @@ export function InterCountyDesk({
               <Repeat className="w-4 h-4 text-blue-700" />
               <span>Lori Systems Backhaul Capacity Arbitrage (50% Off Return Trips)</span>
             </h4>
-            <p className="text-[11px] text-blue-900 leading-relaxed">
+            <p className="text-[12px] text-blue-900 leading-relaxed">
               Trucks delivering goods from Nairobi to Mombasa return empty <b>40–60% of the time</b>. Lori Systems' API tracks live available backhaul capacity across heavy freight corridors. Brief's WAIRO module offers bulk textbook palettes and agricultural freight heading to coastal schools and businesses at discounted return rates. You pay Lori the 50% backhaul rate, parents and traders save massively, and WAIRO retains the spread.
             </p>
           </div>
@@ -1010,7 +1010,7 @@ export function InterCountyDesk({
               <MapPin className="w-4 h-4 text-emerald-700" />
               <span>Fargo Pickup-Point Arbitrage (KES 50 Nationwide Model)</span>
             </h4>
-            <p className="text-[11px] text-emerald-900 leading-relaxed">
+            <p className="text-[12px] text-emerald-900 leading-relaxed">
               Instead of expensive door-to-door delivery (KES 250 - 450), Brief & Wairo partner with Fargo Courier's 200+ nationwide stations. Fargo charges a consolidated wholesale rate of <b>KES 30 per parcel</b>. You pay only <b>KES 50</b>, the platform retains <b>KES 20 spread</b>, and parents save over KES 200 vs home delivery. A true win-win!
             </p>
           </div>
@@ -1020,7 +1020,7 @@ export function InterCountyDesk({
               <ShieldCheck className="w-4 h-4 text-indigo-600" />
               <span>Why We Reward Vehicle Ownership in Kenya</span>
             </h4>
-            <p className="text-[11px] text-indigo-900 leading-relaxed">
+            <p className="text-[12px] text-indigo-900 leading-relaxed">
               In standard ride-hailing and gig delivery models, middleman vehicle leasing companies drain over 40% of courier earnings. Brief & Wairo prioritize independent drivers who own their motorbikes, cars, or vans.
             </p>
           </div>
@@ -1028,17 +1028,17 @@ export function InterCountyDesk({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono">
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
               <span className="font-bold text-[var(--brief-ink)] block">1. 90% Direct Payout</span>
-              <p className="text-[10px] text-gray-600 font-sans">You keep KES 90 out of every KES 100 paid by shippers.</p>
+              <p className="text-[11px] text-gray-600 font-sans">You keep KES 90 out of every KES 100 paid by shippers.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
               <span className="font-bold text-[var(--brief-ink)] block">2. 200+ Fargo Hubs</span>
-              <p className="text-[10px] text-gray-600 font-sans">Collect or drop at any verified Fargo counter nationwide.</p>
+              <p className="text-[11px] text-gray-600 font-sans">Collect or drop at any verified Fargo counter nationwide.</p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 space-y-1">
               <span className="font-bold text-[var(--brief-ink)] block">3. 50% Lori Backhaul</span>
-              <p className="text-[10px] text-gray-600 font-sans">Leverage empty returning 10-ton lorries on heavy corridors.</p>
+              <p className="text-[11px] text-gray-600 font-sans">Leverage empty returning 10-ton lorries on heavy corridors.</p>
             </div>
           </div>
         </div>
@@ -1050,9 +1050,9 @@ export function InterCountyDesk({
           <div className="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-gray-200 text-xs">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono text-[#00BFEF] font-bold uppercase">Booking Parcel Transport</span>
+                <span className="text-[11px] font-mono text-[#00BFEF] font-bold uppercase">Booking Parcel Transport</span>
                 <h3 className="font-black text-base text-[var(--brief-ink)]">{selectedRoute.fromCounty} ➔ {selectedRoute.toCounty}</h3>
-                <span className="text-[10px] font-mono text-gray-500">Tier: {selectedRoute.partnerBrand || 'WAIRO Standard'}</span>
+                <span className="text-[11px] font-mono text-gray-500">Tier: {selectedRoute.partnerBrand || 'WAIRO Standard'}</span>
               </div>
               <button
                 type="button"
@@ -1072,7 +1072,7 @@ export function InterCountyDesk({
                   placeholder="e.g. 2 Cartons of avocado, Spare parts box"
                   value={itemDescription}
                   onChange={(e) => setItemDescription(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                 />
               </div>
 
@@ -1085,7 +1085,7 @@ export function InterCountyDesk({
                     max={selectedRoute.availableCapacityKg}
                     value={weightKg}
                     onChange={(e) => setWeightKg(Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                 </div>
 
@@ -1106,7 +1106,7 @@ export function InterCountyDesk({
                     placeholder="Recipient Name"
                     value={recipientName}
                     onChange={(e) => setRecipientName(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                 </div>
 
@@ -1118,13 +1118,13 @@ export function InterCountyDesk({
                     placeholder="07..."
                     value={recipientPhone}
                     onChange={(e) => setRecipientPhone(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
                   />
                 </div>
               </div>
 
               {selectedRoute.tier === 'lori_backhaul' && (
-                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-300 text-blue-950 text-[11px] space-y-1">
+                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-300 text-blue-950 text-[12px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold text-blue-900">
                     <Repeat className="w-3.5 h-3.5 text-blue-700" />
                     <span>Lori Systems Backhaul Empty Return Capacity Active</span>
@@ -1134,7 +1134,7 @@ export function InterCountyDesk({
               )}
 
               {selectedRoute.tier === 'fargo_pickup' && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-[11px] space-y-1">
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-[12px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold text-emerald-900">
                     <MapPin className="w-3.5 h-3.5 text-emerald-700" />
                     <span>Fargo 200+ Counter Pickup Arbitrage (KES 50)</span>
@@ -1144,7 +1144,7 @@ export function InterCountyDesk({
               )}
 
               {selectedRoute.tier === 'sendy_express' && (
-                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[11px] space-y-1">
+                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-[12px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Sendy Express Goods in Transit Insurance Active</span>
@@ -1154,7 +1154,7 @@ export function InterCountyDesk({
               )}
 
               {selectedRoute.tier === 'bolt_instant' && (
-                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] space-y-1">
+                <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[12px] space-y-1">
                   <div className="flex items-center space-x-1 font-bold">
                     <Navigation className="w-3.5 h-3.5 text-amber-600" />
                     <span>Bolt Rapid Live Telemetry & GPS Link</span>
@@ -1163,7 +1163,7 @@ export function InterCountyDesk({
                 </div>
               )}
 
-              <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[11px] space-y-1">
+              <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-[12px] space-y-1">
                 <div className="flex items-center space-x-1 font-bold">
                   <Lock className="w-3.5 h-3.5 text-blue-600" />
                   <span>Escrow Hold via M-Pesa</span>

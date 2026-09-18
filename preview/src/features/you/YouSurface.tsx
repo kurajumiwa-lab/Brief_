@@ -263,7 +263,7 @@ export function YouSurface({
               ].map(([k, v]) => (
                 <div key={k as string}>
                   <p className="text-2xl font-black" style={{ color: "var(--color-text)" }}>{v}</p>
-                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>{k}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>{k}</p>
                 </div>
               ))}
             </div>
@@ -318,7 +318,7 @@ export function YouSurface({
                           className="text-left min-w-0 flex-1"
                         >
                           <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{row.name}</p>
-                          <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                             {row.objectCount} item{row.objectCount === 1 ? "" : "s"}
                           </p>
                         </button>
@@ -409,7 +409,7 @@ export function YouSurface({
           or a business workspace. */}
       {section === "archive" && (
         <div className="mt-4 space-y-3">
-          <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
             Restricted records and drops you hold or have been granted. An archive is read slowly and kept — it is
             not something to browse between posters.
           </p>
@@ -422,7 +422,7 @@ export function YouSurface({
           <PositionCard position={position} />
           <CommitmentsCard commitments={commitments} />
           <ReciprocityCard reciprocity={reciprocity} />
-          <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-muted)" }}>
+          <p className="text-[12px] leading-snug" style={{ color: "var(--color-text-muted)" }}>
             Nothing here is a score. Each line is a count over rows you could read yourself — a quote you
             sent, an order you owe, a favour that went unreturned — and a line is shown only while its row
             still exists.

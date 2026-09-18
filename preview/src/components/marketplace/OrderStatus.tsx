@@ -65,12 +65,12 @@ export function OrderStatus({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-extrabold text-[var(--brief-ink)]">{order.listingTitle}</p>
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             {order.quantity} x {money(order.unitPrice, order.currency)}
           </p>
         </div>
         <span
-          className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
+          className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full ${
             STATUS_STYLE[order.status] ?? 'bg-[var(--brief-line)] text-[var(--ink-60)]'
           }`}
         >
@@ -84,7 +84,7 @@ export function OrderStatus({
       </p>
 
       {/* Payment stated as its own fact, always. Never inferred from status. */}
-      <p className="text-[10px] text-[var(--ink-60)]">
+      <p className="text-[11px] text-[var(--ink-60)]">
         {order.paid
           ? 'Paid - settled transaction on record'
           : 'Not paid yet - no settled payment is on record for this order'}
@@ -92,8 +92,8 @@ export function OrderStatus({
 
       {order.dispute && (
         <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-2">
-          <p className="text-[10px] font-extrabold text-[var(--brief-ink)]">Disputed</p>
-          <p className="text-[10px] text-[var(--ink-60)]">{order.dispute.reason}</p>
+          <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Disputed</p>
+          <p className="text-[11px] text-[var(--ink-60)]">{order.dispute.reason}</p>
         </div>
       )}
 
@@ -103,7 +103,7 @@ export function OrderStatus({
             <button
               onClick={() => onSettle(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[#2563EB] text-[var(--accent-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Settle
             </button>
@@ -112,7 +112,7 @@ export function OrderStatus({
             <button
               onClick={() => onFulfil(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[#2563EB] text-[var(--accent-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Mark fulfilled
             </button>
@@ -121,7 +121,7 @@ export function OrderStatus({
             <button
               onClick={() => onDispute(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] border border-[var(--brief-line)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] border border-[var(--brief-line)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Report a problem
             </button>
@@ -130,7 +130,7 @@ export function OrderStatus({
             <button
               onClick={() => onCancel(order.id)}
               disabled={busy}
-              className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+              className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>

@@ -1261,11 +1261,11 @@ export function App() {
       <div className="min-h-screen bg-[#D8D2E1] text-[#251045]">
         <div className="min-h-screen flex flex-col items-center justify-center px-5 py-10">
           <div className="w-full max-w-sm text-center">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#251045]/50">Brief · Nairobi</p>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.22em] text-[#251045]/50">Brief · Nairobi</p>
             <h1 className="font-display text-3xl font-semibold tracking-tight mt-2">
               An account opens everything
             </h1>
-            <p className="mt-3 text-[12px] leading-relaxed text-[#251045]/70">
+            <p className="mt-3 text-[13px] leading-relaxed text-[#251045]/70">
               Brief is members-only: the live feed, the Tea studio,
               the marketplace and every tool behind this wall need an account.
             </p>
@@ -1276,13 +1276,13 @@ export function App() {
                 'Sell, campaign and run groups',
                 'Sign in with Google, email link, or your Brief handle'
               ].map((line) => (
-                <li key={line} className="flex items-start gap-2 text-[11px] leading-snug text-[#251045]/80">
+                <li key={line} className="flex items-start gap-2 text-[12px] leading-snug text-[#251045]/80">
                   <span aria-hidden="true" className="mt-[3px] h-1.5 w-1.5 rounded-full bg-[#5B2EA6] shrink-0" />
                   {line}
                 </li>
               ))}
             </ul>
-            <p className="mt-4 text-[10px] leading-relaxed text-[#251045]/50">
+            <p className="mt-4 text-[11px] leading-relaxed text-[#251045]/50">
               No real money moves on Brief yet (no payment provider connected), and
               Google sign-in activates once this deployment registers its Google
               credentials. Your Brief account — the primary registry — works today.

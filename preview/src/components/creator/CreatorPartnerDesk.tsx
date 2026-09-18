@@ -59,7 +59,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white tracking-wider">
+              <span className="text-[11px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white tracking-wider">
                 CREATOR PARTNER DESK
               </span>
               <span className="text-xs text-gray-300 font-bold flex items-center space-x-1">
@@ -120,7 +120,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
         <div className="p-5 rounded-2xl bg-[color:var(--color-paper)] shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <span className="text-[10px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
+              <span className="text-[11px] font-mono font-black uppercase text-[#B8621F] tracking-wide">
                 {activeCreator.role.replace('_', ' ').toUpperCase()}
               </span>
               <h3 className="text-lg font-black text-[var(--brief-ink)] leading-snug">
@@ -149,7 +149,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
           {/* 3 Metrics Cards */}
           <div className="grid grid-cols-3 gap-3 pt-2">
             <div className="p-4 rounded-xl bg-[#F0EDE8] space-y-1">
-              <div className="flex items-center space-x-1 text-[10px] font-bold text-[var(--brief-muted)] uppercase">
+              <div className="flex items-center space-x-1 text-[11px] font-bold text-[var(--brief-muted)] uppercase">
                 <Users className="w-3.5 h-3.5 text-[#B8621F]" />
                 <span>Activated Groups</span>
               </div>
@@ -159,7 +159,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
             </div>
 
             <div className="p-4 rounded-xl bg-[#F0EDE8] space-y-1">
-              <div className="flex items-center space-x-1 text-[10px] font-bold text-[var(--brief-muted)] uppercase">
+              <div className="flex items-center space-x-1 text-[11px] font-bold text-[var(--brief-muted)] uppercase">
                 <TrendingUp className="w-3.5 h-3.5 text-[#0B6E6E]" />
                 <span>Coordinated Volume</span>
               </div>
@@ -169,7 +169,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
             </div>
 
             <div className="p-4 rounded-xl bg-emerald-500/10 space-y-1">
-              <div className="flex items-center space-x-1 text-[10px] font-bold text-emerald-800 uppercase">
+              <div className="flex items-center space-x-1 text-[11px] font-bold text-emerald-800 uppercase">
                 <Coins className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Earned Commissions</span>
               </div>
@@ -186,7 +186,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
             <span className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               Groups Onboarded & Managed
             </span>
-            <span className="text-[10px] font-mono text-[var(--brief-muted)] font-bold">
+            <span className="text-[11px] font-mono text-[var(--brief-muted)] font-bold">
               15% NET TAKE-RATE CUT
             </span>
           </div>
@@ -200,7 +200,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
                 <div className="space-y-0.5">
                   <div className="flex items-center space-x-2">
                     <h4 className="text-sm font-black text-[var(--brief-ink)]">{grp.groupName}</h4>
-                    <span className="text-[9px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                    <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
                       Activated
                     </span>
                   </div>
@@ -213,7 +213,7 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
                   <span className="text-xs font-black text-emerald-700 block">
                     +KES {grp.commissionAccruedKes.toLocaleString()}
                   </span>
-                  <span className="text-[10px] text-[var(--brief-muted)]">
+                  <span className="text-[11px] text-[var(--brief-muted)]">
                     From KES {grp.monthlyVolumeKes.toLocaleString()} monthly volume
                   </span>
                 </div>
@@ -228,20 +228,20 @@ export const CreatorPartnerDesk: React.FC<CreatorPartnerDeskProps> = ({
             <span className="text-xs font-black text-[var(--brief-ink)] block">
               M-Pesa B2C Auto-Settlement
             </span>
-            <p className="text-[11px] text-[var(--brief-muted)]">
+            <p className="text-[12px] text-[var(--brief-muted)]">
               Disbursed on 1st of every month to registered line: {activeCreator.phone}
             </p>
           </div>
 
           <div className="text-right">
-            <span className="text-[10px] font-bold text-[var(--brief-muted)] uppercase block">Pending Payout</span>
+            <span className="text-[11px] font-bold text-[var(--brief-muted)] uppercase block">Pending Payout</span>
             <span className="text-sm font-black text-[#B8621F]">KES {activeCreator.pendingCommissionsKes.toLocaleString()}</span>
           </div>
         </div>
 
         {/* Commission Rules Disclaimer */}
         <div className="p-3.5 rounded-2xl bg-black/[0.03] space-y-1 text-center">
-          <p className="text-[10px] text-[var(--brief-muted)] leading-relaxed">
+          <p className="text-[11px] text-[var(--brief-muted)] leading-relaxed">
             Brief compensates creators on activated, retained community coordination value — never on raw registrations or vanity signups. Groups govern their own funds.
           </p>
         </div>

@@ -68,7 +68,7 @@ export function ContextMenu({ actions, ariaLabel, variant = "icon", triggerLabel
             style={{ background: "var(--color-surface)" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="px-2 pt-1 pb-2 text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
+            <p className="px-2 pt-1 pb-2 text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
               Actions
             </p>
             {actions.map((a) => (

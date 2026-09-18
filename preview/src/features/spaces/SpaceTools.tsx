@@ -140,14 +140,14 @@ export function SpaceTools({
 
   return (
     <div className={`space-y-5 ${className}`}>
-      <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>{CAP}</p>
+      <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>{CAP}</p>
 
       {/* ── OPENING HOURS ─────────────────────────────────────────────────── */}
       <section className="space-y-2" aria-label="Opening hours">
-        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+        <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           When you are on
         </h3>
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
           This is the same field your space file shows and the pipeline reads. Toggle the days; leave the
           hours blank if you do not work a fixed window.
         </p>
@@ -160,7 +160,7 @@ export function SpaceTools({
                 type="button"
                 aria-pressed={on}
                 onClick={() => setDays((cur) => (on ? cur.filter((x) => x !== d) : [...cur, d]))}
-                className="w-12 py-2 rounded-xl text-[11px] font-black uppercase cursor-pointer border"
+                className="w-12 py-2 rounded-xl text-[12px] font-black uppercase cursor-pointer border"
                 style={{
                   background: on ? 'var(--color-primary)' : 'var(--color-paper)',
                   color: on ? 'var(--accent-ink)' : 'var(--brief-muted)',
@@ -174,18 +174,18 @@ export function SpaceTools({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input type="time" aria-label="Opens at" value={from} onChange={(e) => setFrom(e.target.value)}
-            className="px-3 py-2 rounded-xl text-[13px] font-mono border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
+            className="px-3 py-2 rounded-xl text-[14px] font-mono border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
           <span style={{ color: 'var(--brief-muted)' }}>→</span>
           <input type="time" aria-label="Closes at" value={to} onChange={(e) => setTo(e.target.value)}
-            className="px-3 py-2 rounded-xl text-[13px] font-mono border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
+            className="px-3 py-2 rounded-xl text-[14px] font-mono border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
           <input type="text" aria-label="Or describe it" placeholder="or say it in words (market days only)"
             value={summary} onChange={(e) => setSummary(e.target.value)}
-            className="flex-1 min-w-[180px] px-3 py-2 rounded-xl text-[13px] border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
+            className="flex-1 min-w-[180px] px-3 py-2 rounded-xl text-[14px] border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
           <button
             type="button"
             onClick={() => void saveHours()}
             disabled={saveState === 'busy' || (days.length === 0 && !summary.trim())}
-            className="px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
             style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
           >
             {saveState === 'busy' ? 'Saving…' : 'Save hours'}
@@ -195,15 +195,15 @@ export function SpaceTools({
 
       {/* ── PINNED OFFERS ─────────────────────────────────────────────────── */}
       <section className="space-y-2" aria-label="Pinned offers">
-        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+        <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           Lead the counter
         </h3>
-        <p className="text-[10px]" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
           Pin up to three of your active offers. Your choice, in front — no algorithm is consulted, and no
           buyer is shown anything you did not put there.
         </p>
         {active.length === 0 ? (
-          <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>Nothing is active to pin yet.</p>
+          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>Nothing is active to pin yet.</p>
         ) : (
           <ul className="grid grid-cols-2 gap-2">
             {active.map((o) => {
@@ -221,8 +221,8 @@ export function SpaceTools({
                     {on ? <PinOff className="w-4 h-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
                        : <Pin className="w-4 h-4 shrink-0" style={{ color: 'var(--color-quiet)' }} />}
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[12px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{o.title}</span>
-                      <span className="block text-[11px] font-mono" style={{ color: 'var(--brief-muted)' }}>
+                      <span className="block text-[13px] font-bold truncate" style={{ color: 'var(--brief-ink)' }}>{o.title}</span>
+                      <span className="block text-[12px] font-mono" style={{ color: 'var(--brief-muted)' }}>
                         {o.currency} {o.price.toLocaleString('en-KE')}
                       </span>
                     </span>
@@ -237,25 +237,25 @@ export function SpaceTools({
 
       {/* ── TEMPLATES ─────────────────────────────────────────────────────── */}
       <section className="space-y-2" aria-label="Message templates">
-        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+        <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           Sentences you keep retyping
         </h3>
-        <p className="text-[10px]" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
           Tap one to put it on the clipboard and paste it where you reply. Nothing is sent for you — Brief
           does not message your customers from a template.
         </p>
         {tpl.length === 0 ? (
-          <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>None saved yet.</p>
+          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>None saved yet.</p>
         ) : (
           <ul className="space-y-1.5">
             {tpl.map((t) => (
               <li key={t.id} className="p-2.5 rounded-2xl border flex items-start gap-2" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)' }}>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-black uppercase tracking-wide" style={{ color: 'var(--brief-muted)' }}>{t.label}</p>
-                  <p className="text-[13px] leading-snug mt-0.5" style={{ color: 'var(--brief-ink)' }}>{t.body}</p>
+                  <p className="text-[12px] font-black uppercase tracking-wide" style={{ color: 'var(--brief-muted)' }}>{t.label}</p>
+                  <p className="text-[14px] leading-snug mt-0.5" style={{ color: 'var(--brief-ink)' }}>{t.body}</p>
                 </div>
                 <button type="button" onClick={() => void copyTemplate(t)} aria-label={`Copy ${t.label}`}
-                  className="shrink-0 px-2.5 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border" style={{ borderColor: 'var(--brief-line)' }}>
+                  className="shrink-0 px-2.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer border" style={{ borderColor: 'var(--brief-line)' }}>
                   Copy
                 </button>
                 <button type="button" onClick={() => void removeTemplate(t.id)} aria-label={`Delete ${t.label}`}
@@ -269,12 +269,12 @@ export function SpaceTools({
         <div className="p-3 rounded-2xl space-y-2" style={{ background: 'var(--color-well)' }}>
           <input type="text" maxLength={40} aria-label="Template label" placeholder="Label (e.g. Order confirmed)"
             value={label} onChange={(e) => setLabel(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl text-[13px] border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
+            className="w-full px-3 py-2 rounded-xl text-[14px] border bg-[color:var(--color-paper)]" style={{ borderColor: 'var(--brief-line)' }} />
           <textarea rows={2} maxLength={300} aria-label="Template message" placeholder="Your order is confirmed for Saturday, 10am. Pay on collection."
             value={body} onChange={(e) => setBody(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl text-[13px] border bg-[color:var(--color-paper)] resize-none" style={{ borderColor: 'var(--brief-line)' }} />
+            className="w-full px-3 py-2 rounded-xl text-[14px] border bg-[color:var(--color-paper)] resize-none" style={{ borderColor: 'var(--brief-line)' }} />
           <button type="button" onClick={() => void addTemplate()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer"
             style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}>
             <Plus className="w-4 h-4" /> Save template
           </button>
@@ -282,10 +282,10 @@ export function SpaceTools({
       </section>
 
       {message && (
-        <p role="status" className="text-[12px] font-bold" style={{ color: 'var(--color-success)' }}>{message}</p>
+        <p role="status" className="text-[13px] font-bold" style={{ color: 'var(--color-success)' }}>{message}</p>
       )}
 
-      <p className="text-[10px] leading-snug p-3 rounded-xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
+      <p className="text-[11px] leading-snug p-3 rounded-xl" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
         Not here yet: staff and roles for a space. Brief&rsquo;s authority is a role bound to a scope, resolved
         in one place; a Manager/Staff/Viewer picker that no route enforced would tell you a colleague is
         read-only when they are not. It comes with the scope, not before it.

@@ -122,7 +122,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
         <div className="p-5 bg-[color:var(--color-surface)] flex items-center justify-between border-b border-black/5">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                 Step {step} of 3
               </span>
             </div>
@@ -172,14 +172,14 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                     >
                       <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-[color:var(--color-primary)]' : 'text-[color:var(--color-text-muted)]'}`} />
                       <p className="text-xs font-bold text-[color:var(--color-text)]">{opt.title}</p>
-                      <p className="text-[10px] text-[color:var(--color-text-muted)] leading-tight mt-0.5">{opt.desc}</p>
+                      <p className="text-[11px] text-[color:var(--color-text-muted)] leading-tight mt-0.5">{opt.desc}</p>
                     </button>
                   );
                 })}
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Space Name</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text)]">Space Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Amina's Cakes, Zawadi Leather"
@@ -190,7 +190,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Primary Goal</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text)]">Primary Goal</label>
                 <input
                   type="text"
                   placeholder="e.g. Get my first 20 customers, Reach KES 100k revenue"
@@ -218,7 +218,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           {step === 2 && (
             <div className="space-y-4 animate-fadeIn">
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Offer Title</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text)]">Offer Title</label>
                 <input
                   type="text"
                   placeholder="e.g. Birthday Cake, Custom Dress, Makeup Session"
@@ -231,7 +231,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[color:var(--color-text)]">Price (KES)</label>
+                  <label className="text-[12px] font-bold text-[color:var(--color-text)]">Price (KES)</label>
                   <input
                     type="number"
                     placeholder="4500"
@@ -242,7 +242,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[11px] font-bold text-[color:var(--color-text)]">Type</label>
+                  <label className="text-[12px] font-bold text-[color:var(--color-text)]">Type</label>
                   <select
                     value={offerType}
                     onChange={(e) => setOfferType(e.target.value as any)}
@@ -255,7 +255,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text)]">Description</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text)]">Description</label>
                 <textarea
                   rows={2}
                   placeholder="Brief description for customers on WhatsApp and web"
@@ -294,7 +294,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           {step === 3 && (
             <div className="space-y-4 animate-fadeIn">
               <div className="p-4 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[color:var(--color-text)]">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[color:var(--color-text)]">
                   Ready to Launch
                 </span>
                 <p className="text-sm font-black text-[color:var(--color-text)]">
@@ -307,7 +307,7 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                       KES {Number(offerPrice || 0).toLocaleString()}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[color:var(--color-text-muted)]">{offerDescription}</p>
+                  <p className="text-[11px] text-[color:var(--color-text-muted)]">{offerDescription}</p>
                 </div>
               </div>
 

@@ -49,14 +49,14 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
         )}
         {/* Category chip over the cover */}
         <span
-          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide"
+          className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide"
           style={{ background: "rgba(255,255,255,0.9)", color: "var(--color-text)" }}
         >
           {event.categoryLabel}
         </span>
         {event.featured && (
           <span
-            className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-extrabold"
+            className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-extrabold"
             style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
           >
             ★ Featured
@@ -69,7 +69,7 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
         <p className="text-sm font-extrabold text-[var(--color-text)] leading-snug line-clamp-2">
           {event.title}
         </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-[var(--color-text-muted)]">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-[var(--color-text-muted)]">
           {event.startsAt && <span>{event.startsAt.slice(0, 10)}</span>}
           {event.location && <span className="truncate">{event.location}</span>}
           <span>{event.goalAmount != null ? "Cause / pot" : money(event.price, event.currency)}</span>
@@ -78,7 +78,7 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
         {/* Group overlap — the unique, derived social proof. Only shown when
             the viewer's own group genuinely has members going. */}
         {event.tableBankingOverlap && event.tableBankingOverlap.length > 0 && (
-          <p className="text-[10px] font-bold" style={{ color: "var(--color-primary)" }}>
+          <p className="text-[11px] font-bold" style={{ color: "var(--color-primary)" }}>
             {event.tableBankingOverlap.map((o) => `${o.memberCount} from ${o.tableBankingName ?? "your Circle"}`).join(" · ")} going
           </p>
         )}

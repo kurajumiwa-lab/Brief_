@@ -126,7 +126,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
         <div className="p-6 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-2 shadow-sm">
           <Truck className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
           <p className="text-xs font-bold text-[color:var(--color-text)]">No cargo dispatches recorded yet</p>
-          <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
+          <p className="text-[12px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
             Connect your home-baked cakes and goods to cross-county distribution stages (2NK, Easy Coach, Mololine).
           </p>
         </div>
@@ -147,7 +147,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                       <span className="text-xs font-black text-[color:var(--color-text)] font-mono">
                         {d.waybillRef}
                       </span>
-                      <span className="text-[10px] font-bold text-[color:var(--color-primary)] bg-[color:var(--color-primary-subtle)] px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-bold text-[color:var(--color-primary)] bg-[color:var(--color-primary-subtle)] px-2 py-0.5 rounded-full">
                         {d.carrierSacco}
                       </span>
                     </div>
@@ -157,13 +157,13 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                     </p>
                   </div>
 
-                  <span className={`text-[9px] font-extrabold px-2.5 py-1 rounded-full shrink-0 ${sc.bg} ${sc.text}`}>
+                  <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full shrink-0 ${sc.bg} ${sc.text}`}>
                     {sc.label}
                   </span>
                 </div>
 
                 {/* Receiver details */}
-                <div className="p-3 rounded-2xl bg-[color:var(--color-surface)] text-[11px] space-y-1 text-[color:var(--color-text-muted)]">
+                <div className="p-3 rounded-2xl bg-[color:var(--color-surface)] text-[12px] space-y-1 text-[color:var(--color-text-muted)]">
                   <p>
                     <strong className="text-[color:var(--color-text)]">Receiver:</strong> {d.receiverName} ({d.receiverPhone})
                   </p>
@@ -178,7 +178,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                     </p>
                   )}
                   {d.stageFeeKes > 0 && (
-                    <p className="text-[10px] font-mono text-[color:var(--color-text)]">
+                    <p className="text-[11px] font-mono text-[color:var(--color-text)]">
                       Parcel Stage Fee: KES {d.stageFeeKes.toLocaleString()}
                     </p>
                   )}
@@ -189,7 +189,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                   <button
                     type="button"
                     onClick={() => handleShareTracking(d)}
-                    className="px-3 py-1.5 rounded-xl bg-[color:var(--color-surface-elevated)] hover:bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] text-[10px] font-bold transition-all cursor-pointer flex items-center space-x-1"
+                    className="px-3 py-1.5 rounded-xl bg-[color:var(--color-surface-elevated)] hover:bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] text-[11px] font-bold transition-all cursor-pointer flex items-center space-x-1"
                   >
                     <MessageCircle className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
                     <span>Share WhatsApp Tracking</span>
@@ -200,7 +200,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(d.id, 'ready_at_stage')}
-                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-primary-subtle)] hover:bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-extrabold transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-primary-subtle)] hover:bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-extrabold transition-all cursor-pointer"
                       >
                         Mark Ready at Stage
                       </button>
@@ -209,7 +209,7 @@ export const SpaceDispatches: React.FC<SpaceDispatchesProps> = ({
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(d.id, 'collected')}
-                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-success)] hover:bg-[color:var(--color-success)] text-white text-[10px] font-bold transition-all cursor-pointer"
+                        className="px-2.5 py-1.5 rounded-xl bg-[color:var(--color-success)] hover:bg-[color:var(--color-success)] text-white text-[11px] font-bold transition-all cursor-pointer"
                       >
                         Mark Collected
                       </button>

@@ -144,7 +144,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
     <div className={`flex flex-col h-full bg-[color:var(--color-paper)] rounded-3xl shadow-sm overflow-hidden ${className}`}>
 
       {threadError && (
-        <p role="alert" className="px-4 py-2 text-[11px] font-bold"
+        <p role="alert" className="px-4 py-2 text-[12px] font-bold"
           style={{ background: '#FEF2F2', color: '#B91C1C' }}>{threadError}</p>
       )}
 
@@ -164,13 +164,13 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             <div className="flex items-center space-x-2">
               <h3 className="font-bold text-[color:var(--color-text)] text-sm">{conversation.customerName}</h3>
               {conversation.customerContact && (
-                <span className="text-[10px] font-mono text-[color:var(--color-text-muted)] bg-[color:var(--color-paper)] px-2 py-0.5 rounded-full shadow-xs">
+                <span className="text-[11px] font-mono text-[color:var(--color-text-muted)] bg-[color:var(--color-paper)] px-2 py-0.5 rounded-full shadow-xs">
                   {conversation.customerContact}
                 </span>
               )}
             </div>
             {conversation.offerTitle && (
-              <p className="text-[11px] text-[color:var(--color-primary)] font-semibold mt-0.5 flex items-center space-x-1">
+              <p className="text-[12px] text-[color:var(--color-primary)] font-semibold mt-0.5 flex items-center space-x-1">
                 <Tag className="w-3 h-3" />
                 <span>Inquiring about: {conversation.offerTitle}</span>
                 {conversation.offerPriceKes && (
@@ -182,7 +182,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
         </div>
 
         {conversation.status === 'converted' && (
-          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[10px] font-bold">
+          <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-bold">
             <CheckCircle2 className="w-3.5 h-3.5 text-[color:var(--color-text)]" />
             <span>Order Converted</span>
           </div>
@@ -203,7 +203,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                   <button
                     type="button"
                     onClick={() => handleSimulatePayment(msg.paymentPrompt!.id, msg.paymentPrompt!.amountKes)}
-                    className="mt-1 px-3 py-1 rounded-full bg-[color:var(--color-text)] text-white text-[10px] font-bold shadow-xs hover:bg-black transition-all cursor-pointer"
+                    className="mt-1 px-3 py-1 rounded-full bg-[color:var(--color-text)] text-white text-[11px] font-bold shadow-xs hover:bg-black transition-all cursor-pointer"
                   >
                     Simulate Customer M-Pesa PIN Entry
                   </button>
@@ -229,7 +229,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                 {/* WhatsApp delivery status on owner replies — honest, from the
                     stored result (sent ✓ / not delivered + reason). */}
                 {!isCustomer && (msg as any).whatsappDelivery && (
-                  <p className="mt-1 text-[10px] font-bold" style={{ color: (msg as any).whatsappDelivery.ok ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.7)' }}>
+                  <p className="mt-1 text-[11px] font-bold" style={{ color: (msg as any).whatsappDelivery.ok ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.7)' }}>
                     {(msg as any).whatsappDelivery.ok
                       ? '✓ Sent via WhatsApp'
                       : `Not delivered — ${(msg as any).whatsappDelivery.reason ?? 'no provider'}`}
@@ -240,11 +240,11 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                 {msg.quote && (
                   <div className="mt-2 p-3 rounded-xl bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-sm space-y-1.5 border border-black/5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">Official Quote</span>
+                      <span className="text-[11px] uppercase tracking-wider font-extrabold text-[color:var(--color-primary)]">Official Quote</span>
                       <span className="text-xs font-black text-[color:var(--color-text)]">KES {msg.quote.priceKes.toLocaleString()}</span>
                     </div>
                     <p className="text-xs font-bold">{msg.quote.title}</p>
-                    {msg.quote.notes && <p className="text-[11px] text-[color:var(--color-text-muted)]">{msg.quote.notes}</p>}
+                    {msg.quote.notes && <p className="text-[12px] text-[color:var(--color-text-muted)]">{msg.quote.notes}</p>}
                     <button
                       type="button"
                       onClick={() => {
@@ -253,7 +253,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
                         setPromptDesc(`Payment for ${msg.quote!.title}`);
                         setShowPromptForm(true);
                       }}
-                      className="w-full mt-1 py-1.5 rounded-lg bg-[color:var(--color-primary)] hover:bg-[#85e028] text-[color:var(--color-text)] text-[11px] font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                      className="w-full mt-1 py-1.5 rounded-lg bg-[color:var(--color-primary)] hover:bg-[#85e028] text-[color:var(--color-text)] text-[12px] font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
                     >
                       <Smartphone className="w-3.5 h-3.5" />
                       <span>Send M-Pesa STK Prompt</span>
@@ -263,7 +263,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
 
                 {/* Timestamp */}
                 <div
-                  className={`text-[9px] mt-1 text-right ${
+                  className={`text-[11px] mt-1 text-right ${
                     isCustomer ? 'text-[color:var(--color-text-muted)]' : 'text-white/70'
                   }`}
                 >
@@ -283,7 +283,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             <button
               type="button"
               onClick={() => setShowQuoteForm(false)}
-              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
+              className="text-[12px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
             >
               Cancel
             </button>
@@ -330,7 +330,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             <button
               type="button"
               onClick={() => setShowPromptForm(false)}
-              className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
+              className="text-[12px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] font-medium"
             >
               Cancel
             </button>
@@ -380,7 +380,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             setShowQuoteForm(!showQuoteForm);
             setShowPromptForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-primary)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-primary)] text-[12px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Tag className="w-3.5 h-3.5" />
           <span>Quote</span>
@@ -392,7 +392,7 @@ export const SpaceConversationThread: React.FC<SpaceConversationThreadProps> = (
             setShowPromptForm(!showPromptForm);
             setShowQuoteForm(false);
           }}
-          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-text)] text-[11px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
+          className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] hover:bg-black/5 text-[color:var(--color-text)] text-[12px] font-bold shadow-xs transition-colors flex items-center space-x-1 cursor-pointer"
         >
           <Smartphone className="w-3.5 h-3.5 text-[#059669]" />
           <span>M-Pesa STK</span>

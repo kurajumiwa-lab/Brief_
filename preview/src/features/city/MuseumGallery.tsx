@@ -191,13 +191,13 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
           <button
             type="button"
             onClick={() => { setFilters(EMPTY); setApplied(EMPTY); }}
-            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-bold cursor-pointer"
+            className="shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-text-muted)' }}
           >
             <X className="w-3 h-3" /> Clear
           </button>
         )}
-        <span className="ml-auto shrink-0 text-[10px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="ml-auto shrink-0 text-[11px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
           swipe
         </span>
       </div>
@@ -287,7 +287,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
         }
       >
         <div>
-          <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
             Wing
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -316,7 +316,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
         <div>
           <label
             htmlFor="museum-loc"
-            className="block text-[10px] font-black uppercase tracking-wider mb-2"
+            className="block text-[11px] font-black uppercase tracking-wider mb-2"
             style={{ color: 'var(--color-text-muted)' }}
           >
             Place (optional)
@@ -334,7 +334,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               From
             </p>
             <input
@@ -346,7 +346,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
             />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               To
             </p>
             <input

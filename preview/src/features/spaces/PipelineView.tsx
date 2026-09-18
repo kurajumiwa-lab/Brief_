@@ -236,7 +236,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         <div className="min-w-0">
           <div className="flex items-center space-x-2">
             <span className="text-xs text-[color:var(--color-text-muted)] font-semibold">Your business workspace</span>
-            <span className="text-[10px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-2 py-0.5 rounded-full font-bold">
+            <span className="text-[11px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-2 py-0.5 rounded-full font-bold">
               {space.type}
             </span>
           </div>
@@ -247,7 +247,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
         <div className="flex items-center space-x-2 shrink-0">
           <div className="px-3 py-1.5 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] text-[color:var(--color-text)] text-right">
-            <span className="text-[9px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Settled · all time</span>
+            <span className="text-[11px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Settled · all time</span>
             <span className="text-xs font-black block text-[color:var(--color-text)]">KES {revenueKes.toLocaleString()}</span>
           </div>
           <div className="px-2.5 py-1.5 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-xs font-black">
@@ -262,14 +262,14 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
           <span className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
             Active Orders & Inquiries ({conversations.length})
           </span>
-          <span className="text-[10px] text-[color:var(--color-text-muted)]">Real-time stream</span>
+          <span className="text-[11px] text-[color:var(--color-text-muted)]">Real-time stream</span>
         </div>
 
         {conversations.length === 0 ? (
           <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-2">
             <MessageSquare className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
             <p className="text-xs font-bold text-[color:var(--color-text)]">No active orders in pipeline</p>
-            <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
+            <p className="text-[12px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
               Share your catalog offers on WhatsApp or social channels to receive inbound inquiries and orders.
             </p>
           </div>
@@ -310,7 +310,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center space-x-2 min-w-0">
                         <span
-                          className={`text-[9px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 ${
+                          className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 ${
                             isDispatched
                               ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-accent)]'
                               : isPaid
@@ -363,12 +363,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
                     {/* Dispatched Info if available */}
                     {isDispatched && (
-                      <div className="p-2 rounded-xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] text-[color:var(--color-accent)] text-[11px] flex items-center justify-between">
+                      <div className="p-2 rounded-xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-border)] text-[color:var(--color-accent)] text-[12px] flex items-center justify-between">
                         <span className="flex items-center space-x-1 truncate">
                           <Truck className="w-3.5 h-3.5 text-[color:var(--color-accent)] shrink-0" />
                           <span className="font-bold">{latestDispatch.carrierSacco}</span>
                           <span>→ {latestDispatch.destinationTown}</span>
-                          <span className="font-mono text-[10px]">({latestDispatch.waybillRef})</span>
+                          <span className="font-mono text-[11px]">({latestDispatch.waybillRef})</span>
                         </span>
                         <button
                           type="button"
@@ -376,7 +376,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             e.stopPropagation();
                             handleShareTracking(conv, latestDispatch.carrierSacco, latestDispatch.destinationTown);
                           }}
-                          className="text-[10px] font-bold text-[color:var(--color-accent)] underline ml-2 shrink-0 cursor-pointer"
+                          className="text-[11px] font-bold text-[color:var(--color-accent)] underline ml-2 shrink-0 cursor-pointer"
                         >
                           Share Tracking
                         </button>
@@ -387,7 +387,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                     {lastMessages.length > 0 && (
                       <div className="space-y-1 pt-0.5">
                         {lastMessages.map((m) => (
-                          <p key={m.id} className="text-[11px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-elevated)] p-1.5 rounded-xl truncate">
+                          <p key={m.id} className="text-[12px] text-[color:var(--color-text-muted)] bg-[color:var(--color-surface-elevated)] p-1.5 rounded-xl truncate">
                             💬 <strong className="text-[color:var(--color-text)]">{m.from === 'customer' ? conv.customerName : 'You'}:</strong> {m.text}
                           </p>
                         ))}
@@ -416,12 +416,12 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                             >
                               <p>{m.text}</p>
                               {m.quote && (
-                                <div className="mt-1 p-2 rounded-lg bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs text-[11px]">
+                                <div className="mt-1 p-2 rounded-lg bg-[color:var(--color-paper)] text-[color:var(--color-text)] shadow-2xs text-[12px]">
                                   <strong>Quote:</strong> KES {m.quote.priceKes.toLocaleString()} ({m.quote.title})
                                 </div>
                               )}
                             </div>
-                            <span className="text-[8px] text-[color:var(--color-text-muted)] mt-0.5">
+                            <span className="text-[11px] text-[color:var(--color-text-muted)] mt-0.5">
                               {new Date(m.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
@@ -476,7 +476,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                           {/* Inline Quote Drawer Form */}
                           {isQuoting && (
                             <div className="p-3 bg-[color:var(--color-paper)] rounded-2xl border border-black/5 space-y-2 animate-fadeIn">
-                              <span className="text-[10px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
+                              <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
                                 Prepare Quotation for {conv.customerName}
                               </span>
                               <input
@@ -517,7 +517,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                       {isQuoteSent && !isPaid && (
                         <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-900">
                               Quote Sent · Waiting on Customer
                             </span>
                             <span className="text-xs font-black text-blue-900">
@@ -576,7 +576,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => setActiveDispatchCardId(null)}
-                                  className="text-[10px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
+                                  className="text-[11px] text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
                                 >
                                   Cancel
                                 </button>
@@ -660,18 +660,18 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
         <div className="flex items-center space-x-2">
           <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
           <div>
-            <span className="text-[10px] uppercase font-bold block" style={{ color: 'var(--brief-muted)' }}>
+            <span className="text-[11px] uppercase font-bold block" style={{ color: 'var(--brief-muted)' }}>
               Settled through Brief · all time
             </span>
             <span className="text-sm font-black font-mono" style={{ color: 'var(--brief-ink)' }}>
               KES {revenueKes.toLocaleString()}
             </span>
-            <span className="text-[9px] block" style={{ color: 'var(--color-quiet)' }}>
+            <span className="text-[11px] block" style={{ color: 'var(--color-quiet)' }}>
               Expenses are not subtracted here — they are in the Money tab.
             </span>
           </div>
         </div>
-        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
+        <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: 'var(--color-well)', color: 'var(--brief-muted)' }}>
           {space.name}
         </span>
       </div>

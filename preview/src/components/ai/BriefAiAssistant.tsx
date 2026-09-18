@@ -196,16 +196,16 @@ export function BriefAiAssistant({
       {/* ================= HEADER ================= */}
       <div className="bg-[var(--brief-ink)] text-white p-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#4F46E5] to-[#FF8A00] flex items-center justify-center text-white shadow-md">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#2563EB] to-[#FF8A00] flex items-center justify-center text-white shadow-md">
             <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
               <h3 className="font-black text-sm text-white">Brief AI</h3>
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span className="text-[10px] text-emerald-400 font-mono font-bold">ONLINE</span>
+              <span className="text-[11px] text-emerald-400 font-mono font-bold">ONLINE</span>
             </div>
-            <p className="text-[10px] text-[#DCE2E6]/70">The Town Centre Mayor & Navigator</p>
+            <p className="text-[11px] text-[#DCE2E6]/70">The Town Centre Mayor & Navigator</p>
           </div>
         </div>
 
@@ -229,7 +229,7 @@ export function BriefAiAssistant({
             <div
               className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs shadow-xs ${
                 msg.sender === 'user'
-                  ? 'bg-[#4F46E5] text-white rounded-tr-none font-medium'
+                  ? 'bg-[#2563EB] text-white rounded-tr-none font-medium'
                   : 'bg-white border border-[var(--brief-line)] text-[var(--brief-ink)] rounded-tl-none space-y-2'
               }`}
             >
@@ -241,16 +241,16 @@ export function BriefAiAssistant({
                   {msg.cards.map(card => (
                     <div
                       key={card.id}
-                      className="p-3 bg-[var(--brief-bg)] border border-[var(--brief-line)] rounded-xl flex items-center justify-between gap-2 hover:border-[#4F46E5] transition-colors"
+                      className="p-3 bg-[var(--brief-bg)] border border-[var(--brief-line)] rounded-xl flex items-center justify-between gap-2 hover:border-[#2563EB] transition-colors"
                     >
                       <div className="space-y-0.5 min-w-0">
                         <span className="font-bold text-xs text-[var(--brief-ink)] block truncate">
                           {card.title}
                         </span>
-                        <span className="text-[10px] text-gray-500 block truncate">
+                        <span className="text-[11px] text-gray-500 block truncate">
                           {card.subtitle}
                         </span>
-                        <div className="flex items-center space-x-2 text-[10px] font-mono mt-0.5">
+                        <div className="flex items-center space-x-2 text-[11px] font-mono mt-0.5">
                           {card.price && (
                             <span className="text-emerald-700 font-bold bg-emerald-50 px-1 rounded">
                               {card.price}
@@ -270,7 +270,7 @@ export function BriefAiAssistant({
                           soundEngine.play('tap');
                           if (onOpenCardAction) onOpenCardAction(card.actionType, card.id);
                         }}
-                        className="px-3 py-1.5 rounded-xl bg-[var(--brief-ink)] hover:bg-[#1E2633] text-white text-[10px] font-bold uppercase tracking-wider shrink-0 cursor-pointer shadow-xs"
+                        className="px-3 py-1.5 rounded-xl bg-[var(--brief-ink)] hover:bg-[#1E2633] text-white text-[11px] font-bold uppercase tracking-wider shrink-0 cursor-pointer shadow-xs"
                       >
                         {card.actionLabel} →
                       </button>
@@ -279,15 +279,15 @@ export function BriefAiAssistant({
                 </div>
               )}
             </div>
-            <span className="text-[9px] text-gray-400 font-mono mt-0.5 px-1">{msg.time}</span>
+            <span className="text-[11px] text-gray-400 font-mono mt-0.5 px-1">{msg.time}</span>
           </div>
         ))}
 
         {isTyping && (
           <div className="flex items-center space-x-1.5 bg-white border border-gray-200 px-3 py-2 rounded-2xl w-24">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] animate-bounce" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] animate-bounce delay-100" />
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4F46E5] animate-bounce delay-200" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-bounce" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-bounce delay-100" />
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] animate-bounce delay-200" />
           </div>
         )}
       </div>
@@ -299,7 +299,7 @@ export function BriefAiAssistant({
             key={idx}
             type="button"
             onClick={() => handleSend(p)}
-            className="px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 text-[10px] text-gray-700 font-medium whitespace-nowrap cursor-pointer transition-colors"
+            className="px-2.5 py-1 rounded-full bg-gray-100 hover:bg-gray-200 text-[11px] text-gray-700 font-medium whitespace-nowrap cursor-pointer transition-colors"
           >
             {p}
           </button>
@@ -316,11 +316,11 @@ export function BriefAiAssistant({
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           placeholder="Ask Brief AI anything in your town..."
-          className="flex-1 bg-[var(--brief-bg)] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[var(--brief-ink)] focus:outline-none focus:border-[#4F46E5]"
+          className="flex-1 bg-[var(--brief-bg)] border border-gray-300 rounded-2xl px-4 py-2.5 text-xs text-[var(--brief-ink)] focus:outline-none focus:border-[#2563EB]"
         />
         <button
           type="submit"
-          className="w-10 h-10 rounded-2xl bg-[#4F46E5] hover:bg-[#ff4605] text-white flex items-center justify-center cursor-pointer shadow-md transition-all shrink-0"
+          className="w-10 h-10 rounded-2xl bg-[#2563EB] hover:bg-[#ff4605] text-white flex items-center justify-center cursor-pointer shadow-md transition-all shrink-0"
         >
           <Send className="w-4 h-4" />
         </button>

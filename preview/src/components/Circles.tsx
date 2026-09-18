@@ -427,7 +427,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-extrabold text-[var(--brief-ink)]">{circle.name}</p>
-          <p className="text-[9px] text-[var(--ink-60)] mt-0.5">
+          <p className="text-[11px] text-[var(--ink-60)] mt-0.5">
             {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
             {circle.viewerRole ? ` \u00b7 you are ${circle.viewerRole}` : ''}
           </p>
@@ -437,7 +437,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             <button
               onClick={() => void handleJoin(circle.id)}
               disabled={busyId === circle.id}
-              className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
               {busyId === circle.id ? 'Joining…' : 'Join'}
             </button>
@@ -446,7 +446,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             <button
               onClick={() => void handleLeave(circle.id)}
               disabled={busyId === circle.id}
-              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
             >
               {busyId === circle.id ? 'Leaving…' : 'Leave'}
             </button>
@@ -457,7 +457,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               setSection('overview');
               setNotice(null);
             }}
-            className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer"
+            className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
           >
             Open
           </button>
@@ -465,19 +465,19 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span className="text-[10px] text-[var(--ink-60)]">
+        <span className="text-[11px] text-[var(--ink-60)]">
           {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}
         </span>
-        <span className="text-[10px] text-[var(--ink-60)]">
+        <span className="text-[11px] text-[var(--ink-60)]">
           {circle.blockCount} {circle.blockCount === 1 ? 'block' : 'blocks'}
         </span>
         {circle.contributorCount > 0 && (
-          <span className="text-[10px] text-[var(--ink-60)]">
+          <span className="text-[11px] text-[var(--ink-60)]">
             {circle.contributorCount} contributing
           </span>
         )}
         {mode === 'closed' && (
-          <span className="text-[10px] text-[var(--ink-60)]">
+          <span className="text-[11px] text-[var(--ink-60)]">
             Invite only — a coordinator has to add you
           </span>
         )}
@@ -496,7 +496,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
           </div>
           <button
             onClick={() => setShowCreate((v) => !v)}
-            className="shrink-0 px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer"
+            className="shrink-0 px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
           >
             {showCreate ? 'Cancel' : 'Start a circle'}
           </button>
@@ -504,7 +504,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
         {notice && (
           <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-xl px-3 py-2">
-            <p className="text-[10px] text-[var(--brief-ink)] leading-snug">{notice}</p>
+            <p className="text-[11px] text-[var(--brief-ink)] leading-snug">{notice}</p>
           </div>
         )}
 
@@ -517,29 +517,29 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Circle name"
-              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[12px] text-[var(--brief-ink)]"
+              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
             />
             <input
               value={newGoal}
               onChange={(e) => setNewGoal(e.target.value)}
               placeholder="What is it for? (optional)"
-              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[12px] text-[var(--brief-ink)]"
+              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
             />
             <input
               value={newTarget}
               onChange={(e) => setNewTarget(e.target.value.replace(/[^0-9.]/g, ''))}
               placeholder="Money target, if it has one (optional)"
               inputMode="decimal"
-              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[12px] text-[var(--brief-ink)]"
+              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
             />
             <button
               type="submit"
               disabled={creating || !newName.trim()}
-              className="px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
               {creating ? 'Starting…' : 'Start circle'}
             </button>
-            <p className="text-[10px] text-[var(--ink-70)]">
+            <p className="text-[11px] text-[var(--ink-70)]">
               You become its coordinator, so you can add other people.
             </p>
           </form>
@@ -551,12 +551,12 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
         {list.status === 'error' && (
           <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-2xl p-4">
-            <p className="text-[11px] text-[var(--brief-ink)] leading-snug">
+            <p className="text-[12px] text-[var(--brief-ink)] leading-snug">
               Couldn't load circles. {list.error}
             </p>
             <button
               onClick={load}
-              className="mt-2 text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+              className="mt-2 text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
             >
               Try again
             </button>
@@ -568,7 +568,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             <p className="text-xs text-[var(--ink-60)]">
               There are no circles here yet.
             </p>
-            <p className="text-[10px] text-[var(--ink-60)] mt-1">
+            <p className="text-[11px] text-[var(--ink-60)] mt-1">
               Start one, or join an open one when somebody starts it.
             </p>
           </div>
@@ -576,7 +576,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
         {mine.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
               Circles you are in ({mine.length})
             </h3>
             {mine.map((circle) => card(circle, 'mine'))}
@@ -588,7 +588,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             <p className="text-xs text-[var(--ink-60)]">
               You are not part of any Circle yet.
             </p>
-            <p className="text-[10px] text-[var(--ink-60)] mt-1">
+            <p className="text-[11px] text-[var(--ink-60)] mt-1">
               The ones below are open — joining takes one press.
             </p>
           </div>
@@ -596,7 +596,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
         {joinable.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
               Open to join ({joinable.length})
             </h3>
             {joinable.map((circle) => card(circle, 'joinable'))}
@@ -605,7 +605,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
         {closed.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
               Invite only ({closed.length})
             </h3>
             {closed.map((circle) => card(circle, 'closed'))}
@@ -633,7 +633,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
           setNotice(null);
           setExpandedMember(null);
         }}
-        className="text-[10px] text-[var(--brief-ink)] cursor-pointer"
+        className="text-[11px] text-[var(--brief-ink)] cursor-pointer"
       >
         Back to your circles
       </button>
@@ -643,7 +643,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
       )}
 
       {detail.status === 'error' && (
-        <p className="text-[11px] text-[var(--brief-ink)] mt-2">
+        <p className="text-[12px] text-[var(--brief-ink)] mt-2">
           Couldn't load this circle. {detail.error}
         </p>
       )}
@@ -659,16 +659,16 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             >
               <span className="absolute inset-x-0 bottom-0 flex items-end justify-between p-3">
                 <span className="min-w-0">
-                  <span className="block text-[10px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
+                  <span className="block text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-text-muted)' }}>
                     {open.visibility === 'invite_only' ? 'A private room' : open.visibility === 'discoverable' ? 'Listed room' : 'Open room'}
                     {' · '}{open.memberCount} {open.memberCount === 1 ? 'member' : 'members'}
                   </span>
-                  <h2 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
+                  <h2 className="text-[30px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
                     {open.name}
                   </h2>
                 </span>
                 {myRole ? (
-                  <span className="shrink-0 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--color-primary)' }}>
+                  <span className="shrink-0 text-[11px] font-black uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.72)', color: 'var(--color-primary)' }}>
                     {myRole}
                   </span>
                 ) : null}
@@ -681,7 +681,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             {(open.welcome || welcomeDraft != null || myRole === 'coordinator') && (
               <div className="mt-2 rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
                 {welcomeDraft == null ? (
-                  <p className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+                  <p className="text-[14px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
                     {open.welcome ?? <span style={{ color: 'var(--color-text-muted)' }}>No welcome note yet — one line for whoever walks in.</span>}
                   </p>
                 ) : (
@@ -693,27 +693,27 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                       maxLength={400}
                       aria-label="welcome note"
                       placeholder="Meet at the gate by 7. Bring the pump."
-                      className="w-full px-2.5 py-2 rounded-xl text-[12px] resize-none"
+                      className="w-full px-2.5 py-2 rounded-xl text-[13px] resize-none"
                       style={{ background: 'var(--color-well)', color: 'var(--color-text)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
                     />
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handlePinWelcome}
                         disabled={govBusy === 'welcome' || !welcomeDraft.trim()}
-                        className="px-3 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                        className="px-3 py-1.5 rounded-xl font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                         style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', border: 'none' }}
                       >
                         Pin it
                       </button>
-                      <button onClick={() => setWelcomeDraft(null)} className="px-2 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer" style={{ color: 'var(--color-text-muted)', background: 'none', border: 'none' }}>
+                      <button onClick={() => setWelcomeDraft(null)} className="px-2 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer" style={{ color: 'var(--color-text-muted)', background: 'none', border: 'none' }}>
                         Cancel
                       </button>
-                      <span className="ml-auto text-[9px] font-mono" style={{ color: 'var(--color-text-muted)' }}>{400 - welcomeDraft.length}</span>
+                      <span className="ml-auto text-[11px] font-mono" style={{ color: 'var(--color-text-muted)' }}>{400 - welcomeDraft.length}</span>
                     </div>
                   </div>
                 )}
                 {welcomeDraft == null && myRole === 'coordinator' && (
-                  <button onClick={() => setWelcomeDraft(open.welcome ?? '')} className="mt-1.5 text-[10px] font-black cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
+                  <button onClick={() => setWelcomeDraft(open.welcome ?? '')} className="mt-1.5 text-[11px] font-black cursor-pointer" style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}>
                     {open.welcome ? 'Edit' : 'Write one'}
                   </button>
                 )}
@@ -729,7 +729,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               const vote = votes[0] ?? null;
               const card = (children: React.ReactNode, label: string) => (
                 <div className="mt-2 rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>
-                  <p className="text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-primary)' }}>{label}</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--color-primary)' }}>{label}</p>
                   {children}
                 </div>
               );
@@ -738,8 +738,8 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                 const closing = t?.closesAt ? Math.max(0, Math.round((Date.parse(t.closesAt) - Date.now()) / 3600000)) : null;
                 return card(
                   <>
-                    <p className="text-[14px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>{vote.content}</p>
-                    <p className="text-[10px] font-mono mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                    <p className="text-[15px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>{vote.content}</p>
+                    <p className="text-[11px] font-mono mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
                       {t ? `${t.totalVotes} of ${t.eligibleCount} voted` : 'no ballots yet'}
                       {closing != null ? ` · closes in ${closing}h` : ''}
                       {t?.quorum ? ` · quorum ${t.quorum}` : ''}
@@ -751,10 +751,10 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               if (openTasks.length) {
                 return card(
                   <>
-                    <p className="text-[14px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>
+                    <p className="text-[15px] font-extrabold mt-1" style={{ color: 'var(--brief-ink)' }}>
                       {openTasks.length} {openTasks.length === 1 ? 'job' : 'jobs'} nobody has taken
                     </p>
-                    <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{openTasks[0].content}</p>
+                    <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{openTasks[0].content}</p>
                   </>,
                   'Work waiting'
                 );
@@ -767,7 +767,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                 <button
                   onClick={() => void handleLeave(open.id)}
                   disabled={busyId === open.id}
-                  className="shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-bold cursor-pointer disabled:opacity-50"
+                  className="shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-bold cursor-pointer disabled:opacity-50"
                   style={{ color: 'var(--color-text-muted)', background: 'none', border: 'none' }}
                 >
                   {busyId === open.id ? 'Leaving…' : 'Leave'}
@@ -776,12 +776,12 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                 <button
                   onClick={() => void handleJoin(open.id)}
                   disabled={busyId === open.id}
-                  className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                  className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
                 >
                   {busyId === open.id ? 'Joining…' : 'Join room'}
                 </button>
               ) : (
-                <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>Invite only — ask a coordinator</span>
+                <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>Invite only — ask a coordinator</span>
               )}
 
               {/* The join link. Real origin, real code, copy-on-tap: no vanity
@@ -799,7 +799,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               <div className="mt-1 flex items-center gap-2 flex-wrap">
                 <button
                   onClick={() => setListingRoom((v) => !v)}
-                  className="text-[10px] font-black cursor-pointer"
+                  className="text-[11px] font-black cursor-pointer"
                   style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}
                 >
                   {open.visibility === 'discoverable' ? 'Take it off the list' : 'List it so people can find it'}
@@ -812,13 +812,13 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                       maxLength={300}
                       aria-label="reason for listing this room"
                       placeholder="why should the list show this room? your members see this"
-                      className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl text-[10px]"
+                      className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl text-[11px]"
                       style={{ background: 'var(--color-well)', color: 'var(--color-text)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
                     />
                     <button
                       onClick={handleListRoom}
                       disabled={govBusy === 'listing' || !listReason.trim()}
-                      className="px-3 py-1.5 rounded-xl font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                      className="px-3 py-1.5 rounded-xl font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                       style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', border: 'none' }}
                     >
                       {open.visibility === 'discoverable' ? 'Unlist' : 'List it'}
@@ -835,9 +835,9 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               <button
                 key={s.id}
                 onClick={() => setSection(s.id)}
-                className={`px-3 py-1.5 rounded-xl text-[10px] font-extrabold cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold cursor-pointer ${
                   section === s.id
-                    ? 'bg-[#4F46E5] text-[var(--accent-ink)]'
+                    ? 'bg-[#2563EB] text-[var(--accent-ink)]'
                     : 'bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--ink-70)]'
                 }`}
               >
@@ -849,22 +849,22 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
           {/* A refused action reports the server's own reason. */}
           {notice && (
             <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-xl px-3 py-2">
-              <p className="text-[10px] text-[var(--brief-ink)] leading-snug">{notice}</p>
+              <p className="text-[11px] text-[var(--brief-ink)] leading-snug">{notice}</p>
             </div>
           )}
 
           {section === 'overview' && (
             <div className="space-y-4">
               {open.description && (
-                <p className="text-[11px] text-[var(--ink-60)] leading-snug">{open.description}</p>
+                <p className="text-[12px] text-[var(--ink-60)] leading-snug">{open.description}</p>
               )}
 
               {/* What the room is working towards, in its own words — one line,
                   with the money that has actually settled under it. Not a table
                   of fields: a sentence and a figure. */}
               {open.goal && (
-                <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
-                  <span className="font-black uppercase tracking-wider text-[9px]" style={{ color: 'var(--color-primary)' }}>Working towards </span>
+                <p className="text-[13px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
+                  <span className="font-black uppercase tracking-wider text-[11px]" style={{ color: 'var(--color-primary)' }}>Working towards </span>
                   {open.goal}
                 </p>
               )}
@@ -872,7 +872,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               {/* What is in the room: notes, pins, anything the group put on the
                   wall. Tasks and votes have their own panels; this is the rest. */}
               <div>
-                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">In the room</h3>
+                <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">In the room</h3>
                 {detail.blocks.filter((b) => b.type !== 'task' && b.type !== 'vote').length === 0 ? (
                   <p className="text-xs text-[var(--ink-60)]">Nothing pinned yet.</p>
                 ) : (
@@ -881,10 +881,10 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                       .filter((b) => b.type !== 'task' && b.type !== 'vote')
                       .map((block) => (
                         <div key={block.id} className="bg-[color:var(--color-paper)] rounded-2xl p-3" style={{ boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
-                          <p className="text-[9px] text-[var(--brief-ink)]">{block.type}</p>
+                          <p className="text-[11px] text-[var(--brief-ink)]">{block.type}</p>
                           <p className="text-xs text-[var(--brief-ink)] mt-1">{block.content}</p>
                           {block.sources.length > 0 && block.sources[0].sourceName && (
-                            <p className="text-[9px] text-[var(--ink-60)] mt-1">via {block.sources[0].sourceName}</p>
+                            <p className="text-[11px] text-[var(--ink-60)] mt-1">via {block.sources[0].sourceName}</p>
                           )}
                         </div>
                       ))}
@@ -896,7 +896,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                   the act, the actor's name where it is public, and the reason
                   where one was required. */}
               <div>
-                <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">What changed</h3>
+                <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">What changed</h3>
                 {roomHistory == null ? (
                   <p className="text-xs text-[var(--ink-60)]">The history could not be read.</p>
                 ) : roomHistory.length === 0 ? (
@@ -906,8 +906,8 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                     {roomHistory.slice(0, 6).map((row) => (
                       <li key={row.id} className="flex items-baseline gap-2">
                         <span className="w-1 h-1 rounded-full shrink-0" style={{ background: 'var(--color-primary)' }} />
-                        <span className="min-w-0 flex-1 text-[11px] leading-snug text-[var(--brief-ink)]">{row.text}</span>
-                        <span className="shrink-0 text-[9px] font-mono text-[var(--ink-60)]">{row.at.slice(5, 10)}</span>
+                        <span className="min-w-0 flex-1 text-[12px] leading-snug text-[var(--brief-ink)]">{row.text}</span>
+                        <span className="shrink-0 text-[11px] font-mono text-[var(--ink-60)]">{row.at.slice(5, 10)}</span>
                       </li>
                     ))}
                   </ul>
@@ -916,7 +916,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
               {open.targetValue != null && (
                 <div>
-                  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">Target</h3>
+                  <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">Target</h3>
                   <CircleTarget circle={open} />
                 </div>
               )}

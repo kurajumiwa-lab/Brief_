@@ -23,7 +23,7 @@ const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 export type FieldValues = Record<string, unknown>;
 
-const labelCls = "block text-[10px] font-black uppercase tracking-wider mb-1.5";
+const labelCls = "block text-[11px] font-black uppercase tracking-wider mb-1.5";
 const inputCls =
   "w-full px-3.5 py-2.5 rounded-xl text-xs border focus:outline-none";
 
@@ -52,7 +52,7 @@ export function SpaceFieldInputs({
               {f.question}
             </label>
             {f.help && (
-              <p className="text-[10px] leading-snug mb-1.5" style={{ color: 'var(--color-text-muted)' }}>
+              <p className="text-[11px] leading-snug mb-1.5" style={{ color: 'var(--color-text-muted)' }}>
                 {f.help}
               </p>
             )}
@@ -122,7 +122,7 @@ export function SpaceFieldInputs({
                             : [...((raw as { days?: string[] })?.days ?? []), d];
                           onChange(f.key, { ...(raw as object), days, summary: (raw as { summary?: string })?.summary ?? '', from: (raw as { from?: string })?.from ?? null, to: (raw as { to?: string })?.to ?? null });
                         }}
-                        className="px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border"
+                        className="px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer border"
                         style={{
                           background: on ? 'var(--color-primary)' : 'var(--color-paper)',
                           color: on ? 'var(--accent-ink)' : 'var(--color-text-muted)',
@@ -191,7 +191,7 @@ export function SpaceFieldInputs({
                   style={inputStyle()}
                   placeholder="what a buyer should say first (optional)"
                 />
-                <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-faint, var(--color-text-muted))' }}>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--brief-faint, var(--color-text-muted))' }}>
                   A wrong number is refused, not stored. Nothing is sent for you — this only builds the button.
                 </p>
               </div>
@@ -236,7 +236,7 @@ function ListEditor({ items, onChange, placeholder, id }: {
         style={inputStyle()}
         placeholder={placeholder}
       />
-      <p className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+      <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
         One per line · {items.length} {items.length === 1 ? 'item' : 'items'}
       </p>
     </div>

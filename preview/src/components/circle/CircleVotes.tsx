@@ -80,14 +80,14 @@ export function CircleVotes({
             {vote.content}
           </p>
           {isClosed && (
-            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
+            <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
               closed
             </span>
           )}
         </div>
 
         {/* Turnout, from real rows on both sides. */}
-        <p className="text-[10px] text-[var(--ink-60)]">
+        <p className="text-[11px] text-[var(--ink-60)]">
           {tally?.totalVotes ?? 0} of {tally?.eligibleCount ?? 0} eligible{' '}
           {(tally?.eligibleCount ?? 0) === 1 ? 'member' : 'members'} voted
         </p>
@@ -99,13 +99,13 @@ export function CircleVotes({
               <div key={r.option} className="space-y-1">
                 <div className="flex items-center justify-between gap-3">
                   <span
-                    className={`text-[11px] ${
+                    className={`text-[12px] ${
                       isLeader ? 'text-[var(--brief-ink)] font-extrabold' : 'text-[var(--ink-60)]'
                     }`}
                   >
                     {r.option}
                   </span>
-                  <span className="text-[10px] text-[var(--ink-60)] shrink-0">
+                  <span className="text-[11px] text-[var(--ink-60)] shrink-0">
                     {r.count} {r.count === 1 ? 'vote' : 'votes'}
                     {/* Dash, not 0%: nobody has voted, so there is no share
                         to report. */}
@@ -114,7 +114,7 @@ export function CircleVotes({
                 </div>
                 <div className="h-1 bg-[var(--color-well)] rounded-full overflow-hidden">
                   <div
-                    className={`h-full ${isLeader ? 'bg-[#4F46E5]' : 'bg-[var(--brief-line)]'}`}
+                    className={`h-full ${isLeader ? 'bg-[#2563EB]' : 'bg-[var(--brief-line)]'}`}
                     style={{ width: `${r.pct ?? 0}%` }}
                   />
                 </div>
@@ -126,7 +126,7 @@ export function CircleVotes({
         {/* When it ends on its own, and how many it needs. A time and a number,
             not a promise about the outcome. */}
         {!isClosed && (tally?.closesAt || tally?.quorum) && (
-          <p className="text-[9px] font-mono text-[var(--ink-60)]">
+          <p className="text-[11px] font-mono text-[var(--ink-60)]">
             {tally?.closesAt ? `closes ${String(tally.closesAt).slice(5, 10)}` : 'no deadline set'}
             {tally?.quorum ? ` · quorum ${tally.quorum} of ${tally.eligibleCount}` : ''}
           </p>
@@ -134,14 +134,14 @@ export function CircleVotes({
 
         {/* A count under quorum is not a decision, and is not shown as one. */}
         {!isClosed && tally?.quorum != null && tally?.quorumMet === false && (
-          <p className="text-[10px] text-[var(--color-warning)]">
+          <p className="text-[11px] text-[var(--color-warning)]">
             {tally.totalVotes} of {tally.quorum} needed — under quorum, whatever the lead.
           </p>
         )}
 
         {/* Only a strict winner is announced. A tie says so. */}
         {isClosed && (
-          <p className="text-[10px] text-[var(--brief-ink)]">
+          <p className="text-[11px] text-[var(--brief-ink)]">
             {tally?.leader
               ? `Result: ${tally.leader}`
               : (tally?.totalVotes ?? 0) === 0
@@ -159,7 +159,7 @@ export function CircleVotes({
                 key={r.option}
                 onClick={() => onVote(vote.id, r.option)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? '...' : `Vote ${r.option}`}
               </button>
@@ -169,7 +169,7 @@ export function CircleVotes({
 
         {!isClosed && alreadyVoted && (
           <div className="pt-1">
-            <p className="text-[10px] text-[var(--brief-ink)]">
+            <p className="text-[11px] text-[var(--brief-ink)]">
               You have voted. One vote counts — changing it leaves the first on the record.
             </p>
             <div className="flex flex-wrap gap-2 mt-1">
@@ -178,7 +178,7 @@ export function CircleVotes({
                   key={r.option}
                   onClick={() => onVote(vote.id, r.option)}
                   disabled={busy}
-                  className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] text-[9px] font-extrabold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] text-[11px] font-extrabold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
                 >
                   Change to {r.option}
                 </button>
@@ -188,7 +188,7 @@ export function CircleVotes({
         )}
 
         {!isClosed && myRole === 'observer' && (
-          <p className="text-[10px] text-[var(--ink-60)]">Observers cannot vote.</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Observers cannot vote.</p>
         )}
 
         {!isClosed && isCoordinator && (
@@ -196,12 +196,12 @@ export function CircleVotes({
             <button
               onClick={() => onClose(vote.id)}
               disabled={busy}
-              className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
+              className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
             >
               Close it — nobody has voted
             </button>
           ) : (
-            <details className="text-[10px]">
+            <details className="text-[11px]">
               <summary className="font-extrabold text-[var(--brief-ink)] cursor-pointer">Cancel this vote</summary>
               <form
                 className="mt-1 flex items-center gap-1.5"
@@ -218,9 +218,9 @@ export function CircleVotes({
                   name="reason"
                   aria-label="reason for cancelling this vote"
                   placeholder="why? the circle reads this with the ballots"
-                  className="min-w-0 flex-1 px-2 py-1 rounded-lg border border-[var(--brief-line)] text-[9px] text-[var(--brief-ink)]"
+                  className="min-w-0 flex-1 px-2 py-1 rounded-lg border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]"
                 />
-                <button type="submit" className="shrink-0 px-2 py-1 rounded-lg bg-[var(--color-danger)] text-[var(--accent-ink)] font-extrabold text-[9px] cursor-pointer">
+                <button type="submit" className="shrink-0 px-2 py-1 rounded-lg bg-[var(--color-danger)] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer">
                   Cancel vote
                 </button>
               </form>
@@ -253,11 +253,11 @@ export function CircleVotes({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+  <h3 className="text-[12px] font-extrabold text-[var(--ink-60)]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[var(--ink-60)]">{children}</p>
+  <p className="text-[11px] text-[var(--ink-60)]">{children}</p>
 );

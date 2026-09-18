@@ -62,7 +62,7 @@ const check = (n, c, d = '') => { if (c) { pass++; console.log('  PASS  ' + n); 
   check('the Menu occupies exactly two-thirds of the screen', Boolean(sheet), 'no h-2/3 element');
   const scrim = Array.from(document.querySelectorAll('button')).find((b) => /dismiss/i.test(b.getAttribute('aria-label') ?? ''));
   check('the remaining third is a see-through scrim over the live app',
-    Boolean(scrim) && (/rgba\(36, 28, 18, 0\.2\d?\)/.test(scrim.className) || /\/2[05]/.test(scrim.className)), scrim?.className);
+    Boolean(scrim) && (/rgba\(10, 14, 20, 0\.2\d?\)/.test(scrim.className) || /\/2[05]/.test(scrim.className)), scrim?.className);
   check('the scrim closes the Menu on tap (the natural dismissal)', Boolean(scrim));
   check('no opaque blackout anywhere — the underlying screen is SEEN', !Array.from(document.querySelectorAll('[class*="bg-black"]')).length, 'found a bg-black element');
   check('no neon green anywhere on the page', !body().includes('#00DF8F') && !document.querySelector('[class*="00DF8F"]'));

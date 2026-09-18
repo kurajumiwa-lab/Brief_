@@ -18,9 +18,9 @@ import type { CoopIntent, CoopPost, CoopMatch, CoopCooperation, WhoCanHelpAnswer
 
 /** The grouped answer to "who can help?" — real rows only, empty stated. */
 const INTENTS: { id: CoopIntent; label: string; chip: string; dot: string }[] = [
-  { id: 'have', label: 'Have', chip: 'bg-[#16A34A]', dot: 'bg-[#16A34A]' },
-  { id: 'need', label: 'Need', chip: 'bg-[#06B6D4]', dot: 'bg-[#06B6D4]' },
-  { id: 'can_help', label: 'Can help', chip: 'bg-[#06B6D4]', dot: 'bg-[#06B6D4]' },
+  { id: 'have', label: 'Have', chip: 'bg-[#059669]', dot: 'bg-[#059669]' },
+  { id: 'need', label: 'Need', chip: 'bg-[#0891B2]', dot: 'bg-[#0891B2]' },
+  { id: 'can_help', label: 'Can help', chip: 'bg-[#0891B2]', dot: 'bg-[#0891B2]' },
   { id: 'looking_for', label: 'Looking for', chip: 'bg-[#B45309]', dot: 'bg-[#B45309]' }
 ];
 
@@ -40,11 +40,11 @@ function TrustChip({ trust }: { trust: CoopPost['trust'] }) {
   return (
     <span
       aria-label={LEVEL_WORDS[trust.level] ?? trust.levelWords}
-      className="inline-flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2 py-0.5 text-[9px] font-bold text-[var(--ink-70)]"
+      className="inline-flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-2 py-0.5 text-[11px] font-bold text-[var(--ink-70)]"
     >
       <span
         aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#7A8494]' : 'bg-[#4F46E5]'}`}
+        className={`h-1.5 w-1.5 rounded-full ${trust.level === 'new' ? 'bg-[#7A8494]' : 'bg-[#2563EB]'}`}
       />
       {trust.level === 'new' ? 'new member' : bits.join(' · ')}
     </span>
@@ -148,10 +148,10 @@ export function MshikanoDesk() {
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       <header className="space-y-1">
         <div className="flex items-center gap-2">
-          <Heart className="w-5 h-5 text-[#4F46E5]" aria-hidden="true" />
+          <Heart className="w-5 h-5 text-[#2563EB]" aria-hidden="true" />
           <h1 className="font-display text-2xl font-semibold tracking-tight text-[var(--brief-ink)]">Mshikano</h1>
         </div>
-        <p className="text-[11px] leading-snug text-[var(--ink-60)]">
+        <p className="text-[12px] leading-snug text-[var(--ink-60)]">
           What one person has can help another. Post it, find your complement, work together —
           and both of you confirm it so trust is earned, never bought.
         </p>
@@ -166,7 +166,7 @@ export function MshikanoDesk() {
               type="button"
               onClick={() => setIntent(it.id)}
               aria-pressed={intent === it.id}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-extrabold transition-colors ${
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-extrabold transition-colors ${
                 intent === it.id ? `${it.chip} text-[var(--brief-ink)]` : 'border border-[var(--brief-line)] text-[var(--ink-70)] bg-[color:var(--color-paper)]'
               }`}
             >
@@ -180,30 +180,30 @@ export function MshikanoDesk() {
           onChange={(e) => setTitle(e.target.value)}
           rows={2}
           placeholder="e.g. 1 tonne of mangoes in Makueni · reliable electrician in Kisumu · solar training for three people"
-          className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+          className="w-full rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[13px] text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
         />
         <div className="flex gap-2">
           <input value={town} onChange={(e) => setTown(e.target.value)} placeholder="Town" aria-label="Town"
-            className="w-28 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[11px] text-[var(--brief-ink)]" />
+            className="w-28 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[12px] text-[var(--brief-ink)]" />
           <input value={county} onChange={(e) => setCounty(e.target.value)} placeholder="County" aria-label="County"
-            className="w-32 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[11px] text-[var(--brief-ink)]" />
+            className="w-32 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[12px] text-[var(--brief-ink)]" />
           <button
             type="button"
             onClick={() => void submit()}
             disabled={busy || title.trim().length < 4}
-            className="ml-auto rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40"
+            className="ml-auto rounded-lg bg-[#2563EB] px-4 py-2 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40"
           >
             Post it
           </button>
         </div>
-        {note && <p role="status" className="text-[11px] font-bold text-[var(--ink-70)]">{note}</p>}
+        {note && <p role="status" className="text-[12px] font-bold text-[var(--ink-70)]">{note}</p>}
       </section>
 
       {/* Who can help? */}
       <section aria-label="Who can help" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
         <div className="flex items-center gap-2">
-          <Search className="w-4 h-4 text-[#4F46E5]" aria-hidden="true" />
-          <h2 className="text-[13px] font-extrabold text-[var(--brief-ink)]">Who can help?</h2>
+          <Search className="w-4 h-4 text-[#2563EB]" aria-hidden="true" />
+          <h2 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Who can help?</h2>
         </div>
         <div className="flex gap-2">
           <input
@@ -212,29 +212,29 @@ export function MshikanoDesk() {
             onKeyDown={(e) => { if (e.key === 'Enter') void ask(); }}
             placeholder="I need someone who can help me start a poultry business in Bungoma"
             aria-label="Ask who can help"
-            className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[12px] text-[var(--brief-ink)]"
+            className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
           />
           <button type="button" onClick={() => void ask()} disabled={busy || question.trim().length < 3}
-            className="rounded-lg bg-[#4F46E5] px-3 py-2 text-[11px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
+            className="rounded-lg bg-[#2563EB] px-3 py-2 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
             Ask
           </button>
         </div>
         {answer && (
           <div className="space-y-2">
-            <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">
+            <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">
               {answer.counts.people} {answer.counts.people === 1 ? 'person' : 'people'} · {answer.counts.businesses} {answer.counts.businesses === 1 ? 'business' : 'businesses'} · {answer.counts.groups} {answer.counts.groups === 1 ? 'group' : 'groups'} · {answer.counts.guides} {answer.counts.guides === 1 ? 'guide' : 'guides'}
               {answer.counts.people + answer.counts.businesses + answer.counts.groups + answer.counts.guides === 0 && ' — nobody has posted this yet. Post what you need; the network fills in around it.'}
             </p>
             {answer.groups.map((g) => (
               <div key={g.id} className="rounded-xl border border-[var(--brief-line)] px-3 py-2">
-                <p className="text-[11px] font-bold text-[var(--brief-ink)]">{g.name}</p>
-                <p className="text-[9px] text-[var(--ink-55)]">{g.members} {g.members === 1 ? 'member' : 'members'}{g.description ? ` · ${g.description.slice(0, 70)}` : ''}</p>
+                <p className="text-[12px] font-bold text-[var(--brief-ink)]">{g.name}</p>
+                <p className="text-[11px] text-[var(--ink-55)]">{g.members} {g.members === 1 ? 'member' : 'members'}{g.description ? ` · ${g.description.slice(0, 70)}` : ''}</p>
               </div>
             ))}
             {[...answer.people, ...answer.businesses].slice(0, 6).map((p) => (
               <div key={p.id} className="rounded-xl border border-[var(--brief-line)] px-3 py-2">
-                <p className="text-[11px] font-bold text-[var(--brief-ink)]">{p.title}</p>
-                <p className="text-[9px] text-[var(--ink-55)]">{p.author.displayName}{p.county ? ` · ${p.county}` : ''} · {p.intentLabel}</p>
+                <p className="text-[12px] font-bold text-[var(--brief-ink)]">{p.title}</p>
+                <p className="text-[11px] text-[var(--ink-55)]">{p.author.displayName}{p.county ? ` · ${p.county}` : ''} · {p.intentLabel}</p>
               </div>
             ))}
           </div>
@@ -243,18 +243,18 @@ export function MshikanoDesk() {
 
       {/* Pending confirmations */}
       {coops && coops.pending.filter((c) => c.direction === 'incoming').length > 0 && (
-        <section aria-label="Confirm a cooperation" className="rounded-2xl border border-[#06B6D4] bg-[color:var(--color-paper)] p-4 space-y-2">
-          <h2 className="text-[13px] font-extrabold text-[var(--brief-ink)]">Someone says you worked together</h2>
+        <section aria-label="Confirm a cooperation" className="rounded-2xl border border-[#0891B2] bg-[color:var(--color-paper)] p-4 space-y-2">
+          <h2 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Someone says you worked together</h2>
           {coops.pending.filter((c) => c.direction === 'incoming').map((c) => (
             <div key={c.id} className="flex items-center justify-between gap-2 rounded-xl border border-[var(--brief-line)] px-3 py-2">
-              <p className="text-[11px] text-[var(--brief-ink)]">
+              <p className="text-[12px] text-[var(--brief-ink)]">
                 <span className="font-bold">{c.partner?.displayName}</span>{c.summary ? ` — ${c.summary}` : ''}
               </p>
               <span className="flex gap-1.5 shrink-0">
                 <button type="button" onClick={() => void respond(c.id, true)} disabled={busy}
-                  className="rounded-lg bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)]">Confirm</button>
+                  className="rounded-lg bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)]">Confirm</button>
                 <button type="button" onClick={() => void respond(c.id, false)} disabled={busy}
-                  className="rounded-lg border border-[var(--brief-line)] px-3 py-1.5 text-[10px] font-extrabold text-[var(--ink-70)]">Decline</button>
+                  className="rounded-lg border border-[var(--brief-line)] px-3 py-1.5 text-[11px] font-extrabold text-[var(--ink-70)]">Decline</button>
               </span>
             </div>
           ))}
@@ -265,22 +265,22 @@ export function MshikanoDesk() {
       <section aria-label="Cooperation posts" className="space-y-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" onClick={() => setFilter(null)} aria-pressed={filter === null}
-            className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === null ? 'bg-[#4F46E5] text-[var(--accent-ink)]' : 'border border-[var(--brief-line)] text-[var(--ink-70)]'}`}>
+            className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${filter === null ? 'bg-[#2563EB] text-[var(--accent-ink)]' : 'border border-[var(--brief-line)] text-[var(--ink-70)]'}`}>
             All
           </button>
           {INTENTS.map((it) => (
             <button key={it.id} type="button" onClick={() => setFilter(it.id)} aria-pressed={filter === it.id}
-              className={`rounded-full px-3 py-1 text-[10px] font-extrabold ${filter === it.id ? `${it.chip} text-[var(--brief-ink)]` : 'border border-[var(--brief-line)] text-[var(--ink-70)]'}`}>
+              className={`rounded-full px-3 py-1 text-[11px] font-extrabold ${filter === it.id ? `${it.chip} text-[var(--brief-ink)]` : 'border border-[var(--brief-line)] text-[var(--ink-70)]'}`}>
               {it.label}
             </button>
           ))}
         </div>
 
-        {posts === null && <p className="text-[11px] text-[var(--ink-70)]">Loading the network…</p>}
+        {posts === null && <p className="text-[12px] text-[var(--ink-70)]">Loading the network…</p>}
         {posts !== null && posts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-paper)] px-4 py-3">
-            <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Nothing here yet</p>
-            <p className="mt-1 text-[10px] leading-snug text-[var(--ink-55)]">
+            <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">Nothing here yet</p>
+            <p className="mt-1 text-[11px] leading-snug text-[var(--ink-55)]">
               No {filter ? INTENTS.find((i) => i.id === filter)?.label.toLowerCase() : ''} posts yet. The network starts
               with the first honest post — yours.
             </p>
@@ -293,10 +293,10 @@ export function MshikanoDesk() {
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span aria-hidden="true" className={`h-2 w-2 rounded-full ${INTENTS.find((i) => i.id === p.intent)?.dot}`} />
-                  <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-70)]">{p.intentLabel}</span>
+                  <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-70)]">{p.intentLabel}</span>
                 </div>
-                <h3 className="mt-0.5 text-[13px] font-bold leading-snug text-[var(--brief-ink)]">{p.title}</h3>
-                <p className="text-[9px] text-[var(--ink-55)]">
+                <h3 className="mt-0.5 text-[14px] font-bold leading-snug text-[var(--brief-ink)]">{p.title}</h3>
+                <p className="text-[11px] text-[var(--ink-55)]">
                   {p.author.displayName}{p.town ? ` · ${p.town}` : ''}{p.county ? `, ${p.county}` : ''}
                 </p>
               </div>
@@ -305,33 +305,33 @@ export function MshikanoDesk() {
             <div className="flex gap-1.5">
               {!p.mine && (
                 <button type="button" onClick={() => void markWorked(p)} disabled={busy}
-                  className="rounded-lg bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
+                  className="rounded-lg bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">
                   We worked together
                 </button>
               )}
               <button type="button" onClick={() => void openMatches(p)}
                 aria-expanded={matchesFor?.post.id === p.id}
-                className="rounded-lg border border-[#06B6D4] px-3 py-1.5 text-[10px] font-extrabold text-[#4F46E5]">
+                className="rounded-lg border border-[#0891B2] px-3 py-1.5 text-[11px] font-extrabold text-[#2563EB]">
                 {matchesFor?.post.id === p.id ? 'Hide matches' : 'See matches'}
               </button>
             </div>
             {matchesFor?.post.id === p.id && (
               <div className="space-y-1.5 border-t border-[var(--brief-line)] pt-2">
                 {matchesFor.rows.length === 0 && (
-                  <p className="text-[10px] text-[var(--ink-55)]">No complement posted yet — a {p.intent === 'have' ? 'NEED' : p.intent === 'need' ? 'HAVE' : p.intent === 'can_help' ? 'LOOKING FOR' : 'CAN HELP'} for this will match here.</p>
+                  <p className="text-[11px] text-[var(--ink-55)]">No complement posted yet — a {p.intent === 'have' ? 'NEED' : p.intent === 'need' ? 'HAVE' : p.intent === 'can_help' ? 'LOOKING FOR' : 'CAN HELP'} for this will match here.</p>
                 )}
                 {matchesFor.rows.map((m) => (
                   <div key={m.post.id} className="rounded-xl bg-[color:var(--color-well)] px-3 py-2">
-                    <p className="text-[11px] font-bold text-[var(--brief-ink)]">{m.post.title}</p>
-                    <p className="text-[9px] text-[var(--ink-55)]">{m.post.author.displayName}{m.post.county ? ` · ${m.post.county}` : ''}</p>
+                    <p className="text-[12px] font-bold text-[var(--brief-ink)]">{m.post.title}</p>
+                    <p className="text-[11px] text-[var(--ink-55)]">{m.post.author.displayName}{m.post.county ? ` · ${m.post.county}` : ''}</p>
                     {m.reasons.length > 0 && (
-                      <p className="mt-0.5 text-[9px] text-[#4F46E5] font-bold">Why: {m.reasons.join(' · ')}</p>
+                      <p className="mt-0.5 text-[11px] text-[#2563EB] font-bold">Why: {m.reasons.join(' · ')}</p>
                     )}
                     {!m.post.mine && (
                       <button
                         type="button"
                         onClick={() => setIntroFor(m.post)}
-                        className="mt-1.5 cursor-pointer rounded-full border border-[#4F46E5] px-2.5 py-0.5 text-[9px] font-extrabold text-[#4F46E5] hover:bg-[color:var(--color-well)]"
+                        className="mt-1.5 cursor-pointer rounded-full border border-[#2563EB] px-2.5 py-0.5 text-[11px] font-extrabold text-[#2563EB] hover:bg-[color:var(--color-well)]"
                       >
                         Get introduced — priority
                       </button>
@@ -346,10 +346,10 @@ export function MshikanoDesk() {
 
       {coops && coops.confirmed.length > 0 && (
         <section aria-label="Confirmed cooperations" className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-1.5">
-          <h2 className="text-[13px] font-extrabold text-[var(--brief-ink)]">Your cooperation graph</h2>
+          <h2 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Your cooperation graph</h2>
           {coops.confirmed.slice(0, 6).map((c) => (
             <div key={c.id} className="space-y-1">
-              <p className="text-[10px] text-[var(--ink-70)]">
+              <p className="text-[11px] text-[var(--ink-70)]">
                 🤝 {c.direction === 'outgoing' ? 'You proposed' : 'Confirmed with'} <span className="font-bold">{c.partner?.displayName}</span>
                 {c.confirmedAt ? ` · ${new Date(c.confirmedAt).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}` : ''}
               </p>
@@ -358,15 +358,15 @@ export function MshikanoDesk() {
                   <input value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)}
                     placeholder="Say what went wrong — both sides will see it"
                     aria-label="Dispute reason"
-                    className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2 py-1 text-[10px] text-[var(--brief-ink)]" />
+                    className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2 py-1 text-[11px] text-[var(--brief-ink)]" />
                   <button type="button" onClick={() => void dispute(c.id)} disabled={busy || disputeReason.trim().length < 4}
-                    className="rounded-lg bg-[#DC2626] px-2 py-1 text-[9px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">Send</button>
+                    className="rounded-lg bg-[#DC2626] px-2 py-1 text-[11px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40">Send</button>
                   <button type="button" onClick={() => { setDisputeFor(null); setDisputeReason(''); }}
-                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[9px] font-bold text-[var(--brief-ink)]">Keep it</button>
+                    className="rounded-lg border border-[var(--brief-line)] px-2 py-1 text-[11px] font-bold text-[var(--brief-ink)]">Keep it</button>
                 </div>
               ) : (
                 <button type="button" onClick={() => { setDisputeFor(c.id); setDisputeReason(''); }}
-                  className="text-[9px] font-bold text-[#DC2626]/80 underline">Did not go as written?</button>
+                  className="text-[11px] font-bold text-[#DC2626]/80 underline">Did not go as written?</button>
               )}
             </div>
           ))}
@@ -376,9 +376,9 @@ export function MshikanoDesk() {
       {/* Disputed — the credit is withdrawn, the record stays */}
       {coops && coops.disputed.length > 0 && (
         <section aria-label="Disputed cooperations" className="rounded-2xl border border-[#DC2626]/40 bg-[color:var(--color-paper)] p-4 space-y-1.5">
-          <h2 className="text-[13px] font-extrabold text-[#DC2626]">Disputed — no longer counts for anyone</h2>
+          <h2 className="text-[14px] font-extrabold text-[#DC2626]">Disputed — no longer counts for anyone</h2>
           {coops.disputed.slice(0, 6).map((c) => (
-            <p key={c.id} className="text-[10px] text-[var(--ink-70)]">
+            <p key={c.id} className="text-[11px] text-[var(--ink-70)]">
               ⚠️ With <span className="font-bold">{c.partner?.displayName}</span> — “{c.dispute?.note ?? ''}”. The confirmation is withdrawn until this is resolved.
             </p>
           ))}

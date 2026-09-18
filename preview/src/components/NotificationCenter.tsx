@@ -37,21 +37,21 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  following: '#4F46E5',
-  location: '#16A34A',
-  event: '#4F46E5',
-  offer: '#4F46E5',
+  following: '#2563EB',
+  location: '#059669',
+  event: '#2563EB',
+  offer: '#2563EB',
   alert: '#DC2626',
   collection: '#0D1117',
   correction: '#DC2626',
-  source_update: '#16A34A',
-  confirmed: '#16A34A',
-  challenge: '#4F46E5',
+  source_update: '#059669',
+  confirmed: '#059669',
+  challenge: '#2563EB',
   saved_changed: '#0D1117',
-  event_soon: '#4F46E5',
+  event_soon: '#2563EB',
   system: '#0D1117',
   workflow: '#0D1117',
-  coop: '#16A34A'
+  coop: '#059669'
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -197,12 +197,12 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
       <button
         type="button"
         onClick={() => void open(n)}
-        className={`group flex w-full items-stretch gap-2.5 rounded-2xl border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:border-[#06B6D4] ${
-          n.read ? 'border-[#EFF1F4] bg-[color:var(--color-paper)]' : 'border-[#06B6D4]/40 bg-[color:var(--color-paper)] shadow-sm'
+        className={`group flex w-full items-stretch gap-2.5 rounded-2xl border p-2.5 text-left transition-all hover:-translate-y-0.5 hover:border-[#0891B2] ${
+          n.read ? 'border-[#EFF1F4] bg-[color:var(--color-paper)]' : 'border-[#0891B2]/40 bg-[color:var(--color-paper)] shadow-sm'
         }`}
       >
         {/* Unread marker */}
-        {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#4F46E5]" aria-label="Unread" />}
+        {!n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#2563EB]" aria-label="Unread" />}
         {n.read && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-transparent" aria-hidden="true" />}
 
         {n.imageUrl ? (
@@ -215,32 +215,32 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
         <div className="min-w-0 flex-1 py-0.5">
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.08em] text-white" style={{ backgroundColor: typeColor(n.type) }}>
+            <span className="rounded-full px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-white" style={{ backgroundColor: typeColor(n.type) }}>
               {typeLabel(n.type)}
             </span>
             {n.priority === 'important' && (
-              <span className="flex items-center gap-0.5 rounded-full bg-[color:var(--color-well)] px-1.5 py-0.5 text-[9px] font-extrabold text-[#DC2626]">
+              <span className="flex items-center gap-0.5 rounded-full bg-[color:var(--color-well)] px-1.5 py-0.5 text-[11px] font-extrabold text-[#DC2626]">
                 <CircleAlert className="h-2.5 w-2.5" /> Important
               </span>
             )}
             {statusLine && (
-              <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-                status === 'expired' || status === 'past' ? 'bg-[color:var(--color-well)] text-[var(--ink-60)]' : 'bg-[color:var(--color-well)] text-[#16A34A]'
+              <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-bold ${
+                status === 'expired' || status === 'past' ? 'bg-[color:var(--color-well)] text-[var(--ink-60)]' : 'bg-[color:var(--color-well)] text-[#059669]'
               }`}>
                 {statusLine}
               </span>
             )}
-            <span className="text-[9px] font-semibold text-[var(--ink-60)]">{freshness(n.createdAt)}</span>
+            <span className="text-[11px] font-semibold text-[var(--ink-60)]">{freshness(n.createdAt)}</span>
           </div>
           <p className={`mt-1 line-clamp-2 text-[12.5px] leading-snug ${n.read ? 'text-[var(--ink-70)]' : 'font-bold text-[var(--brief-ink)]'}`}>
             {n.title}
           </p>
-          {n.body && <p className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-[var(--ink-55)]">{n.body}</p>}
+          {n.body && <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[var(--ink-55)]">{n.body}</p>}
           {n.sourceName && (
             <p className="mt-1 text-[9.5px] font-semibold text-[var(--ink-60)]">{n.sourceName}</p>
           )}
           {n.context && (
-            <p className="mt-0.5 text-[9.5px] font-semibold text-[#4F46E5]/70">{n.context}</p>
+            <p className="mt-0.5 text-[9.5px] font-semibold text-[#2563EB]/70">{n.context}</p>
           )}
         </div>
       </button>
@@ -249,7 +249,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md sm:justify-center sm:p-4"
+      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(10, 14, 20, 0.85)] backdrop-blur-md sm:justify-center sm:p-4"
       onClick={onClose}
     >
       <div
@@ -263,14 +263,14 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </button>
           <div className="min-w-0 text-center">
-            <p className="text-[13px] font-extrabold text-[var(--brief-ink)]">Notifications</p>
+            <p className="text-[14px] font-extrabold text-[var(--brief-ink)]">Notifications</p>
             {unread > 0 && (
-              <p className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[#4F46E5]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#2563EB]">
                 {unread} unread
               </p>
             )}
@@ -300,13 +300,13 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         {prefsOpen && (
           <div className="shrink-0 border-b border-[var(--brief-line)] bg-[color:var(--color-paper)] px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
                 What reaches you
               </p>
               <button
                 type="button"
                 onClick={() => setPrefsOpen(false)}
-                className="rounded-full px-2 py-0.5 text-[10px] font-bold text-[#4F46E5] hover:bg-[color:var(--color-well)]"
+                className="rounded-full px-2 py-0.5 text-[11px] font-bold text-[#2563EB] hover:bg-[color:var(--color-well)]"
               >
                 Done
               </button>
@@ -318,14 +318,14 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   type="button"
                   onClick={() => void togglePref(key)}
                   aria-pressed={prefs[key] !== false}
-                  className={`flex items-center justify-between gap-1 rounded-xl border px-2.5 py-1.5 text-[10px] font-bold transition-colors ${
+                  className={`flex items-center justify-between gap-1 rounded-xl border px-2.5 py-1.5 text-[11px] font-bold transition-colors ${
                     prefs[key] !== false
-                      ? 'border-[#06B6D4]/40 bg-[color:var(--color-well)] text-[var(--brief-ink)]'
+                      ? 'border-[#0891B2]/40 bg-[color:var(--color-well)] text-[var(--brief-ink)]'
                       : 'border-[var(--brief-line)] bg-[color:var(--color-paper)] text-[var(--ink-60)]'
                   }`}
                 >
                   <span className="truncate">{CATEGORY_LABELS[key]}</span>
-                  <span className="shrink-0 text-[#4F46E5]">{prefs[key] !== false ? 'On' : 'Off'}</span>
+                  <span className="shrink-0 text-[#2563EB]">{prefs[key] !== false ? 'On' : 'Off'}</span>
                 </button>
               ))}
             </div>
@@ -338,32 +338,32 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
         <div className="flex-1 overflow-y-auto pb-safe">
           {!authed && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
-              <Bell className="h-8 w-8 text-[#4F46E5]" />
-              <p className="max-w-xs text-[13px] font-semibold text-[var(--brief-ink)]">
+              <Bell className="h-8 w-8 text-[#2563EB]" />
+              <p className="max-w-xs text-[14px] font-semibold text-[var(--brief-ink)]">
                 Sign in to see what changed while you were away.
               </p>
             </div>
           )}
 
           {authed && loading && (
-            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(36, 28, 18,0.62)]">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#06B6D4] border-t-transparent" />
-              <p className="text-[12px] font-semibold">Checking what changed…</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-24 text-[rgba(10, 14, 20,0.62)]">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#0891B2] border-t-transparent" />
+              <p className="text-[13px] font-semibold">Checking what changed…</p>
             </div>
           )}
 
           {authed && !loading && error && rows?.length === 0 && (
             <div className="flex flex-col items-center gap-3 px-6 py-20 text-center">
               <BellOff className="h-8 w-8 text-[var(--ink-60)]" />
-              <p className="max-w-xs text-[12px] font-semibold text-[var(--ink-60)]">{error}</p>
+              <p className="max-w-xs text-[13px] font-semibold text-[var(--ink-60)]">{error}</p>
             </div>
           )}
 
           {authed && !loading && rows && rows.length === 0 && (
             <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-14 text-center">
-              <Bell className="h-6 w-6 text-[rgba(36, 28, 18,0.4)]" />
-              <p className="text-[13px] font-semibold text-[var(--brief-ink)]">Nothing new yet</p>
-              <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
+              <Bell className="h-6 w-6 text-[rgba(10, 14, 20,0.4)]" />
+              <p className="text-[14px] font-semibold text-[var(--brief-ink)]">Nothing new yet</p>
+              <p className="max-w-xs text-[13px] leading-relaxed text-[rgba(10, 14, 20,0.62)]">
                 Follow a place, save something, or pick a location in My Brief —
                 when something that matters changes, it lands here.
               </p>
@@ -377,7 +377,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                   <button
                     type="button"
                     onClick={() => void markAll()}
-                    className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[10px] font-bold text-[#4F46E5] transition-colors hover:border-[#06B6D4]"
+                    className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[11px] font-bold text-[#2563EB] transition-colors hover:border-[#0891B2]"
                   >
                     <CheckCheck className="h-3 w-3" /> Mark all read
                   </button>
@@ -386,7 +386,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
               {newRows.length > 0 && (
                 <section aria-label="New">
-                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">New</p>
+                  <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">New</p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {newRows.map((n) => <Row key={n.id} n={n} />)}
                   </div>
@@ -395,7 +395,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
 
               {earlierRows.length > 0 && (
                 <section aria-label="Earlier">
-                  <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-70)]">
+                  <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-70)]">
                     Earlier {now.toLocaleDateString('en-KE', { month: 'short', year: 'numeric' })}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -407,7 +407,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                           aria-label="Mark unread"
                           title="Mark unread"
                           onClick={(e) => { e.stopPropagation(); void setRead(n, false); }}
-                          className="absolute right-2 top-2 rounded-full bg-[rgba(253, 250, 243, 0.90)] p-1 text-[var(--ink-60)] opacity-0 transition-opacity hover:text-[#4F46E5] group-hover:opacity-100"
+                          className="absolute right-2 top-2 rounded-full bg-[rgba(255, 255, 255, 0.90)] p-1 text-[var(--ink-60)] opacity-0 transition-opacity hover:text-[#2563EB] group-hover:opacity-100"
                         >
                           <Bell className="h-3 w-3" />
                         </button>
@@ -418,7 +418,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
               )}
 
               {busyId && (
-                <p className="flex items-center gap-2 text-[10px] font-semibold text-[var(--ink-60)]">
+                <p className="flex items-center gap-2 text-[11px] font-semibold text-[var(--ink-60)]">
                   <Check className="h-3 w-3" /> Updating…
                 </p>
               )}

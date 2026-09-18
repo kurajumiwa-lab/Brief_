@@ -175,7 +175,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
         <section className="px-6 pt-5 pb-6 space-y-4">
           {badge && (
             <div
-              className="inline-block px-3.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase shadow-sm"
+              className="inline-block px-3.5 py-1 rounded-full text-[11px] font-black tracking-widest uppercase shadow-sm"
               style={{
                 backgroundColor: palette.badgeBackground,
                 color: palette.badgeText
@@ -208,7 +208,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
             <div>
               <span className="block text-2xl font-black leading-none">{24}</span>
               <span
-                className="text-[10px] font-bold tracking-wider uppercase"
+                className="text-[11px] font-bold tracking-wider uppercase"
                 style={{ color: palette.textSecondary }}
               >
                 ACTIVE
@@ -217,7 +217,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
             <div>
               <span className="block text-2xl font-black leading-none">1.2k</span>
               <span
-                className="text-[10px] font-bold tracking-wider uppercase"
+                className="text-[11px] font-bold tracking-wider uppercase"
                 style={{ color: palette.textSecondary }}
               >
                 JOINED
@@ -226,7 +226,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
             <div>
               <span className="block text-2xl font-black leading-none">4.8</span>
               <span
-                className="text-[10px] font-bold tracking-wider uppercase"
+                className="text-[11px] font-bold tracking-wider uppercase"
                 style={{ color: palette.textSecondary }}
               >
                 RATING
@@ -282,7 +282,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
+                  <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     About
                   </span>
                 </div>
@@ -298,7 +298,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
+                  <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     Explore Sub-Categories
                   </span>
                 </div>
@@ -377,7 +377,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
               <div className="space-y-2 pt-2">
                 <div className="flex items-center space-x-2 px-2">
                   <span className="w-2 h-2 rounded-full bg-white" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-white">
+                  <span className="text-[12px] font-black uppercase tracking-wider text-white">
                     Featured in This Category
                   </span>
                 </div>
@@ -434,7 +434,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
+                  <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     People Also Follow
                   </span>
                 </div>
@@ -462,7 +462,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                         </div>
                         <div>
                           <h4 className="font-bold text-xs text-[var(--brief-ink)]">{row.title}</h4>
-                          <span className="text-[11px] text-[var(--brief-muted)]">{row.meta}</span>
+                          <span className="text-[12px] text-[var(--brief-muted)]">{row.meta}</span>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -482,7 +482,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                     className="w-2 h-2 rounded-full"
                     style={{ backgroundColor: palette.base }}
                   />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
+                  <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                     Recent Activity
                   </span>
                 </div>
@@ -498,7 +498,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
                       <span className="w-2 h-2 rounded-full bg-[#E8985E] mt-1 shrink-0" />
                       <div className="flex-1">
                         <p className="font-medium text-[var(--brief-ink)]">{act.text}</p>
-                        <span className="text-[10px] text-[var(--color-quiet)] font-mono">{act.time}</span>
+                        <span className="text-[11px] text-[var(--color-quiet)] font-mono">{act.time}</span>
                       </div>
                     </div>
                   ))}
@@ -565,7 +565,7 @@ export const SheetDetailScreen: React.FC<SheetDetailScreenProps> = ({
 
             <div className="space-y-1">
               <span
-                className="text-[10px] font-black uppercase tracking-wider"
+                className="text-[11px] font-black uppercase tracking-wider"
                 style={{ color: palette.textSecondary }}
               >
                 YOU'RE JOINING

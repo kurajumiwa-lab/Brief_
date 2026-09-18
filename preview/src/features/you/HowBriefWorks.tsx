@@ -24,9 +24,9 @@ interface Block {
 
 const Section: React.FC<{ block: Block }> = ({ block }) => (
   <section className="rounded-2xl p-4 space-y-2" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
-    <h3 className="text-[13px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>{block.title}</h3>
+    <h3 className="text-[14px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>{block.title}</h3>
     {block.lines.map((l, i) => (
-      <p key={i} className="text-[12px] leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{l}</p>
+      <p key={i} className="text-[13px] leading-relaxed" style={{ color: 'var(--color-text-secondary)' }}>{l}</p>
     ))}
   </section>
 );
@@ -140,13 +140,13 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
   return (
     <div className={`space-y-3 max-w-2xl mx-auto ${className}`}>
       <div className="space-y-1">
-        <h2 className="text-[20px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Brief works</h2>
-        <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
+        <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Brief works</h2>
+        <p className="text-[13px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
           Everything the screens deliberately do not say, in one place.
         </p>
       </div>
       {blocks.map((b) => <Section key={b.id} block={b} />)}
-      <p className="text-[11px] leading-snug px-1 pb-2" style={{ color: 'var(--color-text-muted)' }}>
+      <p className="text-[12px] leading-snug px-1 pb-2" style={{ color: 'var(--color-text-muted)' }}>
         If a figure on any screen contradicts this page, the figure is wrong and the page is out of date. Both are bugs; report either.
       </p>
     </div>

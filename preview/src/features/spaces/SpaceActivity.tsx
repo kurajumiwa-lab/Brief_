@@ -47,7 +47,7 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
             Recent Activity
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-[color:var(--color-text-muted)]">Real-time</span>
+        <span className="text-[11px] font-mono text-[color:var(--color-text-muted)]">Real-time</span>
       </div>
 
       {activities.length === 0 ? (
@@ -70,12 +70,12 @@ export const SpaceActivity: React.FC<SpaceActivityProps> = ({
                   <span className="text-xs font-bold text-[color:var(--color-text)] truncate">
                     {act.title}
                   </span>
-                  <span className="text-[10px] font-mono text-[#94A3B8] shrink-0">
+                  <span className="text-[11px] font-mono text-[#94A3B8] shrink-0">
                     {formatRelativeTime(act.createdAt)}
                   </span>
                 </div>
                 {act.description && (
-                  <p className="text-[11px] text-[color:var(--color-text-muted)] leading-relaxed line-clamp-2">
+                  <p className="text-[12px] text-[color:var(--color-text-muted)] leading-relaxed line-clamp-2">
                     {act.description}
                   </p>
                 )}

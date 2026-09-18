@@ -43,7 +43,7 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
               <Award className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-amber-400 font-bold block">
                 GRASSROOTS TRUST
               </span>
               <h2 className="text-xl font-black text-white tracking-tight">
@@ -74,13 +74,13 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
               <div className="space-y-0.5">
                 <div className="flex items-center space-x-2">
                   <h3 className="text-lg font-black text-white">{champion.name}</h3>
-                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-extrabold uppercase">
+                  <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-extrabold uppercase">
                     <ShieldCheck className="w-3 h-3 text-amber-400" />
                     <span>Verified</span>
                   </span>
                 </div>
                 <p className="text-xs text-gray-300 font-medium">{champion.role}</p>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[12px] text-gray-400">
                   {neighborhood.name} · Verified Since {champion.verifiedSince}
                 </p>
               </div>
@@ -95,15 +95,15 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
           {/* Stats Badges */}
           <div className="grid grid-cols-3 gap-2 pt-1 text-center">
             <div className="p-2.5 rounded-xl bg-white/5 space-y-0.5">
-              <span className="text-[10px] text-gray-400 block uppercase font-bold">Vouched</span>
+              <span className="text-[11px] text-gray-400 block uppercase font-bold">Vouched</span>
               <span className="text-sm font-black text-white">{champion.vouchedRidersCount} Riders</span>
             </div>
             <div className="p-2.5 rounded-xl bg-white/5 space-y-0.5">
-              <span className="text-[10px] text-gray-400 block uppercase font-bold">Merchants</span>
+              <span className="text-[11px] text-gray-400 block uppercase font-bold">Merchants</span>
               <span className="text-sm font-black text-white">{champion.verifiedMerchantsCount} Dukas</span>
             </div>
             <div className="p-2.5 rounded-xl bg-white/5 space-y-0.5">
-              <span className="text-[10px] text-gray-400 block uppercase font-bold">Monthly Run</span>
+              <span className="text-[11px] text-gray-400 block uppercase font-bold">Monthly Run</span>
               <span className="text-sm font-black text-[#00BFEF]">{champion.communityVolume}</span>
             </div>
           </div>
@@ -116,7 +116,7 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
               <Clock className="w-3.5 h-3.5" />
               <span>Live {neighborhood.name} Activity</span>
             </span>
-            <span className="text-[10px] text-emerald-400 font-mono font-bold">● REALTIME</span>
+            <span className="text-[11px] text-emerald-400 font-mono font-bold">● REALTIME</span>
           </div>
 
           <div className="space-y-2 max-h-40 overflow-y-auto pr-1 no-scrollbar">
@@ -128,7 +128,7 @@ export const CommunityChampionModal: React.FC<CommunityChampionModalProps> = ({
                 <span className="text-base shrink-0">{act.icon}</span>
                 <div className="flex-1 space-y-0.5">
                   <p className="leading-snug">{act.text}</p>
-                  <span className="text-[10px] text-gray-400 block">{act.timeAgo}</span>
+                  <span className="text-[11px] text-gray-400 block">{act.timeAgo}</span>
                 </div>
               </div>
             ))}

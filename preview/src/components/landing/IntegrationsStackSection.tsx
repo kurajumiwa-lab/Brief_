@@ -82,7 +82,7 @@ export const IntegrationsStackSection: React.FC<IntegrationsStackSectionProps> =
             className={`absolute ${item.position} z-20 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur-md text-[var(--brief-ink)] shadow-xl flex items-center space-x-1.5 transition-transform duration-300 hover:scale-110`}
           >
             {item.icon}
-            <span className="text-[11px] font-black tracking-tight">{item.name}</span>
+            <span className="text-[12px] font-black tracking-tight">{item.name}</span>
           </div>
         ))}
       </div>

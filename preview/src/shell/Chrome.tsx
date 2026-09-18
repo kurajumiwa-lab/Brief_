@@ -16,7 +16,7 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
   return (
     <>
       {toastMessage && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#4F46E5] text-[var(--accent-ink)] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#2563EB] text-[var(--accent-ink)] px-4 py-2.5 rounded-xl font-extrabold shadow-2xl flex items-center gap-2">
           <Sparkles className="w-4 h-4 shrink-0" />
           <span className="text-xs">{toastMessage}</span>
         </div>
@@ -28,7 +28,7 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
             onClick={() => setSpringOverlayOpen(false)}
             className="fixed inset-0 z-[60] bg-black/45 backdrop-blur-[8px] transition-opacity"
           />
-          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#06B6D4]/25 bg-[rgba(253, 250, 243, 0.90)] px-6 py-8 text-center shadow-2xl">
+          <div className="brief-spring-modal fixed top-1/2 left-1/2 z-[70] w-[calc(100%-48px)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#0891B2]/25 bg-[rgba(255, 255, 255, 0.90)] px-6 py-8 text-center shadow-2xl">
             <div className="text-4xl mb-4">⏳</div>
             <h3 className="text-xl font-bold mb-2">Nothing to do here?</h3>
             <p className="text-sm text-[var(--ink-60)] leading-relaxed mb-6">
@@ -37,7 +37,7 @@ export function StatusToasts(props: { setSpringOverlayOpen: any, springOverlayOp
             </p>
             <button
               onClick={() => setSpringOverlayOpen(false)}
-              className="w-full py-4 rounded-lg bg-[color:var(--color-paper)] border border-[#06B6D4]/30 text-[var(--brief-ink)] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#06B6D4]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
+              className="w-full py-4 rounded-lg bg-[color:var(--color-paper)] border border-[#0891B2]/30 text-[var(--brief-ink)] text-[15px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-transform duration-150 hover:-translate-y-0.5 hover:border-[#0891B2]/70 active:translate-y-0.5 active:scale-[0.96] active:border-white"
             >
               🗓️ Check a Different Time
             </button>
@@ -67,12 +67,12 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
           >
             <span
               className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                menuOpen ? 'h-7 bg-[#4F46E5]' : 'h-0 bg-transparent'
+                menuOpen ? 'h-7 bg-[#2563EB]' : 'h-0 bg-transparent'
               }`}
             />
             <Menu className="w-5 h-5 shrink-0" />
             <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
-              <span className="block text-[13px] font-extrabold whitespace-nowrap">Menu</span>
+              <span className="block text-[14px] font-extrabold whitespace-nowrap">Menu</span>
             </span>
           </button>
           {DESTINATIONS.map((d) => {
@@ -93,7 +93,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
                 {/* Active marker on the edge, not a heavy filled pill. */}
                 <span
                   className={`absolute left-0 top-1/2 -translate-y-1/2 w-0.5 rounded-r transition-all ${
-                    active ? 'h-7 bg-[#4F46E5]' : 'h-0 bg-transparent'
+                    active ? 'h-7 bg-[#2563EB]' : 'h-0 bg-transparent'
                   }`}
                 />
                 <span className="relative shrink-0">
@@ -103,7 +103,7 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
                   </span>
                 </span>
                 <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
-                  <span className="block text-[13px] font-extrabold whitespace-nowrap">
+                  <span className="block text-[14px] font-extrabold whitespace-nowrap">
                     {d.label}
                   </span>
                 </span>
@@ -123,15 +123,15 @@ export function DesktopRail(props: { activeTab: any, destinationAlerts: any, goT
             <span className="relative shrink-0">
               <Bell className="w-5 h-5" />
               {notifUnread > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#DC2626] px-1 text-[9px] font-extrabold text-[var(--accent-ink)]">
+                <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#DC2626] px-1 text-[11px] font-extrabold text-[var(--accent-ink)]">
                   {notifUnread > 99 ? '99+' : notifUnread}
                 </span>
               )}
             </span>
             <span className="min-w-0 opacity-0 group-hover/rail:opacity-100 transition-opacity">
-              <span className="block text-[13px] font-extrabold whitespace-nowrap">Updates</span>
+              <span className="block text-[14px] font-extrabold whitespace-nowrap">Updates</span>
               {notifUnread > 0 && (
-                <span className="block text-[9px] font-bold whitespace-nowrap text-[#DC2626]">{notifUnread} unread</span>
+                <span className="block text-[11px] font-bold whitespace-nowrap text-[#DC2626]">{notifUnread} unread</span>
               )}
             </span>
           </button>
@@ -164,7 +164,7 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
           dockOn && !isAnyModalActive ? 'translate-y-0' : 'translate-y-full pointer-events-none'
         }`}
       >
-        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] bg-[rgba(253, 250, 243, 0.94)] px-1.5 py-1.5 shadow-[var(--room-light),var(--lift-4),inset_0_0_0_1px_var(--brief-line)] backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-stretch gap-0.5 rounded-[24px] bg-[rgba(255, 255, 255, 0.94)] px-1.5 py-1.5 shadow-[var(--room-light),var(--lift-4),inset_0_0_0_1px_var(--brief-line)] backdrop-blur-xl">
           <button
             type="button"
             onClick={() => { setMenuOpen((v: any) => !v); setDockOn(true); }}
@@ -172,13 +172,13 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
             aria-expanded={menuOpen}
             title="Menu"
             className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-              menuOpen ? 'text-[#4F46E5]' : 'text-[#7A8494] hover:text-[#5A6472]'
+              menuOpen ? 'text-[#2563EB]' : 'text-[#7A8494] hover:text-[#5A6472]'
             }`}
           >
-            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#4F46E5] text-[var(--accent-ink)]' : ''}`}>
+            <span className={`flex h-7 w-11 items-center justify-center rounded-full transition-colors ${menuOpen ? 'bg-[#2563EB] text-[var(--accent-ink)]' : ''}`}>
               <Menu className="w-5 h-5" />
             </span>
-            <span className="text-[11px] font-bold leading-none">Menu</span>
+            <span className="text-[12px] font-bold leading-none">Menu</span>
           </button>
           {DESTINATIONS.map((d) => {
             const active = activeTab === d.id;
@@ -190,16 +190,16 @@ export function DockNav(props: { activeTab: any, destinationAlerts: any, dockOn:
                 aria-current={active ? 'page' : undefined}
                 title={d.hint}
                 className={`flex flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-1.5 cursor-pointer transition-colors ${
-                  active ? 'text-[#4F46E5]' : 'text-[#7A8494] hover:text-[#5A6472]'
+                  active ? 'text-[#2563EB]' : 'text-[#7A8494] hover:text-[#5A6472]'
                 }`}
               >
-                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#4F46E5] text-[var(--accent-ink)]' : ''}`}>
+                <span className={`relative flex h-7 w-11 items-center justify-center rounded-full transition-colors ${active ? 'bg-[#2563EB] text-[var(--accent-ink)]' : ''}`}>
                   <Icon className="w-5 h-5" />
                   <span className="absolute -right-1 -top-1">
                     <ActivityDot n={destinationAlerts[d.id] ?? 0} />
                   </span>
                 </span>
-                <span className="text-[11px] font-bold leading-none">
+                <span className="text-[12px] font-bold leading-none">
                   {d.label}
                 </span>
                 {(destinationAlerts[d.id] ?? 0) > 0 && (

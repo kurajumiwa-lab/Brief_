@@ -140,7 +140,7 @@ export function OfflineSyncQueueDesk({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#10B981] text-[var(--brief-ink)] uppercase tracking-wider">
+              <span className="text-[11px] font-mono font-black px-2.5 py-0.5 rounded-full bg-[#10B981] text-[var(--brief-ink)] uppercase tracking-wider">
                 PWA SERVICE WORKER • INDEXEDDB ENGINE
               </span>
               <span className="text-xs text-indigo-200 font-bold flex items-center space-x-1">
@@ -190,7 +190,7 @@ export function OfflineSyncQueueDesk({
               >
                 <span>{tab.label}</span>
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-[#4F46E5] text-white">
+                  <span className="text-[11px] px-1.5 py-0.2 rounded-full font-mono bg-[#2563EB] text-white">
                     {tab.count}
                   </span>
                 )}
@@ -200,7 +200,7 @@ export function OfflineSyncQueueDesk({
 
           {/* Network Simulator Pills */}
           <div className="flex items-center space-x-1 bg-black/40 p-1 rounded-xl border border-white/10 text-xs">
-            <span className="text-[10px] text-gray-400 px-1 font-mono uppercase">Net:</span>
+            <span className="text-[11px] text-gray-400 px-1 font-mono uppercase">Net:</span>
             {[
               { id: 'online', label: '4G Online', color: 'text-emerald-400' },
               { id: 'flaky_2g', label: '2G Flaky', color: 'text-amber-400' },
@@ -210,7 +210,7 @@ export function OfflineSyncQueueDesk({
                 key={mode.id}
                 type="button"
                 onClick={() => { soundEngine.play('tap'); setNetworkMode(mode.id as any); }}
-                className={`px-2 py-0.5 rounded-lg text-[10px] font-bold font-mono transition-all cursor-pointer ${
+                className={`px-2 py-0.5 rounded-lg text-[11px] font-bold font-mono transition-all cursor-pointer ${
                   networkMode === mode.id
                     ? 'bg-white/20 text-white shadow-xs font-black'
                     : 'text-gray-400 hover:text-white'
@@ -230,20 +230,20 @@ export function OfflineSyncQueueDesk({
           {/* Quick Metrics Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 space-y-1">
-              <span className="text-[10px] font-mono text-amber-700 uppercase font-bold block">Pending Sync</span>
+              <span className="text-[11px] font-mono text-amber-700 uppercase font-bold block">Pending Sync</span>
               <span className="text-xl font-black font-mono text-amber-900">{pendingCount} mutations</span>
-              <span className="text-[10px] text-amber-700 block">Stored in browser IndexedDB</span>
+              <span className="text-[11px] text-amber-700 block">Stored in browser IndexedDB</span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
-              <span className="text-[10px] font-mono text-emerald-700 uppercase font-bold block">Reconciled Clean</span>
+              <span className="text-[11px] font-mono text-emerald-700 uppercase font-bold block">Reconciled Clean</span>
               <span className="text-xl font-black font-mono text-emerald-900">{syncedCount} reconciled</span>
-              <span className="text-[10px] text-emerald-700 block">Server confirmed with receipts</span>
+              <span className="text-[11px] text-emerald-700 block">Server confirmed with receipts</span>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 space-y-1 flex flex-col justify-between">
               <div>
-                <span className="text-[10px] font-mono text-gray-500 uppercase font-bold block">Current Network</span>
+                <span className="text-[11px] font-mono text-gray-500 uppercase font-bold block">Current Network</span>
                 <span className="text-xs font-black font-mono text-[var(--brief-ink)] block mt-1 uppercase">
                   {networkMode === 'online' ? '🟢 4G / Wi-Fi Active' : networkMode === 'flaky_2g' ? '🟡 2G Cellular Edge' : '🔴 Offline / No Signal'}
                 </span>
@@ -252,7 +252,7 @@ export function OfflineSyncQueueDesk({
                 type="button"
                 onClick={handleDrainQueue}
                 disabled={isDraining || pendingCount === 0}
-                className="w-full py-1.5 rounded-xl bg-[#06B6D4] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center justify-center space-x-1 shadow-xs cursor-pointer disabled:opacity-50 transition-all"
+                className="w-full py-1.5 rounded-xl bg-[#0891B2] hover:bg-[#1D4ED8] text-white font-bold text-xs flex items-center justify-center space-x-1 shadow-xs cursor-pointer disabled:opacity-50 transition-all"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isDraining ? 'animate-spin' : ''}`} />
                 <span>{isDraining ? 'Draining Queue…' : 'Drain Sync Queue'}</span>
@@ -271,7 +271,7 @@ export function OfflineSyncQueueDesk({
 
           {/* Queue Items List */}
           <div className="space-y-2.5">
-            <span className="text-[10px] font-mono uppercase text-gray-500 font-bold block">
+            <span className="text-[11px] font-mono uppercase text-gray-500 font-bold block">
               Mutations Log (Ordered by Local Timestamp)
             </span>
 
@@ -285,7 +285,7 @@ export function OfflineSyncQueueDesk({
                     <div>
                       <div className="flex items-center space-x-2">
                         <span className="font-mono text-xs font-black text-[var(--brief-ink)]">{item.title}</span>
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded uppercase font-bold bg-gray-100 text-gray-700">
+                        <span className="text-[11px] font-mono px-1.5 py-0.2 rounded uppercase font-bold bg-gray-100 text-gray-700">
                           {item.category.replace('_', ' ')}
                         </span>
                       </div>
@@ -298,7 +298,7 @@ export function OfflineSyncQueueDesk({
                           KES {item.amountKes}
                         </span>
                       )}
-                      <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase mt-1 inline-block ${
+                      <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full uppercase mt-1 inline-block ${
                         item.status === 'reconciled'
                           ? 'bg-emerald-100 text-emerald-800'
                           : 'bg-amber-100 text-amber-800'
@@ -308,7 +308,7 @@ export function OfflineSyncQueueDesk({
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] font-mono text-gray-400">
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-400">
                     <span>Key: {item.idempotencyKey}</span>
                     <span>{item.serverReceiptId ? `Server Ref: ${item.serverReceiptId}` : item.timestamp}</span>
                   </div>
@@ -325,10 +325,10 @@ export function OfflineSyncQueueDesk({
         <form onSubmit={handleCreateOfflineAction} className="p-5 sm:p-6 space-y-4 max-w-lg mx-auto text-xs">
           <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-gray-700 space-y-1">
             <h4 className="font-bold text-[var(--brief-ink)] flex items-center space-x-1.5">
-              <Plus className="w-4 h-4 text-[#4F46E5]" />
+              <Plus className="w-4 h-4 text-[#2563EB]" />
               <span>Simulate Local Mutation While Disconnected</span>
             </h4>
-            <p className="text-[11px] leading-relaxed">
+            <p className="text-[12px] leading-relaxed">
               When a boda rider drops a parcel or a duka logs a sale in the basement with zero reception, Brief stores the mutation with an immutable cryptographic idempotency key.
             </p>
           </div>
@@ -338,7 +338,7 @@ export function OfflineSyncQueueDesk({
             <select
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value as any)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
             >
               <option value="wairo_logistics">Wairo Courier Drop-off & PIN</option>
               <option value="duka_sales">Duka POS Cash Sale</option>
@@ -353,7 +353,7 @@ export function OfflineSyncQueueDesk({
               required
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
             />
           </div>
 
@@ -364,7 +364,7 @@ export function OfflineSyncQueueDesk({
               required
               value={newDetails}
               onChange={(e) => setNewDetails(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
             />
           </div>
 
@@ -374,7 +374,7 @@ export function OfflineSyncQueueDesk({
               type="number"
               value={newAmount}
               onChange={(e) => setNewAmount(Number(e.target.value))}
-              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#06B6D4]"
+              className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-[#0891B2]"
             />
           </div>
 
@@ -393,20 +393,20 @@ export function OfflineSyncQueueDesk({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
               <span className="font-black text-[var(--brief-ink)] text-xs">📦 wairo_offline_deliveries</span>
-              <p className="text-[11px] text-gray-600 font-sans">Stores encrypted recipient verification PINs, driver GPS breadcrumbs, and pending escrow releases.</p>
-              <span className="text-[10px] text-blue-600 font-bold block">1 Record (2.4 KB)</span>
+              <p className="text-[12px] text-gray-600 font-sans">Stores encrypted recipient verification PINs, driver GPS breadcrumbs, and pending escrow releases.</p>
+              <span className="text-[11px] text-blue-600 font-bold block">1 Record (2.4 KB)</span>
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
               <span className="font-black text-[var(--brief-ink)] text-xs">🛒 duka_offline_sales</span>
-              <p className="text-[11px] text-gray-600 font-sans">Stores cash transactions, barcodes, and inventory decrements before server ledger sync.</p>
-              <span className="text-[10px] text-blue-600 font-bold block">1 Record (1.8 KB)</span>
+              <p className="text-[12px] text-gray-600 font-sans">Stores cash transactions, barcodes, and inventory decrements before server ledger sync.</p>
+              <span className="text-[11px] text-blue-600 font-bold block">1 Record (1.8 KB)</span>
             </div>
 
             <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
               <span className="font-black text-[var(--brief-ink)] text-xs">🌸 circle_offline_ledger</span>
-              <p className="text-[11px] text-gray-600 font-sans">Stores meeting attendance, cash Merry-Go-Round collections, and loan disbursement notes.</p>
-              <span className="text-[10px] text-blue-600 font-bold block">1 Record (3.1 KB)</span>
+              <p className="text-[12px] text-gray-600 font-sans">Stores meeting attendance, cash Merry-Go-Round collections, and loan disbursement notes.</p>
+              <span className="text-[11px] text-blue-600 font-bold block">1 Record (3.1 KB)</span>
             </div>
 
 
@@ -422,7 +422,7 @@ export function OfflineSyncQueueDesk({
               <ShieldCheck className="w-4 h-4 text-indigo-600" />
               <span>Idempotent Two-Phase Synchronization</span>
             </h4>
-            <p className="text-[11px] text-indigo-900 leading-relaxed font-sans">
+            <p className="text-[12px] text-indigo-900 leading-relaxed font-sans">
               Every offline write generates a unique 128-bit key. When internet connectivity resumes, the ServiceWorker BackgroundSync API replays the mutation. The Brief server checks if the key has already settled—preventing double M-Pesa debits even if the connection drops mid-request.
             </p>
           </div>

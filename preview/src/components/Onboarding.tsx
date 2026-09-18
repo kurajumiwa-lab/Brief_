@@ -110,7 +110,7 @@ function StepDots({ step }: { step: number }) {
         <span
           key={n}
           className={`h-1.5 rounded-full transition-all ${
-            n === step ? 'w-6 bg-[#4F46E5]' : n < step ? 'w-3 bg-[#4F46E5]/45' : 'w-3 bg-[color:var(--brief-line)]'
+            n === step ? 'w-6 bg-[#2563EB]' : n < step ? 'w-3 bg-[#2563EB]/45' : 'w-3 bg-[color:var(--brief-line)]'
           }`}
         />
       ))}
@@ -264,7 +264,7 @@ export function Onboarding({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#4F46E5]/45 backdrop-blur-[2px] px-3 pb-3 sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-[#2563EB]/45 backdrop-blur-[2px] px-3 pb-3 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to Brief"
@@ -276,7 +276,7 @@ export function Onboarding({
           <button
             type="button"
             onClick={() => void finish(true)}
-            className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] hover:text-[var(--brief-ink)] cursor-pointer"
+            className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] hover:text-[var(--brief-ink)] cursor-pointer"
           >
             {step === 1 ? 'Later' : 'Skip'}
           </button>
@@ -292,11 +292,11 @@ export function Onboarding({
               </div>
             )}
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 1 of 3</p>
-              <h2 className="mt-1 font-display text-[22px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 1 of 3</p>
+              <h2 className="mt-1 font-display text-[30px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
                 What is happening around you, kept in one place.
               </h2>
-              <p className="mt-1.5 text-[12px] leading-snug text-[var(--ink-60)]">
+              <p className="mt-1.5 text-[13px] leading-snug text-[var(--ink-60)]">
                 Sign in so the things you keep are still yours on the next device. It takes one tap.
               </p>
             </div>
@@ -304,13 +304,13 @@ export function Onboarding({
             {clientId && <div ref={googleSlot} className="flex justify-center" data-testid="google-button" />}
 
             {clientId && !googleReady && (
-              <p className="text-center text-[10px] text-[var(--ink-60)]">Loading Google…</p>
+              <p className="text-center text-[11px] text-[var(--ink-60)]">Loading Google…</p>
             )}
 
             {!clientId && (
               <div className="rounded-xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-well)] px-3.5 py-3">
-                <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">Google sign-in is not configured here</p>
-                <p className="mt-1 text-[10px] leading-snug text-[var(--ink-55)]">
+                <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">Google sign-in is not configured here</p>
+                <p className="mt-1 text-[11px] leading-snug text-[var(--ink-55)]">
                   {providers?.google?.reason ?? 'This deployment has no Google client id.'} Use a handle below — it is a
                   real account either way.
                 </p>
@@ -321,7 +321,7 @@ export function Onboarding({
               <button
                 type="button"
                 onClick={() => setShowPasswordForm(true)}
-                className="w-full rounded-xl border border-[#06B6D4] bg-[#4F46E5] px-4 py-3 text-[12px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
+                className="w-full rounded-xl border border-[#0891B2] bg-[#2563EB] px-4 py-3 text-[13px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
               >
                 Create an account with a handle
               </button>
@@ -335,7 +335,7 @@ export function Onboarding({
                   placeholder="handle (3+ characters)"
                   aria-label="Handle"
                   autoComplete="username"
-                  className="w-full rounded-xl border border-[var(--brief-line)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+                  className="w-full rounded-xl border border-[var(--brief-line)] px-3.5 py-2.5 text-[13px] font-bold text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
                 />
                 <input
                   value={password}
@@ -344,14 +344,14 @@ export function Onboarding({
                   placeholder="password (8+ characters)"
                   aria-label="Password"
                   autoComplete="current-password"
-                  className="w-full rounded-xl border border-[var(--brief-line)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+                  className="w-full rounded-xl border border-[var(--brief-line)] px-3.5 py-2.5 text-[13px] font-bold text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
                 />
                 <div className="flex gap-2">
                   <button
                     type="button"
                     disabled={busy !== null}
                     onClick={() => void submitPassword('register')}
-                    className="flex-1 rounded-xl bg-[#4F46E5] px-4 py-2.5 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-50 cursor-pointer"
+                    className="flex-1 rounded-xl bg-[#2563EB] px-4 py-2.5 text-[13px] font-extrabold text-[var(--accent-ink)] disabled:opacity-50 cursor-pointer"
                   >
                     {busy === 'register' ? 'Creating…' : 'Create account'}
                   </button>
@@ -359,7 +359,7 @@ export function Onboarding({
                     type="button"
                     disabled={busy !== null}
                     onClick={() => void submitPassword('login')}
-                    className="rounded-xl border border-[var(--brief-line)] px-4 py-2.5 text-[12px] font-extrabold text-[var(--brief-ink)] disabled:opacity-50 cursor-pointer"
+                    className="rounded-xl border border-[var(--brief-line)] px-4 py-2.5 text-[13px] font-extrabold text-[var(--brief-ink)] disabled:opacity-50 cursor-pointer"
                   >
                     {busy === 'login' ? 'Signing in…' : 'I have one'}
                   </button>
@@ -378,14 +378,14 @@ export function Onboarding({
                 if (guest) void refreshState();
                 else setError('Could not start a device account. The API may be unreachable.');
               }}
-              className="w-full text-[11px] font-bold text-[var(--ink-55)] hover:text-[var(--brief-ink)] cursor-pointer"
+              className="w-full text-[12px] font-bold text-[var(--ink-55)] hover:text-[var(--brief-ink)] cursor-pointer"
             >
               {busy === 'guest' ? 'Setting up…' : 'Just look around on this device'}
             </button>
 
             {error && <p className="text-[10.5px] font-bold text-[#DC2626]">{error}</p>}
 
-            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[var(--ink-60)]">
+            <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[var(--ink-60)]">
               <ShieldCheck className="mt-[1px] h-3 w-3 shrink-0" />
               <span>
                 Telegram is not required to be a member. If you open Brief inside Telegram it signs you in there too —
@@ -399,11 +399,11 @@ export function Onboarding({
         {step === 2 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 2 of 3</p>
-              <h2 className="mt-1 font-display text-[20px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 2 of 3</p>
+              <h2 className="mt-1 font-display text-[32px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
                 What brought you here?
               </h2>
-              <p className="mt-1 text-[12px] text-[var(--ink-60)]">One tap. It orders your feed, nothing else.</p>
+              <p className="mt-1 text-[13px] text-[var(--ink-60)]">One tap. It orders your feed, nothing else.</p>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {goals.map((g) => (
@@ -414,19 +414,19 @@ export function Onboarding({
                   onClick={() => void chooseGoal(g.id)}
                   data-goal={g.id}
                   className={`flex items-center justify-between rounded-xl border px-3.5 py-3 text-left transition cursor-pointer ${
-                    goal === g.id ? 'border-[#06B6D4] bg-[#4F46E5] text-[var(--accent-ink)]' : 'border-[var(--brief-line)] hover:border-[#06B6D4]'
+                    goal === g.id ? 'border-[#0891B2] bg-[#2563EB] text-[var(--accent-ink)]' : 'border-[var(--brief-line)] hover:border-[#0891B2]'
                   }`}
                 >
                   <span className="text-[12.5px] font-extrabold">{g.label}</span>
                   {busy === `goal:${g.id}` ? (
-                    <span className="text-[10px] font-extrabold uppercase tracking-[0.14em]">Saving…</span>
+                    <span className="text-[11px] font-extrabold uppercase tracking-[0.14em]">Saving…</span>
                   ) : (
                     <ArrowRight className="h-3.5 w-3.5 opacity-45" />
                   )}
                 </button>
               ))}
               {goals.length === 0 && (
-                <p className="rounded-xl border border-dashed border-[var(--brief-line)] px-3.5 py-3 text-[11px] text-[var(--ink-55)]">
+                <p className="rounded-xl border border-dashed border-[var(--brief-line)] px-3.5 py-3 text-[12px] text-[var(--ink-55)]">
                   The API has not answered yet, so there is nothing to choose from. You can skip this and pick it later
                   from your next step card.
                 </p>
@@ -440,11 +440,11 @@ export function Onboarding({
         {step === 3 && (
           <div className="px-5 pb-5 pt-3 space-y-3.5">
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 3 of 3</p>
-              <h2 className="mt-1 font-display text-[20px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
+              <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">Step 3 of 3</p>
+              <h2 className="mt-1 font-display text-[32px] font-semibold leading-tight tracking-tight text-[var(--brief-ink)]">
                 Where should Brief look?
               </h2>
-              <p className="mt-1 text-[12px] text-[var(--ink-60)]">
+              <p className="mt-1 text-[13px] text-[var(--ink-60)]">
                 {placeLabel ? `Using ${placeLabel}.` : 'Skip it and you get the global ranked feed instead.'}
               </p>
             </div>
@@ -453,7 +453,7 @@ export function Onboarding({
               onClick={() => {
                 onUseLocation();
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#06B6D4] bg-[#4F46E5] px-4 py-3 text-[12px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#0891B2] bg-[#2563EB] px-4 py-3 text-[13px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
             >
               <MapPin className="h-3.5 w-3.5" /> Use my location
             </button>
@@ -469,10 +469,10 @@ export function Onboarding({
                       if (res.ok) onStateChange(res.data);
                     });
                   }}
-                  className={`rounded-full border px-3 py-1.5 text-[11px] font-extrabold transition cursor-pointer ${
+                  className={`rounded-full border px-3 py-1.5 text-[12px] font-extrabold transition cursor-pointer ${
                     placeLabel === city.label
-                      ? 'border-[#06B6D4] bg-[#4F46E5] text-[var(--accent-ink)]'
-                      : 'border-[var(--brief-line)] text-[var(--ink-70)] hover:border-[#06B6D4]'
+                      ? 'border-[#0891B2] bg-[#2563EB] text-[var(--accent-ink)]'
+                      : 'border-[var(--brief-line)] text-[var(--ink-70)] hover:border-[#0891B2]'
                   }`}
                 >
                   {city.label}
@@ -483,12 +483,12 @@ export function Onboarding({
               type="button"
               disabled={busy !== null}
               onClick={() => void finish(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#4F46E5] px-4 py-3 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-50 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563EB] px-4 py-3 text-[13px] font-extrabold text-[var(--accent-ink)] disabled:opacity-50 cursor-pointer"
               data-testid="onboarding-finish"
             >
               <Sparkles className="h-3.5 w-3.5" /> Show me what is around
             </button>
-            <p className="flex items-start gap-1.5 text-[10px] leading-snug text-[var(--ink-60)]">
+            <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[var(--ink-60)]">
               <Check className="mt-[1px] h-3 w-3 shrink-0" />
               <span>
                 Hosting, selling, banners and the money desk are not set up now. They open as you go, once there is

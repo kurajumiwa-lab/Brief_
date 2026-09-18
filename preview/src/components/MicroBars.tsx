@@ -34,7 +34,7 @@ export function MicroBars({
         const pct = Math.max(0, Math.min(100, (i.value / max) * 100));
         return (
           <div key={i.label} className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-[9px]" style={{ color: 'var(--ink-faint)' }}>
+            <span className="w-20 shrink-0 text-[11px]" style={{ color: 'var(--ink-faint)' }}>
               {i.label}
             </span>
             <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--ground)' }}>
@@ -47,7 +47,7 @@ export function MicroBars({
                 }}
               />
             </div>
-            <span className="w-12 shrink-0 text-right font-mono text-[9px]" style={{ color: 'var(--ink)' }}>
+            <span className="w-12 shrink-0 text-right font-mono text-[11px]" style={{ color: 'var(--ink)' }}>
               {i.value.toLocaleString()}
             </span>
           </div>
@@ -73,7 +73,7 @@ export function Funnel({ stages, accent = 'var(--signal-live)' }: { stages: Funn
         const pct = Math.max(4, Math.min(100, (s.value / max) * 100));
         return (
           <div key={s.label} className="flex items-center gap-2">
-            <span className="w-20 shrink-0 text-[9px]" style={{ color: 'var(--ink-faint)' }}>
+            <span className="w-20 shrink-0 text-[11px]" style={{ color: 'var(--ink-faint)' }}>
               {s.label}
             </span>
             <div className="flex-1">
@@ -86,7 +86,7 @@ export function Funnel({ stages, accent = 'var(--signal-live)' }: { stages: Funn
                 }}
               />
             </div>
-            <span className="w-12 shrink-0 text-right font-mono text-[9px]" style={{ color: 'var(--ink)' }}>
+            <span className="w-12 shrink-0 text-right font-mono text-[11px]" style={{ color: 'var(--ink)' }}>
               {s.value.toLocaleString()}
             </span>
           </div>

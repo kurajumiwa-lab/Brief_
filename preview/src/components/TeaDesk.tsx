@@ -68,13 +68,13 @@ export function TeaDesk() {
       <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Editorial Studio</h2>
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Write, design and publish the story layer. {published.length} live.
           </p>
         </div>
         <button
           onClick={() => setEditing('new')}
-          className="rounded-full bg-[#4F46E5] px-4 py-2 text-[12px] font-bold text-[var(--accent-ink)] cursor-pointer"
+          className="rounded-full bg-[#2563EB] px-4 py-2 text-[13px] font-bold text-[var(--accent-ink)] cursor-pointer"
         >
           New story
         </button>
@@ -87,8 +87,8 @@ export function TeaDesk() {
         <div className="space-y-2">
           {articles.length === 0 && (
             <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
-              <p className="text-[13px] font-bold text-[var(--brief-ink)]">No stories yet.</p>
-              <p className="mt-1 text-[11px] text-[var(--ink-60)]">
+              <p className="text-[14px] font-bold text-[var(--brief-ink)]">No stories yet.</p>
+              <p className="mt-1 text-[12px] text-[var(--ink-60)]">
                 Open the studio and design the first one — theme, layout, photos and all.
               </p>
             </div>
@@ -111,25 +111,25 @@ export function TeaDesk() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-semibold text-[var(--brief-ink)] truncate">{a.title}</p>
-                  <p className="text-[10px] text-[var(--ink-60)]">
+                  <p className="text-[14px] font-semibold text-[var(--brief-ink)] truncate">{a.title}</p>
+                  <p className="text-[11px] text-[var(--ink-60)]">
                     {a.category}{a.location ? ` · ${a.location}` : ''} · {a.readingTime}m
                     {a.design?.theme ? ` · ${theme.label}` : ''}
                     {typeof a.likeCount === 'number' ? ` · ♥ ${a.likeCount}` : ''}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}` }}>
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}` }}>
                   {STATUS_LABEL[a.status] ?? a.status}
                 </span>
                 <div className="flex shrink-0 gap-1">
-                  <button onClick={() => setEditing(a)} className="text-[10px] font-bold text-[var(--brief-ink)] cursor-pointer">Design</button>
+                  <button onClick={() => setEditing(a)} className="text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer">Design</button>
                   {a.status !== 'published' ? (
-                    <button onClick={() => void transition(a.id, 'publish')} className="text-[10px] font-bold text-[var(--brief-ink)] cursor-pointer">Publish</button>
+                    <button onClick={() => void transition(a.id, 'publish')} className="text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer">Publish</button>
                   ) : (
-                    <button onClick={() => void transition(a.id, 'unpublish')} className="text-[10px] font-bold text-[var(--brief-ink)] cursor-pointer">Unpublish</button>
+                    <button onClick={() => void transition(a.id, 'unpublish')} className="text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer">Unpublish</button>
                   )}
                   {a.status !== 'archived' && (
-                    <button onClick={() => void transition(a.id, 'archive')} className="text-[10px] font-bold text-[var(--ink-60)] cursor-pointer">Archive</button>
+                    <button onClick={() => void transition(a.id, 'archive')} className="text-[11px] font-bold text-[var(--ink-60)] cursor-pointer">Archive</button>
                   )}
                 </div>
               </div>

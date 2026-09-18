@@ -49,7 +49,7 @@ export function CopyId({ value, label, className = '' }: CopyIdProps) {
   return (
     <span className={`inline-flex items-center gap-1 min-w-0 ${className}`}>
       {label && (
-        <span className="text-[9px] font-black uppercase tracking-wider shrink-0" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-black uppercase tracking-wider shrink-0" style={{ color: 'var(--color-text-muted)' }}>
           {label}
         </span>
       )}
@@ -58,7 +58,7 @@ export function CopyId({ value, label, className = '' }: CopyIdProps) {
         onClick={() => void copy()}
         aria-label={`Copy ${label ?? 'reference'} ${value}`}
         title={state === 'unavailable' ? 'Copy it by hand — the text is shown' : 'Copy'}
-        className="inline-flex items-center gap-1 max-w-full min-w-0 px-1.5 py-0.5 rounded-md cursor-pointer font-mono text-[10px] transition-colors"
+        className="inline-flex items-center gap-1 max-w-full min-w-0 px-1.5 py-0.5 rounded-md cursor-pointer font-mono text-[11px] transition-colors"
         style={{
           background: state === 'copied' ? 'var(--color-primary-subtle)' : 'transparent',
           color: state === 'copied' ? 'var(--color-primary)' : 'var(--color-text-muted)',

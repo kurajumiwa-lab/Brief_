@@ -96,7 +96,7 @@ export function CircleTasks({
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs text-[var(--brief-ink)] min-w-0">{task.content}</p>
           <span
-            className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
+            className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full ${
               state?.status === 'completed'
                 ? 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]'
                 : state?.status === 'assigned'
@@ -112,12 +112,12 @@ export function CircleTasks({
             key. When no name resolves, the line says it cannot, rather than
             falling back to the id. */}
         {state?.status === 'assigned' && (
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             {mine ? 'Assigned to you' : `Assigned to ${nameOf?.(state.assigneeId) || 'a member'}`}
           </p>
         )}
         {state?.status === 'completed' && (
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Completed by {nameOf?.(state.completedBy) || (state.completedBy ? 'a member' : 'unknown')}
             {state.completedAt ? ` on ${state.completedAt.slice(0, 10)}` : ''}
             {/* Complete and verified are two facts, printed as two: the first is
@@ -126,7 +126,7 @@ export function CircleTasks({
           </p>
         )}
         {state?.status === 'cancelled' && (
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Cancelled{state.cancelReason ? ` — ${state.cancelReason}` : ''}
           </p>
         )}
@@ -135,7 +135,7 @@ export function CircleTasks({
           {isCoordinator && state?.status !== 'cancelled' && (
             <button
               onClick={() => { setAsking(asking?.id === task.id && asking.kind === 'cancel' ? null : { id: task.id, kind: 'cancel' }); setWhy(''); }}
-              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[11px] cursor-pointer"
             >
               Cancel
             </button>
@@ -143,7 +143,7 @@ export function CircleTasks({
           {isCoordinator && (state?.status === 'completed' || state?.status === 'cancelled') && (
             <button
               onClick={() => { setAsking(asking?.id === task.id && asking.kind === 'reopen' ? null : { id: task.id, kind: 'reopen' }); setWhy(''); }}
-              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[11px] cursor-pointer"
             >
               Reopen
             </button>
@@ -152,7 +152,7 @@ export function CircleTasks({
             <button
               onClick={() => onVerify(task.id)}
               disabled={busy}
-              className="px-3 py-1.5 rounded-xl bg-[var(--color-success)] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[var(--color-success)] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
               Verify it landed
             </button>
@@ -160,7 +160,7 @@ export function CircleTasks({
           {(canOperate && state?.status !== 'cancelled') && (
             <button
               onClick={() => { setAsking(asking?.id === task.id && asking.kind === 'due' ? null : { id: task.id, kind: 'due' }); setDueDraft((task.task?.dueAt ?? '').slice(0, 10)); }}
-              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[var(--ink-60)] font-extrabold text-[11px] cursor-pointer"
             >
               {task.task?.dueAt ? `Due ${String(task.task.dueAt).slice(0, 10)}` : 'Set a deadline'}
             </button>
@@ -173,7 +173,7 @@ export function CircleTasks({
                 aria-label={`reason for ${asking.kind === 'cancel' ? 'cancelling' : 'reopening'} this task`}
                 placeholder={asking.kind === 'cancel' ? 'why is it being cancelled? the circle sees this' : 'why is it being reopened? the circle sees this'}
                 maxLength={500}
-                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]"
+                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]"
               />
               <button
                 disabled={!why.trim()}
@@ -184,7 +184,7 @@ export function CircleTasks({
                   else onReopen?.(task.id, reason);
                   setAsking(null); setWhy('');
                 }}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
               >
                 {asking.kind === 'cancel' ? 'Cancel task' : 'Reopen task'}
               </button>
@@ -193,14 +193,14 @@ export function CircleTasks({
           {asking?.id === task.id && asking.kind === 'due' && (
             <div className="w-full flex items-center gap-2">
               <input type="date" value={dueDraft} onChange={(e) => setDueDraft(e.target.value)} aria-label="new deadline"
-                className="shrink-0 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]" />
+                className="shrink-0 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]" />
               <input value={why} onChange={(e) => setWhy(e.target.value)} aria-label="reason for moving the deadline"
                 placeholder="why is the date moving? (required)" maxLength={500}
-                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]" />
+                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]" />
               <button
                 disabled={!dueDraft || !why.trim()}
                 onClick={() => { onDue?.(task.id, dueDraft, why.trim()); setAsking(null); setWhy(''); }}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-40"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
               >
                 Move it
               </button>
@@ -210,7 +210,7 @@ export function CircleTasks({
             <button
               onClick={() => onAssign(task.id)}
               disabled={busy}
-              className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+              className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
               {busy ? 'Working...' : 'Take this on'}
             </button>
@@ -221,14 +221,14 @@ export function CircleTasks({
               <button
                 onClick={() => onComplete(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
               >
                 {busy ? 'Working...' : 'Mark complete'}
               </button>
               <button
                 onClick={() => onRelease(task.id)}
                 disabled={busy}
-                className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
               >
                 Release
               </button>
@@ -238,7 +238,7 @@ export function CircleTasks({
 
         {/* An observer is told why, rather than shown a button that 403s. */}
         {state?.status === 'open' && myRole === 'observer' && (
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             Observers cannot take on tasks.
           </p>
         )}
@@ -284,11 +284,11 @@ export function CircleTasks({
 }
 
 const Heading = ({ children }: { children: React.ReactNode }) => (
-  <h3 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+  <h3 className="text-[12px] font-extrabold text-[var(--ink-60)]">
     {children}
   </h3>
 );
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[10px] text-[var(--ink-60)]">{children}</p>
+  <p className="text-[11px] text-[var(--ink-60)]">{children}</p>
 );

@@ -37,7 +37,7 @@ export function PulseBanner({ value, label, spark, accent = 'var(--signal-live)'
             {live && <span className="brief-breathe h-2 w-2 rounded-full" style={{ background: accent }} />}
             <span className="font-mono-live text-2xl font-semibold" style={{ color: accent }}>{value}</span>
           </div>
-          <p className="mt-0.5 text-[11px] text-[var(--ink-dim)]">{label}</p>
+          <p className="mt-0.5 text-[12px] text-[var(--ink-dim)]">{label}</p>
         </div>
         {spark && (
           <svg viewBox="0 0 64 24" className="h-6 w-16 shrink-0 opacity-80" aria-hidden="true">
@@ -69,7 +69,7 @@ export function TickerBanner({ items, onOpen }: TickerBannerProps) {
           <button
             key={`${it.id}-${i}`}
             onClick={() => onOpen(it.id)}
-            className="mx-1.5 shrink-0 rounded-full border border-[var(--hairline)] px-3 py-1 text-[11px] font-semibold text-[var(--ink-dim)] transition-colors active:border-[var(--ink)]"
+            className="mx-1.5 shrink-0 rounded-full border border-[var(--hairline)] px-3 py-1 text-[12px] font-semibold text-[var(--ink-dim)] transition-colors active:border-[var(--ink)]"
             style={it.accent ? { color: it.accent, borderColor: `${it.accent}55` } : undefined}
           >
             {it.label}
@@ -95,8 +95,8 @@ export function PromptBanner({ line1, line2, action, onAction }: PromptBannerPro
       className="brief-banner-in w-full rounded-2xl border border-dashed border-[var(--hairline)] bg-[var(--surface)] px-5 py-6 text-left transition-transform active:scale-[0.97]"
     >
       <p className="font-display text-lg font-semibold text-[var(--ink)]">{line1}</p>
-      <p className="mt-1 text-[12px] text-[var(--ink-dim)]">{line2}</p>
-      <span className="mt-4 inline-block rounded-full bg-[var(--signal-live)] px-4 py-1.5 text-[12px] font-bold text-[var(--ground)]">
+      <p className="mt-1 text-[13px] text-[var(--ink-dim)]">{line2}</p>
+      <span className="mt-4 inline-block rounded-full bg-[var(--signal-live)] px-4 py-1.5 text-[13px] font-bold text-[var(--ground)]">
         {action}
       </span>
     </button>

@@ -126,7 +126,7 @@ export function ImageField({
   if (value) {
     return (
       <div>
-        <p className="text-[11px] font-bold text-[var(--brief-ink)]">{label}</p>
+        <p className="text-[12px] font-bold text-[var(--brief-ink)]">{label}</p>
         <div className="mt-1 flex items-center gap-2">
           <img
             src={value}
@@ -134,20 +134,20 @@ export function ImageField({
             className="h-14 w-20 shrink-0 rounded-lg border border-[var(--brief-line)] object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] text-[var(--ink-60)]">{value}</p>
+            <p className="truncate text-[11px] text-[var(--ink-60)]">{value}</p>
             <div className="mt-1 flex gap-1.5">
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
                 disabled={busy}
-                className="rounded-md border border-[var(--brief-line)] px-2 py-1 text-[10px] font-bold text-[var(--brief-ink)] cursor-pointer disabled:opacity-40"
+                className="rounded-md border border-[var(--brief-line)] px-2 py-1 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer disabled:opacity-40"
               >
                 Replace
               </button>
               <button
                 type="button"
                 onClick={() => onChange?.(null)}
-                className="rounded-md border border-[var(--brief-line)] px-2 py-1 text-[10px] font-bold text-[var(--ink-60)] cursor-pointer"
+                className="rounded-md border border-[var(--brief-line)] px-2 py-1 text-[11px] font-bold text-[var(--ink-60)] cursor-pointer"
               >
                 Remove
               </button>
@@ -162,15 +162,15 @@ export function ImageField({
           onChange={onPick}
           aria-label={`Replace ${label}`}
         />
-        {error && <p className="mt-1 text-[10px] text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
       </div>
     );
   }
 
   return (
     <div>
-      <p className="text-[11px] font-bold text-[var(--brief-ink)]">{label}</p>
-      {hint && <p className="text-[9px] text-[var(--ink-70)]">{hint}</p>}
+      <p className="text-[12px] font-bold text-[var(--brief-ink)]">{label}</p>
+      {hint && <p className="text-[11px] text-[var(--ink-70)]">{hint}</p>}
 
       <div
         onDragOver={(e) => e.preventDefault()}
@@ -178,19 +178,19 @@ export function ImageField({
         className={`mt-1 rounded-xl border border-dashed border-[var(--brief-line)] bg-[color:var(--color-well)] ${compact ? 'p-2.5' : 'p-4'} text-center`}
       >
         {busy ? (
-          <p className="text-[10px] text-[var(--ink-60)]">Uploading {progress}…</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Uploading {progress}…</p>
         ) : (
           <>
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer hover:bg-[#000000]"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer hover:bg-[#000000]"
             >
               {multiple ? <UploadCloud className="h-3.5 w-3.5" /> : <ImagePlus className="h-3.5 w-3.5" />}
               {multiple ? 'Choose photos' : 'Choose photo'}
             </button>
             {!compact && (
-              <p className="mt-1.5 text-[9px] text-[var(--ink-60)]">
+              <p className="mt-1.5 text-[11px] text-[var(--ink-60)]">
                 or drop {multiple ? 'them' : 'it'} here · {formats}
               </p>
             )}
@@ -208,7 +208,7 @@ export function ImageField({
         aria-label={multiple ? `Add ${label}` : `Upload ${label}`}
       />
 
-      {error && <p className="mt-1 text-[10px] text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-[11px] text-red-600">{error}</p>}
 
       {useLink ? (
         <div className="mt-1.5 flex gap-1.5">
@@ -216,7 +216,7 @@ export function ImageField({
             value={link}
             onChange={(e) => setLink(e.target.value)}
             placeholder="https://…/photo.jpg"
-            className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[11px] text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+            className="flex-1 rounded-lg border border-[var(--brief-line)] bg-[color:var(--color-well)] px-2.5 py-1.5 text-[12px] text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
           />
           <button
             type="button"
@@ -228,7 +228,7 @@ export function ImageField({
               else onChange?.(url);
               setLink('');
             }}
-            className="rounded-lg bg-[#4F46E5] px-2.5 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
+            className="rounded-lg bg-[#2563EB] px-2.5 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
           >
             Use
           </button>
@@ -237,14 +237,14 @@ export function ImageField({
         <button
           type="button"
           onClick={() => setUseLink(true)}
-          className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-[var(--ink-60)] underline cursor-pointer"
+          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[var(--ink-60)] underline cursor-pointer"
         >
           <Link2 className="h-3 w-3" /> Use a link instead
         </button>
       )}
 
       {persisted === false && (
-        <p className="mt-1 text-[9px] text-[var(--ink-60)]">
+        <p className="mt-1 text-[11px] text-[var(--ink-60)]">
           Photos are stored on this server's disk: they survive a restart, not a redeploy to a fresh container.
         </p>
       )}

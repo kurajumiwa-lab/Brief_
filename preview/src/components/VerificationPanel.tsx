@@ -27,7 +27,7 @@ const KIND_LABEL: Record<AccountVerificationKind, string> = {
 
 const STATUS_STYLE: Record<string, string> = {
   pending: 'bg-[color:var(--brief-line)] text-[var(--ink-60)]',
-  approved: 'bg-[#4F46E5] text-[var(--accent-ink)]',
+  approved: 'bg-[#2563EB] text-[var(--accent-ink)]',
   rejected: 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]',
   revoked: 'bg-[color:var(--brief-line)] text-[var(--ink-60)]'
 };
@@ -89,7 +89,7 @@ export function VerificationPanel() {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Verify</h2>
-        <p className="text-[10px] text-[var(--ink-60)] leading-snug">
+        <p className="text-[11px] text-[var(--ink-60)] leading-snug">
           Verified email, phone and identity unlock the things compliance
           gates require. Integrated with Smile Identity for real-time Kenyan National ID & 3D facial liveness verification.
         </p>
@@ -99,8 +99,8 @@ export function VerificationPanel() {
       <div className="grid grid-cols-3 gap-2">
         {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
           <div key={k} className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3">
-            <p className="text-[9px] uppercase tracking-[0.14em] text-[var(--ink-60)]">{KIND_LABEL[k]}</p>
-            <p className="mt-1 text-[12px] font-extrabold text-[var(--brief-ink)] capitalize">
+            <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--ink-60)]">{KIND_LABEL[k]}</p>
+            <p className="mt-1 text-[13px] font-extrabold text-[var(--brief-ink)] capitalize">
               {standing[k] ?? 'unverified'}
             </p>
           </div>
@@ -112,10 +112,10 @@ export function VerificationPanel() {
         <div className="flex items-start justify-between">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="px-2 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] text-[9px] font-mono font-black uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] text-[11px] font-mono font-black uppercase tracking-wider">
                 SMILE IDENTITY KYC
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold">
+              <span className="text-[11px] font-mono text-emerald-400 font-bold">
                 &lt;10s Instant Check
               </span>
             </div>
@@ -127,7 +127,7 @@ export function VerificationPanel() {
           <ShieldCheck className="w-6 h-6 text-[#00BFEF] shrink-0" />
         </div>
 
-        <p className="text-[11px] text-slate-300 leading-relaxed">
+        <p className="text-[12px] text-slate-300 leading-relaxed">
           Skip manual queue delays. Smile Identity validates your National ID, Passport, or Alien Card directly against the Kenya IPRS national population registry with 3D biometric anti-spoofing in under 10 seconds.
         </p>
 
@@ -153,14 +153,14 @@ export function VerificationPanel() {
 
       {/* submit manual claim */}
       <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4 space-y-2">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">Manual Operator Review</p>
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">Manual Operator Review</p>
         <div className="flex flex-wrap gap-1.5">
           {(['email', 'phone', 'identity'] as AccountVerificationKind[]).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold cursor-pointer border ${
-                kind === k ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]' : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold cursor-pointer border ${
+                kind === k ? 'bg-[#2563EB] text-[var(--accent-ink)] border-[#0891B2]' : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
               }`}
             >
               {KIND_LABEL[k]}
@@ -173,17 +173,17 @@ export function VerificationPanel() {
           rows={3}
           aria-label="what a reviewer should check"
           placeholder="What should the reviewer check? (e.g. the phone number on my M-Pesa registration is …)"
-          className="w-full rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2.5 text-[12px] text-[var(--brief-ink)] resize-none"
+          className="w-full rounded-xl border border-[var(--brief-line)] bg-[color:var(--color-well)] px-3 py-2.5 text-[13px] text-[var(--brief-ink)] resize-none"
         />
         <button
           type="button"
           onClick={() => void submit()}
           disabled={busy || !note.trim()}
-          className="rounded-lg bg-[#4F46E5] px-4 py-2 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
+          className="rounded-lg bg-[#2563EB] px-4 py-2 text-[12px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40"
         >
           {busy ? 'Submitting…' : 'Submit for review'}
         </button>
-        {noteMsg && <p className="text-[11px] text-[var(--brief-ink)]">{noteMsg}</p>}
+        {noteMsg && <p className="text-[12px] text-[var(--brief-ink)]">{noteMsg}</p>}
       </div>
 
       {error && <p className="text-xs text-[var(--brief-ink)]">{error}</p>}
@@ -201,17 +201,17 @@ export function VerificationPanel() {
             <div key={r.id} className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-3 space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-extrabold text-[var(--brief-ink)]">{KIND_LABEL[r.kind] ?? r.kind}</p>
-                <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? STATUS_STYLE.pending}`}>
+                <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${STATUS_STYLE[r.status] ?? STATUS_STYLE.pending}`}>
                   {r.status}
                 </span>
               </div>
-              {r.note && <p className="text-[10px] text-[var(--ink-60)]">{r.note}</p>}
-              <p className="text-[9px] text-[var(--ink-60)]">
+              {r.note && <p className="text-[11px] text-[var(--ink-60)]">{r.note}</p>}
+              <p className="text-[11px] text-[var(--ink-60)]">
                 submitted {r.submittedAt.slice(0, 10)}
                 {r.reviewedAt ? ` · reviewed ${r.reviewedAt.slice(0, 10)}` : ' · awaiting review'}
               </p>
               {r.reason && (
-                <p className="text-[10px] text-[var(--brief-ink)] break-words">
+                <p className="text-[11px] text-[var(--brief-ink)] break-words">
                   Reviewer: {r.reason}
                 </p>
               )}

@@ -129,7 +129,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
           <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl overflow-hidden p-6 space-y-4 brief-lift-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+                <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                   Host an event
                 </span>
                 <h3 className="text-base font-black mt-1" style={{ color: 'var(--brief-ink)' }}>Put your event on the board</h3>

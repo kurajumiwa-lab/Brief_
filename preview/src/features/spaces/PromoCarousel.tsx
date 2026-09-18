@@ -106,7 +106,7 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black text-[color:var(--color-text)] truncate">{e.title}</p>
-              <p className="text-[10px] text-[color:var(--color-text-muted)] truncate">
+              <p className="text-[11px] text-[color:var(--color-text-muted)] truncate">
                 {[e.categoryLabel, fmtDate(e.startsAt), money(e.price, e.currency), e.popularity > 0 ? `${e.popularity} going` : null]
                   .filter(Boolean).join(' · ')}
               </p>
@@ -163,18 +163,18 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
                 ) : (
                   <div className="absolute inset-0" style={{ background: PLASTER }}>
                     <span className="absolute inset-0" style={{ background: wash }} />
-                    <span className="absolute bottom-3 left-3 text-[9px] font-black uppercase tracking-wider" style={{ color: categoryAccent(e.category) }}>
+                    <span className="absolute bottom-3 left-3 text-[11px] font-black uppercase tracking-wider" style={{ color: categoryAccent(e.category) }}>
                       waiting on a cover
                     </span>
                   </div>
                 )}
                 <div className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white space-y-1">
-                  <span className="inline-block text-[9px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
                     {e.categoryLabel}
                   </span>
                   <p className="text-base font-black leading-tight">{e.title}</p>
-                  <p className="text-[10px] text-white/80">
+                  <p className="text-[11px] text-white/80">
                     {[fmtDate(e.startsAt), e.location, money(e.price, e.currency), e.popularity > 0 ? `${e.popularity} going` : null]
                       .filter(Boolean)
                       .join(" · ")}

@@ -79,7 +79,7 @@ export function StakesLine({ position, spaces, loading = false, failed = false, 
   }
   if (failed || !position) {
     return (
-      <p className="flex items-center gap-2 text-[13px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
+      <p className="flex items-center gap-2 text-[14px] font-semibold" style={{ color: 'var(--color-text-muted)' }}>
         <StateDot state="unknown" /> No read — nothing claimed.
       </p>
     );
@@ -92,7 +92,7 @@ export function StakesLine({ position, spaces, loading = false, failed = false, 
   const actionLabel = r.offers === 0 ? 'Post an offer' : 'See what is open';
 
   return (
-    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] font-bold" style={{ color: 'var(--color-text)' }}>
+    <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[15px] font-bold" style={{ color: 'var(--color-text)' }}>
       <span className="font-mono">
         {num(r.offers)} <span className="font-sans font-semibold" style={{ color: 'var(--color-text-muted)' }}>offers live</span>
       </span>
@@ -116,7 +116,7 @@ export function StakesLine({ position, spaces, loading = false, failed = false, 
         <button
           type="button"
           onClick={action}
-          className="inline-flex items-center gap-0.5 text-[11px] font-black cursor-pointer"
+          className="inline-flex items-center gap-0.5 text-[12px] font-black cursor-pointer"
           style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0, font: 'inherit' }}
         >
           {actionLabel} <ArrowRight className="w-3 h-3" />

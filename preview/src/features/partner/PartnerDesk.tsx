@@ -354,7 +354,7 @@ export function PartnerDesk() {
                                                 <p className="text-sm font-bold" style={{ color: "var(--color-success)" }}>
                                                   KES {m.activity.verifiedCommercialKes.toLocaleString()}
                                                 </p>
-                                                <p className="text-[10px]" style={{ color: "var(--color-text-muted)" }}>
+                                                <p className="text-[11px]" style={{ color: "var(--color-text-muted)" }}>
                                                   {m.activity.work.fulfilled.count} work · {m.activity.orders.bought.count} bought · {m.activity.orders.sold.count} sold
                                                 </p>
                                               </div>

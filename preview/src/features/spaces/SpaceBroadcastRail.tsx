@@ -66,17 +66,17 @@ export function BroadcastRail({
     <section className="space-y-2" aria-label="Broadcasts to followers">
       <div className="flex items-center gap-2">
         <Radio className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
-        <h3 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+        <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           Updates
         </h3>
-        <span className="text-[10px] font-mono" style={{ color: 'var(--brief-muted)' }}>
+        <span className="text-[11px] font-mono" style={{ color: 'var(--brief-muted)' }}>
           {broadcasts.length} live · {pastCount} gone
         </span>
         {canManage && (
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="ml-auto text-[11px] font-black cursor-pointer"
+            className="ml-auto text-[12px] font-black cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             {open ? 'Close' : 'Post an update'}
@@ -85,7 +85,7 @@ export function BroadcastRail({
       </div>
 
       {broadcasts.length === 0 && !open ? (
-        <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
           Nothing is up. An update stays on your front for 24 hours and reaches the {followers} follower
           {followers === 1 ? '' : 's'} who follow this space.
         </p>
@@ -101,13 +101,13 @@ export function BroadcastRail({
                 boxShadow: 'inset 0 0 0 2px #fff'
               }}
             >
-              <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                 {KINDS.find((k) => k.id === b.kind)?.label ?? 'Update'}
               </p>
-              <p className="text-[12px] font-medium leading-snug mt-1" style={{ color: 'var(--brief-ink)' }}>
+              <p className="text-[13px] font-medium leading-snug mt-1" style={{ color: 'var(--brief-ink)' }}>
                 {b.text}
               </p>
-              <p className="text-[10px] font-mono mt-2 inline-flex items-center gap-1" style={{ color: 'var(--brief-muted)' }}>
+              <p className="text-[11px] font-mono mt-2 inline-flex items-center gap-1" style={{ color: 'var(--brief-muted)' }}>
                 <Clock className="w-3 h-3" /> gone in {hoursLeft(b.expiresAt)}h
               </p>
               {canManage && onDelete && (
@@ -135,7 +135,7 @@ export function BroadcastRail({
                 type="button"
                 aria-pressed={kind === k.id}
                 onClick={() => setKind(k.id)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border"
+                className="px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer border"
                 style={{
                   background: kind === k.id ? 'var(--color-primary)' : 'var(--color-paper)',
                   color: kind === k.id ? 'var(--accent-ink)' : 'var(--brief-muted)',
@@ -154,20 +154,20 @@ export function BroadcastRail({
             placeholder={KINDS.find((k) => k.id === kind)?.hint}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl text-[13px] border bg-[color:var(--color-paper)] resize-none"
+            className="w-full px-3 py-2 rounded-xl text-[14px] border bg-[color:var(--color-paper)] resize-none"
             style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)' }}
           />
-          {error && <p className="text-[11px] font-bold" role="alert" style={{ color: '#E53935' }}>{error}</p>}
+          {error && <p className="text-[12px] font-bold" role="alert" style={{ color: '#E53935' }}>{error}</p>}
           <div className="flex items-center gap-2">
             <button
               type="submit"
               disabled={busy || !text.trim()}
-              className="px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
             >
               Send to {followers} follower{followers === 1 ? '' : 's'}
             </button>
-            <p className="text-[10px]" style={{ color: 'var(--brief-muted)' }}>
+            <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
               In-app only — Brief has no SMS or WhatsApp line for updates, and no read receipts, so opened-counts stay unknown.
             </p>
           </div>

@@ -20,7 +20,7 @@ const money = (n: number, c: string) => `${c} ${n.toLocaleString()}`;
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl p-3 space-y-2">
-      <p className="text-[9px] text-[var(--ink-60)]">{title}</p>
+      <p className="text-[11px] text-[var(--ink-60)]">{title}</p>
       {children}
     </div>
   );
@@ -30,7 +30,7 @@ function Big({ value, label, accent = false }: { value: string; label: string; a
   return (
     <div>
       <p className={`text-xl font-extrabold ${accent ? 'text-[var(--brief-ink)]' : 'text-[var(--brief-ink)]'}`}>{value}</p>
-      <p className="text-[9px] text-[var(--ink-60)]">{label}</p>
+      <p className="text-[11px] text-[var(--ink-60)]">{label}</p>
     </div>
   );
 }
@@ -67,7 +67,7 @@ export function HostCommand() {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Command</h2>
-        <button onClick={() => void load()} className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer">Refresh</button>
+        <button onClick={() => void load()} className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer">Refresh</button>
       </div>
 
       {/* NOW — the one thing that matters first */}
@@ -79,12 +79,12 @@ export function HostCommand() {
             {d.now.slice(0, 5).map((n, i) => (
               <div key={i} className="flex items-center justify-between gap-2">
                 <p className="text-xs text-[var(--brief-ink)] truncate">{n.name}</p>
-                <span className="shrink-0 text-[9px] text-[var(--brief-ink)]">unpaid spot</span>
+                <span className="shrink-0 text-[11px] text-[var(--brief-ink)]">unpaid spot</span>
               </div>
             ))}
             {d.upcoming.length > 0 && (
               <div className="pt-1 border-t border-[var(--brief-line)]">
-                <p className="text-[9px] text-[var(--ink-60)] mb-1">Upcoming</p>
+                <p className="text-[11px] text-[var(--ink-60)] mb-1">Upcoming</p>
                 {d.upcoming.map((u) => (
                   <p key={u.id} className="text-xs text-[var(--brief-ink)] truncate">
                     {u.title} · {u.startsAt.slice(0, 16).replace('T', ' ')}
@@ -109,7 +109,7 @@ export function HostCommand() {
           ]}
         />
         {d.money.campaignCount === 0 && (
-          <p className="text-[10px] text-[var(--ink-60)]">No campaigns yet.</p>
+          <p className="text-[11px] text-[var(--ink-60)]">No campaigns yet.</p>
         )}
       </Section>
 
@@ -142,7 +142,7 @@ export function HostCommand() {
             { label: 'Arrived', value: d.people.checkedIn }
           ]}
         />
-        <p className="text-[9px] text-[var(--ink-60)] leading-snug">
+        <p className="text-[11px] text-[var(--ink-60)] leading-snug">
           Views are page loads, not people. A refresh counts twice.
         </p>
       </Section>
@@ -153,7 +153,7 @@ export function HostCommand() {
           {d.action.slice(0, 6).map((a, i) => (
             <div key={i} className="flex items-center justify-between gap-2">
               <p className="text-xs text-[var(--brief-ink)] truncate">{a.vaultTitle}</p>
-              <span className="shrink-0 text-[9px] text-[var(--brief-ink)]">{a.kind}</span>
+              <span className="shrink-0 text-[11px] text-[var(--brief-ink)]">{a.kind}</span>
             </div>
           ))}
         </Section>

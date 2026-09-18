@@ -65,7 +65,7 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
           <div className="w-full h-full relative" style={{ background: PLASTER }}>
             <span className="absolute inset-0" style={{ background: wash }} />
             <span
-              className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider"
+              className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider"
               style={{ color: accent }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
@@ -91,11 +91,11 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
       {/* Category wing + the honest "new" mark (a row that appeared since you
           last looked — derived from the listing set, not pushed to you) */}
       <div className="absolute top-4 left-4 flex items-center gap-1.5">
-        <span className="text-[10px] font-extrabold uppercase tracking-wider bg-[var(--paper-95)] text-black px-3 py-1 rounded-full">
+        <span className="text-[11px] font-extrabold uppercase tracking-wider bg-[var(--paper-95)] text-black px-3 py-1 rounded-full">
           {event.categoryLabel}
         </span>
         {isNew && (
-          <span className="text-[10px] font-extrabold px-2 py-1 rounded-full bg-[var(--paper-95)] text-black flex items-center gap-1">
+          <span className="text-[11px] font-extrabold px-2 py-1 rounded-full bg-[var(--paper-95)] text-black flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             New
           </span>
@@ -106,7 +106,7 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
       {event.featured && (
         <div className="absolute top-4 right-4">
           <span
-            className="text-[10px] font-extrabold px-2.5 py-1 rounded-full"
+            className="text-[11px] font-extrabold px-2.5 py-1 rounded-full"
             style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
           >
             ★ Featured
@@ -116,10 +116,10 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
 
       {/* Content overlay — bottom of the card */}
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
-        <h3 className="text-[22px] font-extrabold leading-tight line-clamp-2">{event.title}</h3>
+        <h3 className="text-[30px] font-extrabold leading-tight line-clamp-2">{event.title}</h3>
 
         {/* Meta line — the format that worked, kept verbatim */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[13px] text-white/85">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[14px] text-white/85">
           {date && <span>{date}</span>}
           {event.location && (
             <>
@@ -135,14 +135,14 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
 
         {/* Social proof — the viewer's own group, derived. Real, not invented. */}
         {event.tableBankingOverlap && event.tableBankingOverlap.length > 0 && (
-          <p className="mt-1.5 text-[12px] text-white/80">
+          <p className="mt-1.5 text-[13px] text-white/80">
             {event.tableBankingOverlap.map((o) => `${o.memberCount} from ${o.tableBankingName ?? "your Circle"}`).join(" · ")} going
           </p>
         )}
 
         {/* A real local fact: this device opened this exhibit. */}
         {openedAgoDays != null && (
-          <p className="mt-1.5 flex items-center gap-1 text-[11px] text-white/70">
+          <p className="mt-1.5 flex items-center gap-1 text-[12px] text-white/70">
             <Eye className="w-3 h-3" />
             you opened this {openedAgoDays === 0 ? "today" : `${openedAgoDays}d ago`}
           </p>
@@ -154,7 +154,7 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
             <button
               type="button"
               onClick={() => onOpen(event.slug)}
-              className="flex-1 font-extrabold text-[13px] py-3 rounded-2xl active:scale-[0.98] transition cursor-pointer"
+              className="flex-1 font-extrabold text-[14px] py-3 rounded-2xl active:scale-[0.98] transition cursor-pointer"
               style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
             >
               View event

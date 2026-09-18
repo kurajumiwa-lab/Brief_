@@ -217,7 +217,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
         <div className="p-5 sm:p-6 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[var(--brief-ink)] text-white space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#B8621F] text-white text-[11px] font-black uppercase tracking-wider">
                 1-CLICK BULK DESK
               </span>
               <span className="text-xs text-amber-300 font-bold flex items-center space-x-1">
@@ -265,7 +265,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   >
                     <BookOpen className="w-3 h-3" />
                     <span>{b.grade}</span>
-                    <span className="text-[9px] opacity-80">(-{b.discountPercent}%)</span>
+                    <span className="text-[11px] opacity-80">(-{b.discountPercent}%)</span>
                   </button>
                 );
               })}
@@ -326,7 +326,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                         ? 'Lori Systems 10-Ton Return Haulage'
                         : 'WAIRO Express Assigned'}
                     </span>
-                    <span className="text-[10px] text-cyan-300">
+                    <span className="text-[11px] text-cyan-300">
                       {completedOrder.deliveryType === 'fargo_pickup' 
                         ? 'Next-Morning Pickup Ready at Station' 
                         : completedOrder.deliveryType === 'lori_backhaul'
@@ -335,7 +335,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     </span>
                   </div>
                 </div>
-                <span className="text-[10px] font-mono font-bold bg-white/20 px-2 py-1 rounded">
+                <span className="text-[11px] font-mono font-bold bg-white/20 px-2 py-1 rounded">
                   Waybill Verified
                 </span>
               </div>
@@ -354,7 +354,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
               <div className="p-4 rounded-2xl bg-white shadow-sm space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-[#B8621F] block">
+                    <span className="text-[11px] font-black uppercase tracking-wider text-[#B8621F] block">
                       {currentBundle.curriculum}
                     </span>
                     <h3 className="text-base font-black text-[var(--brief-ink)] leading-tight mt-0.5">
@@ -364,7 +364,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       {currentBundle.supplier}
                     </p>
                   </div>
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  <span className="text-[11px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                     Save KES {totalSavingsKes.toLocaleString()}
                   </span>
                 </div>
@@ -377,14 +377,14 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   <span className="text-xs font-semibold text-gray-400 line-through">
                     KES {currentBundle.retailPriceKes.toLocaleString()}
                   </span>
-                  <span className="text-[10px] font-bold text-[#B8621F]">
+                  <span className="text-[11px] font-bold text-[#B8621F]">
                     (Wholesale PTA Rate)
                   </span>
                 </div>
 
                 {/* Included Books Accordion preview */}
                 <div className="bg-[#F9F8F6] rounded-xl p-3 space-y-1.5 text-xs">
-                  <span className="font-bold text-[11px] text-[var(--brief-muted)] uppercase tracking-wider block">
+                  <span className="font-bold text-[12px] text-[var(--brief-muted)] uppercase tracking-wider block">
                     {currentBundle.booksIncluded.length} Textbooks in this Bundle:
                   </span>
                   <ul className="space-y-1 text-[var(--brief-muted)] pl-1">
@@ -404,7 +404,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   <label className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)] flex items-center space-x-1.5">
                     <span>1. Delivery Tier & Backhaul Arbitrage</span>
                   </label>
-                  <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     Fargo KES 50 • Lori -50%
                   </span>
                 </div>
@@ -422,13 +422,13 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   >
                     <div className="flex items-center justify-between">
                       <MapPin className="w-4 h-4 mb-1 text-emerald-300" />
-                      <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-900">
+                      <span className="text-[11px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-400 text-stone-900">
                         TOP PICK
                       </span>
                     </div>
                     <div>
                       <span className="text-xs font-black block">Fargo Drop Point</span>
-                      <span className="text-[10px] font-bold opacity-90">KES 50 (200+ Hubs)</span>
+                      <span className="text-[11px] font-bold opacity-90">KES 50 (200+ Hubs)</span>
                     </div>
                   </button>
 
@@ -444,13 +444,13 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   >
                     <div className="flex items-center justify-between">
                       <Repeat className="w-4 h-4 mb-1 text-cyan-300" />
-                      <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-cyan-300 text-blue-950">
+                      <span className="text-[11px] font-black uppercase px-1.5 py-0.5 rounded bg-cyan-300 text-blue-950">
                         -50% LORI
                       </span>
                     </div>
                     <div>
                       <span className="text-xs font-black block">Lori Backhaul 🚛</span>
-                      <span className="text-[10px] font-bold opacity-90">+KES 80 (Heavy Pallet)</span>
+                      <span className="text-[11px] font-bold opacity-90">+KES 80 (Heavy Pallet)</span>
                     </div>
                   </button>
 
@@ -466,7 +466,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <Building2 className="w-4 h-4 mb-1" />
                     <div>
                       <span className="text-xs font-bold block">Town Gate Desk</span>
-                      <span className="text-[10px] opacity-80">+KES 120 (SACCO)</span>
+                      <span className="text-[11px] opacity-80">+KES 120 (SACCO)</span>
                     </div>
                   </button>
 
@@ -482,7 +482,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <Truck className="w-4 h-4 mb-1" />
                     <div>
                       <span className="text-xs font-bold block">Door Delivery</span>
-                      <span className="text-[10px] opacity-80">+KES 250</span>
+                      <span className="text-[11px] opacity-80">+KES 250</span>
                     </div>
                   </button>
 
@@ -498,7 +498,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <ShieldCheck className="w-4 h-4 mb-1 text-emerald-300" />
                     <div>
                       <span className="text-xs font-bold block">Sendy Express ⚡</span>
-                      <span className="text-[10px] opacity-80">+KES 450 (Insured)</span>
+                      <span className="text-[11px] opacity-80">+KES 450 (Insured)</span>
                     </div>
                   </button>
 
@@ -514,7 +514,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                     <Zap className="w-4 h-4 mb-1 text-amber-200" />
                     <div>
                       <span className="text-xs font-bold block">Bolt Instant 🚀</span>
-                      <span className="text-[10px] opacity-80">+KES 380 (Rapid GPS)</span>
+                      <span className="text-[11px] opacity-80">+KES 380 (Rapid GPS)</span>
                     </div>
                   </button>
                 </div>
@@ -527,7 +527,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                         <MapPin className="w-3.5 h-3.5 text-emerald-700" />
                         <span>Select Nearest Fargo Drop-Off Station:</span>
                       </span>
-                      <span className="text-[10px] font-mono text-emerald-700 font-bold">
+                      <span className="text-[11px] font-mono text-emerald-700 font-bold">
                         200+ Nationwide Hubs
                       </span>
                     </div>
@@ -540,7 +540,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                         <option key={fp} value={fp}>{fp}</option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-emerald-800 leading-tight">
+                    <p className="text-[11px] text-emerald-800 leading-tight">
                       💡 <b>Pickup-Point Arbitrage:</b> Instead of KES 250+ home delivery, collect your package safely at Fargo Courier counter for just KES 50.
                     </p>
                   </div>
@@ -551,7 +551,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                         <Repeat className="w-3.5 h-3.5 text-blue-700" />
                         <span>Lori Systems Backhaul Heavy Corridor Hub:</span>
                       </span>
-                      <span className="text-[10px] font-mono text-blue-700 font-bold">
+                      <span className="text-[11px] font-mono text-blue-700 font-bold">
                         50% Off Return Rate
                       </span>
                     </div>
@@ -562,7 +562,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                       placeholder="School Depot / Port CFS / Highway Hub"
                       className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-bold text-[var(--brief-ink)] outline-none focus:border-blue-600"
                     />
-                    <p className="text-[10px] text-blue-800 leading-tight">
+                    <p className="text-[11px] text-blue-800 leading-tight">
                       🚛 <b>Backhaul Arbitrage:</b> Leverages empty returning 10-ton trucks on the Nairobi ⇄ Mombasa/Kisumu corridors at 50% wholesale savings.
                     </p>
                   </div>
@@ -583,7 +583,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
               <div className="space-y-2.5">
                 <label className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)] flex items-center justify-between">
                   <span>2. Payment Source</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">Encrypted & Instant</span>
+                  <span className="text-[11px] text-emerald-600 font-bold">Encrypted & Instant</span>
                 </label>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -598,13 +598,13 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   >
                     <div className="flex items-center justify-between">
                       <Coins className="w-4 h-4 text-amber-300" />
-                      <span className="text-[8px] font-black uppercase bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] font-black uppercase bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded">
                         Available
                       </span>
                     </div>
                     <div className="mt-2">
                       <span className="text-xs font-black block">Circle Table Bank</span>
-                      <span className="text-[10px] text-purple-200">Cycle 5 Payout Balance</span>
+                      <span className="text-[11px] text-purple-200">Cycle 5 Payout Balance</span>
                     </div>
                   </button>
 
@@ -619,13 +619,13 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-black">M-PESA</span>
-                      <span className="text-[8px] font-black uppercase bg-white/20 text-white px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] font-black uppercase bg-white/20 text-white px-1.5 py-0.5 rounded">
                         Instant
                       </span>
                     </div>
                     <div className="mt-2">
                       <span className="text-xs font-black block">Direct STK Push</span>
-                      <span className="text-[10px] text-emerald-200">Safaricom Secure</span>
+                      <span className="text-[11px] text-emerald-200">Safaricom Secure</span>
                     </div>
                   </button>
                 </div>
@@ -670,7 +670,7 @@ export const CBCTextbookBundleCheckoutModal: React.FC<CBCTextbookBundleCheckoutM
                   ) : (
                     <>
                       <span>1-Click Authorize & Dispatch (KES {totalAmountKes.toLocaleString()})</span>
-                      <ArrowRight className="w-4 h-4 text-[#4F46E5]" />
+                      <ArrowRight className="w-4 h-4 text-[#2563EB]" />
                     </>
                   )}
                 </button>

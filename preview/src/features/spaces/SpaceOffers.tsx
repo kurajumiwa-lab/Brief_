@@ -75,7 +75,7 @@ export const SpaceOffers: React.FC<SpaceOffersProps> = ({
                       {offer.title}
                     </span>
                     <span
-                      className={`text-[9px] font-mono font-black uppercase px-2 py-0.5 rounded-full ${
+                      className={`text-[11px] font-mono font-black uppercase px-2 py-0.5 rounded-full ${
                         isPublished
                           ? 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-success)] border border-[color:var(--color-border)]'
                           : 'bg-[color:var(--color-surface-elevated)] text-[color:var(--color-warning)] border border-[color:var(--color-border)]'

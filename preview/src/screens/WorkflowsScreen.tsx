@@ -146,9 +146,9 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                   setWorkflowSection('active');
                   setWorkflowView('queue');
                 }}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold border cursor-pointer transition ${
                   workflowView === 'queue'
-                    ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                    ? 'bg-[#2563EB] text-[var(--accent-ink)] border-[#0891B2]'
                     : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
                 }`}
               >
@@ -161,9 +161,9 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                     setWorkflowSection(bundle.sections[0] as WorkflowSection);
                     setWorkflowView('screen');
                   }}
-                  className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-extrabold border cursor-pointer transition ${
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold border cursor-pointer transition ${
                     workflowView === 'screen' && activeWorkflowBundle.id === bundle.id
-                      ? 'bg-[#4F46E5] text-[var(--accent-ink)] border-[#06B6D4]'
+                      ? 'bg-[#2563EB] text-[var(--accent-ink)] border-[#0891B2]'
                       : 'bg-[color:var(--color-paper)] text-[var(--ink-70)] border-[var(--brief-line)]'
                   }`}
                 >
@@ -178,9 +178,9 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                   <button
                     key={id}
                     onClick={() => setWorkflowSection(id as WorkflowSection)}
-                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-extrabold transition cursor-pointer ${
+                    className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition cursor-pointer ${
                       workflowSection === id
-                        ? 'bg-[#4F46E5] text-[var(--accent-ink)]'
+                        ? 'bg-[#2563EB] text-[var(--accent-ink)]'
                         : 'text-[var(--ink-70)] hover:text-[var(--brief-ink)] bg-[color:var(--color-well)]'
                     }`}
                   >
@@ -214,7 +214,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
             <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-2">
                 <Briefcase className="w-4 h-4 text-[var(--brief-ink)]" />
-                <span className="text-[10px] text-[var(--brief-ink)]">
+                <span className="text-[11px] text-[var(--brief-ink)]">
                   Workflows
                 </span>
               </div>
@@ -254,7 +254,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <span className="text-[10px] text-[var(--brief-ink)]">
+                      <span className="text-[11px] text-[var(--brief-ink)]">
                         {journey.category}
                       </span>
 
@@ -274,7 +274,7 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
 
                   <div className="h-1.5 bg-[color:var(--color-well)] rounded-full mt-5 overflow-hidden">
                     <div
-                      className="h-full bg-[#4F46E5] rounded-full"
+                      className="h-full bg-[#2563EB] rounded-full"
                       style={{ width: `${journey.progressPercent}%` }}
                     />
                   </div>
@@ -296,12 +296,12 @@ export function WorkflowsScreen(props: WorkflowsScreenProps) {
                         <p className="text-xs font-extrabold">
                           {step.title}
                         </p>
-                        <p className="text-[10px] text-[var(--ink-60)]">
+                        <p className="text-[11px] text-[var(--ink-60)]">
                           {step.description}
                         </p>
                       </div>
 
-                      <span className="text-[9px] text-[var(--brief-ink)]">
+                      <span className="text-[11px] text-[var(--brief-ink)]">
                         {step.statusLabel}
                       </span>
                     </div>

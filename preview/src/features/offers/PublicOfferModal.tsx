@@ -85,7 +85,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
         {/* Cover image or placeholder */}
         <div className="relative aspect-[16/10] w-full bg-gradient-to-br from-[color:var(--color-text)] to-[color:var(--color-text)] p-6 flex flex-col justify-between text-white">
           <div className="flex items-center justify-between z-10">
-            <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[10px] font-mono font-bold backdrop-blur-md">
+            <span className="px-2.5 py-1 rounded-full bg-white/20 text-white text-[11px] font-mono font-bold backdrop-blur-md">
               VERIFIED OFFER
             </span>
 
@@ -132,7 +132,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
               </span>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">Your Name</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text-muted)]">Your Name</label>
                 <input
                   type="text"
                   value={customerName}
@@ -144,7 +144,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">WhatsApp Phone</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text-muted)]">WhatsApp Phone</label>
                 <input
                   type="text"
                   value={contact}
@@ -155,7 +155,7 @@ export const PublicOfferModal: React.FC<PublicOfferModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-[color:var(--color-text-muted)]">Your Question</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text-muted)]">Your Question</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}

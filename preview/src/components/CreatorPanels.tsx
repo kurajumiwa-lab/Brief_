@@ -26,7 +26,7 @@ function Shell({ icon: Icon, title, children }: { icon: any; title: string; chil
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="h-4 w-4" style={{ color: T.primary }} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>{title}</span>
+        <span className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>{title}</span>
       </div>
       {children}
     </div>
@@ -34,11 +34,11 @@ function Shell({ icon: Icon, title, children }: { icon: any; title: string; chil
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="text-[12px]" style={{ color: T.onSurfaceVariant }}>{text}</p>;
+  return <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>{text}</p>;
 }
 
 function Notice({ message }: { message: string | null }) {
-  return message ? <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{message}</p> : null;
+  return message ? <p className="text-[12px]" style={{ color: T.onSurfaceVariant }}>{message}</p> : null;
 }
 
 // --- Media kit ---------------------------------------------------------------
@@ -66,9 +66,9 @@ export function MediaKitPanel() {
         <div className="rounded-xl border p-4 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
           <div className="flex items-baseline justify-between">
             <p className="text-[15px] font-bold" style={{ color: T.onSurface }}>{kit.displayName}</p>
-            <span className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{kit.contactMethod ?? ''}</span>
+            <span className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{kit.contactMethod ?? ''}</span>
           </div>
-          {kit.description && <p className="text-[12px]" style={{ color: T.onSurfaceVariant }}>{kit.description}</p>}
+          {kit.description && <p className="text-[13px]" style={{ color: T.onSurfaceVariant }}>{kit.description}</p>}
 
           <div className="grid grid-cols-3 gap-2 pt-1">
             {[
@@ -78,7 +78,7 @@ export function MediaKitPanel() {
             ].map(([label, n]) => (
               <div key={label as string} className="rounded-lg border p-2 text-center" style={{ borderColor: T.outlineVariant }}>
                 <p className="text-[16px] font-bold" style={{ color: T.onSurface }}>{n}</p>
-                <p className="text-[9px]" style={{ color: T.onSurfaceVariant }}>{label}</p>
+                <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{label}</p>
               </div>
             ))}
           </div>
@@ -86,11 +86,11 @@ export function MediaKitPanel() {
           {kit.interests.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {kit.interests.map((i: string) => (
-                <span key={i} className="rounded-full border px-2 py-0.5 text-[10px]" style={{ borderColor: T.outlineVariant, color: T.onSurfaceVariant }}>{i}</span>
+                <span key={i} className="rounded-full border px-2 py-0.5 text-[11px]" style={{ borderColor: T.outlineVariant, color: T.onSurfaceVariant }}>{i}</span>
               ))}
             </div>
           )}
-          <p className="text-[9px]" style={{ color: T.outline }}>{kit.note}</p>
+          <p className="text-[11px]" style={{ color: T.outline }}>{kit.note}</p>
         </div>
       )}
     </Shell>
@@ -167,8 +167,8 @@ export function CreatorProfilePanel() {
 
   const input = (label: string, key: keyof typeof form, placeholder = '') => (
     <label className="block space-y-1">
-      <span className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{label}</span>
-      <input value={form[key]} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value }))} placeholder={placeholder} className="w-full rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+      <span className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{label}</span>
+      <input value={form[key]} onChange={(e) => setForm((old) => ({ ...old, [key]: e.target.value }))} placeholder={placeholder} className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
     </label>
   );
 
@@ -180,14 +180,14 @@ export function CreatorProfilePanel() {
             {input('Name', 'fullName', 'Your public name')}
             <div className="grid grid-cols-2 gap-2">{input('Regions', 'regions', 'KE, NG')}{input('Niches', 'nicheTags', 'events, fashion')}</div>
             <div className="grid gap-2 sm:grid-cols-3">{input('Instagram', 'instagram', 'https://instagram.com/...')}{input('Facebook', 'facebook', 'https://facebook.com/...')}{input('TikTok', 'tiktok', 'https://tiktok.com/@...')}</div>
-            <button type="button" disabled={busy || !form.fullName.trim()} onClick={() => void saveProfile()} className="rounded-full px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>Save profile</button>
+            <button type="button" disabled={busy || !form.fullName.trim()} onClick={() => void saveProfile()} className="rounded-full px-4 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>Save profile</button>
           </div>
 
           <div className="rounded-xl border p-4 space-y-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>Rate cards</p>
-            <div className="grid gap-2 sm:grid-cols-2"><select value={card.serviceType} onChange={(e) => setCard((old) => ({ ...old, serviceType: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook post</option><option value="DEDICATED_CAMPAIGN">Dedicated campaign</option><option value="EVENT_APPEARANCE">Event appearance</option></select><input value={card.basePrice} onChange={(e) => setCard((old) => ({ ...old, basePrice: e.target.value }))} placeholder="Base price" type="number" className="rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /></div>
-            <div className="flex gap-2"><select value={card.currency} onChange={(e) => setCard((old) => ({ ...old, currency: e.target.value }))} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option>KES</option><option>NGN</option><option>ZAR</option><option>USD</option></select><input value={card.regions} onChange={(e) => setCard((old) => ({ ...old, regions: e.target.value }))} placeholder="Regions" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /><button type="button" disabled={busy || !card.basePrice} onClick={() => void createCard()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}><Plus className="h-3.5 w-3.5" /></button></div>
-            {cards.length === 0 ? <Empty text="No rate cards yet." /> : <div className="space-y-2">{cards.map((item) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border p-2" style={{ borderColor: T.outlineVariant }}><div className="min-w-0"><p className="text-[12px] font-semibold truncate" style={{ color: T.onSurface }}>{item.serviceType}</p><p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{item.currency} {Number(item.basePrice).toLocaleString()} · {item.status}</p></div>{item.status === 'draft' && <button type="button" disabled={busy} onClick={() => void publishCard(item.id)} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Publish</button>}</div>)}</div>}
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: T.primary }}>Rate cards</p>
+            <div className="grid gap-2 sm:grid-cols-2"><select value={card.serviceType} onChange={(e) => setCard((old) => ({ ...old, serviceType: e.target.value }))} className="rounded-lg border px-2 py-2 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option value="WHATSAPP_STATUS">WhatsApp Status</option><option value="FB_POST">Facebook post</option><option value="DEDICATED_CAMPAIGN">Dedicated campaign</option><option value="EVENT_APPEARANCE">Event appearance</option></select><input value={card.basePrice} onChange={(e) => setCard((old) => ({ ...old, basePrice: e.target.value }))} placeholder="Base price" type="number" className="rounded-lg border px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /></div>
+            <div className="flex gap-2"><select value={card.currency} onChange={(e) => setCard((old) => ({ ...old, currency: e.target.value }))} className="rounded-lg border px-2 py-2 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}><option>KES</option><option>NGN</option><option>ZAR</option><option>USD</option></select><input value={card.regions} onChange={(e) => setCard((old) => ({ ...old, regions: e.target.value }))} placeholder="Regions" className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} /><button type="button" disabled={busy || !card.basePrice} onClick={() => void createCard()} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}><Plus className="h-3.5 w-3.5" /></button></div>
+            {cards.length === 0 ? <Empty text="No rate cards yet." /> : <div className="space-y-2">{cards.map((item) => <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border p-2" style={{ borderColor: T.outlineVariant }}><div className="min-w-0"><p className="text-[13px] font-semibold truncate" style={{ color: T.onSurface }}>{item.serviceType}</p><p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{item.currency} {Number(item.basePrice).toLocaleString()} · {item.status}</p></div>{item.status === 'draft' && <button type="button" disabled={busy} onClick={() => void publishCard(item.id)} className="text-[11px] font-bold cursor-pointer" style={{ color: T.primary }}>Publish</button>}</div>)}</div>}
           </div>
         </>
       )}
@@ -221,17 +221,17 @@ export function OpportunitiesPanel() {
             <div key={o.id} className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{o.title}</p>
-                  {o.budget && <p className="text-[11px]" style={{ color: T.primary }}>{o.currency} {o.budget.toLocaleString()}</p>}
+                  <p className="text-[14px] font-semibold" style={{ color: T.onSurface }}>{o.title}</p>
+                  {o.budget && <p className="text-[12px]" style={{ color: T.primary }}>{o.currency} {o.budget.toLocaleString()}</p>}
                 </div>
-                <span className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold" style={{ color: T.onSurfaceVariant, border: `1px solid ${T.outlineVariant}` }}>{o.status}</span>
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ color: T.onSurfaceVariant, border: `1px solid ${T.outlineVariant}` }}>{o.status}</span>
               </div>
               {o.status === 'pending' && (
                 <div className="mt-2 flex gap-1">
-                  <button onClick={() => void respond(o.id, 'accept')} className="flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold cursor-pointer" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
+                  <button onClick={() => void respond(o.id, 'accept')} className="flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-bold cursor-pointer" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
                     <Check className="h-3 w-3" /> Accept
                   </button>
-                  <button onClick={() => void respond(o.id, 'decline')} className="flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] font-bold cursor-pointer" style={{ borderColor: T.outlineVariant, color: T.onSurfaceVariant }}>
+                  <button onClick={() => void respond(o.id, 'decline')} className="flex items-center gap-1 rounded-full border px-3 py-1 text-[12px] font-bold cursor-pointer" style={{ borderColor: T.outlineVariant, color: T.onSurfaceVariant }}>
                     <X className="h-3 w-3" /> Decline
                   </button>
                 </div>
@@ -269,14 +269,14 @@ export function MessagesPanel() {
         <Empty text="No conversations yet. Messages from Telegram/WhatsApp appear here." />
       ) : thread ? (
         <div className="space-y-2">
-          <button onClick={() => setThread(null)} className="text-[11px] font-bold cursor-pointer" style={{ color: T.primary }}>← All conversations</button>
+          <button onClick={() => setThread(null)} className="text-[12px] font-bold cursor-pointer" style={{ color: T.primary }}>← All conversations</button>
           {thread.messages.length === 0 ? <Empty text="No messages in this thread yet." /> : thread.messages.map((m) => (
             <div key={m.id} className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
               <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold uppercase" style={{ color: m.direction === 'inbound' ? T.primary : T.outline }}>{m.direction}</span>
-                <span className="text-[9px]" style={{ color: T.outline }}>{m.at ? new Date(m.at).toLocaleString() : ''}</span>
+                <span className="text-[11px] font-bold uppercase" style={{ color: m.direction === 'inbound' ? T.primary : T.outline }}>{m.direction}</span>
+                <span className="text-[11px]" style={{ color: T.outline }}>{m.at ? new Date(m.at).toLocaleString() : ''}</span>
               </div>
-              <p className="mt-1 text-[12px]" style={{ color: T.onSurface }}>{m.text}</p>
+              <p className="mt-1 text-[13px]" style={{ color: T.onSurface }}>{m.text}</p>
             </div>
           ))}
         </div>
@@ -284,8 +284,8 @@ export function MessagesPanel() {
         <div className="space-y-1">
           {contacts.map((c) => (
             <button key={c.key} onClick={() => void open(c)} className="w-full rounded-xl border p-3 text-left cursor-pointer transition-colors hover:border-[var(--m3-primary)]" style={{ borderColor: T.outlineVariant, background: T.container }}>
-              <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{c.name}</p>
-              <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>{c.inboundCount} inbound · {c.lastAt ? new Date(c.lastAt).toLocaleDateString() : ''}</p>
+              <p className="text-[14px] font-semibold" style={{ color: T.onSurface }}>{c.name}</p>
+              <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>{c.inboundCount} inbound · {c.lastAt ? new Date(c.lastAt).toLocaleDateString() : ''}</p>
             </button>
           ))}
         </div>
@@ -449,7 +449,7 @@ export function SubscriptionsPanel() {
       <div className="flex gap-1.5">
         <button
           onClick={() => setMode('mine')}
-          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          className="rounded-lg px-3 py-1.5 text-[12px] font-bold cursor-pointer"
           style={{
             background: mode === 'mine' ? T.primary : T.container,
             color: mode === 'mine' ? 'var(--brief-ink)' : T.onSurfaceVariant,
@@ -460,7 +460,7 @@ export function SubscriptionsPanel() {
         </button>
         <button
           onClick={() => setMode('join')}
-          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          className="rounded-lg px-3 py-1.5 text-[12px] font-bold cursor-pointer"
           style={{
             background: mode === 'join' ? T.primary : T.container,
             color: mode === 'join' ? 'var(--brief-ink)' : T.onSurfaceVariant,
@@ -471,7 +471,7 @@ export function SubscriptionsPanel() {
         </button>
         <button
           onClick={() => setMode('topics')}
-          className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer"
+          className="rounded-lg px-3 py-1.5 text-[12px] font-bold cursor-pointer"
           style={{
             background: mode === 'topics' ? T.primary : T.container,
             color: mode === 'topics' ? 'var(--brief-ink)' : T.onSurfaceVariant,
@@ -484,19 +484,19 @@ export function SubscriptionsPanel() {
 
       {notice && (
         <div className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
-          <p className="text-[11px]" style={{ color: T.onSurface }}>{notice}</p>
+          <p className="text-[12px]" style={{ color: T.onSurface }}>{notice}</p>
         </div>
       )}
 
       {mode === 'mine' && (
         <>
           <div className="flex gap-2">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name (e.g. Trail Club)" className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
-            <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="KES" className="w-24 rounded-lg border px-3 py-2 text-[12px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
-            <select value={interval} onChange={(e) => setInterval(e.target.value)} className="rounded-lg border px-2 py-2 text-[12px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Name (e.g. Trail Club)" className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+            <input value={price} onChange={(e) => setPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="KES" className="w-24 rounded-lg border px-3 py-2 text-[13px] outline-none" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }} />
+            <select value={interval} onChange={(e) => setInterval(e.target.value)} className="rounded-lg border px-2 py-2 text-[13px]" style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}>
               <option value="weekly">weekly</option><option value="monthly">monthly</option><option value="yearly">yearly</option>
             </select>
-            <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
+            <button onClick={() => void create()} disabled={busy || !title.trim() || !price} className="rounded-lg px-3 py-2 text-[13px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -508,19 +508,19 @@ export function SubscriptionsPanel() {
               {subs.map((s) => (
                 <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
-                    <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                    <p className="text-[14px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
+                    <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
                       {s.currency} {s.price} · {s.interval} · {s.status}
                     </p>
                     {/* Derived, not stored: it cannot disagree with the rows. */}
-                    <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                    <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
                       {s.subscriberCount} {s.subscriberCount === 1 ? 'member' : 'members'} · {s.settledCycles} settled {s.settledCycles === 1 ? 'cycle' : 'cycles'}
                     </p>
                   </div>
                   <div className="flex gap-1">
-                    {s.status === 'active' && <button onClick={() => void act(s.id, 'pause')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Pause</button>}
-                    {s.status === 'paused' && <button onClick={() => void act(s.id, 'resume')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Resume</button>}
-                    {s.status !== 'cancelled' && <button onClick={() => void act(s.id, 'cancel')} className="text-[10px] font-bold cursor-pointer" style={{ color: T.onSurfaceVariant }}>Cancel</button>}
+                    {s.status === 'active' && <button onClick={() => void act(s.id, 'pause')} className="text-[11px] font-bold cursor-pointer" style={{ color: T.primary }}>Pause</button>}
+                    {s.status === 'paused' && <button onClick={() => void act(s.id, 'resume')} className="text-[11px] font-bold cursor-pointer" style={{ color: T.primary }}>Resume</button>}
+                    {s.status !== 'cancelled' && <button onClick={() => void act(s.id, 'cancel')} className="text-[11px] font-bold cursor-pointer" style={{ color: T.onSurfaceVariant }}>Cancel</button>}
                   </div>
                 </div>
               ))}
@@ -532,13 +532,13 @@ export function SubscriptionsPanel() {
       {mode === 'topics' && (
         <div className="space-y-3">
           <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
-            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Get email about what you chose — nothing else</p>
+            <p className="text-[12px] font-semibold" style={{ color: T.onSurface }}>Get email about what you chose — nothing else</p>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               aria-label="email address"
-              className="w-full rounded-lg border px-3 py-2 text-[12px] outline-none"
+              className="w-full rounded-lg border px-3 py-2 text-[13px] outline-none"
               style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
             />
             <div className="flex flex-wrap gap-1.5">
@@ -546,7 +546,7 @@ export function SubscriptionsPanel() {
                 <button
                   key={t}
                   onClick={() => toggleTopic(t)}
-                  className="rounded-full px-2.5 py-1 text-[10px] font-bold cursor-pointer"
+                  className="rounded-full px-2.5 py-1 text-[11px] font-bold cursor-pointer"
                   style={{
                     border: `1px solid ${topics.includes(t) ? T.primary : T.outlineVariant}`,
                     color: topics.includes(t) ? T.primary : T.onSurfaceVariant,
@@ -560,42 +560,42 @@ export function SubscriptionsPanel() {
             <button
               onClick={() => void subscribe()}
               disabled={topicBusy || !email.trim() || topics.length === 0}
-              className="rounded-lg px-4 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+              className="rounded-lg px-4 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40"
               style={{ background: T.primary, color: 'var(--accent-ink)' }}
             >
               {topicBusy ? '…' : 'Subscribe (double opt-in)'}
             </button>
             {tokenOut && (
               <div className="rounded-lg border p-2 space-y-1" style={{ borderColor: T.outlineVariant, background: T.container }}>
-                <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
                   No mail provider is connected, so here is the confirmation token the email would have carried:
                 </p>
-                <p className="font-mono text-[10px] break-all select-all" style={{ color: T.onSurface }}>{tokenOut}</p>
+                <p className="font-mono text-[11px] break-all select-all" style={{ color: T.onSurface }}>{tokenOut}</p>
               </div>
             )}
-            {topicNote && <p className="text-[11px]" style={{ color: T.onSurface }}>{topicNote}</p>}
+            {topicNote && <p className="text-[12px]" style={{ color: T.onSurface }}>{topicNote}</p>}
           </div>
 
           <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
-            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Confirm a subscription</p>
+            <p className="text-[12px] font-semibold" style={{ color: T.onSurface }}>Confirm a subscription</p>
             <div className="flex gap-2">
               <input
                 value={confirmToken}
                 onChange={(e) => setConfirmToken(e.target.value)}
                 placeholder="paste the confirmation token"
                 aria-label="confirmation token"
-                className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none"
+                className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none"
                 style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
               />
-              <button onClick={() => void confirm()} disabled={topicBusy || !confirmToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
+              <button onClick={() => void confirm()} disabled={topicBusy || !confirmToken.trim()} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ background: T.primary, color: 'var(--accent-ink)' }}>
                 Confirm
               </button>
             </div>
           </div>
 
           <div className="rounded-xl border p-3 space-y-2" style={{ borderColor: T.outlineVariant, background: T.container }}>
-            <p className="text-[11px] font-semibold" style={{ color: T.onSurface }}>Leave the lists</p>
-            <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+            <p className="text-[12px] font-semibold" style={{ color: T.onSurface }}>Leave the lists</p>
+            <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
               Leaving needs no account — the token is enough. That is the privacy-correct direction.
             </p>
             <div className="flex gap-2">
@@ -604,10 +604,10 @@ export function SubscriptionsPanel() {
                 onChange={(e) => setLeaveToken(e.target.value)}
                 placeholder="token or email address"
                 aria-label="unsubscribe token or email"
-                className="flex-1 rounded-lg border px-3 py-2 text-[12px] outline-none"
+                className="flex-1 rounded-lg border px-3 py-2 text-[13px] outline-none"
                 style={{ borderColor: T.outlineVariant, background: T.container, color: T.onSurface }}
               />
-              <button onClick={() => void doUnsubscribe()} disabled={topicBusy || !leaveToken.trim()} className="rounded-lg px-3 py-2 text-[11px] font-bold cursor-pointer disabled:opacity-40" style={{ border: `1px solid ${T.outlineVariant}`, color: T.onSurfaceVariant, background: T.container }}>
+              <button onClick={() => void doUnsubscribe()} disabled={topicBusy || !leaveToken.trim()} className="rounded-lg px-3 py-2 text-[12px] font-bold cursor-pointer disabled:opacity-40" style={{ border: `1px solid ${T.outlineVariant}`, color: T.onSurfaceVariant, background: T.container }}>
                 Unsubscribe
               </button>
             </div>
@@ -621,8 +621,8 @@ export function SubscriptionsPanel() {
 
           {publicState === 'error' && (
             <div className="rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
-              <p className="text-[11px]" style={{ color: T.onSurface }}>Could not read public plans. {publicError}</p>
-              <button onClick={() => void browse()} className="mt-2 text-[10px] font-bold cursor-pointer" style={{ color: T.primary }}>Try again</button>
+              <p className="text-[12px]" style={{ color: T.onSurface }}>Could not read public plans. {publicError}</p>
+              <button onClick={() => void browse()} className="mt-2 text-[11px] font-bold cursor-pointer" style={{ color: T.primary }}>Try again</button>
             </div>
           )}
 
@@ -634,8 +634,8 @@ export function SubscriptionsPanel() {
             {publicPlans.map((s) => (
               <div key={s.id} className="flex items-center justify-between gap-2 rounded-xl border p-3" style={{ borderColor: T.outlineVariant, background: T.container }}>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
-                  <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+                  <p className="text-[14px] font-semibold" style={{ color: T.onSurface }}>{s.title}</p>
+                  <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
                     {s.currency} {s.price} · {s.interval} · {s.subscriberCount} {s.subscriberCount === 1 ? 'member' : 'members'}
                   </p>
                 </div>
@@ -643,7 +643,7 @@ export function SubscriptionsPanel() {
                   <button
                     onClick={() => void leave(s.id)}
                     disabled={joining === s.id}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+                    className="rounded-lg px-3 py-1.5 text-[12px] font-bold cursor-pointer disabled:opacity-40"
                     style={{ color: T.onSurfaceVariant, border: `1px solid ${T.outlineVariant}` }}
                   >
                     {joining === s.id ? 'Leaving…' : 'Subscribed — leave'}
@@ -652,7 +652,7 @@ export function SubscriptionsPanel() {
                   <button
                     onClick={() => void join(s.id)}
                     disabled={joining === s.id}
-                    className="rounded-lg px-3 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-40"
+                    className="rounded-lg px-3 py-1.5 text-[12px] font-bold cursor-pointer disabled:opacity-40"
                     style={{ background: T.primary, color: 'var(--accent-ink)' }}
                   >
                     {joining === s.id ? 'Joining…' : 'Join'}
@@ -662,7 +662,7 @@ export function SubscriptionsPanel() {
             ))}
           </div>
 
-          <p className="text-[10px]" style={{ color: T.onSurfaceVariant }}>
+          <p className="text-[11px]" style={{ color: T.onSurfaceVariant }}>
             No payment provider is connected, so joining records the membership and
             the cycle without charging anything. Nothing is owed until a real
             payment exists.

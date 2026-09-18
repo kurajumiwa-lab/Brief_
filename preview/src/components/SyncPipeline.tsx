@@ -39,10 +39,10 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
   return (
     <div className="rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
+        <h3 className="text-[12px] font-extrabold uppercase tracking-[0.16em] text-[var(--brief-ink)]">
           Pipeline
         </h3>
-        <span className="text-[10px] font-mono text-[var(--ink-60)]">
+        <span className="text-[11px] font-mono text-[var(--ink-60)]">
           {run
             ? run.inSync
               ? `in sync · ${run.version?.slice(0, 8) ?? ''}`
@@ -66,7 +66,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
               <div className="flex-1 min-w-0 flex flex-col items-center text-center">
                 {/* the node dot */}
                 <div
-                  className={`h-9 w-9 rounded-full flex items-center justify-center border text-[11px] font-extrabold transition-all ${
+                  className={`h-9 w-9 rounded-full flex items-center justify-center border text-[12px] font-extrabold transition-all ${
                     state === 'active' ? 'animate-pulse' : ''
                   }`}
                   style={{
@@ -82,21 +82,21 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                       'var(--brief-ink)/40',
                     borderColor:
                       state === 'done' ? 'var(--brief-ink)' :
-                      state === 'active' ? '#4F46E5' : 'var(--brief-line)'
+                      state === 'active' ? '#2563EB' : 'var(--brief-line)'
                   }}
                 >
                   {state === 'done' ? '✓' : state === 'blocked' ? '⏸' : i + 1}
                 </div>
-                <p className="mt-2 text-[10px] font-extrabold text-[var(--brief-ink)] leading-tight">
+                <p className="mt-2 text-[11px] font-extrabold text-[var(--brief-ink)] leading-tight">
                   {node.label}
                 </p>
-                <p className="text-[9px] text-[var(--ink-60)] leading-tight">{node.caption}</p>
+                <p className="text-[11px] text-[var(--ink-60)] leading-tight">{node.caption}</p>
                 {/* real timing, or the honest absence of one */}
-                <p className="mt-1 text-[9px] font-mono" style={{ color: stage?.ms != null ? 'var(--brief-ink)' : 'rgba(17,17,17,0.4)' }}>
+                <p className="mt-1 text-[11px] font-mono" style={{ color: stage?.ms != null ? 'var(--brief-ink)' : 'rgba(17,17,17,0.4)' }}>
                   {stage?.ms != null ? `${stage.ms}ms` : state === 'blocked' ? 'held' : '—'}
                 </p>
                 {stage?.detail && (
-                  <p className="mt-0.5 text-[8px] text-[var(--ink-60)] leading-tight line-clamp-2 px-0.5">
+                  <p className="mt-0.5 text-[11px] text-[var(--ink-60)] leading-tight line-clamp-2 px-0.5">
                     {stage.detail}
                   </p>
                 )}
@@ -110,7 +110,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
                     style={{
                       background:
                         stageFor(run, NODES[i + 1].id) && !pending
-                          ? '#4F46E5' : 'var(--brief-line)'
+                          ? '#2563EB' : 'var(--brief-line)'
                     }}
                   />
                 </div>
@@ -121,7 +121,7 @@ export function SyncPipeline({ run, pending }: SyncPipelineProps) {
       </div>
 
       {!run && (
-        <p className="mt-3 text-center text-[10px] text-[var(--ink-60)]">
+        <p className="mt-3 text-center text-[11px] text-[var(--ink-60)]">
           The pipeline runs the moment the engine beats — nothing here is animated for show.
         </p>
       )}

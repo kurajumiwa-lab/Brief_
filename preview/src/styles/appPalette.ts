@@ -35,11 +35,11 @@ export const AppPalette = {
 
 export const AppTypography = {
   family: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  h1: 'text-[28px] font-extrabold tracking-tight leading-[1.2] text-[#1A1F2E]',
-  h2: 'text-[22px] font-bold tracking-tight leading-[1.3] text-[#1A1F2E]',
-  h3: 'text-[17px] font-semibold leading-[1.4] text-[#1A1F2E]',
+  h1: 'text-[32px] font-extrabold tracking-tight leading-[1.2] text-[#1A1F2E]',
+  h2: 'text-[30px] font-bold tracking-tight leading-[1.3] text-[#1A1F2E]',
+  h3: 'text-[32px] font-semibold leading-[1.4] text-[#1A1F2E]',
   body: 'text-[15px] font-normal leading-[1.5] text-[#6B7280]',
-  caption: 'text-[12px] font-medium leading-[1.4] text-[#9CA3AF]',
+  caption: 'text-[13px] font-medium leading-[1.4] text-[#9CA3AF]',
   button: 'text-[15px] font-bold tracking-wide text-white',
 } as const;
 

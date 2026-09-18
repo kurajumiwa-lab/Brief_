@@ -21,6 +21,7 @@ const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const { EventCard } = require('./src/components/events/EventCard.tsx');
+const { CATEGORY_PALETTE } = require('./src/features/city/categoryPalette.ts');
 
 let count = 0;
 const pass = (name) => { count++; console.log('PASS ' + name); };
@@ -65,14 +66,14 @@ async function main() {
     // all of it; the attribute is the honest thing to assert on.
     const plateOf = (c) => {
       const els = Array.from(c.querySelectorAll('div, span'));
-      const plaster = els.find((d) => (d.getAttribute('style') || '').includes('#F1E8DA'));
+      const plaster = els.find((d) => (d.getAttribute('style') || '').includes('#EDF1F6'));
       const glow = els.find((d) => /radial-gradient/.test(d.getAttribute('style') || ''));
       return { plaster: plaster ? plaster.getAttribute('style') : '', glow: glow ? glow.getAttribute('style') : '', el: plaster };
     };
     const tint = plateOf(container);
     assert.ok(tint.el, 'fallback is a lit plate, not a void and not a black box');
     const plate = tint.plaster;
-    assert.ok(plate.includes('#FBF6EC') && plate.includes('#F1E8DA'), 'the plate is the room\'s own warm plaster');
+    assert.ok(plate.includes('#FBFCFE') && plate.includes('#EDF1F6'), 'the plate is the room\'s own warm plaster');
     assert.ok(tint.glow.includes('#0E7C86'), 'the wing\'s colour is on it — as a light, since session is that wing');
     assert.ok(!/4F46E5,\s*#22D3EE|#22D3EE\)/.test(plate), 'never the cold blue-violet swatch that made cards look pasted in');
     // ...and the tint means something: a different category is a different light.
@@ -81,7 +82,12 @@ async function main() {
     );
     const other = plateOf(other_);
     assert.notEqual(tint.glow, other.glow, 'category drives the palette');
-    assert.ok(other.glow.includes('#4F46E5'), 'popup brings its own hue');
+    assert.ok(other.glow.includes('#7C3AED'), 'popup brings its own hue');
+    // A category may never borrow the action colour — the flip to a blue accent
+    // would otherwise make every primary button read as a wing label.
+    const accents = new Set(Object.values(CATEGORY_PALETTE).map((c) => c.accent));
+    assert.ok(!accents.has('#2563EB'), 'no category accent is the app accent');
+    assert.equal(accents.size, 5, 'five wings, five hues');
   }
   pass('EventCard tints by category and never falls back to a monogram or a black box');
 

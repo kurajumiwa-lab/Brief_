@@ -37,7 +37,7 @@ export function DiscoveryHead({
     <header className={className}>
       <div className="space-y-1">
         {eyebrow && (
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
+          <p className="text-[12px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
             {eyebrow}
           </p>
         )}

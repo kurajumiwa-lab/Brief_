@@ -88,19 +88,19 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                           {conv.customerName}
                         </span>
                         {conv.status === 'converted' && (
-                          <span className="px-2 py-0.5 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[9px] font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-bold">
                             Order Paid
                           </span>
                         )}
                       </div>
                       {conv.offerTitle && (
-                        <p className="text-[10px] text-[color:var(--color-primary)] font-semibold truncate flex items-center space-x-1">
+                        <p className="text-[11px] text-[color:var(--color-primary)] font-semibold truncate flex items-center space-x-1">
                           <Tag className="w-2.5 h-2.5 inline" />
                           <span>{conv.offerTitle}</span>
                         </p>
                       )}
                       {lastMsg && (
-                        <p className="text-[11px] text-[color:var(--color-text-muted)] truncate mt-0.5">
+                        <p className="text-[12px] text-[color:var(--color-text-muted)] truncate mt-0.5">
                           {lastMsg.from === 'customer' ? `${conv.customerName}: ` : 'You: '}
                           {lastMsg.text}
                         </p>
@@ -146,7 +146,7 @@ export const SpacePeople: React.FC<SpacePeopleProps> = ({
                     <span className="text-xs font-bold text-[color:var(--color-text)] block truncate">
                       {c.name}
                     </span>
-                    <span className="text-[10px] text-[color:var(--color-text-muted)] block truncate">
+                    <span className="text-[11px] text-[color:var(--color-text-muted)] block truncate">
                       {c.contact || 'WhatsApp Customer'}
                     </span>
                   </div>

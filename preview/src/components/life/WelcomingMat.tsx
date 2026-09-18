@@ -32,12 +32,12 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Welcoming Mat · Mutual Aid & Solidarity
               </h3>
-              <p className="text-[11px] text-[#78716C] font-medium">
+              <p className="text-[12px] text-[#78716C] font-medium">
                 Discreet family support, confidential circles & quiet community relief
               </p>
             </div>
           </div>
-          <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-stone-200/70 text-stone-700">
+          <span className="text-[11px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-stone-200/70 text-stone-700">
             Confidential
           </span>
         </div>
@@ -57,18 +57,18 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-xl">🕊️</span>
-                <span className="text-[9px] font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded-full">
                   Family Circle
                 </span>
               </div>
               <h4 className="text-xs font-black text-[var(--brief-ink)] mt-2 group-hover:text-[#B8621F] transition-colors">
                 Family & Life Support Desk
               </h4>
-              <p className="text-[11px] text-[#78716C] mt-0.5 leading-snug">
+              <p className="text-[12px] text-[#78716C] mt-0.5 leading-snug">
                 Organize family tasks, private harambees, and respectful memorial arrangements with clan members.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-black/[0.03] flex items-center justify-between text-[11px] font-bold text-[#B8621F]">
+            <div className="mt-3 pt-2 border-t border-black/[0.03] flex items-center justify-between text-[12px] font-bold text-[#B8621F]">
               <span>Open Private Support Desk</span>
               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </div>
@@ -86,18 +86,18 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
             <div>
               <div className="flex items-center justify-between">
                 <span className="text-xl">💚</span>
-                <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
                   Safe & Anonymous
                 </span>
               </div>
               <h4 className="text-xs font-black text-[var(--brief-ink)] mt-2 group-hover:text-emerald-700 transition-colors">
                 Wellbeing & Listening Circles
               </h4>
-              <p className="text-[11px] text-[#78716C] mt-0.5 leading-snug">
+              <p className="text-[12px] text-[#78716C] mt-0.5 leading-snug">
                 Private peer listening spaces, certified counseling referrals, and safe mutual aid support.
               </p>
             </div>
-            <div className="mt-3 pt-2 border-t border-black/[0.03] flex items-center justify-between text-[11px] font-bold text-emerald-700">
+            <div className="mt-3 pt-2 border-t border-black/[0.03] flex items-center justify-between text-[12px] font-bold text-emerald-700">
               <span>Enter Confidential Space</span>
               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
             </div>
@@ -106,7 +106,7 @@ export const WelcomingMat: React.FC<WelcomingMatProps> = ({
         </div>
 
         {/* Welcoming reassurance footnote */}
-        <p className="text-[10px] text-stone-400 mt-3 text-center font-medium">
+        <p className="text-[11px] text-stone-400 mt-3 text-center font-medium">
           Always private to your invited circle. Never published to the public neighborhood feed.
         </p>
 

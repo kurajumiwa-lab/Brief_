@@ -176,7 +176,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="font-bold text-lg text-white">Live Courier & Transit Telemetry</h3>
-                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#F58220]/20 text-[#F58220] border border-[#F58220]/40 font-semibold tracking-wider">
+                <span className="text-[11px] uppercase font-mono px-2 py-0.5 rounded-full bg-[#F58220]/20 text-[#F58220] border border-[#F58220]/40 font-semibold tracking-wider">
                   GPS ACTIVE
                 </span>
               </div>
@@ -267,7 +267,7 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
                 <div className="absolute inset-0 bg-[#0B1B2A]/40 backdrop-blur-[1px]"></div>
                 
                 <div className="absolute inset-0 p-4 flex flex-col justify-between pointer-events-none">
-                  <div className="flex justify-between items-center text-[10px] font-mono text-[#00BFEF]">
+                  <div className="flex justify-between items-center text-[11px] font-mono text-[#00BFEF]">
                     <div className="bg-[#0B1B2A]/90 px-2.5 py-1 rounded border border-[#00BFEF]/30 flex items-center space-x-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                       <span>COURIER: {activeDelivery.courierName}</span>
@@ -281,12 +281,12 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
                     <div className="w-20 h-20 border border-[#00BFEF]/60 rounded-full flex items-center justify-center animate-pulse">
                       <Bike className="w-8 h-8 text-[#F58220]" />
                     </div>
-                    <span className="text-[10px] font-mono text-[#F58220] mt-1 bg-[#0B1B2A]/80 px-2 rounded">
+                    <span className="text-[11px] font-mono text-[#F58220] mt-1 bg-[#0B1B2A]/80 px-2 rounded">
                       DESTINATION: {selectedLocation.name}
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center text-[10px] font-mono text-[#DCE2E6]">
+                  <div className="flex justify-between items-center text-[11px] font-mono text-[#DCE2E6]">
                     <span>STATUS: IN TRANSIT ({speed} km/h)</span>
                     <span className="text-[#00BFEF]">SECURITY CODE: OTP 8849</span>
                   </div>
@@ -311,19 +311,19 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
 
                 <div className="grid grid-cols-2 gap-3 text-xs font-mono">
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">TOTAL FARE:</span>
+                    <span className="text-[#DCE2E6]/60 block text-[11px]">TOTAL FARE:</span>
                     <span className="text-white font-bold">KES {activeDelivery.fareKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">COURIER TAKE (90%):</span>
+                    <span className="text-[#DCE2E6]/60 block text-[11px]">COURIER TAKE (90%):</span>
                     <span className="text-emerald-400 font-bold">KES {activeDelivery.driverReturnKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">PLATFORM FEE (10%):</span>
+                    <span className="text-[#DCE2E6]/60 block text-[11px]">PLATFORM FEE (10%):</span>
                     <span className="text-white font-bold">KES {activeDelivery.platformFeeKes}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-black/30 border border-white/5">
-                    <span className="text-[#DCE2E6]/60 block text-[10px]">VEHICLE OWNERSHIP:</span>
+                    <span className="text-[#DCE2E6]/60 block text-[11px]">VEHICLE OWNERSHIP:</span>
                     <span className="text-[#00BFEF] font-bold">Logbook Verified ✓</span>
                   </div>
                 </div>
@@ -334,27 +334,27 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
           {/* Real-Time Telemetry Stats Row */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Transit Speed</span>
+              <span className="text-[11px] uppercase font-mono text-[#DCE2E6]/70">Transit Speed</span>
               <span className="text-lg sm:text-xl font-bold font-mono text-[#00BFEF]">{speed} km/h</span>
-              <span className="text-[10px] text-emerald-400">Road Corridor</span>
+              <span className="text-[11px] text-emerald-400">Road Corridor</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Courier Take</span>
+              <span className="text-[11px] uppercase font-mono text-[#DCE2E6]/70">Courier Take</span>
               <span className="text-lg sm:text-xl font-bold font-mono text-emerald-400">90%</span>
-              <span className="text-[10px] text-emerald-300">KES {activeDelivery.driverReturnKes}</span>
+              <span className="text-[11px] text-emerald-300">KES {activeDelivery.driverReturnKes}</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">Security OTP</span>
+              <span className="text-[11px] uppercase font-mono text-[#DCE2E6]/70">Security OTP</span>
               <span className="text-lg sm:text-xl font-bold font-mono text-[#F58220]">8849</span>
-              <span className="text-[10px] text-[#FF9D24]">Release Code</span>
+              <span className="text-[11px] text-[#FF9D24]">Release Code</span>
             </div>
 
             <div className="bg-[#173247]/60 border border-[#00BFEF]/20 rounded-2xl p-3 flex flex-col items-center text-center">
-              <span className="text-[10px] uppercase font-mono text-[#DCE2E6]/70">ETA Arrival</span>
+              <span className="text-[11px] uppercase font-mono text-[#DCE2E6]/70">ETA Arrival</span>
               <span className="text-lg sm:text-xl font-bold font-mono text-white">{selectedLocation.etaMins} mins</span>
-              <span className="text-[10px] text-[#00BFEF]">To: {selectedLocation.name}</span>
+              <span className="text-[11px] text-[#00BFEF]">To: {selectedLocation.name}</span>
             </div>
           </div>
 
@@ -388,9 +388,9 @@ export const LiveTelemetryModal: React.FC<LiveTelemetryModalProps> = ({
                       <span className={`font-semibold ${step.active ? 'text-[#F58220]' : step.done ? 'text-white' : 'text-gray-400'}`}>
                         {step.title}
                       </span>
-                      <span className="text-[10px] font-mono text-gray-400">{step.time}</span>
+                      <span className="text-[11px] font-mono text-gray-400">{step.time}</span>
                     </div>
-                    <p className="text-[11px] text-[#DCE2E6]/70">{step.desc}</p>
+                    <p className="text-[12px] text-[#DCE2E6]/70">{step.desc}</p>
                   </div>
                 </div>
               ))}

@@ -83,7 +83,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
       <div className="px-4 pt-3.5 pb-4">
         <div className="flex items-center gap-2">
           <Globe className="w-4 h-4" style={{ color: 'var(--color-primary)' }} aria-hidden="true" />
-          <h2 className="text-[13px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
+          <h2 className="text-[14px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
             Public page
           </h2>
           <span className="ml-auto">
@@ -93,12 +93,12 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
 
         {open ? (
           <>
-            <p className="mt-1.5 text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+            <p className="mt-1.5 text-[12px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
               Mirror of this space. Edit the space and this page changes — there is nothing to edit here.
             </p>
             <div className="mt-2.5 flex items-center gap-2">
               <code
-                className="min-w-0 flex-1 truncate px-3 py-2 rounded-xl text-[11px] font-mono"
+                className="min-w-0 flex-1 truncate px-3 py-2 rounded-xl text-[12px] font-mono"
                 style={{ background: 'var(--well, var(--color-well))', color: 'var(--brief-ink)' }}
                 title={link}
               >
@@ -107,7 +107,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
               <button
                 type="button"
                 onClick={() => void copy()}
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-black cursor-pointer"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[12px] font-black cursor-pointer"
                 style={{ background: copied ? 'var(--color-primary)' : 'var(--color-primary-subtle)', color: copied ? 'var(--accent-ink)' : 'var(--color-primary)' }}
               >
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -117,7 +117,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
                 href={path}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-bold"
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-[12px] font-bold"
                 style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}
               >
                 <ExternalLink className="w-3.5 h-3.5" /> Open
@@ -144,21 +144,21 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
             </div>
 
             {needsContact && (
-              <p className="mt-2.5 text-[11px] leading-snug" style={{ color: 'var(--brief-faint)' }}>
+              <p className="mt-2.5 text-[12px] leading-snug" style={{ color: 'var(--brief-faint)' }}>
                 No WhatsApp number yet, so the page has no button. Add one under To do → contact, or leave it blank and buyers
                 reach you through the Brief inbox.
               </p>
             )}
 
             {face && face.reports.count > 0 && (
-              <p className="mt-2.5 text-[11px] font-bold leading-snug" style={{ color: 'var(--brief-muted)' }} data-reports={face.reports.count}>
+              <p className="mt-2.5 text-[12px] font-bold leading-snug" style={{ color: 'var(--brief-muted)' }} data-reports={face.reports.count}>
                 {face.reports.note}
               </p>
             )}
           </>
         ) : confirming ? (
           <div className="mt-2.5 rounded-2xl px-3 py-3" style={{ background: 'var(--color-well)' }}>
-            <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+            <p className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
               This puts <strong>{space.name}</strong> on the open internet at <span className="font-mono">{path}</span>: your name,
               cover photo, stated hours, and every live offer with its price. Anyone can read it, including people you do not
               know. Your orders, customers and money stay private.
@@ -171,7 +171,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
                   setConfirming(false);
                   onPublish();
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
                 style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
               >
                 <Globe className="w-3.5 h-3.5" /> Publish it
@@ -179,7 +179,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
               <button
                 type="button"
                 onClick={() => setConfirming(false)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-bold cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold cursor-pointer"
                 style={{ background: 'var(--brief-card)', color: 'var(--brief-ink)' }}
               >
                 <Lock className="w-3.5 h-3.5" /> Stay private
@@ -188,14 +188,14 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
           </div>
         ) : (
           <>
-            <p className="mt-1.5 text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+            <p className="mt-1.5 text-[12px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
               {face?.reason ?? `This space is ${space.visibility ?? 'private'}, so there is no page.`}
             </p>
             <button
               type="button"
               disabled={busy}
               onClick={() => setConfirming(true)}
-              className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+              className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
             >
               <Globe className="w-3.5 h-3.5" /> Make a public page
@@ -204,7 +204,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
               <button
                 type="button"
                 onClick={onEditSpace}
-                className="mt-2.5 ml-2 text-[11px] font-bold cursor-pointer"
+                className="mt-2.5 ml-2 text-[12px] font-bold cursor-pointer"
                 style={{ color: 'var(--color-primary)' }}
               >
                 Fill the space first
@@ -221,7 +221,7 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
 function Chip({ text, icon, strong = false }: { text: string; icon?: React.ReactNode; strong?: boolean }) {
   return (
     <span
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold"
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold"
       style={{
         background: strong ? 'var(--color-primary-subtle)' : 'var(--color-well)',
         color: strong ? 'var(--color-primary)' : 'var(--brief-muted)'

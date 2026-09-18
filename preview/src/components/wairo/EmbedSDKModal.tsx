@@ -117,7 +117,7 @@ export default function MyKenyanMarketplace() {
             <div>
               <div className="flex items-center space-x-2">
                 <h3 className="font-bold text-base sm:text-lg text-white">Wairo Kenya Logistics & Errands SDK</h3>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] border border-[#00BFEF]/40 font-bold">
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#00BFEF]/20 text-[#00BFEF] border border-[#00BFEF]/40 font-bold">
                   v2.5.0 KE
                 </span>
               </div>
@@ -168,7 +168,7 @@ export default function MyKenyanMarketplace() {
         {/* Code Snippet Box */}
         <div className="p-5 overflow-y-auto max-h-[50vh]">
           <div className="relative rounded-2xl bg-[#061019] border border-[#173247] p-4 font-mono text-xs text-[#DCE2E6]">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[11px] text-[#00BFEF]">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-[12px] text-[#00BFEF]">
               <span className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse"></span>
                 <span>INTEGRATION SNIPPET (KENYAN LOGISTICS)</span>

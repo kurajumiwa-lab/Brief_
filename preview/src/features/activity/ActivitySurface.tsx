@@ -152,7 +152,7 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
             <button
               type="button"
               onClick={onOpenRequests}
-              className="px-4 py-2 rounded-full text-[12px] font-black cursor-pointer"
+              className="px-4 py-2 rounded-full text-[13px] font-black cursor-pointer"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
             >
               Post an offer
@@ -171,7 +171,7 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           >
             <MotionNumber value={state.requests} tier="consequential" />
             <p
-              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+              className="text-[11px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Requests
@@ -185,7 +185,7 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           >
             <MotionNumber value={state.work} tier="consequential" />
             <p
-              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+              className="text-[11px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Work Orders
@@ -205,7 +205,7 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
               {" "}/ {state.payments}
             </span>
             <p
-              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+              className="text-[11px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Payments confirmed
@@ -219,7 +219,7 @@ export function ActivitySurface({ onOpenRequests }: { onOpenRequests: () => void
           >
             <MotionNumber value={state.procurement} tier="consequential" />
             <p
-              className="text-[10px] font-black uppercase tracking-wider mt-0.5"
+              className="text-[11px] font-black uppercase tracking-wider mt-0.5"
               style={{ color: "var(--color-text-muted)" }}
             >
               Repeat procurement

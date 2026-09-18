@@ -190,7 +190,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
           <Users className="w-3.5 h-3.5 text-[var(--brief-muted)]" />
           <span>Following</span>
           {followedCount > 0 && (
-            <span className="rounded-full bg-[#B8621F] px-1.5 text-[9px] font-extrabold text-white ml-1">
+            <span className="rounded-full bg-[#B8621F] px-1.5 text-[11px] font-extrabold text-white ml-1">
               {followedCount}
             </span>
           )}
@@ -208,7 +208,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
           <Bell className="w-3.5 h-3.5 text-[var(--brief-muted)]" />
           <span>Updates</span>
           {updatesCount > 0 && (
-            <span className="rounded-full bg-[#DC2626] px-1.5 text-[9px] font-extrabold text-white ml-1">
+            <span className="rounded-full bg-[#DC2626] px-1.5 text-[11px] font-extrabold text-white ml-1">
               {updatesCount > 99 ? '99+' : updatesCount}
             </span>
           )}
@@ -245,7 +245,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
           {/* Section: Where do you want your Brief? */}
           <div className="space-y-2.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
+            <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
               Where do you want your Brief?
             </span>
 
@@ -273,7 +273,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
 
           {/* Section: What do you care about? */}
           <div className="space-y-2.5">
-            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
+            <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)] block">
               What do you care about?
             </span>
 
@@ -336,7 +336,7 @@ export const BriefBuilderSection: React.FC<BriefBuilderSectionProps> = ({
               Build my Brief
             </button>
 
-            <p className="text-[11px] text-[var(--color-quiet)] leading-tight">
+            <p className="text-[12px] text-[var(--color-quiet)] leading-tight">
               Pick anything, or skip — your feed stays local.
             </p>
           </div>

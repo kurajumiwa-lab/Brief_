@@ -205,7 +205,7 @@ export function ActivityDot({ n }: { n: number }) {
   return (
     <span
       aria-hidden="true"
-      className="brief-alert-dot inline-flex items-center justify-center min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#DC2626] text-[var(--accent-ink)] text-[8px] font-extrabold leading-none shadow-[0_0_0_1.5px_#0D1117]"
+      className="brief-alert-dot inline-flex items-center justify-center min-w-[15px] h-[15px] px-[3px] rounded-full bg-[#DC2626] text-[var(--accent-ink)] text-[11px] font-extrabold leading-none shadow-[0_0_0_1.5px_#0D1117]"
     >
       {n > 1 ? alertLabel(n) : ''}
     </span>
@@ -733,13 +733,13 @@ export const getPostKindMeta = (
     case 'news':
       return { label: 'News', tone: 'text-[var(--brief-ink)] border-[var(--brief-line)]' };
     case 'notice':
-      return { label: 'Notice', tone: 'text-[var(--brief-ink)] border-[#06B6D4]' };
+      return { label: 'Notice', tone: 'text-[var(--brief-ink)] border-[#0891B2]' };
     case 'chatter':
       return { label: 'Chatter', tone: 'text-[var(--brief-ink)] border-[var(--brief-line)]' };
     case 'question':
-      return { label: 'Question', tone: 'text-[var(--brief-ink)] border-[#06B6D4]' };
+      return { label: 'Question', tone: 'text-[var(--brief-ink)] border-[#0891B2]' };
     case 'promo':
-      return { label: 'Promoted', tone: 'text-[var(--brief-ink)] border-[#06B6D4]' };
+      return { label: 'Promoted', tone: 'text-[var(--brief-ink)] border-[#0891B2]' };
   }
 };
 
@@ -3891,18 +3891,18 @@ function PublicShareRow({ title, description }: { title: string; description: st
   return (
     <div className="flex flex-wrap gap-1.5">
       <a href={wa} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold border border-[var(--brief-line)]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold border border-[var(--brief-line)]">
         <MessageCircle className="w-3 h-3" /> WhatsApp
       </a>
       <a href={tg} target="_blank" rel="noreferrer"
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold border border-[var(--brief-line)]">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold border border-[var(--brief-line)]">
         <ExternalLink className="w-3 h-3" /> Telegram
       </a>
       <button onClick={copy}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold border border-[var(--brief-line)] cursor-pointer">
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold border border-[var(--brief-line)] cursor-pointer">
         <Share2 className="w-3 h-3" /> {copied ? 'Copied' : 'Copy link'}
       </button>
-      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--ink-60)] text-[10px] border border-[var(--brief-line)]" title="Scan to open">
+      <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[var(--ink-60)] text-[11px] border border-[var(--brief-line)]" title="Scan to open">
         <ExternalLink className="w-3 h-3" /> QR
       </span>
     </div>
@@ -3966,9 +3966,9 @@ function CompactEventCard({ listing }: { listing: EventListing }) {
         )}
       </div>
       <div className="p-2 space-y-0.5">
-        <p className="text-[10px] font-extrabold text-[var(--brief-ink)] leading-snug">{listing.title}</p>
-        <p className="text-[9px] text-[var(--ink-60)]">{formatStartsAt(listing.startsAt) ?? listing.categoryLabel}</p>
-        <p className="text-[9px] font-extrabold text-[var(--brief-ink)]">{railMoney(listing.price, listing.currency)}</p>
+        <p className="text-[11px] font-extrabold text-[var(--brief-ink)] leading-snug">{listing.title}</p>
+        <p className="text-[11px] text-[var(--ink-60)]">{formatStartsAt(listing.startsAt) ?? listing.categoryLabel}</p>
+        <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">{railMoney(listing.price, listing.currency)}</p>
       </div>
     </a>
   );
@@ -3979,7 +3979,7 @@ function EventRail({ title, listings }: { title: string; listings: EventListing[
   if (!listings.length) return null;
   return (
     <div className="space-y-2">
-      <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">{title}</p>
+      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">{title}</p>
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
         {listings.map((l) => <CompactEventCard key={l.slug} listing={l} />)}
       </div>
@@ -4100,7 +4100,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
   const c = load.data;
 
   return (
-    <div className="min-h-screen bg-[color:var(--brief-bg)] text-[var(--accent-ink)] font-sans selection:bg-[#4F46E5] selection:text-[var(--brief-ink)] flex flex-col">
+    <div className="min-h-screen bg-[color:var(--brief-bg)] text-[var(--accent-ink)] font-sans selection:bg-[#2563EB] selection:text-[var(--brief-ink)] flex flex-col">
       {/* ── FULL-BLEED HERO — the Instagram event splash, edge to edge. ── */}
       {load.status === 'ready' && c && (
         <div className="relative">
@@ -4117,7 +4117,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             // nothing. It is the room's plaster, lit by the campaign's own type.
             <div className="w-full h-64 sm:h-80 relative" style={{ background: PLASTER }}>
               <span className="absolute inset-0" style={{ background: categoryWash(c.type) }} />
-              <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
+              <span className="absolute bottom-4 left-4 inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
                 <span className="w-1.5 h-1.5 rounded-full" style={{ background: categoryAccent(c.type) }} />
                 waiting on a cover
               </span>
@@ -4157,15 +4157,15 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
           {/* Overlaid identity: chips + title + meta, like an IG post caption. */}
           <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[11px] font-bold uppercase tracking-wider">
                 {c.type}
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[10px] font-bold">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-[11px] font-bold">
                 {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
               </span>
             </div>
             <h1 className="text-2xl sm:text-4xl font-black leading-tight drop-shadow-md">{c.title}</h1>
-            <p className="text-[11px] sm:text-xs text-white/85">
+            <p className="text-[12px] sm:text-xs text-white/85">
               {[formatStartsAt(c.startsAt), c.location].filter(Boolean).join('  ·  ')}
             </p>
           </div>
@@ -4182,7 +4182,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             <p className="text-sm font-extrabold text-[var(--brief-ink)]">{load.error}</p>
             <button
               onClick={fetchCampaign}
-              className="px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
             >
               Try again
             </button>
@@ -4203,10 +4203,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     <User className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 leading-tight">
-                    <p className="text-[11px] font-extrabold text-[var(--brief-ink)]">
+                    <p className="text-[12px] font-extrabold text-[var(--brief-ink)]">
                       {c.host.name ?? 'Organiser'}
                     </p>
-                    <p className="text-[9px] text-[var(--ink-60)]">
+                    <p className="text-[11px] text-[var(--ink-60)]">
                       {c.host.eventsHosted === 0
                         ? 'First event'
                         : `${c.host.eventsHosted} event${c.host.eventsHosted === 1 ? '' : 's'} hosted`}
@@ -4215,7 +4215,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 </div>
               )}
               {c.creator && (
-                <p className="text-[11px] text-[var(--brief-ink)] font-extrabold">by {c.creator}</p>
+                <p className="text-[12px] text-[var(--brief-ink)] font-extrabold">by {c.creator}</p>
               )}
               {c.description && (
                 <p className="text-xs text-[var(--ink-60)] leading-relaxed">{c.description}</p>
@@ -4227,11 +4227,11 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {c.goalAmount != null && (
               <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
                 <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
                     Contribution pot
                   </p>
                   {c.endsAt && (
-                    <p className="text-[10px] text-[var(--ink-60)]">
+                    <p className="text-[11px] text-[var(--ink-60)]">
                       {Date.parse(c.endsAt) <= Date.now()
                         ? 'Deadline passed'
                         : `Open until ${c.endsAt.slice(0, 10)}`}
@@ -4247,7 +4247,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-[12px]">
                   <span className="font-extrabold text-[var(--brief-ink)]">
                     {c.currency} {(c.raised ?? 0).toLocaleString()} of {c.goalAmount.toLocaleString()}
                   </span>
@@ -4255,7 +4255,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     {(c.contributors ?? 0)} contribution{(c.contributors ?? 0) === 1 ? '' : 's'}
                   </span>
                 </div>
-                <p className="text-[9px] leading-snug text-[var(--ink-70)]">
+                <p className="text-[11px] leading-snug text-[var(--ink-70)]">
                   Progress counts SETTLED money only — a pledge that has not settled is not raised.
                   Contributors are counted, never listed.
                 </p>
@@ -4266,20 +4266,20 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 rendered only when the organiser actually set one. */}
             {c.venue && (c.venue.name || c.venue.address) && (
               <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
                   Venue
                 </p>
                 {c.venue.name && (
                   <p className="text-xs font-extrabold text-[var(--brief-ink)]">{c.venue.name}</p>
                 )}
                 {c.venue.address && (
-                  <p className="text-[11px] text-[var(--ink-60)] leading-snug">{c.venue.address}</p>
+                  <p className="text-[12px] text-[var(--ink-60)] leading-snug">{c.venue.address}</p>
                 )}
                 <a
                   href={venueMapsHref(c.venue, c.location) ?? undefined}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold"
                   style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
                 >
                   <Navigation className="w-3 h-3" /> Open in maps
@@ -4290,7 +4290,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {/* Agenda (T4): the organiser's ordered run of show, when set. */}
             {c.agenda && c.agenda.length > 0 && (
               <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
                   Agenda
                 </p>
                 {c.agenda.map((item, i) => (
@@ -4307,10 +4307,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     <div className="min-w-0 pb-1">
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="text-xs font-extrabold text-[var(--brief-ink)]">{item.title}</p>
-                        {item.at && <p className="shrink-0 text-[9px] text-[var(--ink-60)]">{item.at}</p>}
+                        {item.at && <p className="shrink-0 text-[11px] text-[var(--ink-60)]">{item.at}</p>}
                       </div>
                       {item.description && (
-                        <p className="text-[11px] leading-snug text-[var(--ink-60)]">{item.description}</p>
+                        <p className="text-[12px] leading-snug text-[var(--ink-60)]">{item.description}</p>
                       )}
                     </div>
                   </div>
@@ -4321,16 +4321,16 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
             {/* Updates (T3): the organiser's posts, newest first. */}
             {updates !== null && updates.length > 0 && (
               <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-70)]">
                   Updates
                 </p>
                 {updates.map((u) => (
                   <div key={u.id} className="space-y-0.5">
                     <div className="flex items-baseline justify-between gap-2">
                       <p className="text-xs font-extrabold text-[var(--brief-ink)]">{u.title}</p>
-                      <p className="shrink-0 text-[9px] text-[var(--ink-60)]">{u.createdAt.slice(0, 10)}</p>
+                      <p className="shrink-0 text-[11px] text-[var(--ink-60)]">{u.createdAt.slice(0, 10)}</p>
                     </div>
-                    <p className="text-[11px] leading-snug text-[var(--ink-60)]">{u.body}</p>
+                    <p className="text-[12px] leading-snug text-[var(--ink-60)]">{u.body}</p>
                   </div>
                 ))}
               </div>
@@ -4348,7 +4348,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <a
                     href={eventIcsUrl({ title: c.title, description: c.description, location: c.location, startsAt: c.startsAt, endsAt: c.endsAt }) ?? undefined}
                     download="event.ics"
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold cursor-pointer"
                     style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
                   >
                     <CalendarPlus className="w-3 h-3" /> Add to calendar
@@ -4365,7 +4365,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     href={venueMapsHref(c.venue, c.location) ?? undefined}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold cursor-pointer"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold cursor-pointer"
                     style={{ background: "var(--color-primary-subtle)", color: "var(--color-primary)" }}
                   >
                     <Navigation className="w-3 h-3" /> Get directions
@@ -4411,7 +4411,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
               )}
               {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
                 <div className="space-y-1 pt-1">
-                  <div className="flex items-center justify-between text-[10px]">
+                  <div className="flex items-center justify-between text-[11px]">
                     <span className="text-[var(--ink-60)]">Spots filled</span>
                     <span className="font-mono-live text-[var(--brief-ink)]">
                       {c.capacity - c.remaining} / {c.capacity}
@@ -4455,7 +4455,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     {done.status === 'started' ? "You have a spot held" : "You're registered"}
                   </p>
                 </div>
-                <p className="text-[11px] text-[var(--ink-60)] leading-snug">
+                <p className="text-[12px] text-[var(--ink-60)] leading-snug">
                   {done.status === 'started'
                     ? 'Your spot is held. It is confirmed once payment is arranged with the organiser.'
                     : 'The organiser can see you on their list.'}
@@ -4464,9 +4464,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <div className="flex items-center gap-3 pt-1">
                     <PublicTicketQr code={done.ticketCode} />
                     <div className="min-w-0 space-y-1">
-                      <p className="text-[9px] text-[var(--ink-60)]">Your ticket</p>
-                      <p className="text-[11px] text-[var(--brief-ink)] break-all select-all">{done.ticketCode}</p>
-                      <p className="text-[10px] text-[var(--ink-60)] leading-snug">Show this code at the gate.</p>
+                      <p className="text-[11px] text-[var(--ink-60)]">Your ticket</p>
+                      <p className="text-[12px] text-[var(--brief-ink)] break-all select-all">{done.ticketCode}</p>
+                      <p className="text-[11px] text-[var(--ink-60)] leading-snug">Show this code at the gate.</p>
                     </div>
                   </div>
                 )}
@@ -4497,22 +4497,22 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Name"
-                    className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                    className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                   />
                   <input
                     value={contact}
                     onChange={(e) => setContact(e.target.value)}
                     placeholder="Phone or email"
-                    className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                    className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                   />
                   <button
                     disabled={waitlistBusy}
                     onClick={joinWaitlist}
-                    className="w-full py-3 rounded-xl border border-[#06B6D4] text-[var(--brief-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40"
+                    className="w-full py-3 rounded-xl border border-[#0891B2] text-[var(--brief-ink)] font-extrabold text-xs cursor-pointer disabled:opacity-40"
                   >
                     {waitlistBusy ? 'Saving...' : 'Join wait list'}
                   </button>
-                  {waitlistMessage && <p className="text-[10px] text-[var(--ink-60)]">{waitlistMessage}</p>}
+                  {waitlistMessage && <p className="text-[11px] text-[var(--ink-60)]">{waitlistMessage}</p>}
                 </div>
               </div>
             )}
@@ -4524,36 +4524,36 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 <div id="register-form" className="space-y-3">
                   {regError && (
                     <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-xl p-3">
-                      <p className="text-[11px] text-[var(--brief-ink)] break-words">{regError}</p>
+                      <p className="text-[12px] text-[var(--brief-ink)] break-words">{regError}</p>
                     </div>
                   )}
                   <div>
-                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">
+                    <label className="block text-[11px] text-[var(--ink-60)] mb-1">
                       Your name
                     </label>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Name"
-                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                     />
                   </div>
                   <div>
-                    <label className="block text-[9px] text-[var(--ink-60)] mb-1">
+                    <label className="block text-[11px] text-[var(--ink-60)] mb-1">
                       Phone or email
                     </label>
                     <input
                       value={contact}
                       onChange={(e) => setContact(e.target.value)}
                       placeholder="So the organiser can reach you"
-                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                      className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                     />
                   </div>
                   {/* Pots (T3): the supporter states a whole-shillings amount.
                       Fixed-price events never show this — the price is the price. */}
                   {c.goalAmount != null && (
                     <div>
-                      <label className="block text-[9px] text-[var(--ink-60)] mb-1">
+                      <label className="block text-[11px] text-[var(--ink-60)] mb-1">
                         Your contribution ({c.currency})
                       </label>
                       <input
@@ -4561,9 +4561,9 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                         onChange={(e) => setAmount(e.target.value)}
                         inputMode="numeric"
                         placeholder="Whole shillings you are putting in"
-                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#06B6D4] focus:outline-none"
+                        className="w-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-sm rounded-xl px-3 py-3 border border-[var(--brief-line)] focus:border-[#0891B2] focus:outline-none"
                       />
-                      <p className="mt-1 text-[9px] text-[var(--ink-60)] leading-snug">
+                      <p className="mt-1 text-[11px] text-[var(--ink-60)] leading-snug">
                         State what you are putting in. It counts toward the pot once the money
                         settles; contributors are counted, never listed.
                       </p>
@@ -4572,7 +4572,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   <button
                     disabled={busy || (c.goalAmount != null && !Number(amount))}
                     onClick={submit}
-                    className="w-full py-4 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-sm cursor-pointer disabled:opacity-40"
+                    className="w-full py-4 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-sm cursor-pointer disabled:opacity-40"
                   >
                     {busy
                       ? 'Registering...'
@@ -4583,7 +4583,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                       : `Register - ${c.currency} ${c.price.toLocaleString()}`}
                   </button>
                   {(c.price > 0 || c.goalAmount != null) && (
-                    <p className="text-[10px] text-[var(--ink-60)] leading-snug text-center">
+                    <p className="text-[11px] text-[var(--ink-60)] leading-snug text-center">
                       No online payment is connected yet. Your spot is held and you
                       arrange payment with the organiser.
                     </p>
@@ -4607,7 +4607,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         <div className="sticky bottom-0 z-20 border-t border-[var(--brief-line)] bg-[color:var(--color-paper)] px-4 py-3">
           <div className="w-full max-w-lg mx-auto flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.14em] text-[var(--ink-60)]">This event</p>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--ink-60)]">This event</p>
               <p className="text-sm font-extrabold text-[var(--brief-ink)]">
                 {c.price === 0 ? 'Free' : `${c.currency} ${c.price.toLocaleString()}`}
               </p>
@@ -4618,7 +4618,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   .getElementById(c.soldOut ? 'waitlist-form' : 'register-form')
                   ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
               }
-              className="px-5 py-3 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-xs cursor-pointer"
             >
               {c.soldOut ? 'Join wait list' : c.goalAmount != null ? 'Contribute' : 'Register'}
             </button>
@@ -4626,7 +4626,7 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
         </div>
       )}
 
-      <footer className="border-t border-[var(--brief-line)] py-6 text-[10px] text-[var(--ink-60)] text-center">
+      <footer className="border-t border-[var(--brief-line)] py-6 text-[11px] text-[var(--ink-60)] text-center">
         Brief
       </footer>
     </div>

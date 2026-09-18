@@ -36,21 +36,21 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
     <section
       data-testid="next-step"
       aria-label="Your next step"
-      className="rounded-2xl border border-[#06B6D4] bg-[color:var(--color-paper)] px-4 py-3.5 shadow-sm"
+      className="rounded-2xl border border-[#0891B2] bg-[color:var(--color-paper)] px-4 py-3.5 shadow-sm"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-[var(--ink-60)]">
             Step {done + 1} of {total}
           </p>
-          <h3 className="mt-0.5 text-[14px] font-extrabold tracking-tight text-[var(--brief-ink)]">{next.label}</h3>
-          {!compact && <p className="mt-1 text-[11px] leading-snug text-[var(--ink-60)]">{next.detail}</p>}
+          <h3 className="mt-0.5 text-[15px] font-extrabold tracking-tight text-[var(--brief-ink)]">{next.label}</h3>
+          {!compact && <p className="mt-1 text-[12px] leading-snug text-[var(--ink-60)]">{next.detail}</p>}
         </div>
         {onDismiss && (
           <button
             type="button"
             onClick={onDismiss}
-            className="shrink-0 text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] hover:text-[var(--brief-ink)] cursor-pointer"
+            className="shrink-0 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] hover:text-[var(--brief-ink)] cursor-pointer"
           >
             Hide
           </button>
@@ -62,7 +62,7 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
           <span
             key={rung.id}
             title={rung.reached ? `${rung.label} — ${rung.how ?? 'done'}` : rung.label}
-            className={`h-1.5 flex-1 rounded-full ${rung.reached ? 'bg-[#4F46E5]' : 'bg-[color:var(--brief-line)]'}`}
+            className={`h-1.5 flex-1 rounded-full ${rung.reached ? 'bg-[#2563EB]' : 'bg-[color:var(--brief-line)]'}`}
           />
         ))}
       </div>
@@ -71,19 +71,19 @@ export function NextStep({ ladder, onAct, onDismiss, compact = false }: NextStep
         <button
           type="button"
           onClick={() => onAct(next.id)}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[#4F46E5] px-3.5 py-2 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#2563EB] px-3.5 py-2 text-[12px] font-extrabold text-[var(--accent-ink)] cursor-pointer"
         >
           {next.cta} <ArrowRight className="h-3 w-3" />
         </button>
         {nextService && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--ink-70)]">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--ink-70)]">
             <Lock className="h-3 w-3" /> opens {nextService.label}
           </span>
         )}
       </div>
 
       {!compact && ladder.reached.length > 0 && (
-        <p className="mt-2 flex items-center gap-1 text-[10px] text-[var(--ink-60)]">
+        <p className="mt-2 flex items-center gap-1 text-[11px] text-[var(--ink-60)]">
           <Check className="h-3 w-3" />
           {ladder.rungs.filter((r) => r.reached).slice(-1)[0]?.how ?? 'Done so far'}
         </p>

@@ -86,7 +86,7 @@ export function VendorPanel({
     return (
       <div className="space-y-3">
         <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-3">
-          <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+          <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
             Start selling
           </h4>
           <p className="text-xs text-[var(--ink-60)]">
@@ -113,11 +113,11 @@ export function VendorPanel({
           <button
             onClick={onCreateVendor}
             disabled={busyId === 'vendor'}
-            className="w-full py-2 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+            className="w-full py-2 rounded-full bg-[#2563EB] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
           >
             Create seller profile
           </button>
-          {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
+          {notice && <p className="text-[11px] text-[var(--brief-ink)]">{notice}</p>}
         </div>
       </div>
     );
@@ -131,7 +131,7 @@ export function VendorPanel({
         <h4 className="text-sm font-extrabold text-[var(--brief-ink)]">{vendor.displayName}</h4>
         {vendor.description && <p className="text-xs text-[var(--ink-60)]">{vendor.description}</p>}
         {vendor.verification.facts.map((f) => (
-          <p key={f.kind} className="text-[10px] text-[var(--ink-60)]">
+          <p key={f.kind} className="text-[11px] text-[var(--ink-60)]">
             {f.label}
           </p>
         ))}
@@ -143,27 +143,27 @@ export function VendorPanel({
           like a balance they could withdraw. */}
       {earnings && earnings.orderCount > 0 && (
         <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-1">
-          <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+          <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
             Settled earnings
           </h4>
           <p className="text-lg font-extrabold text-[var(--brief-ink)]">
             {money(earnings.net, earnings.currency)}
           </p>
-          <p className="text-[10px] text-[var(--ink-60)]">
+          <p className="text-[11px] text-[var(--ink-60)]">
             From {earnings.orderCount} settled order{earnings.orderCount === 1 ? '' : 's'} -{' '}
             {money(earnings.gross, earnings.currency)} less {money(earnings.commission, earnings.currency)}{' '}
             platform commission
           </p>
           {/* The distinction that matters: earned is not withdrawable. */}
           {!earnings.payoutAvailable && (
-            <p className="text-[10px] text-[var(--brief-ink)]">{earnings.payoutReason}</p>
+            <p className="text-[11px] text-[var(--brief-ink)]">{earnings.payoutReason}</p>
           )}
         </div>
       )}
 
       {/* --- new listing ---------------------------------------------------- */}
       <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+        <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
           New listing
         </h4>
         <input
@@ -218,7 +218,7 @@ export function VendorPanel({
              supply chain. Everything here is optional for a service or a
              one-off, and the board shows 'no flow declared' rather than guessing. */}
         <div className="pt-1.5 border-t border-[var(--brief-line)] space-y-2">
-          <p className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--ink-60)]">
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-[var(--ink-60)]">
             Where this fits in the supply board (optional)
           </p>
           <div className="flex gap-2">
@@ -312,19 +312,19 @@ export function VendorPanel({
         <button
           onClick={onCreateListing}
           disabled={busyId === 'listing'}
-          className="w-full py-2 rounded-full bg-[#4F46E5] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
+          className="w-full py-2 rounded-full bg-[#2563EB] text-[var(--accent-ink)] text-xs font-extrabold cursor-pointer disabled:opacity-50"
         >
           Create listing
         </button>
-        <p className="text-[10px] text-[var(--ink-60)]">
+        <p className="text-[11px] text-[var(--ink-60)]">
           New listings start as a draft. Publish when you are ready to take orders.
         </p>
-        {notice && <p className="text-[10px] text-[var(--brief-ink)]">{notice}</p>}
+        {notice && <p className="text-[11px] text-[var(--brief-ink)]">{notice}</p>}
       </div>
 
       {/* --- my listings ----------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+        <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
           My listings
         </h4>
         {listings.length === 0 ? (
@@ -335,13 +335,13 @@ export function VendorPanel({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[var(--brief-ink)]">{l.title}</p>
-                  <p className="text-[10px] text-[var(--ink-60)]">
+                  <p className="text-[11px] text-[var(--ink-60)]">
                     {money(l.price, l.currency)}
                     {l.quantityAvailable !== null ? ` - ${l.quantityAvailable} left` : ''}
                   </p>
                 </div>
                 <span
-                  className={`shrink-0 text-[9px] px-2 py-0.5 rounded-full ${
+                  className={`shrink-0 text-[11px] px-2 py-0.5 rounded-full ${
                     STATUS_STYLE[l.status] ?? 'bg-[var(--brief-line)] text-[var(--ink-60)]'
                   }`}
                 >
@@ -354,7 +354,7 @@ export function VendorPanel({
                 <button
                   type="button"
                   onClick={() => setPromoteFor(l)}
-                  className="mr-1.5 cursor-pointer rounded-full border border-[#4F46E5] px-3 py-1 text-[10px] font-extrabold text-[#4F46E5] hover:bg-[var(--color-well)]"
+                  className="mr-1.5 cursor-pointer rounded-full border border-[#2563EB] px-3 py-1 text-[11px] font-extrabold text-[#2563EB] hover:bg-[var(--color-well)]"
                 >
                   Promote
                 </button>
@@ -364,7 +364,7 @@ export function VendorPanel({
                       key={a.status}
                       onClick={() => onSetStatus(l.id, a.status)}
                       disabled={busyId === l.id}
-                      className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
                     >
                       {a.label}
                     </button>
@@ -378,7 +378,7 @@ export function VendorPanel({
 
       {/* --- orders received -------------------------------------------------- */}
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+        <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
           Orders received{pendingOrders.length > 0 ? ` (${pendingOrders.length} to fulfil)` : ''}
         </h4>
         {orders.length === 0 ? (

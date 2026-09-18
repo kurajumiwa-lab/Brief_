@@ -111,7 +111,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
               <h3 className="text-sm font-black text-[color:var(--color-text)]">
                 WAIRO Cargo Dispatch
               </h3>
-              <p className="text-[10px] text-[color:var(--color-text-muted)]">
+              <p className="text-[11px] text-[color:var(--color-text-muted)]">
                 Inter-County Matatu Sacco & Courier Waybill
               </p>
             </div>
@@ -129,7 +129,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
         <form onSubmit={handleSubmit} className="p-5 space-y-3.5">
           {/* Destination */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-[color:var(--color-text)] flex items-center space-x-1">
+            <label className="text-[12px] font-bold text-[color:var(--color-text)] flex items-center space-x-1">
               <MapPin className="w-3.5 h-3.5 text-[color:var(--color-primary)]" />
               <span>Destination Stage</span>
             </label>
@@ -156,7 +156,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
 
           {/* Carrier Sacco */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-bold text-[color:var(--color-text)]">Carrier / Matatu Sacco</label>
+            <label className="text-[12px] font-bold text-[color:var(--color-text)]">Carrier / Matatu Sacco</label>
             <select
               value={carrierSacco}
               onChange={(e) => setCarrierSacco(e.target.value)}
@@ -171,7 +171,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
           {/* Receiver Info */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[color:var(--color-text)]">Receiver Name</label>
+              <label className="text-[12px] font-bold text-[color:var(--color-text)]">Receiver Name</label>
               <input
                 type="text"
                 placeholder="e.g. Mary Wanjiku"
@@ -182,7 +182,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[color:var(--color-text)]">Receiver Phone</label>
+              <label className="text-[12px] font-bold text-[color:var(--color-text)]">Receiver Phone</label>
               <input
                 type="tel"
                 placeholder="e.g. 254712345678"
@@ -197,7 +197,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
           {/* Conductor & Fee */}
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[color:var(--color-text)]">Conductor Contact (Optional)</label>
+              <label className="text-[12px] font-bold text-[color:var(--color-text)]">Conductor Contact (Optional)</label>
               <input
                 type="tel"
                 placeholder="e.g. 254722000111"
@@ -207,7 +207,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-[color:var(--color-text)]">Stage Parcel Fee (KES)</label>
+              <label className="text-[12px] font-bold text-[color:var(--color-text)]">Stage Parcel Fee (KES)</label>
               <input
                 type="number"
                 placeholder="300"
@@ -220,7 +220,7 @@ export const CreateDispatchModal: React.FC<CreateDispatchModalProps> = ({
 
           {/* Notes */}
           <div className="space-y-1">
-            <label className="text-[11px] font-bold text-[color:var(--color-text)]">Parcel Notes</label>
+            <label className="text-[12px] font-bold text-[color:var(--color-text)]">Parcel Notes</label>
             <input
               type="text"
               placeholder="e.g. 2-Tier Birthday Cake, handle with care"

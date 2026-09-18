@@ -33,15 +33,15 @@
 /** Nothing in here is a colour from a hash — see the header. */
 import type * as React from 'react';
 
-export const ROOM_TINT = 'rgba(79, 70, 229, 0.07)';
-export const ROOM_TINT_SECONDARY = 'rgba(6, 182, 212, 0.06)';
+export const ROOM_TINT = 'rgba(37, 99, 235, 0.07)';
+export const ROOM_TINT_SECONDARY = 'rgba(8, 145, 178, 0.06)';
 /** #18130C — --brief-ink warmed a shade for laying over a photograph. */
-export const SCRIM_INK = '24, 19, 12';
+export const SCRIM_INK = '10, 14, 20';
 
 /** The room's own plaster as ONE layer: the floor of a plate. A component paints
     this on the plate and adds its accent as a separate glow layer above it, so
     no surface depends on a parser that can handle several backgrounds. */
-export const PLASTER = 'linear-gradient(158deg, #FBF6EC 0%, #F1E8DA 100%)';
+export const PLASTER = 'linear-gradient(158deg, #FBFCFE 0%, #EDF1F6 100%)';
 
 /** The room's own surface for a card with no picture of its own. Deliberately
     TWO layers (a light, then the plaster) and never more: a real browser paints
@@ -75,7 +75,7 @@ export const PHOTO_FILTER = 'saturate(1.05) contrast(1.02) brightness(1.005)';
 
 /** Small chip that sits on the plate: quiet, warm, unmistakably not a number. */
 export const PLATE_CHIP: React.CSSProperties = {
-  background: 'rgba(24, 19, 12, 0.055)',
+  background: 'rgba(10, 14, 20, 0.055)',
   color: 'var(--brief-muted)'
 };
 

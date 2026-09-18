@@ -48,7 +48,7 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">
+      <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">
         Activity
       </h3>
 
@@ -63,7 +63,7 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
               key={signal.id}
               className="flex items-center gap-3 bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-xl px-3 py-2"
             >
-              <span className="text-[10px] text-[var(--brief-ink)] min-w-0 truncate">
+              <span className="text-[11px] text-[var(--brief-ink)] min-w-0 truncate">
                 {ACTIVITY_LABELS[signal.type] ?? signal.type.replace(/_/g, ' ')}
               </span>
 
@@ -71,12 +71,12 @@ export function CircleActivity({ signals, limit }: CircleActivityProps) {
                   events have none and are left unattributed rather than
                   credited to somebody. */}
               {signal.actorId && (
-                <span className="text-[10px] text-[var(--ink-60)] shrink-0">
+                <span className="text-[11px] text-[var(--ink-60)] shrink-0">
                   {signal.actorId}
                 </span>
               )}
 
-              <span className="text-[9px] text-[var(--ink-60)] shrink-0 ml-auto">
+              <span className="text-[11px] text-[var(--ink-60)] shrink-0 ml-auto">
                 {signal.createdAt.slice(0, 10)}
               </span>
             </div>

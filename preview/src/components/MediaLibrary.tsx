@@ -59,12 +59,12 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
   return (
     <div className="rounded-xl border border-[var(--brief-line)] bg-[var(--color-well)] p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--ink-60)]">
           Your media library
         </p>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+          className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
         >
           {open ? 'Hide' : 'Show'}
         </button>
@@ -73,13 +73,13 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
       {open && (
         <>
           {error && (
-            <p className="text-[10px] text-[var(--brief-ink)]">{error}</p>
+            <p className="text-[11px] text-[var(--brief-ink)]">{error}</p>
           )}
           {rows === null && (
-            <p className="text-[10px] text-[var(--ink-60)]">Loading…</p>
+            <p className="text-[11px] text-[var(--ink-60)]">Loading…</p>
           )}
           {rows !== null && rows.length === 0 && !error && (
-            <p className="text-[10px] text-[var(--ink-60)]">
+            <p className="text-[11px] text-[var(--ink-60)]">
               No uploads yet. Files you add above collect here, ready to reuse.
             </p>
           )}
@@ -96,23 +96,23 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
                     className="h-8 w-8 shrink-0 rounded-md object-cover bg-[var(--color-well)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-bold text-[var(--brief-ink)]">
+                    <p className="truncate text-[11px] font-bold text-[var(--brief-ink)]">
                       {m.originalName ?? 'unnamed upload'}
                     </p>
-                    <p className="text-[9px] text-[var(--ink-60)]">
+                    <p className="text-[11px] text-[var(--ink-60)]">
                       {(m.bytes / 1024).toFixed(0)} KB · {m.createdAt.slice(0, 10)}
                     </p>
                   </div>
                   <button
                     onClick={() => onUse(m.url)}
-                    className="shrink-0 px-2 py-1 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[9px] cursor-pointer"
+                    className="shrink-0 px-2 py-1 rounded-lg bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
                   >
                     Use
                   </button>
                   <button
                     onClick={() => handleDelete(m.id)}
                     disabled={busyId === m.id}
-                    className="shrink-0 px-2 py-1 rounded-lg border border-[var(--brief-line)] font-bold text-[9px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                    className="shrink-0 px-2 py-1 rounded-lg border border-[var(--brief-line)] font-bold text-[11px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
                   >
                     {busyId === m.id ? '…' : 'Delete'}
                   </button>
@@ -120,7 +120,7 @@ export function MediaLibrary({ onUse }: MediaLibraryProps) {
               ))}
             </ul>
           )}
-          {note && <p className="text-[10px] text-[var(--ink-70)]">{note}</p>}
+          {note && <p className="text-[11px] text-[var(--ink-70)]">{note}</p>}
         </>
       )}
     </div>

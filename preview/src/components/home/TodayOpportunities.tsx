@@ -85,12 +85,12 @@ export function TodayOpportunities({
     <section className="space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-1.5">
-          <span className="w-2 h-2 rounded-full bg-[#4F46E5] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
           <h3 className="text-xs font-black uppercase tracking-[0.16em] text-[var(--brief-ink)]">
             Today's Opportunities
           </h3>
         </div>
-        <span className="text-[10px] font-mono text-gray-500 font-bold">Updated Live</span>
+        <span className="text-[11px] font-mono text-gray-500 font-bold">Updated Live</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
@@ -105,10 +105,10 @@ export function TodayOpportunities({
             className={`p-3 rounded-2xl bg-gradient-to-br ${item.bgGradient} text-left text-white shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer flex flex-col justify-between min-h-[95px]`}
           >
             <div className="flex items-start justify-between">
-              <span className="text-[18px] sm:text-xl font-black leading-none block">
+              <span className="text-[32px] sm:text-xl font-black leading-none block">
                 {item.badge}
               </span>
-              <span className="text-[8px] font-mono uppercase tracking-wider bg-black/20 px-1.5 py-0.5 rounded text-white/90">
+              <span className="text-[11px] font-mono uppercase tracking-wider bg-black/20 px-1.5 py-0.5 rounded text-white/90">
                 {item.category}
               </span>
             </div>
@@ -117,7 +117,7 @@ export function TodayOpportunities({
               <h4 className="font-black text-xs leading-tight block">
                 {item.title}
               </h4>
-              <p className="text-[10px] text-white/80 line-clamp-1">
+              <p className="text-[11px] text-white/80 line-clamp-1">
                 {item.subtitle}
               </p>
             </div>

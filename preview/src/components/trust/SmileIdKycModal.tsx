@@ -165,10 +165,10 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
         <div className="p-5 bg-gradient-to-r from-[#1E293B] via-[#0F172A] to-[#1E1B4B] border-b border-slate-800 flex items-center justify-between">
           <div className="space-y-0.5">
             <div className="flex items-center space-x-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] text-[10px] font-mono font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] text-[11px] font-mono font-black uppercase tracking-wider">
                 SMILE IDENTITY API
               </span>
-              <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center space-x-1">
+              <span className="text-[11px] text-emerald-400 font-mono font-bold flex items-center space-x-1">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>&lt;10s Pan-African KYC</span>
               </span>
@@ -191,14 +191,14 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
         {step === 'input' && (
           <form onSubmit={startLivenessCheck} className="p-5 sm:p-6 space-y-4 text-xs">
             <div className="p-3.5 rounded-2xl bg-slate-800/60 border border-slate-700/80 space-y-1 text-slate-300">
-              <p className="text-[11px] leading-relaxed">
+              <p className="text-[12px] leading-relaxed">
                 Brief utilizes <b>Smile Identity</b> (Official Pan-African KYC Provider) to verify Kenyan National IDs, Passports, and 3D facial liveness in real-time against the national IPRS registry.
               </p>
             </div>
 
             {/* Country Corridor */}
             <div className="space-y-1">
-              <label className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+              <label className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">
                 Country Authority
               </label>
               <select
@@ -216,7 +216,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
 
             {/* Document Type Selector */}
             <div className="space-y-1">
-              <label className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+              <label className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">
                 Document Type
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -244,7 +244,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
             {/* ID Number & Full Legal Name */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">
                   {docType === 'national_id' ? 'National ID Number' : docType === 'passport' ? 'Passport Number' : 'Card Serial Number'}
                 </label>
                 <input
@@ -258,7 +258,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-300 uppercase tracking-wider text-[10px]">
+                <label className="font-bold text-slate-300 uppercase tracking-wider text-[11px]">
                   Full Name (as on ID)
                 </label>
                 <input
@@ -294,7 +294,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
               </div>
 
               {/* Liveness Target Prompt */}
-              <div className="absolute bottom-2 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[10px] font-mono font-bold text-cyan-300">
+              <div className="absolute bottom-2 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[11px] font-mono font-bold text-cyan-300">
                 {livenessStage === 'center' && '👤 Look directly at camera'}
                 {livenessStage === 'turn_left' && '⬅️ Slowly turn head left'}
                 {livenessStage === 'turn_right' && '➡️ Slowly turn head right'}
@@ -307,7 +307,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
               <h4 className="text-sm font-black text-white">
                 Smile 3D Liveness Detection
               </h4>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[12px] text-slate-400">
                 Anti-spoofing algorithm is checking depth, texture, and active micro-expressions.
               </p>
             </div>
@@ -338,7 +338,7 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
               />
             </div>
 
-            <div className="text-[10px] font-mono text-slate-500">
+            <div className="text-[11px] font-mono text-slate-500">
               Smile Identity Secure Enclave • Encrypted IPRS Pipe
             </div>
           </div>
@@ -362,23 +362,23 @@ export const SmileIdKycModal: React.FC<SmileIdKycModalProps> = ({
             {/* Cryptographic Certificate Card */}
             <div className="p-4 rounded-2xl bg-slate-800/90 border border-slate-700 space-y-2.5 font-mono text-xs">
               <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                <span className="text-slate-400 uppercase text-[10px]">Certificate Ref:</span>
+                <span className="text-slate-400 uppercase text-[11px]">Certificate Ref:</span>
                 <span className="font-bold text-cyan-300">{kycResult.certificateRef}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                <span className="text-slate-400 uppercase text-[10px]">Legal Name:</span>
+                <span className="text-slate-400 uppercase text-[11px]">Legal Name:</span>
                 <span className="font-bold text-white">{kycResult.fullName}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                <span className="text-slate-400 uppercase text-[10px]">National ID / Doc:</span>
+                <span className="text-slate-400 uppercase text-[11px]">National ID / Doc:</span>
                 <span className="font-bold text-white">{kycResult.idNumber}</span>
               </div>
               <div className="flex items-center justify-between border-b border-slate-700 pb-2">
-                <span className="text-slate-400 uppercase text-[10px]">3D Liveness Score:</span>
+                <span className="text-slate-400 uppercase text-[11px]">3D Liveness Score:</span>
                 <span className="font-bold text-emerald-400">{kycResult.confidenceScore}% (Passed)</span>
               </div>
-              <div className="flex items-center justify-between pt-1 text-[11px]">
-                <span className="text-slate-400 uppercase text-[10px]">Issued Standing:</span>
+              <div className="flex items-center justify-between pt-1 text-[12px]">
+                <span className="text-slate-400 uppercase text-[11px]">Issued Standing:</span>
                 <span className="font-black text-emerald-400">TIER-3 VERIFIED CITIZEN</span>
               </div>
             </div>

@@ -103,7 +103,7 @@ export function EventsHub() {
           <h2 className="text-base font-extrabold truncate" style={{ color: 'var(--color-text)' }}>
             What&rsquo;s on
           </h2>
-          <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
             Popularity is counted people, never a seeded number.
           </p>
         </div>
@@ -125,14 +125,14 @@ export function EventsHub() {
 
       {/* ONE line: what you're looking at, and a way to clear it. */}
       <div className="flex items-center gap-2">
-        <p className="min-w-0 flex-1 text-[11px] font-bold truncate" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="min-w-0 flex-1 text-[12px] font-bold truncate" style={{ color: 'var(--color-text-muted)' }}>
           {summary}
         </p>
         {activeCount > 0 && (
           <button
             type="button"
             onClick={() => { setCategory(null); setFilters(EMPTY); }}
-            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+            className="shrink-0 inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer"
             style={{ color: 'var(--color-primary)' }}
           >
             <X className="w-3 h-3" /> Clear
@@ -158,7 +158,7 @@ export function EventsHub() {
 
       <FilterSheet open={sheetOpen} title="Filter what's on" onClose={() => setSheetOpen(false)}>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
             Category
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -185,7 +185,7 @@ export function EventsHub() {
         </div>
 
         <div>
-          <label htmlFor="eh-loc" className="block text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+          <label htmlFor="eh-loc" className="block text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
             Place (optional)
           </label>
           <input
@@ -200,7 +200,7 @@ export function EventsHub() {
 
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               From
             </p>
             <input
@@ -212,7 +212,7 @@ export function EventsHub() {
             />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] font-black uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
               To
             </p>
             <input

@@ -189,7 +189,7 @@ export function WellbeingDesk({
           <div>
             <div className="flex items-center space-x-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-[10px] font-mono font-black uppercase tracking-wider text-emerald-300">
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-emerald-300">
                 TOWN WELLBEING DISTRICT
               </span>
             </div>
@@ -221,7 +221,7 @@ export function WellbeingDesk({
             <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
               How are you feeling today?
             </h3>
-            <span className="text-[10px] font-mono text-gray-400">1-Tap Confidential Check-in</span>
+            <span className="text-[11px] font-mono text-gray-400">1-Tap Confidential Check-in</span>
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
@@ -239,7 +239,7 @@ export function WellbeingDesk({
                   }`}
                 >
                   <span className="text-2xl block mb-1">{m.emoji}</span>
-                  <span className="text-[11px] font-bold text-[var(--brief-ink)] leading-tight block">
+                  <span className="text-[12px] font-bold text-[var(--brief-ink)] leading-tight block">
                     {m.label}
                   </span>
                 </button>
@@ -267,7 +267,7 @@ export function WellbeingDesk({
               <span className="text-xl">{activeMoodObj.emoji}</span>
               <div>
                 <span className="font-bold block text-emerald-950">Feeling {activeMoodObj.label}:</span>
-                <p className="text-[11px] text-emerald-800 mt-0.5">{activeMoodObj.advice}</p>
+                <p className="text-[12px] text-emerald-800 mt-0.5">{activeMoodObj.advice}</p>
               </div>
             </div>
           )}
@@ -302,7 +302,7 @@ export function WellbeingDesk({
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Find Professional Help (Licensed Therapists)
               </h3>
-              <span className="text-[10px] text-emerald-700 font-bold flex items-center space-x-1">
+              <span className="text-[11px] text-emerald-700 font-bold flex items-center space-x-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Verified Credentials</span>
               </span>
@@ -317,22 +317,22 @@ export function WellbeingDesk({
                   <div className="flex items-start justify-between">
                     <div>
                       <h4 className="font-black text-xs text-[var(--brief-ink)]">{doc.name}</h4>
-                      <p className="text-[10px] text-emerald-700 font-bold">{doc.title}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">{doc.exp}</p>
+                      <p className="text-[11px] text-emerald-700 font-bold">{doc.title}</p>
+                      <p className="text-[11px] text-gray-500 mt-0.5">{doc.exp}</p>
                     </div>
-                    <div className="flex items-center space-x-1 bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-bold text-amber-700">
+                    <div className="flex items-center space-x-1 bg-amber-50 px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-700">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                       <span>{doc.rating}</span>
                     </div>
                   </div>
 
-                  <div className="text-[10px] text-gray-600 bg-gray-50 p-2 rounded-xl">
+                  <div className="text-[11px] text-gray-600 bg-gray-50 p-2 rounded-xl">
                     <span className="font-bold text-gray-700 block">Focus:</span>
                     <span>{doc.specialties}</span>
                   </div>
 
                   <div className="flex items-center justify-between pt-1 border-t border-gray-100">
-                    <span className="text-[10px] font-mono font-bold text-[var(--brief-ink)]">{doc.fee}</span>
+                    <span className="text-[11px] font-mono font-bold text-[var(--brief-ink)]">{doc.fee}</span>
                     <button
                       type="button"
                       onClick={() => handleBook(doc.name)}
@@ -354,7 +354,7 @@ export function WellbeingDesk({
               <h3 className="text-xs font-black uppercase tracking-wider text-[var(--brief-ink)]">
                 Free Community Peer Support Circles
               </h3>
-              <span className="text-[10px] text-gray-400">100% Free • Non-Judgemental</span>
+              <span className="text-[11px] text-gray-400">100% Free • Non-Judgemental</span>
             </div>
 
             <div className="space-y-2.5">
@@ -366,14 +366,14 @@ export function WellbeingDesk({
                   <div className="space-y-0.5">
                     <div className="flex items-center space-x-2">
                       <h4 className="font-black text-xs text-[var(--brief-ink)]">{grp.title}</h4>
-                      <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-cyan-50 text-cyan-700 font-bold">
+                      <span className="text-[11px] font-mono px-1.5 py-0.2 rounded bg-cyan-50 text-cyan-700 font-bold">
                         {grp.tag}
                       </span>
                     </div>
-                    <p className="text-[11px] text-gray-500">{grp.desc}</p>
-                    <div className="flex items-center space-x-3 text-[10px] font-mono text-gray-400 pt-1">
+                    <p className="text-[12px] text-gray-500">{grp.desc}</p>
+                    <div className="flex items-center space-x-3 text-[11px] font-mono text-gray-400 pt-1">
                       <span className="flex items-center space-x-1">
-                        <Clock className="w-3 h-3 text-[#4F46E5]" />
+                        <Clock className="w-3 h-3 text-[#2563EB]" />
                         <span>{grp.schedule}</span>
                       </span>
                       <span className="flex items-center space-x-1">
@@ -412,11 +412,11 @@ export function WellbeingDesk({
                   className="p-3.5 bg-[color:var(--brief-bg)] border border-[var(--brief-line)] rounded-2xl flex flex-col justify-between shadow-xs"
                 >
                   <div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
                       {act.tag}
                     </span>
                     <h4 className="font-black text-xs text-[var(--brief-ink)] mt-1.5">{act.title}</h4>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{act.schedule} • {act.location}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{act.schedule} • {act.location}</p>
                   </div>
 
                   <button

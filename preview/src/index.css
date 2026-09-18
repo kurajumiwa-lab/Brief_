@@ -16,28 +16,28 @@
        before it comes from borders; muted/faint are the SAME ink at reduced
        alpha. A card never carries a 1px outline: the room separates surfaces
        with shadow, not with a stroke. --- */
-  --ground:         #F4EEE3;  /* the room — warm plaster, not an empty canvas */
-  --surface:        #FDFAF3;  /* raised cards, banners — warm paper, never pure white */
-  --overlay-scrim:  #241C12;  /* the scrim is the room's own ink over a photo */
-  --hairline:       #E4DACB;  /* dividers and input rings ONLY, never a card */
+  --ground:         #F7F8FA;  /* the room — warm plaster, not an empty canvas */
+  --surface:        #FFFFFF;  /* raised cards, banners — warm paper, never pure white */
+  --overlay-scrim:  #0A0E14;  /* the scrim is the room's own ink over a photo */
+  --hairline:       #DCE1E8;  /* dividers and input rings ONLY, never a card */
 
-  --ink:            #241C12;  /* primary text — warm ink */
-  --ink-dim:        #6E6152;  /* secondary text */
-  --ink-faint:      #7E7057;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
+  --ink:            #0A0E14;  /* primary text — warm ink */
+  --ink-dim:        #5A6472;  /* secondary text */
+  --ink-faint:      #6B7684;  /* tertiary/meta: timestamps, counters — >=4.5:1 */
 
-  --signal-live:    #16A34A;  /* live/active state ONLY — success green */
+  --signal-live:    #059669;  /* live/active state ONLY — success green */
   --signal-urgent:  #DC2626;  /* countdown / closing-soon / expiring ONLY — danger */
 
-  --tea:            #4F46E5;  /* Tea category — electric indigo */
-  --today:          #06B6D4;  /* Today category — cyan */
-  --pursuits:       #16A34A;  /* Pursuits category — green */
-  --quests:         #16A34A;  /* Quests (shares live — quests ARE the live layer) */
+  --tea:            #2563EB;  /* Tea category — electric indigo */
+  --today:          #0891B2;  /* Today category — cyan */
+  --pursuits:       #059669;  /* Pursuits category — green */
+  --quests:         #059669;  /* Quests (shares live — quests ARE the live layer) */
 
   /* --- Spec-named accent tokens (§3) --- */
-  --accent:      #4F46E5;   /* electric indigo (primary) */
-  --accent-2:    #06B6D4;   /* terminal cyan (secondary) */
+  --accent:      #2563EB;   /* electric indigo (primary) */
+  --accent-2:    #0891B2;   /* terminal cyan (secondary) */
   --accent-ink:  #FFFFFF;   /* text on indigo — white, for contrast */
-  --success:     #16A34A;
+  --success:     #059669;
   --warning:     #B45309;
   --danger:      #DC2626;
 
@@ -181,10 +181,10 @@ html, body {
 .brief-scrim {
   background: linear-gradient(
     to top,
-    rgba(24, 19, 12, 0.95) 0%,
-    rgba(24, 19, 12, 0.62) 34%,
-    rgba(24, 19, 12, 0.16) 68%,
-    rgba(24, 19, 12, 0.04) 100%
+    rgba(10, 14, 20, 0.95) 0%,
+    rgba(10, 14, 20, 0.62) 34%,
+    rgba(10, 14, 20, 0.16) 68%,
+    rgba(10, 14, 20, 0.04) 100%
   );
 }
 .brief-spring-modal {
@@ -204,7 +204,7 @@ html, body {
   --lobby-edge: var(--brief-line);
   --lobby-ink: var(--brief-ink);
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(79, 70, 229, 0.07), transparent 60%),
+    radial-gradient(120% 60% at 50% -10%, rgba(37, 99, 235, 0.07), transparent 60%),
     var(--lobby-paper);
   border: 1px solid var(--lobby-edge);
   border-radius: 28px;
@@ -223,7 +223,7 @@ html, body {
   min-height: 44px;
   border-radius: 999px;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 14px;
   padding: 0 18px;
   border: none;
   cursor: pointer;
@@ -242,7 +242,7 @@ html, body {
   border-radius: 16px;
   border: none;
   background: var(--well);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--lobby-ink);
   box-shadow: inset 0 0 0 1px var(--lobby-edge), var(--room-light-dim);
 }
@@ -250,7 +250,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 13px;
   padding: 6px 10px;
   border-radius: 999px;
   border: none;
@@ -271,7 +271,7 @@ html, body {
   background: var(--brief-card);
   color: var(--lobby-ink);
   font-weight: 900;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   box-shadow: inset 0 0 0 1px var(--lobby-edge), var(--lift-1);
 }
@@ -354,16 +354,16 @@ html, body {
   --m3-surface-container-highest: var(--brief-line);
   --m3-surface-variant:        var(--brief-line);
 
-  --m3-primary:                #4F46E5;
-  --m3-primary-fixed:          #4F46E5;
-  --m3-primary-fixed-dim:      #06B6D4;
-  --m3-primary-container:      #4F46E5;
+  --m3-primary:                #2563EB;
+  --m3-primary-fixed:          #2563EB;
+  --m3-primary-fixed-dim:      #0891B2;
+  --m3-primary-container:      #2563EB;
   --m3-on-primary:             #FFFFFF;
   --m3-on-primary-container:   #FFFFFF;
 
-  --m3-secondary:              #06B6D4;
-  --m3-secondary-fixed:        #06B6D4;
-  --m3-secondary-fixed-dim:    #06B6D4;
+  --m3-secondary:              #0891B2;
+  --m3-secondary-fixed:        #0891B2;
+  --m3-secondary-fixed-dim:    #0891B2;
   --m3-secondary-container:    var(--well);
   --m3-on-secondary-container: var(--brief-ink);
 
@@ -390,7 +390,7 @@ html, body {
 /*/* Status ring (the "new" story affordance) — indigo arc for new, hairline
    full ring once seen. */
 .m3-status-ring {
-  background: conic-gradient(from 180deg at 50% 50%, #4F46E5 0deg, #4F46E5 120deg, transparent 120deg, transparent 360deg);
+  background: conic-gradient(from 180deg at 50% 50%, #2563EB 0deg, #2563EB 120deg, transparent 120deg, transparent 360deg);
 }
 .m3-status-ring-seen {
   background: conic-gradient(from 180deg at 50% 50%, var(--brief-line) 0deg, var(--brief-line) 360deg);

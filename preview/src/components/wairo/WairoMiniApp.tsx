@@ -126,15 +126,15 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
       
       {/* Phone Status Bar */}
       <div className="pt-3 px-6 pb-2 flex items-center justify-between text-[#0B1B2A] text-xs font-semibold tracking-tight z-20">
-        <span className="font-mono text-[13px] font-bold">10:09</span>
+        <span className="font-mono text-[14px] font-bold">10:09</span>
         
         {/* Dynamic Island Pill */}
         <div className="w-28 h-5 bg-[#0B1B2A] rounded-full flex items-center justify-center px-2 space-x-1.5 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-[#00BFEF] animate-pulse"></span>
-          <span className="text-[9px] font-mono text-white font-bold tracking-wider">WAIRO LOGISTICS</span>
+          <span className="text-[11px] font-mono text-white font-bold tracking-wider">WAIRO LOGISTICS</span>
         </div>
 
-        <div className="flex items-center space-x-1.5 text-[11px]">
+        <div className="flex items-center space-x-1.5 text-[12px]">
           <span>5G</span>
           <div className="w-4 h-2 border border-[#0B1B2A] rounded-sm p-0.5 flex items-center">
             <div className="w-full h-full bg-[#0B1B2A] rounded-2xs"></div>
@@ -166,7 +166,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
             <span className="text-xl font-black tracking-tighter text-[#0B1B2A] lowercase font-mono leading-none">
               wai<span className="text-[#00BFEF]">ro</span>
             </span>
-            <span className="text-[8px] font-mono font-extrabold uppercase text-[#F58220] tracking-wider">
+            <span className="text-[11px] font-mono font-extrabold uppercase text-[#F58220] tracking-wider">
               Kenyan Logistics & Errands
             </span>
           </div>
@@ -192,7 +192,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
           >
             <Bell className="w-3.5 h-3.5 text-[#0B1B2A]" />
             {unreadNotifications > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F58220] text-white text-[9px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#F58220] text-white text-[11px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
                 {unreadNotifications}
               </span>
             )}
@@ -230,7 +230,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <ChevronDown className="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" />
               </button>
 
-              <div className="flex items-center space-x-1.5 text-[11px] font-mono text-[#173247]">
+              <div className="flex items-center space-x-1.5 text-[12px] font-mono text-[#173247]">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
                 <span className="font-semibold">{selectedLocation.zone}</span>
               </div>
@@ -238,7 +238,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
 
             {/* Marketplace Headline */}
             <div className="pt-1">
-              <h1 className="text-[24px] sm:text-[26px] font-black text-[#0B1B2A] leading-[1.1] tracking-tight">
+              <h1 className="text-[32px] sm:text-[30px] font-black text-[#0B1B2A] leading-[1.1] tracking-tight">
                 Kenyan Courier & Errands.<br />
                 <span className="text-[#00BFEF] font-bold">Better Returns for Providers.</span>
               </h1>
@@ -265,7 +265,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                      <span className={`text-[11px] font-mono px-1.5 py-0.5 rounded font-bold ${
                         isSelected ? 'bg-[#00BFEF]/20 text-[#00BFEF]' : 'bg-gray-100 text-gray-700'
                       }`}>
                         {srv.badge}
@@ -276,7 +276,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
 
                     <div className="mt-2.5">
                       <h3 className="font-bold text-xs leading-tight">{srv.title}</h3>
-                      <div className="flex items-center justify-between mt-1 text-[10px] font-mono">
+                      <div className="flex items-center justify-between mt-1 text-[11px] font-mono">
                         <span className={isSelected ? 'text-[#F58220] font-bold' : 'text-[#0B1B2A] font-bold'}>
                           From KES {srv.baseKes}
                         </span>
@@ -297,13 +297,13 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                     <Bike className="w-4 h-4 text-[#F58220]" />
                   </div>
                   <div>
-                    <span className="text-[10px] font-mono text-[#00BFEF] font-bold block">ACTIVE SHIPMENT • {activeDelivery.trackingId}</span>
+                    <span className="text-[11px] font-mono text-[#00BFEF] font-bold block">ACTIVE SHIPMENT • {activeDelivery.trackingId}</span>
                     <h3 className="font-bold text-sm text-white">{activeDelivery.carrierType}</h3>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[10px] font-mono text-emerald-400 font-bold block">90% RIDER PAYOUT</span>
+                  <span className="text-[11px] font-mono text-emerald-400 font-bold block">90% RIDER PAYOUT</span>
                   <span className="text-xs text-[#F58220] font-mono font-bold">KES {activeDelivery.fareKes} Total</span>
                 </div>
               </div>
@@ -312,15 +312,15 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between items-center bg-black/30 p-2.5 rounded-xl border border-white/5">
                   <div>
-                    <span className="text-[10px] text-gray-400 block font-mono">ASSIGNED COURIER:</span>
+                    <span className="text-[11px] text-gray-400 block font-mono">ASSIGNED COURIER:</span>
                     <span className="font-bold text-white flex items-center space-x-1">
                       <span>{activeDelivery.courierName}</span>
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline" />
                     </span>
-                    <span className="text-[10px] text-[#00BFEF] font-mono">{activeDelivery.vehicleType} • {activeDelivery.vehiclePlate}</span>
+                    <span className="text-[11px] text-[#00BFEF] font-mono">{activeDelivery.vehicleType} • {activeDelivery.vehiclePlate}</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] text-gray-400 block font-mono">STATUS:</span>
+                    <span className="text-[11px] text-gray-400 block font-mono">STATUS:</span>
                     <span className="text-[#00BFEF] font-mono font-bold">{activeDelivery.status} ({activeDelivery.etaMinutes}m ETA)</span>
                   </div>
                 </div>
@@ -367,11 +367,11 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <div>
                   <h4 className="text-xs font-bold text-[#0B1B2A] flex items-center space-x-1.5">
                     <span>Mathematical Auction Engine</span>
-                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-100 text-[#00BFEF] font-bold">
+                    <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-blue-100 text-[#00BFEF] font-bold">
                       PRIVATE BIDS
                     </span>
                   </h4>
-                  <p className="text-[10px] text-gray-600">
+                  <p className="text-[11px] text-gray-600">
                     Optimal algorithmic matches for {selectedLocation.name} (Calculated via trust, rate & vehicle ownership score)
                   </p>
                 </div>
@@ -387,13 +387,13 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                       <div className="flex items-center space-x-1.5">
                         <span className="font-bold text-xs text-[#0B1B2A]">{bid.companyName}</span>
                         {bid.insuranceCovered && (
-                          <span className="text-[9px] px-1 rounded bg-emerald-100 text-emerald-700 font-bold">
+                          <span className="text-[11px] px-1 rounded bg-emerald-100 text-emerald-700 font-bold">
                             ✓ INSURED
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-gray-600 block">{bid.vehicleModel} • Driver: {bid.driverName}</span>
-                      <span className="text-[9px] font-mono text-[#00BFEF] font-bold">
+                      <span className="text-[11px] text-gray-600 block">{bid.vehicleModel} • Driver: {bid.driverName}</span>
+                      <span className="text-[11px] font-mono text-[#00BFEF] font-bold">
                         ★ {bid.trustScore}% Trust Score • {bid.etaMins}m ETA
                       </span>
                     </div>
@@ -407,7 +407,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                           playSound('click');
                           onOpenDispatchModal();
                         }}
-                        className="mt-1 px-2.5 py-1 rounded-lg bg-[#0B1B2A] hover:bg-[#173247] text-white text-[10px] font-bold cursor-pointer"
+                        className="mt-1 px-2.5 py-1 rounded-lg bg-[#0B1B2A] hover:bg-[#173247] text-white text-[11px] font-bold cursor-pointer"
                       >
                         Select
                       </button>
@@ -425,7 +425,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 </div>
                 <div>
                   <h5 className="font-bold text-xs">Drive / Ride with Wairo</h5>
-                  <p className="text-[10px] text-[#DCE2E6]/70">Earn 90% payout on every drop via M-Pesa</p>
+                  <p className="text-[11px] text-[#DCE2E6]/70">Earn 90% payout on every drop via M-Pesa</p>
                 </div>
               </div>
 
@@ -456,19 +456,19 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <div key={order.id} className="p-3.5 rounded-2xl bg-white border border-[#DCE2E6] space-y-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <span className="text-[10px] font-mono text-gray-500">{order.id} • {order.date}</span>
+                      <span className="text-[11px] font-mono text-gray-500">{order.id} • {order.date}</span>
                       <h4 className="font-bold text-xs text-[#0B1B2A]">{order.items}</h4>
-                      <p className="text-[11px] text-gray-600">{order.destination}</p>
+                      <p className="text-[12px] text-gray-600">{order.destination}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-xs font-mono font-bold text-[#0B1B2A]">KES {order.costKes}</span>
-                      <span className="block text-[10px] font-bold font-mono" style={{ color: order.statusColor }}>
+                      <span className="block text-[11px] font-bold font-mono" style={{ color: order.statusColor }}>
                         {order.status}
                       </span>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[10px] font-mono text-gray-600">
+                  <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-600">
                     <span>Provider: <strong className="text-[#0B1B2A]">{order.provider}</strong></span>
                     <span className="text-emerald-600">Rider Take: KES {order.driverTakeKes} (90%)</span>
                   </div>
@@ -482,7 +482,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
         {activeTab === 'deliver' && (
           <div className="space-y-4">
             <div className="p-4 rounded-2xl bg-gradient-to-r from-[#0B1B2A] to-[#173247] text-white space-y-2">
-              <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Instant Dispatch</span>
+              <span className="text-[11px] uppercase font-mono text-[#00BFEF]">Instant Dispatch</span>
               <h2 className="text-base font-bold">Post Parcel or Errand Request</h2>
               <p className="text-xs text-[#DCE2E6]/70">
                 Private registered companies and owner-operator couriers will submit algorithmic bids in seconds.
@@ -509,7 +509,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <span className="text-lg">🛵</span>
                 <div>
                   <h4 className="font-bold text-xs text-[#0B1B2A]">Erick Mwangi (Courier Partner)</h4>
-                  <span className="text-[10px] text-emerald-600 font-mono">● Active Delivery Comms</span>
+                  <span className="text-[11px] text-emerald-600 font-mono">● Active Delivery Comms</span>
                 </div>
               </div>
             </div>
@@ -524,7 +524,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                         ? 'bg-[#F58220] text-white rounded-br-xs' 
                         : 'bg-[#0B1B2A] text-white rounded-bl-xs border border-[#173247]'
                     }`}>
-                      <div className="flex items-center justify-between text-[10px] opacity-75 mb-1">
+                      <div className="flex items-center justify-between text-[11px] opacity-75 mb-1">
                         <span>{m.name}</span>
                         <span>{m.time}</span>
                       </div>
@@ -563,17 +563,17 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-white">Courier & Carrier Hub</h3>
-                  <p className="text-[11px] text-[#00BFEF] font-mono">Kenya Logistics Partner Registry</p>
+                  <p className="text-[12px] text-[#00BFEF] font-mono">Kenya Logistics Partner Registry</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 text-xs font-mono">
                 <div className="p-2 rounded-xl bg-black/30">
-                  <span className="text-gray-400 block text-[10px]">DRIVER PAYOUT:</span>
+                  <span className="text-gray-400 block text-[11px]">DRIVER PAYOUT:</span>
                   <span className="text-[#F58220] font-bold">90% of Fare</span>
                 </div>
                 <div className="p-2 rounded-xl bg-black/30">
-                  <span className="text-gray-400 block text-[10px]">DISBURSEMENT:</span>
+                  <span className="text-gray-400 block text-[11px]">DISBURSEMENT:</span>
                   <span className="text-emerald-400 font-bold">Instant M-Pesa</span>
                 </div>
               </div>
@@ -584,7 +584,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Vehicle & Logbook Ownership Boost</span>
               </h4>
-              <p className="text-gray-600 text-[11px] leading-relaxed">
+              <p className="text-gray-600 text-[12px] leading-relaxed">
                 Riders and drivers who own their motorbike, car, or van with a verified logbook receive priority matching in the private reverse-auction script and reduced platform deductions.
               </p>
             </div>
@@ -602,7 +602,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 </div>
                 <div>
                   <h5 className="font-bold text-xs text-[#0B1B2A]">Embed Wairo in Any E-Commerce WebApp</h5>
-                  <p className="text-[10px] text-gray-500">React SDK, iFrame, or CDN Script</p>
+                  <p className="text-[11px] text-gray-500">React SDK, iFrame, or CDN Script</p>
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
@@ -623,7 +623,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                   </div>
                   <div>
                     <h5 className="font-bold text-xs text-[#0B1B2A]">Simulate 2G USSD (*483*88#) & SMS</h5>
-                    <p className="text-[10px] text-gray-500">For non-smartphone couriers & feature phones</p>
+                    <p className="text-[11px] text-gray-500">For non-smartphone couriers & feature phones</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
@@ -645,7 +645,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                   </div>
                   <div>
                     <h5 className="font-bold text-xs text-[#0B1B2A]">Inter-County Traveler & Cargo Matching</h5>
-                    <p className="text-[10px] text-gray-500">Nairobi ➔ Mombasa, Nakuru, Kisumu, Eldoret</p>
+                    <p className="text-[11px] text-gray-500">Nairobi ➔ Mombasa, Nakuru, Kisumu, Eldoret</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
@@ -662,12 +662,12 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                 className="w-full p-3.5 rounded-2xl bg-white border border-blue-500/40 hover:border-blue-500 flex items-center justify-between text-left transition-colors cursor-pointer group shadow-xs"
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#06B6D4] flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#0891B2] flex items-center justify-center">
                     <Award className="w-4 h-4" />
                   </div>
                   <div>
                     <h5 className="font-bold text-xs text-[#0B1B2A]">Private Carrier Reverse-Auction Desk</h5>
-                    <p className="text-[10px] text-gray-500">Silent mathematical matching & fleet ranking</p>
+                    <p className="text-[11px] text-gray-500">Silent mathematical matching & fleet ranking</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
@@ -689,7 +689,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                   </div>
                   <div>
                     <h5 className="font-bold text-xs text-[#0B1B2A]">PWA Offline IndexedDB Sync Queue</h5>
-                    <p className="text-[10px] text-gray-500">Zero-data offline mutations & background drain</p>
+                    <p className="text-[11px] text-gray-500">Zero-data offline mutations & background drain</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
@@ -728,7 +728,7 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
                   <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#00BFEF] animate-ping"></span>
                 )}
               </div>
-              <span className={`text-[10px] mt-1 font-semibold ${isActive ? 'font-bold text-[#0B1B2A]' : ''}`}>
+              <span className={`text-[11px] mt-1 font-semibold ${isActive ? 'font-bold text-[#0B1B2A]' : ''}`}>
                 {tab.label}
               </span>
               
@@ -756,11 +756,11 @@ export const WairoMiniApp: React.FC<WairoMiniAppProps> = ({
             <div className="space-y-2 text-xs">
               <div className="p-2 rounded bg-[#173247] border-l-2 border-[#F58220]">
                 <span className="font-bold text-[#F58220] block">Private Bid Settled</span>
-                <span className="text-[11px] text-gray-300">SwiftLink Rider Erick Mwangi assigned (98.4% Trust).</span>
+                <span className="text-[12px] text-gray-300">SwiftLink Rider Erick Mwangi assigned (98.4% Trust).</span>
               </div>
               <div className="p-2 rounded bg-[#173247] border-l-2 border-[#00BFEF]">
                 <span className="font-bold text-[#00BFEF] block">Consolidated Batch Ready</span>
-                <span className="text-[11px] text-gray-300">Nairobi ➔ Mombasa highway van departs at 2:00 PM.</span>
+                <span className="text-[12px] text-gray-300">Nairobi ➔ Mombasa highway van departs at 2:00 PM.</span>
               </div>
             </div>
           </div>

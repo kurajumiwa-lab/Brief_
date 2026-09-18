@@ -142,7 +142,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
   if (status === 'loading') {
     return (
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <p className="text-[11px] text-[var(--ink-60)]">Reading what is waiting on you…</p>
+        <p className="text-[12px] text-[var(--ink-60)]">Reading what is waiting on you…</p>
       </div>
     );
   }
@@ -162,10 +162,10 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-8 text-center">
           <p className="text-xs font-extrabold text-[var(--brief-ink)]">The queue could not be read</p>
-          <p className="text-[10px] text-[var(--ink-70)] mt-1">{unavailableReason}</p>
+          <p className="text-[11px] text-[var(--ink-70)] mt-1">{unavailableReason}</p>
           <button
             onClick={() => { setStatus('loading'); void load(); }}
-            className="mt-3 px-3 py-2 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
+            className="mt-3 px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[12px] cursor-pointer"
           >
             Try again
           </button>
@@ -181,7 +181,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
       <div className="flex items-center justify-end">
         <button
           onClick={() => { setStatus('loading'); void load(); }}
-          className="shrink-0 px-3 py-2 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[11px] cursor-pointer"
+          className="shrink-0 px-3 py-2 rounded-xl bg-[color:var(--color-paper)] border border-[var(--brief-line)] text-[var(--brief-ink)] font-extrabold text-[12px] cursor-pointer"
         >
           Refresh
         </button>
@@ -189,7 +189,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
 
       {refusal && (
         <div className="rounded-xl border border-[var(--brief-line)] bg-[var(--color-well)] px-3 py-2">
-          <p className="text-[11px] text-[var(--brief-ink)]">
+          <p className="text-[12px] text-[var(--brief-ink)]">
             Not done: {refusal}. The item is still in the queue.
           </p>
         </div>
@@ -211,35 +211,35 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[9px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+                <span className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
                   {KIND_LABEL[item.kind]}
                 </span>
                 {item.kind === 'task' && (
-                  <span className="text-[9px] font-bold text-[var(--ink-60)]">{item.circleName}</span>
+                  <span className="text-[11px] font-bold text-[var(--ink-60)]">{item.circleName}</span>
                 )}
                 {item.kind === 'checkin' && item.status === 'open' && (
-                  <span className="text-[9px] font-extrabold text-[var(--brief-ink)] bg-[var(--surface-3)] px-1.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-extrabold text-[var(--brief-ink)] bg-[var(--surface-3)] px-1.5 py-0.5 rounded-full">
                     Open now
                   </span>
                 )}
-                <span className="text-[9px] font-bold text-[var(--ink-60)]">
+                <span className="text-[11px] font-bold text-[var(--ink-60)]">
                   waiting {waited(item.daysWaiting)}
                 </span>
               </div>
 
               <button
                 onClick={() => open(item)}
-                className="mt-1 block text-[13px] font-extrabold text-[var(--brief-ink)] text-left hover:underline cursor-pointer"
+                className="mt-1 block text-[14px] font-extrabold text-[var(--brief-ink)] text-left hover:underline cursor-pointer"
               >
                 {item.title}
               </button>
 
               {item.detail && (
-                <p className="text-[11px] text-[var(--ink-55)] mt-0.5 line-clamp-2">{item.detail}</p>
+                <p className="text-[12px] text-[var(--ink-55)] mt-0.5 line-clamp-2">{item.detail}</p>
               )}
 
               {item.kind === 'checkin' && (
-                <p className="text-[11px] text-[var(--ink-70)] mt-1">
+                <p className="text-[12px] text-[var(--ink-70)] mt-1">
                   {item.pending} still to check in · {item.checkedIn} checked in
                 </p>
               )}
@@ -253,7 +253,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
                     else void act(item, button.action);
                   }}
                   disabled={busy}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#4F46E5] text-[var(--accent-ink)] text-[10px] font-extrabold cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] text-[var(--accent-ink)] text-[11px] font-extrabold cursor-pointer disabled:opacity-50"
                 >
                   {busy ? '…' : button.label}
                 </button>
@@ -262,7 +262,7 @@ export function TriageQueue({ onOpenSection, onNotice }: TriageQueueProps) {
                 <button
                   onClick={() => void act(item, 'release')}
                   disabled={busy}
-                  className="px-2.5 py-1 rounded-lg border border-[var(--brief-line)] text-[10px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                  className="px-2.5 py-1 rounded-lg border border-[var(--brief-line)] text-[11px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
                 >
                   Hand back
                 </button>

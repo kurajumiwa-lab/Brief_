@@ -93,13 +93,13 @@ export function SpaceStorefrontHeader({
           <img src={space.image} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
         ) : pinned ? (
           <div className="absolute inset-0 flex flex-col justify-end p-4">
-            <span className="text-[9px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-muted)' }}>
+            <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-muted)' }}>
               {isPinned ? 'Pinned by the vendor' : 'Newest live offer'}
             </span>
-            <p className="mt-1 text-[19px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
+            <p className="mt-1 text-[30px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
               {pinned.title}
             </p>
-            <p className="mt-0.5 text-[12px] font-mono font-bold" style={{ color: 'var(--brief-ink)' }}>
+            <p className="mt-0.5 text-[13px] font-mono font-bold" style={{ color: 'var(--brief-ink)' }}>
               {pinned.price === 0 ? 'Free' : `KES ${Number(pinned.price).toLocaleString('en-KE')}`}
               {pinned.unitLabel ? ` / ${pinned.unitLabel}` : ''}
               {pinned.minOrderQuantity ? ` · min ${pinned.minOrderQuantity}` : ''}
@@ -107,17 +107,17 @@ export function SpaceStorefrontHeader({
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col justify-end p-4">
-            <p className="text-[24px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
+            <p className="text-[32px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
               {space.name}
             </p>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
               No cover photo yet · {liveOffers} live offer{liveOffers === 1 ? '' : 's'}
             </p>
           </div>
         )}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           <span
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider"
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black uppercase tracking-wider"
             style={{ background: 'rgba(255,255,255,0.94)', color: 'var(--brief-ink)', boxShadow: 'var(--lift-1)' }}
           >
             {space.visibility === 'public' ? 'Public' : space.visibility === 'unlisted' ? 'Unlisted' : <><Lock className="w-3 h-3" /> Private</>}
@@ -135,13 +135,13 @@ export function SpaceStorefrontHeader({
             {initials || '·'}
           </span>
           <div className="min-w-0 pb-1">
-            <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
+            <h1 className="text-[30px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
               {space.name}
             </h1>
-            <p className="text-[13px] truncate" style={{ color: 'var(--brief-muted)' }}>
+            <p className="text-[14px] truncate" style={{ color: 'var(--brief-muted)' }}>
               {space.goal || (space.type ?? 'business').replace('_', ' ')}
             </p>
-            <p className="text-[11px] font-medium tracking-wide truncate" style={{ color: 'var(--brief-muted)' }}>
+            <p className="text-[12px] font-medium tracking-wide truncate" style={{ color: 'var(--brief-muted)' }}>
               {[where, when].filter(Boolean).join(' · ') || 'No place or hours stated yet'}
             </p>
           </div>
@@ -156,7 +156,7 @@ export function SpaceStorefrontHeader({
                 type="button"
                 onClick={onAddOffer}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-black cursor-pointer disabled:opacity-50"
                 style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
               >
                 <Plus className="w-4 h-4" /> Add offer
@@ -164,7 +164,7 @@ export function SpaceStorefrontHeader({
               <button
                 type="button"
                 onClick={onOpenInbox}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
                 style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Inbox
@@ -174,7 +174,7 @@ export function SpaceStorefrontHeader({
                 <button
                   type="button"
                   onClick={onCreateOrder}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
                   style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
                   title="Record who walked in, what they wanted, and what you quoted"
                 >
@@ -185,7 +185,7 @@ export function SpaceStorefrontHeader({
                 type="button"
                 onClick={onEdit}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer disabled:opacity-50"
                 style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <Pencil className="w-4 h-4" /> Edit space
@@ -198,7 +198,7 @@ export function SpaceStorefrontHeader({
                   type="button"
                   onClick={onFollow}
                   disabled={busy}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-black cursor-pointer disabled:opacity-50"
                   style={space.iAmFollowing || audience.iAmFollowing
                     ? { background: 'var(--color-paper)', color: 'var(--brief-ink)', border: '1px solid var(--brief-line)' }
                     : { background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
@@ -209,7 +209,7 @@ export function SpaceStorefrontHeader({
               <button
                 type="button"
                 onClick={onMessage}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
                 style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Message
@@ -219,7 +219,7 @@ export function SpaceStorefrontHeader({
           <button
             type="button"
             onClick={onShare}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold border cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
             style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
           >
             <Share2 className="w-4 h-4" /> Share
@@ -247,14 +247,14 @@ export function SpaceStorefrontHeader({
               ]
           ).map((tile) => (
             <div key={tile.label} className="flex-1 px-2 py-2.5 text-center" style={{ background: 'var(--color-paper)' }}>
-              <p className="font-mono text-[17px] font-extrabold leading-none brief-countdown" style={{ color: 'var(--brief-ink)' }}>
+              <p className="font-mono text-[32px] font-extrabold leading-none brief-countdown" style={{ color: 'var(--brief-ink)' }}>
                 {tile.value}
               </p>
-              <p className="text-[10px] font-medium tracking-wide uppercase mt-1" style={{ color: 'var(--brief-muted)' }}>
+              <p className="text-[11px] font-medium tracking-wide uppercase mt-1" style={{ color: 'var(--brief-muted)' }}>
                 {tile.label}
               </p>
               {tile.sub && (
-                <p className="text-[9px] font-mono mt-0.5 truncate" style={{ color: 'var(--color-quiet)' }}>
+                <p className="text-[11px] font-mono mt-0.5 truncate" style={{ color: 'var(--color-quiet)' }}>
                   {tile.sub}
                 </p>
               )}

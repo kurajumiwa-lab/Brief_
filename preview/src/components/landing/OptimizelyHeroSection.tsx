@@ -47,7 +47,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
           <span>Brief Hyper-Local OS · {locationName} Ward</span>
         </div>
 
-        <span className="hidden sm:inline-block text-[11px] font-mono text-[#93EE34] font-bold">
+        <span className="hidden sm:inline-block text-[12px] font-mono text-[#93EE34] font-bold">
           47 COUNTIES READY
         </span>
       </div>
@@ -116,7 +116,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
               </div>
               <div>
                 <h4 className="text-xs font-black text-white">Circle Table Bank</h4>
-                <p className="text-[10px] text-gray-300">Pezesha score 740 · Cycle 5 Live</p>
+                <p className="text-[11px] text-gray-300">Pezesha score 740 · Cycle 5 Live</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />
@@ -135,7 +135,7 @@ export const OptimizelyHeroSection: React.FC<OptimizelyHeroSectionProps> = ({
               </div>
               <div>
                 <h4 className="text-xs font-black text-white">CBC PTA Bulk Runs</h4>
-                <p className="text-[10px] text-gray-300">KICD Grade 7 · -28% Wholesale</p>
+                <p className="text-[11px] text-gray-300">KICD Grade 7 · -28% Wholesale</p>
               </div>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400" />

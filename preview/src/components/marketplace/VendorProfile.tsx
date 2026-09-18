@@ -32,7 +32,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
 
   return (
     <div className="space-y-3">
-      <button onClick={onBack} className="text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer">
+      <button onClick={onBack} className="text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer">
         Back to marketplace
       </button>
 
@@ -40,7 +40,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-sm font-extrabold text-[var(--brief-ink)]">{vendor.displayName}</h3>
           {vendor.status !== 'active' && (
-            <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--brief-ink)]">
+            <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--brief-ink)]">
               {vendor.status}
             </span>
           )}
@@ -51,13 +51,13 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         )}
 
         {vendor.contactMethod && (
-          <p className="text-[10px] text-[var(--ink-60)]">Contact: {vendor.contactMethod}</p>
+          <p className="text-[11px] text-[var(--ink-60)]">Contact: {vendor.contactMethod}</p>
         )}
       </div>
 
       {/* Verification. Shown only when something was genuinely checked. */}
       <div className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+        <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
           Verification
         </h4>
         {evidence.length === 0 ? (
@@ -77,7 +77,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
         {facts.length > 0 && (
           <ul className="space-y-1 pt-1">
             {facts.map((f) => (
-              <li key={f.kind} className="text-[10px] text-[var(--ink-60)]">
+              <li key={f.kind} className="text-[11px] text-[var(--ink-60)]">
                 {f.label}
               </li>
             ))}
@@ -86,7 +86,7 @@ export function VendorProfile({ vendor, listings, onBack, onOpenListing }: Vendo
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-[11px] font-extrabold text-[var(--ink-60)]">
+        <h4 className="text-[12px] font-extrabold text-[var(--ink-60)]">
           Listings
         </h4>
         {listings.length === 0 ? (

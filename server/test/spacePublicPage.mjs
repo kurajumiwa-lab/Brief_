@@ -443,6 +443,22 @@ await test("leaving the contact channel blank is a choice, never a to-do", () =>
   assert.equal(answered.fields.find((f) => f.key === "contactChannel").state, "current");
 });
 
+await test("the page honours the app's type floor and shadow-not-stroke rule", () => {
+  const src = fs.readFileSync(new URL("../src/domain/spacePublicPage.js", import.meta.url), "utf8");
+  const css = src.slice(src.indexOf("const ROOM_CSS"), src.indexOf("`;", src.indexOf("const ROOM_CSS")));
+  const sizes = [...css.matchAll(/font(?:-size)?:\s*(?:\d+(?:\.\d+)?px\/)?(\d+)px/g)].map((m) => Number(m[1]));
+  assert.ok(sizes.length > 8, "the sheet declares its type scale");
+  assert.ok(Math.min(...sizes) >= 11, `the smallest type on a public page is 11px (found ${Math.min(...sizes)}px)`);
+  const cardRule = /\.card\{([^}]*)\}/.exec(css)?.[1] ?? '';
+  assert.ok(!/border:/.test(cardRule), "a card is lifted by shadow, never outlined");
+  assert.ok(/box-shadow:var\(--lift\)/.test(cardRule), "and the lift is the same construction the app uses");
+  // A hairline is still legal where it is genuinely a line: an input's ring.
+  assert.ok(/textarea\{[^}]*border:1px solid var\(--line\)/.test(css), "an input keeps its ring — the rule bans outlining cards, not drawing lines");
+  // the room's own steps, not a foreign grey
+  assert.ok(css.includes("--bg:#F7F8FA") && css.includes("--card:#FFFFFF"), "the page wears the room: cool near-white, white card");
+  assert.ok(css.includes("--accent:#2563EB"), "one accent, the same blue as the app");
+});
+
 await test("hours are attributed to a named clock on the page", () => {
   const sp = makeSpace({ name: "Clock Shop" });
   const html = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));

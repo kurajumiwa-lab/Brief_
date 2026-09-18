@@ -34,10 +34,10 @@ export const TrustedPartnerRibbon: React.FC<TrustedPartnerRibbonProps> = ({
   return (
     <section className={`w-full space-y-3 py-2 ${className}`}>
       <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] sm:text-xs font-bold text-[var(--brief-muted)] tracking-wide">
+        <span className="text-[12px] sm:text-xs font-bold text-[var(--brief-muted)] tracking-wide">
           {title}
         </span>
-        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#0C221F]">
+        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-[#93EE34]/20 text-[#0C221F]">
           VERIFIED RAILS
         </span>
       </div>
@@ -61,7 +61,7 @@ export const TrustedPartnerRibbon: React.FC<TrustedPartnerRibbonProps> = ({
                 {partner.name}
               </span>
               {partner.sub && (
-                <span className="text-[9px] text-[var(--brief-muted)] font-medium leading-none">
+                <span className="text-[11px] text-[var(--brief-muted)] font-medium leading-none">
                   {partner.sub}
                 </span>
               )}

@@ -4,22 +4,25 @@
 // A screenshot cannot be verified from a sandbox, so this suite pins the RULES
 // that made the screens feel "nude" instead of claiming it looks nice:
 //
-//   1. the palette has a temperature: ground and paper are warm neutrals (blue
-//      channel below red), and the accent stays the brand's indigo/cyan;
+//   1. the palette is COOL and disciplined: a near-white ground (#F7F8FA), pure
+//      white cards, one blue accent (#2563EB), and no warm plaster surviving
+//      anywhere (the 2026-09-17 warm room was tried and read as newsprint);
 //   2. a card is separated from the room by LIGHT (a --lift-* / .brief-card
 //      shadow) and never by a 1px stroke — so no surface on the board carries a
 //      `border: 1px solid <line>` any more;
 //   3. a photograph gets the room's own ink as a scrim, and a card with NO photo
-//      gets a warm plate with a mark that means something — never a cold
-//      blue-violet swatch, never a stock image;
+//      gets a lit plate with a mark that means something — never a stock image
+//      standing in for a shop that has not been photographed;
 //   4. a zero is a true count, printed quietly, with the one step that could
 //      change it. An unmeasurable figure stays a dash. Nothing here is padded to
 //      make a screen look busy;
 //   5. the plate's time sentence comes from the row's own timestamp. No
 //      timestamp, no sentence — "2h ago" is never invented.
 //
-// If someone later "improves" the room by painting cards white with grey borders
-// again, or by seeding a plate with a nice gradient, tests 1–3 fail.
+// If someone later "improves" the room by outlining cards with grey strokes,
+// by re-warming the neutrals, or by substituting stock photography for a missing
+// photo, tests 1–4 fail. The palette has flipped twice inside two days; this file
+// is why it now cannot flip a third time by accident.
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const fs = require('fs');
@@ -68,8 +71,21 @@ const rgb = (hex) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 1
     made the page read as an empty canvas. */
 const isWarm = (hex) => { const [r, , b] = rgb(hex); return r - b >= 8; };
 const isCold = (hex) => { const [r, , b] = rgb(hex); return b - r > 4; };
+/** A cool neutral is one where blue is at or above red. #F7F8FA is only 3 points
+    of blue over red — that is the whole difference between this room and the
+    plaster it replaced, and it is why the old code looked like newsprint. */
+const isCool = (hex) => { const [r, g, b] = rgb(hex); return b >= r && g >= r; };
 
 const themeCss = fs.readFileSync(path.join(__dirname, 'src/ui/theme.css'), 'utf8');
+/** Every source line in the app, for the sweeps that must be repo-wide. */
+const sweep = () => {
+  let all = '';
+  const walk = (d) => { for (const n of fs.readdirSync(d)) { const fp = path.join(d, n);
+    if (fs.statSync(fp).isDirectory()) { if (n !== 'node_modules') walk(fp); continue; }
+    if (/\.(tsx|jsx|ts|js|css)$/.test(n)) all += fs.readFileSync(fp, 'utf8'); } };
+  walk(path.join(__dirname, 'src'));
+  return all;
+};
 const indexCss = fs.readFileSync(path.join(__dirname, 'src/index.css'), 'utf8');
 const roomTs = fs.readFileSync(path.join(__dirname, 'src/features/city/room.ts'), 'utf8');
 
@@ -148,24 +164,40 @@ async function main() {
     const paper = read('brief-card');
     const ink = read('brief-ink');
     const line = read('brief-line');
-    assert.ok(isWarm(ground), `the page is a warm plaster (${ground}) — a cold near-white reads as an empty canvas`);
-    assert.ok(isWarm(paper), `a card is warm paper (${paper}), not pure #FFFFFF`);
-    assert.ok(isWarm(ink) && isWarm(line), 'ink and hairline carry the same temperature as the walls');
-    assert.notEqual(paper, '#FFFFFF', 'no surface is pure white');
+    // Cool, not blue-tinted-to-death: a ground whose blue sits just above red,
+    // and a card that is white. Depth must therefore come from the shadow, and
+    // test 2 is what enforces that.
+    assert.ok(isCool(ground) && !isWarm(ground), `the page is a cool near-white (${ground})`);
+    assert.equal(paper, '#FFFFFF', 'a card is pure white on a cool ground');
+    assert.ok(isCold(ink) || !isWarm(ink), 'ink is cool too — warm ink on white is the newsprint look');
+    assert.ok(!isWarm(line), 'the hairline is cool grey, not beige');
     for (const [name, css] of [['theme.css', themeCss], ['index.css', indexCss]]) {
-      const cold = css.match(/--(brief-bg|brief-card|ground|surface|hairline|brief-line|surface-2|m3-background|m3-surface-container):\s*#(F7F8FA|F8F8F8|FFFFFF|E5E7EB|E5E8EC|F0F2F5|EFF1F4)/g) || [];
-      assert.deepEqual(cold, [], `${name}: no cold ground/surface/hairline token survives`);
+      // Every warm plaster hex from the previous revision. If one survives in a
+      // PAINTING slot, a component was missed by the sweep and the room splits.
+      const warm = css.replace(/\/\*[\s\S]*?\*\//g, '')
+        .match(/--[-\w]*(?:bg|card|surface|ground|paper|well|plaster|elevated|hairline|line|container)[-\w]*:\s*#(F4EEE3|FDFAF3|F0E9DE|EAE2D6|E4DACB|F5F0E8|FBF6EC|F1E8DA|241C12|6E6152|7E7057|A08D74)/g) || [];
+      assert.deepEqual(warm, [], `${name}: no warm plaster token survives — the sweep must be complete`);
     }
     assert.ok(/--color-quiet/.test(themeCss), 'a quiet ink exists for zeros and dashes');
-    assert.ok(/#4F46E5/.test(themeCss) && /#06B6D4/.test(themeCss), 'the brand accents are unchanged — the room got warmth, not a new identity');
+    assert.ok(/#2563EB/.test(themeCss) && /#0891B2/.test(themeCss), 'one blue accent, one supporting cyan');
+    // Comment prose may name an old hex to explain the change; the declarations
+    // may not. So the scan strips comments first, or this assertion would force
+    // the stylesheet to be written without history.
+    const themeCode = themeCss.replace(/\/\*[\s\S]*?\*\//g, '');
+    assert.ok(!/#4F46E5|#06B6D4/.test(themeCode), 'the indigo/bright-cyan pair is gone from the theme, not aliased');
+    // The type floor: fine print is what made the last revision read as a form.
+    assert.ok(!/text-\[(8|9)px\]/.test(sweep()), 'no 8px or 9px type survives in the app');
+    const tw = require('fs').readFileSync(require('path').join(__dirname, 'tailwind.config.js'), 'utf8');
+    assert.ok(/xs:\s*\['13px'/.test(tw), "text-xs is remapped to 13px in one place, so the floor is real");
   }
-  pass('The palette has a temperature: warm plaster, warm paper, warm ink, brand accents intact');
+  pass('1. the palette is cool and complete: near-white ground, white cards, one blue accent, 13px floor');
 
   // --- 2. depth comes from light, not from a stroke ------------------------
   {
     assert.ok(/--lift-1/.test(themeCss) && /--lift-4/.test(themeCss), 'four elevation tiers are defined');
     assert.ok(/inset 0 1px 0/.test(themeCss), 'every surface gets an inset top light — a still screen looks lit from above');
-    assert.ok(/--room-shadow/.test(themeCss) && /rgba\(var\(--room-shadow\)/.test(themeCss), 'shadows are warm, so they belong to this room');
+    assert.ok(/--room-shadow:\s*10 14 20/.test(themeCss) && /rgba\(var\(--room-shadow\)/.test(themeCss),
+      'the drop is the ink itself, so a shadow is the same substance as the text');
     for (const cls of ['brief-lift-1', 'brief-lift-2', 'brief-lift-3', 'brief-lift-4', 'brief-lift-signal', 'brief-card', 'brief-scrim', 'brief-photo']) {
       assert.ok(new RegExp(`\\.${cls}\\s*\\{`).test(themeCss + indexCss), `${cls} is a real class in the room stylesheet`);
     }
@@ -176,7 +208,7 @@ async function main() {
     const cardBlock = indexCss.match(/\.brief-lobby-card\s*\{[^}]*\}/)?.[0] ?? '';
     assert.ok(/border:\s*none/.test(cardBlock), 'even the noticeboard room lifts its cards instead of outlining them');
   }
-  pass('Surfaces are separated by light: four lift tiers, an inset top light, warm shadows, no cold default stroke');
+  pass('2. surfaces are separated by light: four lift tiers, ink-coloured drops, no cold default stroke');
 
   // --- 3. a card on the board carries no border, and takes a lift ---------
   {
@@ -202,7 +234,7 @@ async function main() {
   {
     const { container } = mount(React.createElement(CityFeedView, {}));
     await flush();
-    assert.ok(/rgba\(24, 19, 12/.test(roomTs), 'the scrim is the room\'s own ink fading up through a photo, not pure black');
+    assert.ok(/rgba\(10, 14, 20/.test(roomTs), 'the scrim is the room\'s own ink fading up through a photo, not pure black');
     assert.ok(/filter:\s*PHOTO_FILTER/.test(fs.readFileSync(path.join(__dirname, 'src/features/city/DiscoverFeed.tsx'), 'utf8')),
       'a real photograph is graded a few percent so it does not fight the room');
     assert.ok(!/saturate\(1\.[3-9]\d*\)|sepia/.test(roomTs), 'the grade is a grade, not a costume — no photo is re-inked');
@@ -216,15 +248,15 @@ async function main() {
     assert.ok(/text-transform: uppercase|uppercase/.test(fs.readFileSync(path.join(__dirname, 'src/features/city/NoPhotoPlate.tsx'), 'utf8').includes('uppercase') ? 'uppercase' : ''),
       'only the tiny flow mark is uppercase, never the whole line');
 
-    const plate = allStyled(container).find(({ style }) => style.includes('#FBF6EC') && style.includes('#F1E8DA'));
-    assert.ok(plate, 'the plate is the room\'s plaster');
-    assert.ok(/radial-gradient/.test(plateGlow('#4F46E5')), 'the accent lands on a plate as a corner of light');
-    assert.ok(isCold('#4F46E5') && !roomSurface().includes('linear-gradient(135deg, #4F46E5'),
-      'the cold blue-violet card background is gone');
+    const plate = allStyled(container).find(({ style }) => style.includes('#FBFCFE') && style.includes('#EDF1F6'));
+    assert.ok(plate, 'the plate is the room\'s own floor');
+    assert.ok(/radial-gradient/.test(plateGlow('#2563EB')), 'the accent lands on a plate as a corner of light');
+    assert.ok(!/linear-gradient\(135deg, #4F46E5|#4F46E5|#06B6D4/.test(roomSurface() + roomTs),
+      'the old indigo/cyan pair is gone from the room module, not aliased back in');
     const imgs = Array.from(container.querySelectorAll('img'));
     assert.ok(imgs.length === 1 && /saturate/.test(styleOf(imgs[0])), 'the one real photo present is filtered; no stock image was substituted for the missing one');
   }
-  pass('Pictures belong to the room: real photos get a warm scrim and a light grade, missing ones get a plaster plate');
+  pass('4. pictures belong to the room: a real photo gets the ink scrim and a light grade, a missing one gets a lit plate, never a stock shot');
 
   // --- 5. a zero is a true count, printed quietly, with a next step -------
   {
@@ -313,13 +345,13 @@ async function main() {
     // --color-quiet is deliberately below 4.5:1 — it must therefore appear ONLY
     // at 20px+ (the tile numerals) or as a glyph. If someone puts it on body
     // copy, this fails.
-    assert.ok(contrast(read('brief-faint'), read('brief-bg')) > 4.1, 'meta text on the plaster floor is close');
+    assert.ok(contrast(read('brief-faint'), read('brief-bg')) > 4.1, 'meta text on the ground is close to AA and says so');
     const quiet = themeCss.match(/--color-quiet:\s*(#[0-9A-Fa-f]{6})/)[1];
     assert.ok(contrast(quiet, paper) < 4.5 && contrast(quiet, paper) > 2.5, 'the quiet ink is a soft numeral, not a readable paragraph');
-    assert.ok(contrast('#FFFFFF', read('brief-green')) > 4.5, 'white text on the indigo accent still clears AA');
-    assert.ok(PLASTER.includes('#FBF6EC') && PLASTER.includes('#F1E8DA'), 'the plate floor is exactly two stops of plaster');
+    assert.ok(contrast('#FFFFFF', read('brief-green')) > 4.5, 'white text on the accent clears AA');
+    assert.ok(PLASTER.includes('#FBFCFE') && PLASTER.includes('#EDF1F6'), 'the plate floor is exactly two stops of the ground');
   }
-  pass('The room is warm, not dark, and every text pairing still clears its contrast floor');
+  pass('7. light, not dark: every text pairing clears its floor, and the accent carries white at 5.17:1');
 
 
   // --- 8. a canvas colour is never a var() --------------------------------
@@ -378,35 +410,41 @@ async function main() {
   pass('Raster colours are literals: a tokenised palette may never silently break a QR or a canvas');
 
 
-  // --- 9. no cold black survives in the room's own files -------------------
-  // A pure-black scrim or shadow is the single easiest way to put a picture back
-  // outside the room: it reads as a different material. Every wash in the city /
-  // home / spaces surfaces is the ink of the room at an alpha.
+  // --- 9. a wash is the room's ink; a neutral is a room token ---------------
+  // Two ways a surface stops belonging to the page it sits on: a pure-black
+  // scrim (a different material entirely), or an off-the-shelf Tailwind/slate
+  // grey nobody declared. Both were true of the old app; the room's answer is
+  // that every wash is the ink at an alpha and every neutral is one of the six
+  // declared steps. The palette flipped warm to cool in between, which is
+  // exactly why this test lists the FORBIDDEN set rather than the current
+  // colours: it still catches a foreign grey after a re-skin.
   {
     const fs2 = require('fs');
     const path2 = require('path');
-    const cold = [];
+    const foreign = [];
+    const FORBIDDEN_GREY = /#E5E7EB|#E5E8EC|#F3F4F6|#F9FAFB|#F1F5F9|#F8FAFC|#E2E8F0|#CBD5E1|#0D1117|#111827|#1F2937/i;
+    const BLACK_WASH = /rgba\(\s*(?:0,\s*0,\s*0|13,\s*17,\s*23|10,\s*10,\s*10)\b/;
     const walk = (d) => {
       if (!fs2.existsSync(d)) return;
       for (const name of fs2.readdirSync(d)) {
         const fp = path2.join(d, name);
         if (fs2.statSync(fp).isDirectory()) { walk(fp); continue; }
         if (!/\.(tsx?|css)$/.test(name)) continue;
-        // Strip comments first: prose that NAMES a banned colour (e.g. theme.css
-        // explaining why the cold grey default was replaced) is a decision written
-        // down, not a colour painted.
         fs2.readFileSync(fp, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').split('\n').forEach((raw, i) => {
           const line = raw.replace(/\/\/.*$/, '');
-          if (/rgba\(\s*(0,\s*0,\s*0|13,\s*17,\s*23|10,\s*10,\s*10)\b/.test(line) || /#E5E7EB|#E5E8EC|#F7F8FA|#0D1117/i.test(line)) {
-            cold.push(`${path2.relative(__dirname, fp)}:${i + 1}`);
+          if (BLACK_WASH.test(line) || FORBIDDEN_GREY.test(line)) {
+            foreign.push(`${path2.relative(__dirname, fp)}:${i + 1} ${line.trim().slice(0, 60)}`);
           }
         });
       }
     };
     for (const d of ['src/features/city', 'src/features/home', 'src/features/spaces', 'src/ui', 'src/shell']) walk(path2.join(__dirname, d));
-    assert.deepEqual(cold, [], 'no pure-black scrim and no cold neutral is left in the room\'s own surfaces');
+    assert.deepEqual(foreign, [], 'no pure-black wash and no undeclared grey on the room\'s own surfaces');
+    const steps = ['brief-bg', 'brief-card', 'well', 'surface-3', 'brief-line', 'brief-ink'].map(read);
+    assert.deepEqual([...new Set(steps)].length, 6, 'six distinct steps — a palette that collapses into one grey is not a palette');
+    assert.ok(steps.every((hex) => !isWarm(hex)), 'every step is cool: the plaster revision is fully reversed, not half-applied');
   }
-  pass('No cold black or cold neutral survives on the room\'s own surfaces');
+  pass('9. a wash is the room\'s ink at an alpha, a neutral is a declared step, and no step is warm');
 
 
   // --- 10. a colour never comes from a hash of words ----------------------

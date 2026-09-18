@@ -182,7 +182,7 @@ export const IronSheet: React.FC<IronSheetProps> = ({
 
           {badge && (
             <div
-              className="px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider shadow-sm"
+              className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold uppercase tracking-wider shadow-sm"
               style={{
                 backgroundColor: palette.badgeBackground,
                 color: palette.badgeText

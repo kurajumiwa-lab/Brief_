@@ -37,7 +37,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
               <MapPin className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-[#00BFEF] font-bold block">
+              <span className="text-[11px] font-mono uppercase tracking-widest text-[#00BFEF] font-bold block">
                 3KM MICRO-ECONOMY
               </span>
               <h2 className="text-xl font-black text-white tracking-tight">
@@ -77,18 +77,18 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
                 }}
                 className={`w-full p-4 rounded-2xl text-left transition-all duration-200 cursor-pointer flex items-start justify-between ${
                   isSelected
-                    ? 'bg-gradient-to-r from-[#00BFEF]/20 to-[#06B6D4]/20 shadow-lg'
+                    ? 'bg-gradient-to-r from-[#00BFEF]/20 to-[#0891B2]/20 shadow-lg'
                     : 'bg-[#262D3D] hover:bg-[#2F374A]'
                 }`}
               >
                 <div className="space-y-1.5 flex-1 pr-3">
                   <div className="flex items-center space-x-2">
                     <span className="font-black text-base text-white">{nh.name}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">
                       {nh.county}
                     </span>
                     {isSelected && (
-                      <span className="text-[9px] px-2 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] font-black uppercase">
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#00BFEF] text-[var(--brief-ink)] font-black uppercase">
                         Active
                       </span>
                     )}
@@ -98,7 +98,7 @@ export const NeighborhoodPickerModal: React.FC<NeighborhoodPickerModalProps> = (
                     {nh.tagline}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-gray-400">
+                  <div className="flex flex-wrap items-center gap-3 pt-1 text-[12px] text-gray-400">
                     <span className="flex items-center space-x-1 text-[#00BFEF]">
                       <Truck className="w-3.5 h-3.5" />
                       <span>{nh.stats.activeRidersCount} Boda Riders</span>

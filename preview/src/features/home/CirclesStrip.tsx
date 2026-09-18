@@ -40,7 +40,7 @@ export function CirclesStrip({
     >
       <Users className="w-4 h-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
       <div className="min-w-0 flex-1">
-        <p className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
           Your spaces &amp; circles
         </p>
         <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text)' }}>
@@ -50,7 +50,7 @@ export function CirclesStrip({
       <button
         type="button"
         onClick={onView}
-        className="shrink-0 inline-flex items-center gap-1 text-[11px] font-black cursor-pointer"
+        className="shrink-0 inline-flex items-center gap-1 text-[12px] font-black cursor-pointer"
         style={{ color: 'var(--color-primary)' }}
       >
         {nothing ? 'Start' : 'View'}

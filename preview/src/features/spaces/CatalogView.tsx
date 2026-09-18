@@ -163,7 +163,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
         <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-3 shadow-sm">
           <ShoppingBag className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
           <p className="text-xs font-bold text-[color:var(--color-text)]">No offers created yet</p>
-          <p className="text-[11px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
+          <p className="text-[12px] text-[color:var(--color-text-muted)] max-w-sm mx-auto">
             Add your goods or skills to publish them to your public catalog and generate WhatsApp share links.
           </p>
           <button
@@ -222,7 +222,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   )}
                   {pinned && (
                     <span
-                      className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                      className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider"
                       style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                     >
                       Pinned
@@ -251,7 +251,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   </div>
 
                   {offer.description && (
-                    <p className="text-[11px] text-[color:var(--color-text-muted)] line-clamp-2">
+                    <p className="text-[12px] text-[color:var(--color-text-muted)] line-clamp-2">
                       {offer.description}
                     </p>
                   )}
@@ -273,7 +273,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                           soundEngine.play('reward');
                           onPublishOffer(offer.id);
                         }}
-                        className="px-2.5 py-1 rounded-xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-[10px] font-bold hover:bg-black transition-all cursor-pointer"
+                        className="px-2.5 py-1 rounded-xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-[11px] font-bold hover:bg-black transition-all cursor-pointer"
                       >
                         Publish
                       </button>
@@ -283,13 +283,13 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       <button
                         type="button"
                         onClick={() => (editingId === offer.id ? setEditingId(null) : startEdit(offer))}
-                        className="px-2.5 py-1 rounded-xl border border-black/10 text-[10px] font-bold text-[color:var(--color-text)] hover:bg-black/5 transition-all cursor-pointer"
+                        className="px-2.5 py-1 rounded-xl border border-black/10 text-[11px] font-bold text-[color:var(--color-text)] hover:bg-black/5 transition-all cursor-pointer"
                       >
                         {editingId === offer.id ? 'Close' : 'Edit'}
                       </button>
                     )}
                     {isArchived && (
-                      <span className="text-[10px] font-bold" style={{ color: 'var(--color-text-muted)' }}>
+                      <span className="text-[11px] font-bold" style={{ color: 'var(--color-text-muted)' }}>
                         Withdrawn — a new offer re-lists it
                       </span>
                     )}
@@ -313,7 +313,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 </div>
 
                 {rowError[offer.id] && (
-                  <p className="text-[10px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
+                  <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
                     {rowError[offer.id]}
                   </p>
                 )}
@@ -332,7 +332,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       rows={2}
                       value={draft.description ?? ''}
                       onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
-                      className="w-full px-3 py-2 rounded-xl text-[11px] border border-black/10 bg-[color:var(--color-paper)] resize-none"
+                      className="w-full px-3 py-2 rounded-xl text-[12px] border border-black/10 bg-[color:var(--color-paper)] resize-none"
                     />
                     <div className="flex gap-2">
                       <input
@@ -366,7 +366,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         type="button"
                         disabled={busy}
                         onClick={() => void saveEdit(offer.id)}
-                        className="px-3 py-1.5 rounded-full text-[11px] font-black cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
                         style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                       >
                         {busy ? 'Saving…' : 'Save changes'}
@@ -374,11 +374,11 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border border-black/10"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer border border-black/10"
                       >
                         <X className="w-3 h-3" /> Cancel
                       </button>
-                      <span className="text-[9px]" style={{ color: 'var(--color-text-muted)' }}>
+                      <span className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
                         Buyers see the new price on their next look
                       </span>
                     </div>

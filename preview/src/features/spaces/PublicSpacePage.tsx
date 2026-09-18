@@ -111,13 +111,13 @@ export function PublicSpacePage({
     return (
       <div className={`p-6 text-center space-y-2 ${className}`}>
         <p className="text-sm font-bold">This shop is not open here.</p>
-        <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[13px]" style={{ color: 'var(--brief-muted)' }}>
           {status === 'gone'
             ? 'That space is private, unlisted, archived, or the link is wrong. A private space is not hidden-but-findable — it is not here.'
             : 'Brief could not read it just now. Nothing is shown in its place.'}
         </p>
         {onBack && (
-          <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-[12px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)' }}>
+          <button type="button" onClick={onBack} className="inline-flex items-center gap-1 text-[13px] font-bold cursor-pointer" style={{ color: 'var(--color-primary)' }}>
             <ArrowLeft className="w-3.5 h-3.5" /> Back
           </button>
         )}
@@ -140,20 +140,20 @@ export function PublicSpacePage({
         <div className="p-4 -mt-10">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-[22px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</h1>
-              <p className="text-[13px]" style={{ color: 'var(--brief-muted)' }}>{s.goal || `${s.type.replace(/_/g, ' ')} on Brief`}</p>
-              <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--brief-muted)' }}>
+              <h1 className="text-[30px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</h1>
+              <p className="text-[14px]" style={{ color: 'var(--brief-muted)' }}>{s.goal || `${s.type.replace(/_/g, ' ')} on Brief`}</p>
+              <p className="text-[12px] font-medium mt-0.5" style={{ color: 'var(--brief-muted)' }}>
                 {[s.where, s.when].filter(Boolean).join(' · ') || 'Place and hours not stated'}
               </p>
             </div>
-            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
+            <span className="shrink-0 text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               {s.visibility}
             </span>
           </div>
 
           {/* The open/closed mark, only when their own hours answer supports it. */}
           {s.open?.label && (
-            <p className="mt-2.5 inline-flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--brief-ink)' }}>
+            <p className="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-bold" style={{ color: 'var(--brief-ink)' }}>
               <span
                 className="brief-dot"
                 style={{ background: s.open.tone === 'live' ? 'var(--state-live)' : 'var(--state-quiet)' }}
@@ -174,7 +174,7 @@ export function PublicSpacePage({
                   href={s.contact.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[13px] font-black"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[14px] font-black"
                   style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-2)' }}
                 >
                   <MessageCircle className="w-4 h-4" /> Chat on WhatsApp
@@ -183,21 +183,21 @@ export function PublicSpacePage({
                     it — two renderings of one page must not disagree. */}
                 <a
                   href={`tel:${s.contact.digits ? `+${s.contact.digits}` : s.contact.display}`}
-                  className="inline-flex items-center px-3.5 py-2.5 rounded-full text-[12px] font-mono"
+                  className="inline-flex items-center px-3.5 py-2.5 rounded-full text-[13px] font-mono"
                   style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}
                 >
                   {s.contact.display}
                 </a>
               </>
             ) : (
-              <p className="text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+              <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
                 No contact number on this page — the shop takes inquiries through Brief.
               </p>
             )}
             <button
               type="button"
               onClick={() => void share()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[13px] font-bold cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[14px] font-bold cursor-pointer"
               style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}
             >
               <Copy className="w-4 h-4" /> Share
@@ -205,11 +205,11 @@ export function PublicSpacePage({
           </div>
 
           <div className="flex items-center gap-3 mt-3">
-            <p className="text-[13px] font-mono" style={{ color: 'var(--brief-ink)' }}>
+            <p className="text-[14px] font-mono" style={{ color: 'var(--brief-ink)' }}>
               {s.followers > 0 ? `${s.followers} follow` : `${s.offerCount} offer${s.offerCount === 1 ? '' : 's'}`}
             </p>
             {s.lastStamp && (
-              <p className="text-[11px] font-mono" style={{ color: 'var(--color-quiet)' }}>
+              <p className="text-[12px] font-mono" style={{ color: 'var(--color-quiet)' }}>
                 last written {s.lastStamp.text}
               </p>
             )}
@@ -217,7 +217,7 @@ export function PublicSpacePage({
               type="button"
               disabled={busy}
               onClick={() => void toggleFollow()}
-              className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
+              className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-black cursor-pointer disabled:opacity-50"
               style={following
                 ? { background: 'var(--color-well)', color: 'var(--brief-ink)' }
                 : { background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
@@ -225,18 +225,18 @@ export function PublicSpacePage({
               <Bell className="w-4 h-4" /> {following ? 'Following' : 'Follow'}
             </button>
           </div>
-          {notice && <p role="status" className="text-[11px] font-bold mt-2" style={{ color: 'var(--brief-muted)' }}>{notice}</p>}
+          {notice && <p role="status" className="text-[12px] font-bold mt-2" style={{ color: 'var(--brief-muted)' }}>{notice}</p>}
         </div>
       </header>
 
       {updates.length > 0 && (
         <section className="p-4 rounded-2xl" style={{ background: 'var(--color-well)' }} aria-label="Latest update">
-          <p className="text-[9px] font-black uppercase tracking-wider inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
             <Radio className="w-3 h-3" /> {updates[0].kind}
           </p>
-          <p className="text-[14px] leading-snug mt-1" style={{ color: 'var(--brief-ink)' }}>{updates[0].text}</p>
+          <p className="text-[15px] leading-snug mt-1" style={{ color: 'var(--brief-ink)' }}>{updates[0].text}</p>
           {updates.slice(1).map((b) => (
-            <p key={`${b.kind}-${b.createdAt}`} className="text-[12px] leading-snug mt-2" style={{ color: 'var(--brief-muted)' }}>
+            <p key={`${b.kind}-${b.createdAt}`} className="text-[13px] leading-snug mt-2" style={{ color: 'var(--brief-muted)' }}>
               {b.text}
             </p>
           ))}
@@ -244,13 +244,13 @@ export function PublicSpacePage({
       )}
 
       <section className="space-y-2" aria-label="On the counter">
-        <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
+        <h2 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>
           On the counter
         </h2>
         {offers.length === 0 ? (
           <div className="p-5 rounded-2xl text-center" style={{ background: 'var(--color-well)' }}>
-            <p className="text-[13px] font-bold" style={{ color: 'var(--brief-ink)' }}>This shop is being set up</p>
-            <p className="text-[11px] mt-1" style={{ color: 'var(--brief-muted)' }}>
+            <p className="text-[14px] font-bold" style={{ color: 'var(--brief-ink)' }}>This shop is being set up</p>
+            <p className="text-[12px] mt-1" style={{ color: 'var(--brief-muted)' }}>
               Nothing is listed yet. When they publish an offer, it appears here.
             </p>
           </div>
@@ -265,26 +265,26 @@ export function PublicSpacePage({
                 className="text-left p-3 rounded-2xl bg-[color:var(--color-paper)] cursor-pointer disabled:cursor-default brief-lift-1"
               >
                 {o.featured && (
-                  <span className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+                  <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                     Pinned
                   </span>
                 )}
-                <p className="text-[13px] font-bold leading-snug" style={{ color: 'var(--brief-ink)' }}>{o.title}</p>
+                <p className="text-[14px] font-bold leading-snug" style={{ color: 'var(--brief-ink)' }}>{o.title}</p>
                 {o.blurb && (
-                  <p className="text-[11px] leading-snug mt-1" style={{ color: 'var(--brief-muted)' }}>{o.blurb}</p>
+                  <p className="text-[12px] leading-snug mt-1" style={{ color: 'var(--brief-muted)' }}>{o.blurb}</p>
                 )}
-                <p className="text-[13px] font-mono mt-1" style={{ color: 'var(--brief-ink)' }}>
+                <p className="text-[14px] font-mono mt-1" style={{ color: 'var(--brief-ink)' }}>
                   {o.priceLabel ?? 'Price not listed'}
                   {o.unit ? ` / ${o.unit}` : ''}
                 </p>
-                {o.minimum ? <p className="text-[10px] mt-0.5" style={{ color: 'var(--brief-muted)' }}>min {o.minimum}</p> : null}
+                {o.minimum ? <p className="text-[11px] mt-0.5" style={{ color: 'var(--brief-muted)' }}>min {o.minimum}</p> : null}
                 {/* Stock is a number the owner chose to track. Untracked is not 0. */}
                 {o.stock !== null && o.stock !== undefined && (
-                  <p className="text-[10px] mt-0.5" style={{ color: o.stock > 0 ? 'var(--state-live-ink)' : 'var(--state-stale-ink)' }}>
+                  <p className="text-[11px] mt-0.5" style={{ color: o.stock > 0 ? 'var(--state-live-ink)' : 'var(--state-stale-ink)' }}>
                     {o.stock > 0 ? `${o.stock} in hand` : 'sold out for now'}
                   </p>
                 )}
-                {o.id && <p className="text-[10px] mt-1 inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
+                {o.id && <p className="text-[11px] mt-1 inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
                   <MessageCircle className="w-3 h-3" /> ask about this
                 </p>}
               </button>
@@ -292,26 +292,26 @@ export function PublicSpacePage({
           </div>
         )}
         {s.moreOffers > 0 && (
-          <p className="text-[11px]" style={{ color: 'var(--brief-muted)' }}>
+          <p className="text-[12px]" style={{ color: 'var(--brief-muted)' }}>
             Plus {s.moreOffers} more on their Brief counter.
           </p>
         )}
         {s.facts.length > 0 && (
           <div className="p-3.5 rounded-2xl space-y-2" style={{ background: 'var(--color-well)' }}>
             {s.facts.map((f) => (
-              <p key={f.key} className="text-[12px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
-                <span className="text-[10px] font-black uppercase tracking-wider block" style={{ color: 'var(--brief-faint)' }}>{f.label}</span>
+              <p key={f.key} className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+                <span className="text-[11px] font-black uppercase tracking-wider block" style={{ color: 'var(--brief-faint)' }}>{f.label}</span>
                 {f.answer}
               </p>
             ))}
           </div>
         )}
-        <p className="text-[10px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
+        <p className="text-[11px] leading-snug" style={{ color: 'var(--brief-muted)' }}>
           What you see here is what {s.name} chose to make public: prices and words. Their orders, customers and
           money stay in their own space.
         </p>
         {s.pageUrl && (
-          <a href={s.pageUrl} className="inline-flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--brief-faint)' }}>
+          <a href={s.pageUrl} className="inline-flex items-center gap-1 text-[11px] font-bold" style={{ color: 'var(--brief-faint)' }}>
             <ExternalLink className="w-3 h-3" /> The address of this page
           </a>
         )}

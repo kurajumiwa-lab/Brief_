@@ -34,7 +34,7 @@ export function DerivationNote({ summary, detail, label = 'How this is derived',
   return (
     <div className={`space-y-1 ${className}`}>
       <p
-        className="text-[11px] leading-snug"
+        className="text-[12px] leading-snug"
         style={{ color: tone === 'warn' ? 'var(--color-warning)' : 'var(--brief-muted)' }}
       >
         {summary}{' '}

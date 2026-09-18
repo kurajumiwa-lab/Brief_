@@ -399,7 +399,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         {/* NEXT STEP — one obvious action, derived from real rows. Not a menu. */}
         {space && (
           <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-1">
-            <span className="text-[9px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">▶ Next step</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">▶ Next step</span>
             {(space.offers?.length ?? 0) === 0 ? (
               <p className="text-xs font-bold text-[color:var(--color-text)]">Add your first offer to make this space sellable.</p>
             ) : (
@@ -433,10 +433,10 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 
         {identityOpen && (
           <div className="p-4 rounded-2xl border space-y-3" style={{ borderColor: 'var(--color-primary)' }}>
-            <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
               Edit this space
             </p>
-            <p className="text-[10px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
               Publishing does not freeze anything. These stay yours to change, and the public directory
               reads the current row on each look — there is no copy to update.
             </p>
@@ -463,13 +463,13 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               onChange={(e) => setIdentity((v) => ({ ...v, target: e.target.value }))}
               className="w-40 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
             />
-            {identityError && <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{identityError}</p>}
+            {identityError && <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{identityError}</p>}
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={identityBusy}
                 onClick={() => void saveIdentity()}
-                className="px-3.5 py-2 rounded-full text-[11px] font-black cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
                 style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
               >
                 {identityBusy ? 'Saving…' : 'Save'}
@@ -477,7 +477,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               <button
                 type="button"
                 onClick={() => { setIdentityOpen(false); setIdentityError(null); }}
-                className="px-3.5 py-2 rounded-full text-[11px] font-bold cursor-pointer border border-black/10"
+                className="px-3.5 py-2 rounded-full text-[12px] font-bold cursor-pointer border border-black/10"
               >
                 Cancel
               </button>
@@ -487,7 +487,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
 
         {/* Visibility — the owner decides who can discover this space */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)]">Visibility</span>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[color:var(--color-text-muted)]">Visibility</span>
           {(['private', 'unlisted', 'public'] as const).map((v) => {
             const active = vis === v;
             const Icon = v === 'private' ? Lock : v === 'unlisted' ? Link2 : Globe;
@@ -501,7 +501,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                   void setVisibility(v);
                 }}
                 disabled={busy}
-                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-all cursor-pointer ${
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
                   active ? 'bg-[color:var(--color-primary)] text-[color:var(--accent-ink)]' : 'bg-[color:var(--color-paper)] text-[color:var(--color-text-muted)] border border-black/5 hover:text-[color:var(--color-text)]'
                 }`}
               >
@@ -516,7 +516,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       {/* The publication warning, in the app's own words, before the write. */}
       {pendingPublic && (
         <div className="p-3.5 rounded-2xl" style={{ background: 'var(--color-well)' }} role="alert">
-          <p className="text-[12px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
+          <p className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>
             This puts <strong>{space?.name}</strong> on the open internet at{' '}
             <span className="font-mono">{face?.path ?? `/s/${space?.slug ?? ''}`}</span>: your name, cover photo, stated hours,
             and every live offer with its price. Anyone can read it. Orders, customers and money stay private.
@@ -526,7 +526,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               type="button"
               disabled={busy}
               onClick={() => void setVisibility('public')}
-              className="px-3.5 py-2 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+              className="px-3.5 py-2 rounded-full text-[13px] font-black cursor-pointer disabled:opacity-50"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
             >
               Publish it
@@ -534,7 +534,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             <button
               type="button"
               onClick={() => setPendingPublic(false)}
-              className="px-3.5 py-2 rounded-full text-[12px] font-bold cursor-pointer"
+              className="px-3.5 py-2 rounded-full text-[13px] font-bold cursor-pointer"
               style={{ background: 'var(--brief-card)', color: 'var(--brief-ink)' }}
             >
               Stay private
@@ -650,21 +650,21 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-3), inset 0 0 0 1px var(--brief-line)' }}
       >
         <div className="min-w-0 flex-1">
-          <p className="text-[9px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
+          <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
             Settled through Brief
           </p>
-          <p className="font-mono text-[17px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
+          <p className="font-mono text-[32px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
             KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
           </p>
 
         </div>
-        <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
+        <span className="text-[12px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
           {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live
         </span>
         <button
           type="button"
           onClick={() => setActiveTab('ledger')}
-          className="shrink-0 text-[11px] font-black cursor-pointer"
+          className="shrink-0 text-[12px] font-black cursor-pointer"
           style={{ color: 'var(--color-primary)' }}
         >
           Money

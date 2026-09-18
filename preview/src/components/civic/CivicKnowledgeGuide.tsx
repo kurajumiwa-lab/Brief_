@@ -50,10 +50,10 @@ export function CivicKnowledgeGuide({
     { id: 'share', label: 'Share', icon: Share2, color: '#8B5CF6' },
     { id: 'contact', label: 'Contact', icon: Phone, color: '#3B82F6' },
     { id: 'book', label: 'Book', icon: CalendarDays, color: '#EC4899' },
-    { id: 'buy', label: 'Buy', icon: ShoppingBag, color: '#4F46E5' },
+    { id: 'buy', label: 'Buy', icon: ShoppingBag, color: '#2563EB' },
     { id: 'report', label: 'Report', icon: Flag, color: '#EF4444' },
     { id: 'verify', label: 'Verify', icon: ShieldCheck, color: '#10B981' },
-    { id: 'follow', label: followed ? 'Following' : 'Follow', icon: Plus, color: '#4F46E5' }
+    { id: 'follow', label: followed ? 'Following' : 'Follow', icon: Plus, color: '#2563EB' }
   ];
 
   return (
@@ -64,7 +64,7 @@ export function CivicKnowledgeGuide({
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white flex items-center space-x-1">
+              <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-white flex items-center space-x-1">
                 <CheckCircle2 className="w-3 h-3" />
                 <span>VERIFIED CIVIC GUIDE</span>
               </span>
@@ -110,7 +110,7 @@ export function CivicKnowledgeGuide({
                 </span>
                 <div>
                   <h4 className="font-bold text-[var(--brief-ink)]">{step.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-0.5">{step.desc}</p>
+                  <p className="text-[12px] text-gray-500 mt-0.5">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -149,7 +149,7 @@ export function CivicKnowledgeGuide({
             href="https://brief.ke"
             target="_blank"
             rel="noreferrer"
-            className="text-[#4F46E5] font-bold flex items-center space-x-1 hover:underline"
+            className="text-[#2563EB] font-bold flex items-center space-x-1 hover:underline"
           >
             <span>Official County Portal</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -159,11 +159,11 @@ export function CivicKnowledgeGuide({
         {/* ================= THE UNIVERSAL PROTOCOL BAR ================= */}
         <section className="pt-2 border-t border-gray-200 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-500">
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-gray-500">
               THE PROTOCOL BAR (10 ACTIONS)
             </span>
             {actionNotice && (
-              <span className="text-[10px] font-bold text-emerald-600 animate-fadeIn">
+              <span className="text-[11px] font-bold text-emerald-600 animate-fadeIn">
                 ✓ {actionNotice}
               </span>
             )}
@@ -180,7 +180,7 @@ export function CivicKnowledgeGuide({
                   className="p-2 rounded-xl bg-[color:var(--brief-bg)] border border-[var(--brief-line)] hover:bg-gray-100 flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer"
                 >
                   <IconComp className="w-4 h-4" style={{ color: act.color }} />
-                  <span className="text-[9px] font-bold text-gray-700 block">{act.label}</span>
+                  <span className="text-[11px] font-bold text-gray-700 block">{act.label}</span>
                 </button>
               );
             })}

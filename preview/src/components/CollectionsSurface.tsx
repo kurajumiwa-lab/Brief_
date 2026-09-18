@@ -16,9 +16,9 @@ import type { BriefCollectionSummary } from '../api/briefApi';
 import { CollectionPage } from './CollectionPage';
 
 const INK = '#0D1117';
-const MUTED = 'rgba(36, 28, 18,0.62)';
+const MUTED = 'rgba(10, 14, 20,0.62)';
 const LINE = 'var(--brief-line)';
-const ACCENT = '#4F46E5';
+const ACCENT = '#2563EB';
 
 function CoverThumb({ cover, name }: { cover: briefApi.CollectionCover; name: string }) {
   const urls = cover.kind === 'mosaic' ? (cover.urls ?? []) : cover.kind === 'single' || cover.kind === 'custom' ? [cover.url ?? ''] : [];
@@ -111,17 +111,17 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(36, 28, 18, 0.85)] backdrop-blur-md" role="dialog" aria-label="Collections">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[rgba(10, 14, 20, 0.85)] backdrop-blur-md" role="dialog" aria-label="Collections">
       <div className="mx-auto min-h-full max-w-3xl bg-[color:var(--color-paper)] px-4 py-5 sm:px-6">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <button type="button" onClick={onClose} aria-label="Back"
-            className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[11px] font-bold text-[var(--brief-ink)] cursor-pointer hover:border-[#06B6D4]">
+            className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] px-3 py-1.5 text-[12px] font-bold text-[var(--brief-ink)] cursor-pointer hover:border-[#0891B2]">
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
           <h1 className="text-[16px] font-extrabold text-[var(--brief-ink)]">Collections</h1>
           <button type="button" onClick={() => { setCreating((v) => !v); setError(null); }} aria-label="New collection"
-            className="flex items-center gap-1 rounded-full bg-[#4F46E5] px-3 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer hover:bg-[#EFF1F4]">
+            className="flex items-center gap-1 rounded-full bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer hover:bg-[#EFF1F4]">
             <Plus className="h-3.5 w-3.5" /> New
           </button>
         </div>
@@ -135,7 +135,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search your collections and items…"
             aria-label="Search collections"
-            className="w-full rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] py-2 pl-9 pr-9 text-[12px] font-semibold text-[var(--brief-ink)] outline-none placeholder:text-[var(--ink-60)] focus:border-[#06B6D4]"
+            className="w-full rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] py-2 pl-9 pr-9 text-[13px] font-semibold text-[var(--brief-ink)] outline-none placeholder:text-[var(--ink-60)] focus:border-[#0891B2]"
           />
           {q && (
             <button type="button" onClick={() => setQ('')} aria-label="Clear search"
@@ -147,8 +147,8 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
 
         {/* Quick create */}
         {creating && (
-          <div className="mb-4 rounded-2xl border border-[#06B6D4]/40 bg-[color:var(--color-paper)] p-3 shadow-sm">
-            <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">New collection</p>
+          <div className="mb-4 rounded-2xl border border-[#0891B2]/40 bg-[color:var(--color-paper)] p-3 shadow-sm">
+            <p className="mb-2 text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--brief-ink)]">New collection</p>
             <input
               autoFocus
               value={name}
@@ -156,27 +156,27 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
               onKeyDown={(e) => { if (e.key === 'Enter') create(); if (e.key === 'Escape') setCreating(false); }}
               placeholder="Name (e.g. Weekend Plans, Job Hunt)"
               aria-label="Collection name"
-              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] font-semibold text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+              className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[14px] font-semibold text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
             />
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional description"
               aria-label="Collection description"
-              className="mt-2 w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[12px] font-semibold text-[var(--brief-ink)] outline-none focus:border-[#06B6D4]"
+              className="mt-2 w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] font-semibold text-[var(--brief-ink)] outline-none focus:border-[#0891B2]"
             />
-            {error && <p className="mt-2 text-[10px] font-bold text-[#DC2626]">{error}</p>}
+            {error && <p className="mt-2 text-[11px] font-bold text-[#DC2626]">{error}</p>}
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={create} disabled={busy || !name.trim()}
-                className="rounded-full bg-[#4F46E5] px-4 py-1.5 text-[10px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40">
+                className="rounded-full bg-[#2563EB] px-4 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] cursor-pointer disabled:opacity-40">
                 Create
               </button>
               <button type="button" onClick={() => setCreating(false)}
-                className="rounded-full border border-[var(--brief-line)] px-4 py-1.5 text-[10px] font-extrabold text-[var(--ink-70)] cursor-pointer">
+                className="rounded-full border border-[var(--brief-line)] px-4 py-1.5 text-[11px] font-extrabold text-[var(--ink-70)] cursor-pointer">
                 Cancel
               </button>
             </div>
-            <p className="mt-2 text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
+            <p className="mt-2 text-[11px] font-semibold text-[rgba(10, 14, 20,0.45)]">
               Private by default — make it public later to share it.
             </p>
           </div>
@@ -184,17 +184,17 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
 
         {/* Saved (quick-save bucket — the existing server saves). */}
         <button type="button" onClick={onOpenSaved}
-          className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#06B6D4]/30 bg-gradient-to-r from-[var(--color-well)] to-[#EFF1F4] p-3 text-left cursor-pointer hover:border-[#06B6D4]">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#4F46E5] text-[var(--accent-ink)]">
+          className="mb-3 flex w-full items-center gap-3 rounded-2xl border border-[#0891B2]/30 bg-gradient-to-r from-[var(--color-well)] to-[#EFF1F4] p-3 text-left cursor-pointer hover:border-[#0891B2]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#2563EB] text-[var(--accent-ink)]">
             <Bookmark className="h-5 w-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-extrabold text-[var(--brief-ink)]">Saved</span>
-            <span className="block text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
+            <span className="block text-[15px] font-extrabold text-[var(--brief-ink)]">Saved</span>
+            <span className="block text-[11px] font-semibold text-[rgba(10, 14, 20,0.62)]">
               Your quick saves — organise them into collections any time
             </span>
           </span>
-          <span className="rounded-full bg-[color:var(--color-paper)] px-2.5 py-1 text-[10px] font-extrabold text-[#4F46E5]">
+          <span className="rounded-full bg-[color:var(--color-paper)] px-2.5 py-1 text-[11px] font-extrabold text-[#2563EB]">
             {savedCount} {savedCount === 1 ? 'item' : 'items'}
           </span>
         </button>
@@ -204,11 +204,11 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           <div className="h-40 animate-pulse rounded-2xl bg-[#EFF1F4]" />
         ) : collections.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-[var(--brief-line)] px-6 py-12 text-center">
-            <FolderPlus className="h-6 w-6 text-[rgba(36, 28, 18,0.35)]" />
-            <p className="text-[13px] font-semibold text-[var(--brief-ink)]">
+            <FolderPlus className="h-6 w-6 text-[rgba(10, 14, 20,0.35)]" />
+            <p className="text-[14px] font-semibold text-[var(--brief-ink)]">
               {q ? 'No collections match your search' : 'No collections yet'}
             </p>
-            <p className="max-w-xs text-[12px] leading-relaxed text-[rgba(36, 28, 18,0.62)]">
+            <p className="max-w-xs text-[13px] leading-relaxed text-[rgba(10, 14, 20,0.62)]">
               {q
                 ? 'Try a different search — this only looks at your own collections.'
                 : 'Create a collection, then save objects into it from any object page.'}
@@ -218,22 +218,22 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {collections.map((c) => (
               <button key={c.id} type="button" onClick={() => setOpenId(c.id)}
-                className="group overflow-hidden rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#06B6D4] cursor-pointer">
+                className="group overflow-hidden rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#0891B2] cursor-pointer">
                 <div className="h-24 w-full sm:h-28">
                   <CoverThumb cover={c.cover} name={c.name} />
                 </div>
                 <div className="p-2.5">
                   <div className="flex items-center justify-between gap-1">
-                    <h3 className="truncate text-[13px] font-extrabold text-[var(--brief-ink)]">{c.name}</h3>
+                    <h3 className="truncate text-[14px] font-extrabold text-[var(--brief-ink)]">{c.name}</h3>
                     {c.visibility === 'public'
-                      ? <Globe className="h-3 w-3 shrink-0 text-[#4F46E5]" />
-                      : <Lock className="h-3 w-3 shrink-0 text-[rgba(36, 28, 18,0.4)]" />}
+                      ? <Globe className="h-3 w-3 shrink-0 text-[#2563EB]" />
+                      : <Lock className="h-3 w-3 shrink-0 text-[rgba(10, 14, 20,0.4)]" />}
                   </div>
-                  <p className="mt-0.5 text-[10px] font-semibold text-[rgba(36, 28, 18,0.62)]">
+                  <p className="mt-0.5 text-[11px] font-semibold text-[rgba(10, 14, 20,0.62)]">
                     {c.count} {c.count === 1 ? 'item' : 'items'} · {relativeDay(c.updatedAt)}
                   </p>
                   {c.locations.areas.length > 0 && (
-                    <p className="mt-1 flex items-center gap-0.5 truncate text-[9px] font-semibold text-[#4F46E5]">
+                    <p className="mt-1 flex items-center gap-0.5 truncate text-[11px] font-semibold text-[#2563EB]">
                       <MapPin className="h-2.5 w-2.5 shrink-0" />
                       {c.locations.areas.slice(0, 2).join(' · ')}
                     </p>
@@ -244,7 +244,7 @@ export function CollectionsSurface({ authed, savedCount, onClose, onOpenObject, 
           </div>
         )}
 
-        <p className="mt-6 text-center text-[9px] font-semibold text-[rgba(36, 28, 18,0.45)]">
+        <p className="mt-6 text-center text-[11px] font-semibold text-[rgba(10, 14, 20,0.45)]">
           Collections hold references only — saving or removing here never changes the objects themselves.
         </p>
       </div>

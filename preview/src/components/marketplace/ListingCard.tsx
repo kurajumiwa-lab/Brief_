@@ -39,7 +39,7 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
     >
       <div className="flex items-start justify-between gap-3">
         <p className="text-xs font-extrabold text-[var(--brief-ink)] min-w-0">{listing.title}</p>
-        <span className="shrink-0 text-[9px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
+        <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>
       </div>
@@ -49,22 +49,22 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
       </p>
 
       {listing.vendor && (
-        <p className="text-[10px] text-[var(--ink-60)]">{listing.vendor.displayName}</p>
+        <p className="text-[11px] text-[var(--ink-60)]">{listing.vendor.displayName}</p>
       )}
 
       {/* Optional by design: a mobile service has no single location. */}
       {listing.locationName && (
-        <p className="text-[10px] text-[var(--ink-60)]">{listing.locationName}</p>
+        <p className="text-[11px] text-[var(--ink-60)]">{listing.locationName}</p>
       )}
 
       {/* Stock only when it is genuinely tracked. null means "not tracked",
           which is different from zero and must not render as "0 left". */}
       {listing.quantityAvailable !== null && listing.quantityAvailable > 0 && (
-        <p className="text-[10px] text-[var(--ink-60)]">{listing.quantityAvailable} available</p>
+        <p className="text-[11px] text-[var(--ink-60)]">{listing.quantityAvailable} available</p>
       )}
 
       {!listing.orderable && listing.unorderableReason && (
-        <p className="text-[10px] text-[var(--brief-ink)]">{listing.unorderableReason}</p>
+        <p className="text-[11px] text-[var(--brief-ink)]">{listing.unorderableReason}</p>
       )}
     </button>
   );

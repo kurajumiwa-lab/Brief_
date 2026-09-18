@@ -151,7 +151,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#00BFEF] font-bold">
+                      <span className="text-[11px] font-mono px-1.5 py-0.5 rounded bg-black/40 text-[#00BFEF] font-bold">
                         {srv.badge}
                       </span>
                       {srv.id === 'courier' && <Bike className="w-3.5 h-3.5 text-[#F58220]" />}
@@ -160,10 +160,10 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
                       {srv.id === 'wayfarer' && <Car className="w-3.5 h-3.5 text-[#FF9D24]" />}
                     </div>
                     <h4 className="font-bold text-xs text-white leading-tight mt-1.5">{srv.title}</h4>
-                    <span className="text-[11px] text-[#F58220] font-mono font-semibold block mt-0.5">
+                    <span className="text-[12px] text-[#F58220] font-mono font-semibold block mt-0.5">
                       Base: KES {srv.baseKes}
                     </span>
-                    <span className="text-[10px] text-emerald-400 block font-mono">{srv.driverSharePercent}% Provider Return</span>
+                    <span className="text-[11px] text-emerald-400 block font-mono">{srv.driverSharePercent}% Provider Return</span>
                   </button>
                 );
               })}
@@ -195,7 +195,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           <div>
             <label className="block text-xs font-semibold text-[#DCE2E6]/80 uppercase tracking-wider mb-2 flex items-center justify-between">
               <span>Mathematical Private Auction Bids</span>
-              <span className="text-[10px] text-[#00BFEF] font-mono">No Public Bidding Spam</span>
+              <span className="text-[11px] text-[#00BFEF] font-mono">No Public Bidding Spam</span>
             </label>
             <div className="space-y-2">
               {bids.slice(0, 3).map((bid) => {
@@ -219,20 +219,20 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
                       <div className="flex items-center space-x-2">
                         <span className="font-bold text-xs text-white">{bid.companyName}</span>
                         {bid.isLogbookVerifiedOwner && (
-                          <span className="text-[9px] px-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                          <span className="text-[11px] px-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">
                             ✓ OWNER LOGBOOK
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[#DCE2E6]/70 mt-0.5">{bid.vehicleModel} • {bid.driverName}</p>
-                      <span className="text-[10px] font-mono text-[#00BFEF] block mt-0.5">
+                      <p className="text-[12px] text-[#DCE2E6]/70 mt-0.5">{bid.vehicleModel} • {bid.driverName}</p>
+                      <span className="text-[11px] font-mono text-[#00BFEF] block mt-0.5">
                         ★ {bid.trustScore}% Trust • {bid.etaMins}m ETA • {bid.insuranceCovered ? '100% Insured' : 'Standard Cover'}
                       </span>
                     </div>
 
                     <div className="text-right">
                       <span className="text-sm font-mono font-bold text-white block">KES {bid.bidPriceKes}</span>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${isChosen ? 'bg-[#F58220] text-white' : 'bg-white/10 text-gray-300'}`}>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isChosen ? 'bg-[#F58220] text-white' : 'bg-white/10 text-gray-300'}`}>
                         {isChosen ? 'SELECTED' : 'CHOOSE'}
                       </span>
                     </div>
@@ -272,14 +272,14 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           <div className="p-3.5 bg-gradient-to-r from-[#0B1B2A] to-[#173247] border border-[#00BFEF]/30 rounded-2xl space-y-2">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] uppercase font-mono text-[#00BFEF]">Total Delivery Fare (M-Pesa)</span>
+                <span className="text-[11px] uppercase font-mono text-[#00BFEF]">Total Delivery Fare (M-Pesa)</span>
                 <div className="flex items-baseline space-x-1.5">
                   <span className="text-xl font-bold font-mono text-white">KES {activeBid.bidPriceKes}</span>
                 </div>
               </div>
               <div className="text-right font-mono text-xs">
                 <span className="text-emerald-400 font-bold block">Rider Take: KES {Math.round(activeBid.bidPriceKes * 0.9)} (90%)</span>
-                <span className="text-gray-400 text-[10px] block">Platform Fee: KES {Math.round(activeBid.bidPriceKes * 0.1)} (10%)</span>
+                <span className="text-gray-400 text-[11px] block">Platform Fee: KES {Math.round(activeBid.bidPriceKes * 0.1)} (10%)</span>
               </div>
             </div>
           </div>
@@ -304,7 +304,7 @@ export const DispatchModal: React.FC<DispatchModalProps> = ({
           </button>
 
           {/* ── NON-PROMISES DISCLAIMER (NEIGHBORHOOD TRUST OS) ── */}
-          <p className="text-[10px] text-gray-400 text-center leading-snug px-2">
+          <p className="text-[11px] text-gray-400 text-center leading-snug px-2">
             You are booking a rider directly. Brief connects you and records the trip — resolving issues is between you and the rider, with support from your Community Champion if needed.
           </p>
 

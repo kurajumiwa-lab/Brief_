@@ -47,12 +47,12 @@ export function PublicSpaces({ onOpenSpace }: { onOpenSpace: (spaceId: string) =
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-bold text-[color:var(--color-text)] truncate">{s.name}</span>
-              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-1.5 py-0.5 rounded-full">
+              <span className="shrink-0 text-[11px] font-bold uppercase tracking-wider text-[color:var(--color-text-muted)] bg-[color:var(--color-surface)] px-1.5 py-0.5 rounded-full">
                 {TYPE_LABEL[s.type] ?? s.type}
               </span>
             </div>
-            {s.goal && <p className="text-[10px] text-[color:var(--color-text-muted)] truncate">{s.goal}</p>}
-            <p className="text-[10px] text-[color:var(--color-text-muted)]">
+            {s.goal && <p className="text-[11px] text-[color:var(--color-text-muted)] truncate">{s.goal}</p>}
+            <p className="text-[11px] text-[color:var(--color-text-muted)]">
               {s.activeOfferCount} active offer{s.activeOfferCount === 1 ? '' : 's'}
               {s.sampleOffers.length > 0 && ` · ${s.sampleOffers.map((o) => o.title).join(', ')}`}
             </p>
@@ -67,12 +67,12 @@ export function PublicSpaces({ onOpenSpace }: { onOpenSpace: (spaceId: string) =
                     return f?.answer ? [{ key: k, answer: f.answer }] : [];
                   })
                   .map(({ key, answer }) => (
-                    <p key={key} className="text-[10px] leading-snug" style={{ color: 'var(--color-text)' }}>
+                    <p key={key} className="text-[11px] leading-snug" style={{ color: 'var(--color-text)' }}>
                       {answer}
                     </p>
                   ))}
                 {s.operating.staleDays !== null && (
-                  <p className="text-[10px] font-bold" style={{ color: 'var(--color-warning)' }}>
+                  <p className="text-[11px] font-bold" style={{ color: 'var(--color-warning)' }}>
                     Answers last confirmed {s.operating.staleDays} days ago
                   </p>
                 )}

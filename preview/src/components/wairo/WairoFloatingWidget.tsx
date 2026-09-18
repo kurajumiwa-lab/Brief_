@@ -107,18 +107,18 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
             style={{
               boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.06), 0px 2px 6px rgba(0, 0, 0, 0.04)'
             }}
-            className="group flex items-center bg-white/95 hover:bg-white text-[var(--brief-ink)] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[var(--brief-line)] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#4F46E5]/40 cursor-pointer"
+            className="group flex items-center bg-white/95 hover:bg-white text-[var(--brief-ink)] pl-3.5 pr-2.5 py-3 rounded-l-2xl border-l border-y border-r-0 border-[var(--brief-line)] backdrop-blur-md transition-all duration-300 ease-out hover:scale-[1.02] active:scale-[0.98] hover:border-[#2563EB]/40 cursor-pointer"
           >
             <div className="w-8 h-8 rounded-xl bg-[var(--color-well)] group-hover:bg-[#FFF3EC] flex items-center justify-center mr-2.5 shrink-0 transition-colors">
-              <Bike className="w-4 h-4 text-[#4F46E5]" />
+              <Bike className="w-4 h-4 text-[#2563EB]" />
             </div>
 
             <div className="flex flex-col items-start text-left pr-1">
               <div className="flex items-center space-x-1.5 mb-0.5">
-                <span className="text-[11px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
+                <span className="text-[12px] font-black uppercase tracking-wider text-[var(--brief-ink)]">
                   WAIRO
                 </span>
-                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                <span className="text-[11px] font-mono font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
                   90/10 Payout
                 </span>
               </div>
@@ -135,7 +135,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
               </div>
             </div>
 
-            <div className="ml-1.5 text-[var(--ink-40)] group-hover:text-[#4F46E5] group-hover:-translate-x-0.5 transition-all">
+            <div className="ml-1.5 text-[var(--ink-40)] group-hover:text-[#2563EB] group-hover:-translate-x-0.5 transition-all">
               <ChevronLeft className="w-4 h-4" />
             </div>
           </button>
@@ -160,7 +160,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
           >
             {/* Top Badge & Close */}
             <div className="flex items-center justify-between">
-              <div className="px-3 py-1 rounded-lg bg-white/20 text-white text-[10px] font-black tracking-wider uppercase">
+              <div className="px-3 py-1 rounded-lg bg-white/20 text-white text-[11px] font-black tracking-wider uppercase">
                 WAIRO · 90/10 PAYOUT
               </div>
 
@@ -169,7 +169,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                   type="button"
                   onClick={openMiniAppDrawer}
                   title="Open Full MiniApp Companion"
-                  className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[11px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
+                  className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-[12px] font-bold flex items-center space-x-1 cursor-pointer transition-colors"
                 >
                   <Smartphone className="w-3.5 h-3.5" />
                   <span>MiniApp</span>
@@ -240,7 +240,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                 className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-colors"
               >
                 <span>Inter-County Cargo</span>
-                <span className="text-[10px] text-white/70">90% Payout →</span>
+                <span className="text-[11px] text-white/70">90% Payout →</span>
               </button>
               <button
                 type="button"
@@ -251,7 +251,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                 className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold text-left flex items-center justify-between cursor-pointer transition-colors"
               >
                 <span>Carrier Auction</span>
-                <span className="text-[10px] text-white/70">Math Engine →</span>
+                <span className="text-[11px] text-white/70">Math Engine →</span>
               </button>
             </div>
           </div>

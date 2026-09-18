@@ -19,21 +19,21 @@ export const DesignTokens = {
     // Warm light system — see src/ui/theme.css for the --brief-*/--color-* names.
     // Nothing here is #FFFFFF-on-#F7F8FA any more: a cold neutral next to a warm
     // accent is what made surfaces read as unpainted wireframe.
-    background: '#F4EEE3',        // --color-bg — the room, warm plaster
-    surface: '#FDFAF3',           // --color-surface / --color-paper — warm paper
-    surfaceElevated: '#F0E9DE',   // --color-well — input wells, inset rows
-    border: '#E4DACB',            // --color-border — dividers/rings only, never a card
-    textPrimary: '#241C12',       // --color-text (warm ink)
+    background: '#F7F8FA',        // --color-bg — the room, warm plaster
+    surface: '#FFFFFF',           // --color-surface / --color-paper — warm paper
+    surfaceElevated: '#EEF1F5',   // --color-well — input wells, inset rows
+    border: '#DCE1E8',            // --color-border — dividers/rings only, never a card
+    textPrimary: '#0A0E14',       // --color-text (warm ink)
     textSecondary: '#55493A',     // --color-text-secondary — card bodies
-    textMuted: '#6E6152',         // --color-text-muted (5.9:1 on paper)
-    textFaint: '#7E7057',         // meta / timestamps (>=4.5:1 on paper)
-    quiet: '#A08D74',             // a zero, a dash, an arrow: present, unbothered
-    primary: '#4F46E5',           // --color-primary (electric indigo — unchanged)
+    textMuted: '#5A6472',         // --color-text-muted (5.9:1 on paper)
+    textFaint: '#6B7684',         // meta / timestamps (>=4.5:1 on paper)
+    quiet: '#8A94A3',             // a zero, a dash, an arrow: present, unbothered
+    primary: '#2563EB',           // --color-primary (electric indigo — unchanged)
     primaryStrong: '#4338CA',     // --color-primary-strong (hover/pressed)
-    accent: '#06B6D4',            // --color-accent (cyan secondary — unchanged)
-    success: '#16A34A',
+    accent: '#0891B2',            // --color-accent (cyan secondary — unchanged)
+    success: '#059669',
     warning: '#B45309',
-    danger: '#C2483C'             // warm brick, not pure red
+    danger: '#DC2626'             // warm brick, not pure red
   },
   // Elevation is the room's depth language: an inset highlight at the top edge
   // (the light source) plus a warm drop shadow. A card takes one of these and

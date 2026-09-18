@@ -58,7 +58,7 @@ export function NoPhotoPlate({ seller, mark = null, icon = null, stamp = null, q
         </span>
         {mark && (
           <span
-            className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-[0.14em] font-mono"
+            className="px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-[0.14em] font-mono"
             style={{ background: 'rgba(24,19,12,0.055)', color: 'var(--brief-muted)' }}
           >
             {mark}
@@ -68,10 +68,10 @@ export function NoPhotoPlate({ seller, mark = null, icon = null, stamp = null, q
       {!quiet && (
         <span className="flex items-end justify-between gap-2">
           <span className="min-w-0">
-            <span className="block text-[11px] font-extrabold leading-tight" style={{ color: 'var(--brief-ink)' }}>
+            <span className="block text-[12px] font-extrabold leading-tight" style={{ color: 'var(--brief-ink)' }}>
               Waiting on photo
             </span>
-            <span className="block text-[10px] font-mono truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
+            <span className="block text-[11px] font-mono truncate mt-0.5" style={{ color: 'var(--brief-muted)' }}>
               {[seller ? `no photo from ${seller}` : 'no photo on this row', stamp].filter(Boolean).join(' · ')}
             </span>
           </span>

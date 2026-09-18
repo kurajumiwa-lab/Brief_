@@ -146,7 +146,7 @@ export function FirstRunChecklist({
                 <span className={`block text-xs font-bold ${s.done ? "" : ""}`} style={{ color: s.done ? "var(--color-text-muted)" : "var(--color-text)" }}>
                   {s.label}
                 </span>
-                <span className="block text-[10px]" style={{ color: "var(--color-text-muted)" }}>{s.hint}</span>
+                <span className="block text-[11px]" style={{ color: "var(--color-text-muted)" }}>{s.hint}</span>
               </span>
             </button>
           </li>

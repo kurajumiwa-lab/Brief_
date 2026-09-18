@@ -73,12 +73,12 @@ export function StandingLine({
   }
 
   return (
-    <p className={`text-[11px] font-semibold leading-snug ${className}`} style={{ color: 'var(--color-text-muted)' }}>
+    <p className={`text-[12px] font-semibold leading-snug ${className}`} style={{ color: 'var(--color-text-muted)' }}>
       {segments.length === 0 ? (
         <span>Nothing pending on your ledger.</span>
       ) : (
         <>
-          <span className="font-black uppercase tracking-[0.12em] text-[9px] mr-1.5" style={{ color: 'var(--color-primary)' }}>
+          <span className="font-black uppercase tracking-[0.12em] text-[11px] mr-1.5" style={{ color: 'var(--color-primary)' }}>
             Your standing
           </span>
           {segments.join(' · ')}

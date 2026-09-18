@@ -82,7 +82,7 @@ export function SyncStatusDot({ label = false, className = "" }: SyncStatusDotPr
         style={{ background: m.color }}
       />
       {label && (
-        <span className="text-[10px] font-bold" style={{ color: "var(--color-text-muted)" }}>
+        <span className="text-[11px] font-bold" style={{ color: "var(--color-text-muted)" }}>
           {count > 0 ? `${m.text} (${count})` : m.text}
         </span>
       )}

@@ -56,7 +56,7 @@ export function StateDot({ state, label, size = 'sm', inline = false, className 
         aria-hidden="true"
       />
       {label ? (
-        <span className="text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: 'var(--color-text-muted)' }}>
+        <span className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: 'var(--color-text-muted)' }}>
           {label}
         </span>
       ) : null}

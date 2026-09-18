@@ -312,44 +312,44 @@ export function unavailableReason(slug) {
 // ---------------------------------------------------------------------------
 
 const ROOM_CSS = `
-:root{--bg:#F4EEE3;--card:#FDFAF3;--well:#F0E9DE;--ink:#241C12;--muted:#6E6152;--faint:#7E7057;--line:#E4DACB;--accent:#4F46E5;--live:#3B7A43;--quiet:#8A5A12;--plaster:linear-gradient(rgba(79,70,229,0.07),rgba(79,70,229,0.07)),linear-gradient(158deg,#FBF6EC 0%,#F1E8DA 100%);--lift:0 6px 20px rgba(60,46,30,0.07),inset 0 1px 0 rgba(255,255,255,0.9)}
+:root{--bg:#F7F8FA;--card:#FFFFFF;--well:#EEF1F5;--ink:#0A0E14;--muted:#5A6472;--faint:#6B7684;--line:#DCE1E8;--accent:#2563EB;--live:#047857;--quiet:#B45309;--plaster:linear-gradient(rgba(37,99,235,0.07),rgba(37,99,235,0.07)),linear-gradient(158deg,#FBFCFE 0%,#EDF1F6 100%);--lift:0 6px 20px rgba(10,14,20,0.06),inset 0 1px 0 rgba(255,255,255,0.9)}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
 a{color:var(--accent)}
 .wrap{max-width:640px;margin:0 auto;padding:16px 14px 44px}
-.card{background:var(--card);border-radius:24px;overflow:hidden;box-shadow:var(--lift)}
+.card{background:var(--card);border-radius:22px;overflow:hidden;box-shadow:var(--lift)}
 .cover{position:relative;height:168px;background:var(--plaster)}
 .cover img{width:100%;height:168px;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.02)}
 .id{padding:0 16px 18px;margin-top:-34px}
-.avatar{width:64px;height:64px;border-radius:50%;background:var(--card);box-shadow:var(--lift);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:20px}
-h1{font-size:22px;margin:10px 0 2px;line-height:1.2}
-.tag{margin:0;color:var(--muted);font-size:13px}
-.line{margin:4px 0 0;color:var(--faint);font-size:12px}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:var(--well);color:var(--ink);margin-top:10px}
+.avatar{width:64px;height:64px;border-radius:50%;background:var(--card);box-shadow:var(--lift);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:22px}
+h1{font-size:26px;margin:10px 0 2px;line-height:1.2}
+.tag{margin:0;color:var(--muted);font-size:15px}
+.line{margin:4px 0 0;color:var(--faint);font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;background:var(--well);color:var(--ink);margin-top:10px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--live);display:inline-block}
 .dot--quiet{background:var(--quiet)}
-.cta{display:block;text-align:center;text-decoration:none;background:var(--accent);color:#fff;font-weight:800;padding:13px 16px;border-radius:999px;margin-top:14px;box-shadow:var(--lift)}
-h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 8px}
+.cta{display:block;text-align:center;text-decoration:none;background:var(--accent);color:#fff;font-weight:800;font-size:15px;padding:14px 16px;border-radius:999px;margin-top:14px;box-shadow:var(--lift)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
 section{padding:16px}
 section+section{border-top:1px solid var(--line)}
 .offer{background:var(--well);border-radius:16px;padding:12px 13px;margin-bottom:8px}
 .offer:last-child{margin-bottom:0}
-.offer .t{font-weight:700;font-size:14px;margin:0}
-.offer .p{font-size:13px;margin:4px 0 0;font-variant-numeric:tabular-nums}
-.offer .n{font-size:11px;color:var(--faint);margin:3px 0 0}
-.pin{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.offer .t{font-weight:700;font-size:15px;margin:0}
+.offer .p{font-size:14px;margin:4px 0 0;font-variant-numeric:tabular-nums}
+.offer .n{font-size:12px;color:var(--faint);margin:3px 0 0}
+.pin{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .post{background:var(--well);border-radius:16px;padding:12px 13px;margin-bottom:8px}
-.post .k{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.post .b{margin:4px 0 0;font-size:14px}
+.post .k{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.post .b{margin:4px 0 0;font-size:15px}
 .fact{margin:0 0 10px}
-.fact dt{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
-.fact dd{margin:2px 0 0;font-size:14px}
-.empty{background:var(--well);border-radius:16px;padding:16px;text-align:center;color:var(--muted);font-size:13px}
-.foot{margin-top:16px;text-align:center;font-size:11px;color:var(--faint)}
-.foot a{font-size:11px}
+.fact dt{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint)}
+.fact dd{margin:2px 0 0;font-size:15px}
+.empty{background:var(--well);border-radius:16px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
+.foot{margin-top:16px;text-align:center;font-size:12px;color:var(--faint)}
+.foot a{font-size:12px}
 form{margin-top:10px}
 textarea{width:100%;min-height:56px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;padding:8px}
-button{background:var(--well);color:var(--ink);border:0;border-radius:999px;padding:9px 14px;font-weight:800;font-size:12px}
+button{background:var(--well);color:var(--ink);border:0;border-radius:999px;padding:11px 16px;font-weight:800;font-size:14px}
 `;
 
 /** The visible page. `view` must come from publicPageView — nothing here adds a figure. */
@@ -416,7 +416,7 @@ ${view.facts.map((f) => `      <div class="fact"><dt>${esc(f.label)}</dt><dd>${e
 <meta property="og:description" content="${esc(DESCRIPTION_LINE(view))}" />
 ${view.pageUrl ? `<meta property="og:url" content="${esc(view.pageUrl)}" />\n<link rel="canonical" href="${esc(view.pageUrl)}" />` : ''}
 ${view.image ? `<meta property="og:image" content="${esc(view.image)}" />\n<meta name="twitter:card" content="summary_large_image" />` : `<meta name="twitter:card" content="summary" />`}
-<meta name="theme-color" content="#F4EEE3" />
+<meta name="theme-color" content="#F7F8FA" />
 <meta name="robots" content="index,follow" />
 ${JSON_LD(view)}
 </head>

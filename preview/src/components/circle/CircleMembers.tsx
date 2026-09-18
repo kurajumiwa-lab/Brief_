@@ -97,7 +97,7 @@ export function CircleMembers({
 
   return (
     <div>
-      <h3 className="text-[11px] font-extrabold text-[var(--ink-60)] mb-2">
+      <h3 className="text-[12px] font-extrabold text-[var(--ink-60)] mb-2">
         Members
       </h3>
 
@@ -118,7 +118,7 @@ export function CircleMembers({
             onSubmit={handleInvite}
             className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-2"
           >
-            <p className="text-[10px] font-extrabold text-[var(--ink-60)]">
+            <p className="text-[11px] font-extrabold text-[var(--ink-60)]">
               Invite by handle
             </p>
             <div className="flex items-center gap-2">
@@ -127,13 +127,13 @@ export function CircleMembers({
                 onChange={(e) => setInviteId(e.target.value)}
                 placeholder="@handle"
                 aria-label="invite handle"
-                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]"
+                className="min-w-0 flex-1 px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]"
               />
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as Member['role'])}
                 aria-label="invite role"
-                className="px-2 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]"
+                className="px-2 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]"
               >
                 {GOV_ROLES.map((r) => (
                   <option key={r} value={r}>
@@ -144,7 +144,7 @@ export function CircleMembers({
               <button
                 type="submit"
                 disabled={!inviteId.trim() || busyUserId === 'invite'}
-                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[10px] cursor-pointer disabled:opacity-50"
+                className="shrink-0 px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
               >
                 Invite
               </button>
@@ -167,7 +167,7 @@ export function CircleMembers({
                         photo, so it never pretends to be one. */}
                     <span
                       aria-hidden="true"
-                      className="w-8 h-8 shrink-0 rounded-full grid place-items-center text-[11px] font-black"
+                      className="w-8 h-8 shrink-0 rounded-full grid place-items-center text-[12px] font-black"
                       style={{ background: 'var(--color-well)', color: 'var(--color-primary)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
                     >
                       {member.initials || (member.displayName ? member.displayName.slice(0, 1).toUpperCase() : '?')}
@@ -176,7 +176,7 @@ export function CircleMembers({
                       <span className="block text-xs font-extrabold text-[var(--brief-ink)] truncate">
                         {member.displayName || (member.handle ? `@${member.handle}` : 'a member')}
                       </span>
-                      <span className="block text-[9px] text-[var(--ink-60)] mt-0.5">
+                      <span className="block text-[11px] text-[var(--ink-60)] mt-0.5">
                         {ROLE_LABEL[member.role] ?? member.role}
                         {since(member.joinedAt) ? ` · joined ${since(member.joinedAt)}` : ''}
                       </span>
@@ -184,7 +184,7 @@ export function CircleMembers({
                   </div>
                   <button
                     onClick={() => onToggle(member.userId)}
-                    className="shrink-0 text-[10px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
+                    className="shrink-0 text-[11px] font-extrabold text-[var(--brief-ink)] cursor-pointer"
                   >
                     {open ? 'Hide' : 'Evidence'}
                   </button>
@@ -206,7 +206,7 @@ export function CircleMembers({
                           onChange={(e) => setRoleDraft((prev) => ({ ...prev, [member.userId]: e.target.value as Member['role'] }))}
                           aria-label={`role for ${member.displayName || member.handle || 'this member'}`}
                           disabled={busyUserId === member.userId}
-                          className="px-2 py-1 rounded-xl border border-[var(--brief-line)] text-[9px] text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
+                          className="px-2 py-1 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)] cursor-pointer disabled:opacity-50"
                         >
                           {GOV_ROLES.map((r) => (
                             <option key={r} value={r}>{ROLE_LABEL[r] ?? r}</option>
@@ -221,7 +221,7 @@ export function CircleMembers({
                               setRoleDraft((prev) => { const next = { ...prev }; delete next[member.userId]; return next; });
                             }}
                             disabled={busyUserId === member.userId || reasonless}
-                            className="px-2.5 py-1 rounded-xl bg-[#4F46E5] text-[var(--accent-ink)] font-extrabold text-[9px] cursor-pointer disabled:opacity-40"
+                            className="px-2.5 py-1 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                           >
                             Save role
                           </button>
@@ -230,7 +230,7 @@ export function CircleMembers({
                           <button
                             onClick={() => onTransfer(member.userId)}
                             disabled={busyUserId === member.userId}
-                            className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[9px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[11px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
                           >
                             Hand over the room
                           </button>
@@ -245,13 +245,13 @@ export function CircleMembers({
                                 setReason('');
                               }}
                               disabled={busyUserId === member.userId || reasonless}
-                              className="px-2.5 py-1 rounded-xl bg-[var(--color-danger)] text-[var(--accent-ink)] font-extrabold text-[9px] cursor-pointer disabled:opacity-40"
+                              className="px-2.5 py-1 rounded-xl bg-[var(--color-danger)] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                             >
                               Confirm remove
                             </button>
                             <button
                               onClick={() => { setConfirmRemove(null); setReason(''); }}
-                              className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[9px] text-[var(--ink-60)] cursor-pointer"
+                              className="px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[11px] text-[var(--ink-60)] cursor-pointer"
                             >
                               Keep
                             </button>
@@ -260,7 +260,7 @@ export function CircleMembers({
                           <button
                             onClick={() => setConfirmRemove(member.userId)}
                             disabled={busyUserId === member.userId}
-                            className="ml-auto px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[9px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
+                            className="ml-auto px-2.5 py-1 rounded-xl border border-[var(--brief-line)] font-bold text-[11px] text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
                           >
                             Remove
                           </button>
@@ -275,7 +275,7 @@ export function CircleMembers({
                             : 'why the change? the circle sees this'}
                           aria-label="reason for this change"
                           maxLength={500}
-                          className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[10px] text-[var(--brief-ink)]"
+                          className="w-full px-2.5 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] text-[var(--brief-ink)]"
                         />
                       )}
                     </div>
@@ -288,7 +288,7 @@ export function CircleMembers({
                     {member.trust.evidence.map((e) => (
                       <span
                         key={e.kind}
-                        className="text-[9px] px-2 py-0.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)]"
+                        className="text-[11px] px-2 py-0.5 rounded-full bg-[color:var(--color-paper)] text-[var(--brief-ink)]"
                       >
                         {e.label}
                       </span>
@@ -302,7 +302,7 @@ export function CircleMembers({
                     {member.trust.facts.length > 0 && (
                       <ul className="space-y-0.5 mt-2">
                         {member.trust.facts.map((f) => (
-                          <li key={f.kind} className="text-[10px] text-[var(--ink-60)]">
+                          <li key={f.kind} className="text-[11px] text-[var(--ink-60)]">
                             {f.label}
                           </li>
                         ))}
@@ -310,11 +310,11 @@ export function CircleMembers({
                     )}
 
                     {ev === 'loading' && (
-                      <p className="text-[10px] text-[var(--ink-60)]">Loading evidence...</p>
+                      <p className="text-[11px] text-[var(--ink-60)]">Loading evidence...</p>
                     )}
 
                     {ev === 'error' && (
-                      <p className="text-[10px] text-[var(--brief-ink)]">
+                      <p className="text-[11px] text-[var(--brief-ink)]">
                         Couldn't load this member's history.
                       </p>
                     )}
@@ -326,7 +326,7 @@ export function CircleMembers({
                             {ev.summary.map((s) => (
                               <span
                                 key={s.kind}
-                                className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--color-well)] border border-[var(--brief-line)] text-[var(--ink-60)]"
+                                className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--color-well)] border border-[var(--brief-line)] text-[var(--ink-60)]"
                               >
                                 {s.label}
                               </span>
@@ -335,7 +335,7 @@ export function CircleMembers({
                         )}
 
                         {ev.evidence.length === 0 ? (
-                          <p className="text-[10px] text-[var(--ink-60)]">
+                          <p className="text-[11px] text-[var(--ink-60)]">
                             No recorded activity in this circle yet.
                           </p>
                         ) : (
@@ -343,10 +343,10 @@ export function CircleMembers({
                             {ev.evidence.slice(0, 10).map((item) => (
                               <li
                                 key={item.signalId}
-                                className="flex items-center gap-2 text-[10px] text-[var(--ink-60)]"
+                                className="flex items-center gap-2 text-[11px] text-[var(--ink-60)]"
                               >
                                 <span className="min-w-0 truncate">{item.label}</span>
-                                <span className="text-[9px] text-[var(--ink-60)] ml-auto shrink-0">
+                                <span className="text-[11px] text-[var(--ink-60)] ml-auto shrink-0">
                                   {item.at.slice(0, 10)}
                                 </span>
                               </li>
