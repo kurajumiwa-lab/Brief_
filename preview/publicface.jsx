@@ -275,7 +275,9 @@ async function main() {
     return ok({});
   };
   mount(React.createElement(SpaceShell, { spaceId: 'spc_1' }));
-  await flush();
+  // The shell now fans out to three reads (space, audience, guardian notice), so
+  // let all of them settle before snapshotting the call log.
+  await flush(320);
   // The private space's panel is up, and it is the mirror read, not a claim.
   assert.ok(allText().includes('Public page'), 'the shell mounts the face panel');
   const publicChip = Array.from(document.querySelectorAll('button')).find((b) => text(b) === 'Public');
@@ -283,7 +285,7 @@ async function main() {
   const before = calls.length;
   click(publicChip);
   await flush();
-  assert.equal(calls.length, before, 'tapping the Public chip writes nothing at all');
+  assert.equal(calls.length, before, `tapping the Public chip writes nothing at all :: ${calls.slice(before).join(' , ')}`);
   assert.ok(allText().includes('on the open internet'), 'it shows the warning first');
   click(btn('Publish it'));
   await flush();

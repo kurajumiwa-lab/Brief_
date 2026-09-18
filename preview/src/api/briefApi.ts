@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
@@ -4988,6 +4988,33 @@ export function getPublicSpace(slugOrId: string): Promise<ApiResult<{ space: Pub
 export function getPublicSpacePage(slugOrId: string): Promise<ApiResult<{ space: SpacePublicPageView }>> {
   return request(`/api/public/spaces/${encodeURIComponent(slugOrId)}/page`, undefined, (r) => (r?.space ? { space: r.space as SpacePublicPageView } : undefined));
 }
+// ---------------------------------------------------------------------------
+// GUARDIANS — a claim that you introduced a shop, and the shop's answer to it.
+// The credit is points, converted only inside the rewards pool, so there is no
+// payout endpoint here: `/api/referrals/*` owns money.
+// ---------------------------------------------------------------------------
+export function getGuardianNetwork(): Promise<ApiResult<{ network: GuardianNetwork }>> {
+  return request(`/api/guardians/mine`, undefined, (r) => (r?.network?.businesses ? { network: r.network as GuardianNetwork } : undefined));
+}
+export function claimGuardian(spaceId: string, note?: string): Promise<ApiResult<{ attribution: { id: string; status: string }; note: string }>> {
+  return request(`/api/guardians/claim`, { method: 'POST', body: JSON.stringify({ spaceId, note }) }, (r) =>
+    r?.attribution?.id ? { attribution: r.attribution, note: r.note } : undefined);
+}
+export function getSpaceGuardian(spaceId: string): Promise<ApiResult<SpaceGuardian>> {
+  return request<SpaceGuardian>(`/api/spaces/${encodeURIComponent(spaceId)}/guardian`, undefined, (r) =>
+    r && 'attribution' in r ? (r as SpaceGuardian) : undefined);
+}
+export function answerGuardian(
+  attributionId: string,
+  answer: 'confirm' | 'dispute' | 'revoke',
+  reason?: string
+): Promise<ApiResult<{ attribution: { id: string; status: string }; note?: string }>> {
+  return request(`/api/guardians/${encodeURIComponent(attributionId)}/${answer}`, {
+    method: 'POST',
+    body: JSON.stringify(answer === 'confirm' ? {} : { reason })
+  }, (r) => (r?.attribution?.id ? { attribution: r.attribution, note: r.note } : undefined));
+}
+
 /** The owner's read of their own public face: the link, what a buyer sees, reports. */
 export function getSpacePublicFace(spaceId: string): Promise<ApiResult<SpacePublicFace>> {
   return request<SpacePublicFace>(`/api/spaces/${encodeURIComponent(spaceId)}/public-page`, undefined, (r) =>

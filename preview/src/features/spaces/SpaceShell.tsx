@@ -7,6 +7,7 @@ import { PipelineView } from './PipelineView';
 import { SpaceOperatingPanel } from './SpaceOperatingPanel';
 import { SpaceStorefrontHeader } from './SpaceStorefrontHeader';
 import { PublicFacePanel } from './PublicFacePanel';
+import { GuardianNotice } from './GuardianNotice';
 import { BroadcastRail } from './SpaceBroadcastRail';
 import { SpaceTools } from './SpaceTools';
 import type { SpaceAudienceView } from '../../api/briefApi';
@@ -377,6 +378,11 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
           onShare={() => void shareSpace()}
           onCreateOrder={onCreateOrder}
         />
+
+        {/* Somebody may have claimed they introduced this shop. Until the shop
+            answers, that claim credits nothing — which is why the notice sits
+            here, in the owner's own workspace, and nowhere public. */}
+        <GuardianNotice spaceId={space!.id} />
 
         <PublicFacePanel
           space={space!}

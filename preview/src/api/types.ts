@@ -2090,6 +2090,73 @@ export interface SpacePublicFace {
   note: string;
 }
 
+// ---------------------------------------------------------------------------
+// GUARDIANS — shop-level attribution ("I introduced that shop").
+// Every figure is a count of rows or points those rows produced. There is no
+// rating, no complaint rate, no standing score and no money field, because Brief
+// holds no review rows for a shop and charges no percentage fee on an order.
+// ---------------------------------------------------------------------------
+export interface GuardianLink {
+  attributionId: string;
+  spaceId: string;
+  spaceName: string | null;
+  status: 'pending_owner' | 'active' | 'disputed' | 'revoked' | 'expired' | 'flagged' | 'suspended';
+  statusReason: string | null;
+  pointsPerHundredKes: number;
+  since: string | null;
+  until: string | null;
+  settledOrders: number;
+  points: number;
+  reports: number;
+  freshness: string | null;
+  note: string;
+}
+
+export interface GuardianNetwork {
+  guardianId: string;
+  pointsPerHundredKes: number;
+  months: number;
+  pendingCap: number;
+  businesses: GuardianLink[];
+  totals: {
+    claimed: number;
+    active: number;
+    pending: number;
+    paused: number;
+    settledOrders: number;
+    points: number;
+  };
+  unavailable: string[];
+  note: string;
+  channels: { inApp: string; sms: string; whatsapp: string };
+  conversion?: {
+    ptsToKes: number;
+    minPoints: number;
+    pointsAvailable: number;
+    poolAvailableKes: number;
+    poolBackingKes: number;
+    note: string;
+  } | null;
+}
+
+export interface SpaceGuardian {
+  attribution: {
+    id: string;
+    status: string;
+    guardianName: string | null;
+    note: string | null;
+    claimedAt: string;
+    confirmedAt: string | null;
+    expiresAt: string | null;
+  } | null;
+  pointsPerHundredKes?: number;
+  months?: number;
+  terms?: string;
+  canConfirm?: boolean;
+  canDispute?: boolean;
+  note: string;
+}
+
 export interface SpaceOfferCreate {
   title: string;
   description?: string;

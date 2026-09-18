@@ -21,6 +21,7 @@
 
 import { store, newId } from '../store.js';
 import { getUser } from './auth.js';
+import * as guardians from './guardians.js';
 import { confirmedServiceRevenue } from './fees.js';
 import { createTransaction, transitionTransaction } from './ledger.js';
 import { notify } from './notifications.js';
@@ -35,7 +36,13 @@ export const POINTS = {
   eventSignup: 25,      // a public event registration through your link
   traffic: 1,           // one unique visit through your link
   trafficPerDay: 50,    // daily cap — traffic points cannot be farmed
-  leadClosed: 250       // a CLOSED lead: a fulfilled order a field agent generated
+  leadClosed: 250,      // a CLOSED lead: a fulfilled order a field agent generated
+  // A shop's GUARDIAN (the person who introduced it, confirmed by the shop)
+  // earns this per KES 100 of its settled orders. It is points, not a levy: the
+  // shop is charged nothing, and the payout leaves the pool — see guardians.js,
+  // whose whole reason for existing is that Brief charges no percentage fee on
+  // an order, so a "cut of the cut" would have no source row.
+  guardianPerHundred: 1
 };
 export const CONVERSION = { ptsToKes: 0.10, minPoints: 500 };
 export const POOL_RATE = 0.10; // of confirmed service-fee revenue
@@ -108,6 +115,12 @@ export function recordOrder(orderId) {
       at: new Date().toISOString()
     }));
   }
+  // The shop's guardian, if the shop confirmed them: credited once per order,
+  // through THIS module, so one pool and one cap govern every distribution share.
+  try {
+    guardians.creditForOrder(order);
+  } catch { /* a credit failure must never break the order event */ }
+
   // A field agent generated this lead: reward them ONCE, only when the lead
   // actually closes (the order fulfils). Deterministic flat points, idempotent
   // per order, credited to the agent only — depth stays at one, and the agent

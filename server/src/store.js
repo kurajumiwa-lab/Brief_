@@ -139,6 +139,10 @@ const EMPTY = {
   // One row per report filed from a public page. Nothing else writes here, and
   // nothing here changes a space's visibility — see spacePublicPage.reportSpace.
   spaceAbuseReports: [],
+  // "This person introduced that shop" — pending until the shop confirms it.
+  // See guardians.js: an unconfirmed claim is worth nothing by construction, and
+  // the credit a confirmed one produces is a referralPoints row, not a ledger.
+  attributions: [],
   // Errands — a posted task someone can carry (a parcel, a queue, a document,
   // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
   // anyone may post. The fee a poster states is a stated amount, NOT money

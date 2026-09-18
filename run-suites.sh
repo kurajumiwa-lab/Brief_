@@ -16,7 +16,7 @@ cd "$(dirname "$0")"
 cd preview || exit 1
 export PATH="../node_modules/.bin:$PATH"
 
-ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs spaceloop circlejoin motion partnerdesk yousurface earnsurface progressivedisclosure tablebankingsurface eventcard eventactions eventdetail polish firstrun spacesignals promocarousel spaceshell wairodispatch cityfeed position commitments reciprocity museumgallery homezones spaceoperating spaceedit youposition errandslobby spacestorefront discoverlayout room publicface sellerhardening"
+ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs spaceloop circlejoin motion partnerdesk yousurface earnsurface progressivedisclosure tablebankingsurface eventcard eventactions eventdetail polish firstrun spacesignals promocarousel spaceshell wairodispatch cityfeed position commitments reciprocity museumgallery homezones spaceoperating spaceedit youposition errandslobby spacestorefront discoverlayout room publicface guardians sellerhardening"
 SUITES="${*:-$ALL}"
 
 tot_p=0; tot_f=0; broken=""
@@ -36,7 +36,11 @@ for f in $SUITES; do
   out=$(timeout 180 node ".tmp.$f.cjs" 2>&1); code=$?
   rm -f ".tmp.$f.cjs"
 
-  line=$(echo "$out" | grep -Ei "^(pass [0-9]+|PASSED [0-9]+)" | tail -1)
+  # Anchored, and only a summary: a suite that dies mid-run prints lines like
+  # "PASS 9. the contact channel is one honest input", which an unanchored grep
+  # happily reads as "9 passed" and reports as GREEN. That is the exact failure
+  # this runner exists to catch, so the pattern must not match a test name.
+  line=$(echo "$out" | grep -Ei "^(pass|PASSED)[ ]+[0-9]+((([ ]*/?[ ]+)(fail|FAIL|FAILED)[ ]+[0-9]+))?$" | tail -1)
   p=$(echo "$line" | grep -oEi "(pass|PASSED) +[0-9]+" | grep -oE "[0-9]+")
   fl=$(echo "$line" | grep -oEi "(fail|FAILED) +[0-9]+" | grep -oE "[0-9]+")
 

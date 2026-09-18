@@ -8,6 +8,7 @@ import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
 import { HowBriefWorks } from "./HowBriefWorks";
+import { GuardianNetwork } from "./GuardianNetwork";
 import { Marketplace } from "../../components/Marketplace";
 import { PositionHero } from "./PositionHero";
 import { Vault } from "../../components/vault/Vault";
@@ -43,7 +44,7 @@ const KIND_LABELS: Record<string, string> = {
 
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
-  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "how";
+  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how";
 
 export function YouSurface({
   onOpenEntity,
@@ -227,6 +228,7 @@ export function YouSurface({
         {tab("selling", "Selling")}
         {tab("archive", "Archive")}
         {tab("tableBanking", "Table Banking")}
+        {tab("network", "Your network")}
         {tab("how", "How Brief works")}
       </div>
 
@@ -449,6 +451,7 @@ export function YouSurface({
         <EarnSurface onRequireAuth={onRequireAuth} />
       )}
 
+      {section === "network" && <GuardianNetwork />}
       {section === "how" && <HowBriefWorks />}
 
       {section === "tableBanking" && (

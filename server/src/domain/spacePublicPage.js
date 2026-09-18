@@ -608,6 +608,17 @@ export function reportSpace(slug, { reason, reporterId = null, referrer = null }
   if (!space) return { error: 'no space at that address', status: 404 };
   const text = String(reason ?? '').trim().slice(0, 500);
   if (text.length < 4) return { error: 'say what is wrong in a few words', status: 400 };
+  // One open report per signed-in person per space. Without this, whoever wants
+  // a guardian's reward frozen just taps the form three times, and the
+  // attribution flag threshold (see attribution.js) is a button, not a signal.
+  if (reporterId) {
+    const already = store.find('spaceAbuseReports', (r) =>
+      r.spaceId === space.id && r.reporterId === reporterId && !r.handledAt);
+    if (already) {
+      return { reported: true, reused: true, id: already.id,
+        note: 'You already have an open report on this page, so it was not filed twice.' };
+    }
+  }
   const row = store.insert('spaceAbuseReports', {
     id: `abr_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
     spaceId: space.id,

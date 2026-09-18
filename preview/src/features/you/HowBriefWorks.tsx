@@ -128,6 +128,17 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       ]
     },
     {
+      id: 'guardians',
+      title: 'Who introduced a shop, and what that earns',
+      lines: [
+        'A member may claim that they walked a business through signing up. The claim is stored as unanswered, and it credits nothing until the shop confirms it. A dispute closes it for everybody: Brief has no mediator, so it does not host the same argument twice and it does not let a claimant ask again.',
+        'A confirmed guardian earns one point per KES 100 that settles through that shop, for 24 months, and the credit pauses the moment the shop has three open reports from signed-in people. Points become cash only inside the rewards pool — a fraction of confirmed service-fee revenue — and a conversion above the pool is refused rather than advanced.',
+        'A guardian is never shown the shop’s revenue, customers or ledger, and the shop is never charged for the credit: it comes from Brief’s pool, not out of what the shop earns.',
+        'What Brief will not compute for a guardian: a star rating or any average of reviews (there are no review rows for a shop’s orders), a complaint rate (there is no denominator of transactions to divide by), a “good standing” score, or an automatic takedown — a report freezes the credit and tells an operator; nobody removes a shop on a form.',
+        'There is also no percentage cut of an order. That would need Brief to charge a percentage fee on orders, which it does not: fees here are named services with a price, sold and confirmed by a human. A “1% of the 6% we take” would be a share of money that never existed.'
+      ]
+    },
+    {
       id: 'never',
       title: 'What Brief never shows',
       lines: [
