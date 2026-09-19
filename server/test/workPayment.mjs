@@ -306,16 +306,17 @@ console.log(`\nPASS ${count}`);
   // Configure the rail just enough to be "configured", then inject a fetch mock
   // that answers the collection endpoint. No real network, no real money — this
   // proves the initiation path accepts and marks authorized.
-  process.env.INTASEND_SECRET_KEY = "ISSecretKey_test_wpay";
-  process.env.INTASEND_BASE_URL = "https://stub.invalid";
-  process.env.INTASEND_WEBHOOK_SECRET = "wpay-cb-secret";
+  process.env.BUNI_CONSUMER_KEY = "ck_wpay";
+  process.env.BUNI_CONSUMER_SECRET = "cs_wpay";
+  process.env.BUNI_BASE_URL = "https://stub.invalid";
+  process.env.BUNI_WEBHOOK_SECRET = "wpay-cb-secret";
   process.env.BRIEF_PUBLIC_ORIGIN = "https://brief.example.com";
 
   // §32: the provider status surfaced to clients must NEVER contain the
   // callback secret (it is the only defence on unsigned callbacks).
   const statusJson = JSON.stringify(wp.providerStatus());
   assert.ok(!statusJson.includes("wpay-cb-secret"));
-  assert.ok(!statusJson.includes("/api/webhooks/intasend/"));
+  assert.ok(!statusJson.includes("/api/webhooks/buni/"));
   count++;
   console.log("PASS Provider status never leaks the callback secret");
 
@@ -328,9 +329,14 @@ console.log(`\nPASS ${count}`);
   let stkSeen = null;
   const fakeFetch = async (url, opts) => {
     const u = String(url);
-    if (u.includes("/api/v2/collections/collection")) {
+    if (u.endsWith("/token?grant_type=client_credentials")) {
+      return { ok: true, status: 200, json: async () => ({ access_token: "jwt.mock", expires_in: 3600 }) };
+    }
+    if (u.includes("/mm/api/request/1.0.0/stkpush")) {
       stkSeen = JSON.parse(opts.body);
-      return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: "wpay_CO_MOCK", state: "Pending", merchant_request_id: "m1" } }) };
+      return { ok: true, status: 200, json: async () => ({ Body: { stkPushResponseCode: {
+        CheckoutRequestID: "wpay_CO_MOCK", MerchantRequestID: "m1", ResponseCode: 0, CustomerMessage: "accepted"
+      } } }) };
     }
     throw new Error("unexpected URL " + u);
   };
@@ -338,8 +344,8 @@ console.log(`\nPASS ${count}`);
   assert.equal(res.ok, true);
   assert.equal(res.providerRef, "wpay_CO_MOCK");
   // The amount sent to the provider is the whole-unit collectible amount.
-  assert.equal(stkSeen.amount, 1550);
-  assert.equal(stkSeen.phone_number, "254722000111");
+  assert.equal(stkSeen.amount, "1550", "KCB takes the amount as a string");
+  assert.equal(stkSeen.phoneNumber, "254722000111");
   const updated = wp.getIntent(intent.id);
   assert.equal(updated.status, "authorized");
   // Initiation success is NOT payment success: no ledger entry yet.
@@ -354,9 +360,10 @@ console.log(`\nPASS ${count}`);
   count++;
   console.log("PASS Provider callback confirms the initiated payment");
 
-  delete process.env.INTASEND_SECRET_KEY;
-  delete process.env.INTASEND_BASE_URL;
-  delete process.env.INTASEND_WEBHOOK_SECRET;
+  delete process.env.BUNI_CONSUMER_KEY;
+  delete process.env.BUNI_CONSUMER_SECRET;
+  delete process.env.BUNI_BASE_URL;
+  delete process.env.BUNI_WEBHOOK_SECRET;
   delete process.env.BRIEF_PUBLIC_ORIGIN;
 }
 

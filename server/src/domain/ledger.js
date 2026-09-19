@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // LEDGER
 //
-// HONEST SCOPE. Brief's collection rail is IntaSend (see providers.js);
+// HONEST SCOPE. Brief's collection rail is KCB Buni (see providers.js);
 // whether it is live depends on credentials being mounted. With none mounted
 // there is no card processor and no bank rail in reach. Therefore this module
 // deliberately does NOT:

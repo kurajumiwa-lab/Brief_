@@ -54,7 +54,7 @@ const TERMINAL = new Set(['confirmed', 'failed', 'cancelled', 'reversed']);
 
 /**
  * Which provider is active for COLLECTION. Resolved through the provider
- * registry (see ../providers.js) -- IntaSend is the gateway. Only a genuinely
+ * registry (see ../providers.js) -- KCB Buni is the gateway. Only a genuinely
  * configured provider counts; there is no "mock" provider, by design.
  */
 export function activeProvider() {

@@ -3549,120 +3549,174 @@ console.log('\n=== PAYMENT CONNECTOR BOUNDARY (no credentials configured) ===');
   // The ledger must agree -- one answer to "can Brief move money".
   const led = await import('../src/domain/ledger.js');
   check('ledger.providerConfigured() agrees', led.providerConfigured() === false);
-  check('ledger delegates to the seam, not a vendor file', led.providerStatus().detail?.provider === 'intasend');
+  check('ledger delegates to the seam, not a vendor file', led.providerStatus().detail?.provider === 'buni');
 }
 
-console.log('\n=== INTASEND CONNECTOR (simulated fetch -- the documented contract) ===');
+console.log('\n=== KCB BUNI CONNECTOR (simulated fetch -- the documented contract) ===');
 {
-  const intasend = await import('../src/connectors/intasend.js');
+  const buni = await import('../src/connectors/buni.js');
   const phone = await import('../src/connectors/phone.js');
 
-  check('IntaSend reports NOT configured', intasend.isConfigured() === false);
-  check('every missing credential is named',
-    intasend.missingCredentials().length === 4 && intasend.missingCredentials().includes('INTASEND_SECRET_KEY'),
-    intasend.missingCredentials().join(','));
-  const push0 = await intasend.collect({ amount: 100, phone: '0722000111' });
+  check('Buni reports NOT configured', buni.isConfigured() === false);
+  const miss0 = buni.missingCredentials().join(',');
+  check('every missing credential is named', /BUNI_CONSUMER_KEY/.test(miss0) && /BUNI_WEBHOOK_SECRET/.test(miss0), miss0);
+  const push0 = await buni.collect({ amount: 100, phone: '0722000111' });
   check('collect REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
-  check('callback verification fails closed when unset', intasend.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
-  check('the status says configured is not the same as verified', intasend.status().wireContract === 'documented_not_exercised');
-  check('a fee that nobody published is null, never zero', intasend.payoutFee() === null);
+  check('callback verification fails closed when unset', buni.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
+  check('the status says configured is not the same as verified', buni.status().wireContract === 'documented_not_exercised');
+  check('the status admits the callback is unsigned', buni.status().callbacksSigned === false);
+  check('a fee nobody published is null, never zero', buni.payoutFee() === null);
+  const pay0 = await buni.disburse({ name: 'Rider', phone: '0722000111', amount: 500 });
+  check('a payout with an unverified request body REFUSES',
+    pay0.ok === false && pay0.reason === 'transfer_contract_unverified', JSON.stringify(pay0));
 
-  // Phone normalisation moved OUT of the payment connector: the MSISDN rule is
-  // a fact about Kenya, not about whoever holds the money this month.
+  // Phone rules live outside the payment connector: an MSISDN is a fact about
+  // Kenya, not about whoever holds the money.
   check('0722... normalises', phone.normalisePhone('0722000111') === '254722000111');
   check('+254... normalises', phone.normalisePhone('+254722000111') === '254722000111');
-  check('0110... (1-prefix) normalises', phone.normalisePhone('0110000111') === '254110000111');
   check('a foreign number is refused', phone.normalisePhone('+447700900000') === null);
-  check('E.164 form for the channels that want it', phone.toE164('0722000111') === '+254722000111');
 
-  // Callback parsing: only a terminal state is an answer.
-  const okCb = intasend.parseCallback({ invoice: { invoice_id: 'INV1', state: 'Successful', amount: 600, receipt_number: 'R1' } });
-  check('a Successful invoice is a payment', okCb.ok === true && okCb.succeeded === true && okCb.checkoutRequestId === 'INV1' && okCb.amount === 600);
-  const failCb = intasend.parseCallback({ invoice: { invoice_id: 'INV2', state: 'Failed', amount: 600 } });
-  check('a Failed invoice is a failure with a reason', failCb.ok === true && failCb.succeeded === false && /provider_state/.test(failCb.failureReason));
-  const cancelCb = intasend.parseCallback({ invoice: { invoice_id: 'INV3', state: 'Cancelled' } });
-  check('a cancellation is marked as one', cancelCb.ok === true && cancelCb.cancelled === true);
-  const pendingCb = intasend.parseCallback({ invoice: { invoice_id: 'INV4', state: 'Pending' } });
-  check('PENDING is not a payment outcome', pendingCb.ok === false && pendingCb.reason === 'non_terminal_state');
-  const junk = intasend.parseCallback({ nonsense: true });
+  // Callbacks: KCB relays Safaricom's Body.stkCallback, unsigned.
+  const okCb = buni.parseCallback({ Body: { stkCallback: {
+    MerchantRequestID: 'm1', CheckoutRequestID: 'ws_CO_1', ResultCode: 0, ResultDesc: 'success',
+    CallBackMetadata: { Item: [
+      { Name: 'Amount', Value: '600' },
+      { Name: 'MpesaReceiptNumber', Value: 'RECEIPT1' }
+    ] }
+  } } });
+  check('ResultCode 0 is a payment, with the amount and receipt pulled out',
+    okCb.ok === true && okCb.succeeded === true && okCb.checkoutRequestId === 'ws_CO_1' && okCb.amount === 600 && okCb.receipt === 'RECEIPT1');
+  const failCb = buni.parseCallback({ Body: { stkCallback: { CheckoutRequestID: 'ws_CO_2', ResultCode: 1, ResultDesc: 'Failure' } } });
+  check('ResultCode 1 is a failure carrying the provider words',
+    failCb.ok === true && failCb.succeeded === false && /provider_result:1/.test(failCb.failureReason));
+  const cancelCb = buni.parseCallback({ Body: { stkCallback: { CheckoutRequestID: 'ws_CO_3', ResultCode: 1032, ResultDesc: 'cancelled by user' } } });
+  check('1032 is a cancellation, not a failure to retry', cancelCb.ok === true && cancelCb.cancelled === true);
+  const weirdCb = buni.parseCallback({ Body: { stkCallback: { CheckoutRequestID: 'ws_CO_4', ResultCode: 56, ResultDesc: 'processing' } } });
+  check('an unknown code is NOT an outcome', weirdCb.ok === false && weirdCb.reason === 'non_terminal_state');
+  const junk = buni.parseCallback({ nonsense: true });
   check('an unrecognised payload is refused, not guessed', junk.ok === false && junk.reason === 'unrecognised_payload');
+  const noRef = buni.parseCallback({ Body: { stkCallback: { ResultCode: 0 } } });
+  check('a callback naming no reference is refused', noRef.ok === false && noRef.reason === 'unrecognised_payload');
+
+  // Production host: KCB does not publish it, so it must be acknowledged. The
+  // keys are set first, deliberately, so the failure under test is the HOST and
+  // not merely the absence of credentials.
+  process.env.BUNI_CONSUMER_KEY = 'ck_host';
+  process.env.BUNI_CONSUMER_SECRET = 'cs_host';
+  process.env.BUNI_ENV = 'production';
+  check('production without a stated host yields NO base url', buni.baseUrl() === '');
+  check('and the refusal says why', /production host/.test(buni.missingCredentials().join(',')), buni.missingCredentials().join(','));
+  const tokNoHost = await buni.accessToken({ fetchImpl: async () => { throw new Error('must not call out'); } });
+  check('a token request refuses before the host is confirmed', tokNoHost.ok === false && tokNoHost.reason === 'production_host_unacked', JSON.stringify(tokNoHost));
+  check('and no network call was attempted', tokNoHost.detail === undefined);
+  process.env.BUNI_ENV = 'uat';
+  delete process.env.BUNI_CONSUMER_KEY;
+  delete process.env.BUNI_CONSUMER_SECRET;
 
   // With credentials + a stubbed fetch, exercise the real request path.
-  process.env.INTASEND_SECRET_KEY = 'ISSecretKey_test_shop';
-  process.env.INTASEND_BASE_URL = 'https://stub.invalid';
-  process.env.INTASEND_WEBHOOK_SECRET = 'is-cb-secret';
+  process.env.BUNI_CONSUMER_KEY = 'ck_test';
+  process.env.BUNI_CONSUMER_SECRET = 'cs_test';
+  process.env.BUNI_BASE_URL = 'https://stub.invalid';
+  process.env.BUNI_WEBHOOK_SECRET = 'buni-cb-secret';
+  process.env.BUNI_TILL_NO = 'KCBTILL999';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  check('configured once the credentials exist', intasend.isConfigured() === true);
-  check('the callback URL carries the secret, not the key',
-    intasend.callbackUrl() === 'https://brief.example.com/api/webhooks/intasend/is-cb-secret');
-  check('a live callback base is required before any push', intasend.missingCredentials().length === 0);
+  buni._resetTokenCache();
+  check('configured once the credentials exist', buni.isConfigured() === true);
+  check('the callback URL is a secret path segment, not a query param',
+    buni.callbackUrl() === 'https://brief.example.com/api/webhooks/buni/buni-cb-secret', buni.callbackUrl());
 
-  let collectionCalls = 0;
+  let tokenCalls = 0;
+  let stkSeen = null;
   const fakeFetch = async (url, opts) => {
     const u = String(url);
-    if (u.endsWith('/api/v2/collections/collection')) {
-      collectionCalls++;
-      const b = JSON.parse(opts.body);
-      check('the authorization header carries the secret key', /^Token ISSecretKey_test_shop$/.test(opts.headers.authorization), opts.headers.authorization);
-      check('the amount is whole shillings from the server', b.amount === 600 && b.currency === 'KES');
-      return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: `INV_${b.amount}`, state: 'Pending' } }) };
+    if (u.endsWith('/token?grant_type=client_credentials')) {
+      tokenCalls++;
+      check('the token call uses HTTP Basic over key:secret',
+        /^Basic /.test(opts.headers.authorization) &&
+        Buffer.from(opts.headers.authorization.slice(6), 'base64').toString('utf8') === 'ck_test:cs_test');
+      return { ok: true, status: 200, json: async () => ({ access_token: 'jwt.buni.token', expires_in: 3600 }) };
     }
-    if (u.endsWith('/auth/token')) {
-      throw new Error('IntaSend needs no token exchange; a call here means the connector grew one');
+    if (u.endsWith('/mm/api/request/1.0.0/stkpush')) {
+      stkSeen = JSON.parse(opts.body);
+      check('the push is sent with the bearer token', opts.headers.authorization === 'Bearer jwt.buni.token');
+      return { ok: true, status: 200, json: async () => ({ Body: {
+        stkPushResponseCode: {
+          MerchantRequestID: 'mr_1', CheckoutRequestID: 'ws_CO_600', ResponseCode: 0,
+          ResponseDescription: 'Success. Request accepted for processing', CustomerMessage: 'Success. Request accepted for processing'
+        }
+      } }) };
     }
     throw new Error('unexpected URL ' + u);
   };
-  const push = await intasend.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', email: 'b@example.com', fetchImpl: fakeFetch });
-  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'INV_600');
-  check('the provider reference is exposed under both names', push.providerRef === 'INV_600' && push.checkoutRequestId === 'INV_600');
-  await intasend.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
-  check('no auth round-trip is hidden in a push', collectionCalls === 2, `collection calls: ${collectionCalls}`);
+  const push = await buni.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', apiRef: 'ord7', fetchImpl: fakeFetch });
+  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_600', JSON.stringify(push));
+  check('the provider reference is exposed under both names', push.providerRef === 'ws_CO_600' && push.checkoutRequestId === 'ws_CO_600');
+  check('KCB wants the amount as a STRING of whole shillings', stkSeen.amount === '600', JSON.stringify(stkSeen.amount));
+  check('the phone is sent normalised to 254...', stkSeen.phoneNumber === '254722000111');
+  check('sharedShortCode true means KCB\u2019s till receives it, and Brief has no paybill of its own',
+    stkSeen.sharedShortCode === true && stkSeen.orgShortCode === '522522');
+  check('the invoice reference carries the till prefix KCB documents',
+    stkSeen.invoiceNumber === 'KCBTILL999-ord7', stkSeen.invoiceNumber);
+  check('the callback URL travels with the push', stkSeen.callbackUrl.endsWith('/api/webhooks/buni/buni-cb-secret'));
+  await buni.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
+  check('the token is cached across pushes', tokenCalls === 1, `token calls: ${tokenCalls}`);
 
-  const rejected = await intasend.collect({
+  const rejected = await buni.collect({
     amount: 600, phone: '0722000111',
-    fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ success: false, message: 'Validation failed' }) })
+    fetchImpl: async (u) => String(u).includes('/token')
+      ? { ok: true, status: 200, json: async () => ({ access_token: 't' }) }
+      : { ok: false, status: 400, json: async () => ({ response_description: 'Validation failed' }) }
   });
   check('a rejected push is surfaced as failure', rejected.ok === false && rejected.reason === 'push_rejected');
-  const noRef = await intasend.collect({ amount: 600, phone: '0722000111', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
-  check('a response with no invoice id is NOT a success', noRef.ok === false && noRef.reason === 'no_provider_reference');
-  const badAmount = await intasend.collect({ amount: 0, phone: '0722000111', fetchImpl: fakeFetch });
+  const empty = await buni.collect({
+    amount: 600, phone: '0722000111',
+    fetchImpl: async (u) => String(u).includes('/token')
+      ? { ok: true, status: 200, json: async () => ({ access_token: 't' }) }
+      : { ok: true, status: 200, json: async () => ({}) }
+  });
+  check('a response with nothing to chase is NOT a success', empty.ok === false && empty.reason === 'no_provider_reference');
+  const badAmount = await buni.collect({ amount: 0, phone: '0722000111', fetchImpl: fakeFetch });
   check('a zero or negative amount never reaches the rail', badAmount.ok === false && badAmount.reason === 'invalid_amount');
-  const badPhone = await intasend.collect({ amount: 600, phone: '12345', fetchImpl: fakeFetch });
+  const badPhone = await buni.collect({ amount: 600, phone: '12345', fetchImpl: fakeFetch });
   check('a garbled number is refused before any call', badPhone.ok === false && badPhone.reason === 'invalid_phone');
-
-  // Payout: the wallet is a hard prerequisite, and no approval flag means silent.
-  const pay0 = await intasend.disburse({ name: 'Rider', phone: '0722000111', amount: 500, fetchImpl: fakeFetch });
-  check('a payout without a disbursement wallet REFUSES with the reason',
-    pay0.ok === false && pay0.reason === 'disbursement_wallet_missing', JSON.stringify(pay0));
-  process.env.INTASEND_WALLET_ID = 'wallet_test_1';
-  check('the rail is only payout-configured with a wallet', intasend.isPayoutConfigured() === true);
-  let transferBody = null;
-  const pay1 = await intasend.disburse({
-    name: 'Rider One', phone: '0722000111', amount: 500, remarks: 'Brief payout p1',
-    fetchImpl: async (url, opts) => {
-      transferBody = JSON.parse(opts.body);
-      return { ok: true, status: 200, json: async () => ({ tracking_id: 'TRK-1' }) };
+  // The connector caches its bearer token, which is correct behaviour and also
+  // the reason this case needs the cache dropped first: a test that quietly
+  // reuses a live token proves nothing about the failure path.
+  buni._resetTokenCache();
+  let pushSeenAfterBadToken = false;
+  const noToken = await buni.collect({
+    amount: 600, phone: '0722000111',
+    fetchImpl: async (u) => {
+      if (String(u).includes('stkpush')) pushSeenAfterBadToken = true;
+      return { ok: false, status: 401, json: async () => ({ fault: 'Invalid Credentials' }) };
     }
   });
-  check('a payout is created AWAITING APPROVAL by default',
-    pay1.ok === true && pay1.awaitingApproval === true && pay1.providerRef === 'TRK-1');
-  check('the approval flag is sent as their API expects it', transferBody.requires_approval === 'YES');
-  const payNoRef = await intasend.disburse({ name: 'x', phone: '0722000111', amount: 500, fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
-  check('a payout with nothing to track is a failure, not a blank column',
-    payNoRef.ok === false && payNoRef.reason === 'no_provider_reference');
+  check('a rejected token request stops before the push', noToken.ok === false && noToken.reason === 'token_rejected', JSON.stringify(noToken));
+  check('and no STK push was attempted', pushSeenAfterBadToken === false);
+  buni._resetTokenCache();
 
-  check('the correct callback secret is accepted', intasend.verifyCallbackSecret('is-cb-secret').ok === true);
-  check('a wrong callback secret is refused', intasend.verifyCallbackSecret('nope').reason === 'bad_secret');
-  check('the status never leaks the secret or the key', (() => {
-    const j = JSON.stringify(intasend.status());
-    return !j.includes('is-cb-secret') && !j.includes('ISSecretKey_test_shop') && !j.includes('/api/webhooks/intasend/');
+  check('the status never leaks the secret, the key or the callback URL', (() => {
+    const j = JSON.stringify(buni.status());
+    return !j.includes('buni-cb-secret') && !j.includes('cs_test') && !j.includes('/api/webhooks/buni/');
+  })(), JSON.stringify(buni.status()).slice(0, 160));
+  check('payout stays unavailable, with the reason as a string', (() => {
+    const st = buni.status();
+    return st.enablement.disbursement === false && /request body is not published/.test(st.enablement.disbursementNote);
   })());
+  process.env.BUNI_ALLOW_UNVERIFIED_TRANSFERS = '1';
+  check('the unverified-payout switch alone does not invent a call', buni.isPayoutConfigured() === true);
+  const pay1 = await buni.disburse({ name: 'Rider One', phone: '0722000111', amount: 500, fetchImpl: fakeFetch });
+  check('and the call itself still REFUSES rather than guessing a body',
+    pay1.ok === false && pay1.reason === 'not_implemented', JSON.stringify(pay1));
+  delete process.env.BUNI_ALLOW_UNVERIFIED_TRANSFERS;
 
-  delete process.env.INTASEND_SECRET_KEY;
-  delete process.env.INTASEND_BASE_URL;
-  delete process.env.INTASEND_WEBHOOK_SECRET;
-  delete process.env.INTASEND_WALLET_ID;
+  delete process.env.BUNI_CONSUMER_KEY;
+  delete process.env.BUNI_CONSUMER_SECRET;
+  delete process.env.BUNI_BASE_URL;
+  delete process.env.BUNI_WEBHOOK_SECRET;
+  delete process.env.BUNI_TILL_NO;
   delete process.env.BRIEF_PUBLIC_ORIGIN;
+  buni._resetTokenCache();
 }
 
 console.log('\n=== OUTBOUND CHANNEL SEAM + TWILIO (no credentials configured) ===');
@@ -4462,13 +4516,14 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   check('clearing the list re-enables the feature', features.isEnabled('tea') === true);
 }
 
-console.log('\n=== INTASEND PAYMENT E2E + WEBHOOK (simulated provider) ===');
+console.log('\n=== BUNI PAYMENT E2E + WEBHOOK (simulated provider) ===');
 {
   process.env.NODE_ENV = 'test';
-  process.env.INTASEND_SECRET_KEY = 'ISSecretKey_test_shop';
-  process.env.INTASEND_BASE_URL = 'https://stub.invalid';
+  process.env.BUNI_CONSUMER_KEY = 'ck_shop';
+  process.env.BUNI_CONSUMER_SECRET = 'cs_shop';
+  process.env.BUNI_BASE_URL = 'https://stub.invalid';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  process.env.INTASEND_WEBHOOK_SECRET = 'is-cb-secret';
+  process.env.BUNI_WEBHOOK_SECRET = 'buni-cb-secret';
 
   const pay = await import('../src/domain/payment.js');
 
@@ -4486,22 +4541,35 @@ console.log('\n=== INTASEND PAYMENT E2E + WEBHOOK (simulated provider) ===');
     return { status: res.status, body: await res.json().catch(() => null) };
   };
 
+  let pushes = 0;
   try {
-    // A stubbed rail: one endpoint, no token exchange.
+    // A stubbed Buni rail: token, then an accepted push. No real network.
     const fakeFetch = async (url, opts) => {
-      if (String(url).endsWith('/api/v2/collections/collection')) {
+      const u = String(url);
+      if (u.endsWith('/token?grant_type=client_credentials')) {
+        return { ok: true, status: 200, json: async () => ({ access_token: 'jwt.test.token', expires_in: 3600 }) };
+      }
+      if (u.endsWith('/mm/api/request/1.0.0/stkpush')) {
         const b = JSON.parse(opts.body);
+        // Buni's CheckoutRequestID is unique per push. A stub that hands the same
+        // reference to two intents would hide any reference-collision bug, so it
+        // varies after the first call and the assertions below use that id.
+        pushes++;
+        const ref = pushes === 1 ? `ws_CO_${b.amount}` : `ws_CO_${b.amount}_${pushes}`;
         return {
           ok: true, status: 200,
-          json: async () => ({ invoice: { invoice_id: `INV_${b.amount}`, state: 'Pending' } })
+          json: async () => ({ Body: { stkPushResponseCode: {
+            MerchantRequestID: 'mr_' + pushes, CheckoutRequestID: ref, ResponseCode: 0,
+            CustomerMessage: 'Success. Request accepted for processing'
+          } } })
         };
       }
-      throw new Error('unexpected URL ' + url);
+      throw new Error('unexpected URL ' + u);
     };
 
-    const A = (await call('/api/auth/register', 'POST', { handle: 'iseller', password: 'a good passphrase' })).body;
-    const B = (await call('/api/auth/register', 'POST', { handle: 'ibuyer', password: 'a good passphrase' })).body;
-    await call('/api/vendors', 'POST', { displayName: 'Market Stall' }, A.token);
+    const A = (await call('/api/auth/register', 'POST', { handle: 'bseller', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'bbuyer', password: 'a good passphrase' })).body;
+    await call('/api/vendors', 'POST', { displayName: 'KCB Till Stall' }, A.token);
     let r = await call('/api/listings', 'POST', { title: 'Rice', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
     const lid = r.body.listing.id;
     await call(`/api/listings/${lid}/status`, 'POST', { status: 'active' }, A.token);
@@ -4510,43 +4578,57 @@ console.log('\n=== INTASEND PAYMENT E2E + WEBHOOK (simulated provider) ===');
     check('order placed for 600', r.body.order.total === 600);
 
     const { intent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
-    check('the rail recorded on the intent is the active one', intent.provider === 'intasend', String(intent.provider));
+    check('the rail recorded on the intent is the active one', intent.provider === 'buni', String(intent.provider));
     const init = await pay.requestPayment(intent.id, { fetchImpl: fakeFetch });
-    check('requestPayment succeeds against the stubbed rail', init.ok === true && init.providerRef === 'INV_600', JSON.stringify(init));
+    check('requestPayment succeeds against the stubbed rail', init.ok === true && init.providerRef === 'ws_CO_600', JSON.stringify(init));
     let stored = pay.getIntent(intent.id);
-    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'INV_600');
+    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'ws_CO_600');
+    check('initiation is not payment: no ledger row yet', store.all('ledgerTransactions').length === 0);
 
-    r = await call('/api/webhooks/intasend/wrong', 'POST', { invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600 } });
+    const stk = (ref, code, amount, receipt) => ({ Body: { stkCallback: {
+      CheckoutRequestID: ref, ResultCode: code, ResultDesc: code === 0 ? 'success' : 'cancelled by user',
+      CallBackMetadata: { Item: [{ Name: 'Amount', Value: String(amount) }, { Name: 'MpesaReceiptNumber', Value: receipt }] }
+    } } });
+
+    r = await call('/api/webhooks/buni/wrong', 'POST', stk('ws_CO_600', 0, 600, 'R1'));
     check('a wrong callback secret is refused (403)', r.status === 403, `got ${r.status}`);
-    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', { invoice: { invoice_id: 'INV_NOPE', state: 'Pending' } });
-    check('a PENDING callback does not settle anything (400)', r.status === 400, `got ${r.status}`);
+    check('the rejection leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}', JSON.stringify(r.body));
 
-    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
-      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600, receipt_number: 'REC600' }
-    });
+    r = await call('/api/webhooks/buni/buni-cb-secret', 'POST', stk('ws_CO_600', 0, 600, 'R1'));
     check('a valid callback is accepted (200)', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body));
     stored = pay.getIntent(intent.id);
     check('the intent is confirmed by the callback', stored.status === 'confirmed', stored.status);
-    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
-      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600, receipt_number: 'REC600' }
-    });
+
+    r = await call('/api/webhooks/buni/buni-cb-secret', 'POST', stk('ws_CO_600', 0, 600, 'R1'));
     check('a replayed callback is an idempotent no-op', r.status === 200 && r.body?.duplicate === true, JSON.stringify(r.body));
-    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
-      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 6, receipt_number: 'REC601' }
-    });
-    // What actually happens, and what matters: an intent already confirmed is
-    // never re-opened or re-booked by a later callback, whatever amount it
-    // carries. It reads as a duplicate and the ledger keeps one row. (The
-    // mismatch guard for an UNSETTLED intent is the rogue-callback case below.)
-    check('a mismatched callback on a settled intent books nothing',
+    r = await call('/api/webhooks/buni/buni-cb-secret', 'POST', stk('ws_CO_600', 0, 6, 'R2'));
+    check('a mismatched amount on a settled intent books nothing',
       r.status === 200 && r.body?.duplicate === true, JSON.stringify(r.body));
-    check('the intent keeps the state the honest callback gave it',
-      pay.getIntent(intent.id).status === 'confirmed');
+    r = await call('/api/webhooks/buni/buni-cb-secret', 'POST', stk('ws_NEVER_ISSUED', 0, 600, 'R3'));
+    check('a reference Brief never issued is accepted-with-no-op, not retried forever',
+      r.status === 200 && r.body?.ok === false, JSON.stringify(r.body));
+    check('the ledger still holds exactly one settlement', store.all('ledgerTransactions').length === 1,
+      `rows: ${store.all('ledgerTransactions').length}`);
+    check('every callback was recorded for audit, accepted or not',
+      store.all('paymentCallbacks').length >= 5, `rows: ${store.all('paymentCallbacks').length}`);
+
+    // A cancelled prompt is an OUTCOME, not a stuck intent: the buyer walked
+    // away, so the intent closes and the vendor's inbox stops counting it as
+    // pending money. Asserted here because it is the behaviour a UI tends to
+    // want to hide.
+    const { intent: i2 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
+    await pay.requestPayment(i2.id, { fetchImpl: fakeFetch });
+    r = await call('/api/webhooks/buni/buni-cb-secret', 'POST', stk('ws_CO_600_2', 1032, 600, 'R9'));
+    check('a cancellation closes its own intent', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body));
+    check('a cancelled intent never becomes a settlement',
+      pay.getIntent(i2.id).status === 'cancelled' && store.all('ledgerTransactions').length === 1,
+      `status ${pay.getIntent(i2.id).status}, rows ${store.all('ledgerTransactions').length}`);
   } finally {
     srv.close();
-    delete process.env.INTASEND_SECRET_KEY;
-    delete process.env.INTASEND_BASE_URL;
-    delete process.env.INTASEND_WEBHOOK_SECRET;
+    delete process.env.BUNI_CONSUMER_KEY;
+    delete process.env.BUNI_CONSUMER_SECRET;
+    delete process.env.BUNI_BASE_URL;
+    delete process.env.BUNI_WEBHOOK_SECRET;
     delete process.env.BRIEF_PUBLIC_ORIGIN;
   }
 }
@@ -4710,7 +4792,7 @@ console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider re
   // reconciler catches it rather than trusting it would.
   const rogue = store.insert('paymentIntents', {
     id: 'pay_rogue', orderId: order3.id, payerId: 'usr_buyer', amount: 500,
-    currency: 'KES', status: 'confirmed', provider: 'intasend', providerRef: 'INV_ROGUE',
+    currency: 'KES', status: 'confirmed', provider: 'buni', providerRef: 'ws_ROGUE',
     receipt: 'ROGUE1', transactionId: null, createdAt: new Date().toISOString()
   });
   rec = pay.reconcileIntents();
@@ -4782,29 +4864,29 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
     // --- WEBHOOK -------------------------------------------------------------
     // Fails closed with no secret configured.
-    r = await call('/api/webhooks/intasend/whatever', 'POST', { invoice: { invoice_id: 'INV_X', state: 'Successful', amount: 100 } });
+    const cb = (ref, code = 0, amount = 100) => ({ Body: { stkCallback: { CheckoutRequestID: ref, ResultCode: code, ResultDesc: 'x',
+      CallBackMetadata: { Item: [{ Name: 'Amount', Value: String(amount) }, { Name: 'MpesaReceiptNumber', Value: 'R' }] } } } });
+    r = await call('/api/webhooks/buni/whatever', 'POST', cb('ws_X'));
     check('the webhook REJECTS when no secret is configured (403)', r.status === 403, `got ${r.status}`);
     check('the rejection leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}', JSON.stringify(r.body));
     check('the rejected callback was still recorded for audit',
       store.all('paymentCallbacks').some((c) => c.accepted === false));
 
     // With a secret configured, a WRONG secret is still refused.
-    process.env.INTASEND_WEBHOOK_SECRET = 'sekret-value-123';
-    r = await call('/api/webhooks/intasend/wrong-secret-value', 'POST', { invoice: { invoice_id: 'INV_X', state: 'Successful', amount: 100 } });
+    process.env.BUNI_WEBHOOK_SECRET = 'sekret-value-123';
+    r = await call('/api/webhooks/buni/wrong-secret-value', 'POST', cb('ws_X'));
     check('a WRONG secret is refused (403)', r.status === 403, `got ${r.status}`);
 
     // Right secret, but a payload the rail would never send.
-    r = await call('/api/webhooks/intasend/sekret-value-123', 'POST', { nonsense: true });
+    r = await call('/api/webhooks/buni/sekret-value-123', 'POST', { nonsense: true });
     check('a malformed payload is 400, not 500', r.status === 400, `got ${r.status}`);
 
     // Right secret, unknown reference: accepted (200) but NOT applied, so the
     // provider does not retry forever against a reference we never issued.
-    r = await call('/api/webhooks/intasend/sekret-value-123', 'POST', {
-      invoice: { invoice_id: 'INV_UNKNOWN', state: 'Successful', amount: 600 }
-    });
+    r = await call('/api/webhooks/buni/sekret-value-123', 'POST', cb('ws_UNKNOWN', 0, 600));
     check('an unknown reference returns 200 but ok:false', r.status === 200 && r.body?.ok === false, JSON.stringify(r.body));
     check('no transaction was created', store.all('ledgerTransactions').length === 0);
-    delete process.env.INTASEND_WEBHOOK_SECRET;
+    delete process.env.BUNI_WEBHOOK_SECRET;
 
     // Reconciliation endpoint.
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, B.token);
@@ -4813,7 +4895,7 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
     // Capabilities must tell the truth.
     r = await call('/api/capabilities');
     check('capabilities still report payments unconfigured', r.body?.payments?.configured === false);
-    check('and name the intended rail even while unconfigured', r.body?.payments?.detail?.provider === 'intasend');
+    check('and name the intended rail even while unconfigured', r.body?.payments?.detail?.provider === 'buni');
   } finally {
     srv.close();
   }

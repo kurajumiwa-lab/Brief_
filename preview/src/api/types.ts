@@ -1245,7 +1245,7 @@ export interface PaymentIntent {
   phone: string | null;
   status: PaymentStatus;
   provider: string | null;
-  /** The rail's provider reference (IntaSend: invoice_id). */
+  /** The rail's provider reference (Buni: CheckoutRequestID). */
   providerRef: string | null;
   /** The M-Pesa receipt number, once paid. */
   receipt: string | null;

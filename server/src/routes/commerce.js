@@ -26,7 +26,7 @@ app.use('/api/orders', requireFeature('commerce'));
 app.use('/api/disputes', requireFeature('commerce'));
 app.use('/api/orders/:id/pay', requireFeature('payments'));
 app.use('/api/orders/:id/payments', requireFeature('payments'));
-app.use('/api/webhooks/intasend', requireFeature('payments'));
+app.use('/api/webhooks/buni', requireFeature('payments'));
 app.use('/api/webhooks/mpesa-b2c', requireFeature('payouts'));
 app.use('/api/vendors/me/payouts', requireFeature('payouts'));
 // ---------------------------------------------------------------------------
@@ -631,8 +631,10 @@ app.get('/api/orders/:id/payments', (req, res) => {
 /**
  * M-Pesa STK Push callback, through the provider seam.
  *
- * The rail in use does not sign callbacks, so the deployment-controlled defence
- * is a secret path segment (INTASEND_WEBHOOK_SECRET). The REAL authenticity check is
+ * KCB relays Safaricom's own STK result and it carries NO signature, so the
+ * deployment-controlled defence is a secret path segment (BUNI_WEBHOOK_SECRET)
+ * that only stops drive-by POSTs — the authenticity check that matters is the
+ * domain's: the reference must be one Brief issued, with a matching amount. The REAL authenticity check is
  * inside confirmPayment(): the
  * callback must carry a checkout_request_id Brief issued and an amount that
  * matches the stored intent. It FAILS CLOSED: with no secret configured,
@@ -640,10 +642,10 @@ app.get('/api/orders/:id/payments', (req, res) => {
  * replay or a malformed payload is auditable.
  */
 
-app.post('/api/webhooks/intasend/:secret', (req, res) => {
+app.post('/api/webhooks/buni/:secret', (req, res) => {
   const check = providers.verifyCallbackSecret(req.params.secret);
   store.insert('paymentCallbacks', {
-    id: newId('cb'), provider: check.provider ?? 'intasend', accepted: check.ok,
+    id: newId('cb'), provider: check.provider ?? 'buni', accepted: check.ok,
     reason: check.reason ?? null, body: req.body ?? null, at: now()
   });
   if (!check.ok) {

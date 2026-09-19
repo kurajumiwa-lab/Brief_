@@ -1,53 +1,38 @@
 // ---------------------------------------------------------------------------
-// PAYMENT PROVIDER SEAM
+// PAYMENT PROVIDER SEAM — KCB Buni, one rail, both directions.
 //
-// The single place that decides which provider moves money, for both
-// directions:
+//   COLLECTION     customer -> merchant   (M-Pesa STK push on KCB's shared till)
+//   DISBURSEMENT   merchant -> customer   (refused until KCB's transfer contract
+//                                          is in hand; see connectors/buni.js)
 //
-//   COLLECTION     customer -> merchant   (M-Pesa STK Push).
-//   DISBURSEMENT   merchant -> customer   (M-Pesa B2C). Both rails are
-//                  configured-off until credentials exist, so the answer today
-//                  is "Brief cannot move money", and every surface says so.
+// One rail per direction, deliberately. Tuma (needs a paybill/bank relationship
+// Brief does not have) and IntaSend (integrated, never exercised, and its payout
+// tier for unregistered accounts undocumented) were both deleted rather than kept
+// as "supported" options: every extra entry in this map is a second fee schedule,
+// a second callback shape and a second failure mode the domains must reason about,
+// and only one of them can ever be active. Pochi la Biashara survives as a
+// PRACTICE, not a connector — it has no API for third parties, so it is the manual
+// path this repo already implements: a person moves the money, finance confirms
+// the ledger row.
 //
-// Each provider is a connector module exposing a common shape:
-//   capabilities, isConfigured(), status(),
-//   collect, parseCallback(), verifyCallbackSecret()
-//   ...and for disbursement providers, disburse(), isPayoutConfigured(),
-//   payoutFee(amount) and a result parser.
+// A connector module exposes: capabilities, isConfigured(), status(),
+// credentialState/missingCredentials, collect(), parseCallback(),
+// verifyCallbackSecret(), callbackUrl(); for payout rails also disburse(),
+// isPayoutConfigured() and payoutFee().
 //
-// Adding a provider is: write a connector exposing the common shape, add it to
-// the map below. One rail per direction by deliberate choice — Tuma was deleted
-// rather than kept beside IntaSend, because two rails means two fee schedules,
-// two callback shapes and two failure modes in every domain, and only one of
-// them can be active anyway.
-//
-// The rest of Brief NEVER depends on a provider's API details directly. Domain code
-// calls the provider-neutral operations here; the connector files are the only
-// place that know a provider's endpoints, auth and payload shapes.
+// Domain code calls the provider-neutral operations here and NEVER a vendor's
+// endpoint or payload shape. That is why the commerce webhook route can be
+// rewritten for a new rail without touching a domain file.
 // ---------------------------------------------------------------------------
 
-import * as intasend from './connectors/intasend.js';
-import * as mpesa from './connectors/mpesa.js';
+import * as buni from './connectors/buni.js';
 
-// INTASEND IS THE SOLE COLLECTION PROVIDER. One rail, one contract, no fallback
-// guessing: if it is not configured, Brief honestly reports "no provider"
-// rather than silently trying another rail. Tuma was removed outright (2026-09-19)
-// rather than left as a second entry, because its prerequisite is a paybill/till
-// or a registered bank account — the exact thing Brief does not have, so a
-// "supported" rail there would be a promise the deployment cannot keep.
-export const COLLECTION_PROVIDERS = { intasend };
-// M-PESA DARAJA B2C is the disbursement provider: the cheapest payout rail in
-// Kenya (flat M-Pesa "send money" tariff, capped KES 108, free API, no
-// aggregator markup). Unconfigured until the B2C credentials are set, in
-// which case activeDisbursementProvider() honestly returns null.
-// Both rails are kept for payout: Daraja B2C (cheapest, needs registration)
-// and IntaSend B2C (needs a can_disburse wallet). Neither is configured today,
-// so activeDisbursementProvider() returns null and every payout stays manual.
-export const DISBURSEMENT_PROVIDERS = { intasend, mpesa };
+export const COLLECTION_PROVIDERS = { buni };
+export const DISBURSEMENT_PROVIDERS = { buni };
 
-/** The active collection provider's name, or null when no rail is configured. */
+/** The active collection provider's name, or null when no rail is usable. */
 export function activeCollectionProvider() {
-  return intasend.isConfigured() ? 'intasend' : null;
+  return buni.isConfigured() ? 'buni' : null;
 }
 
 /**
@@ -73,7 +58,11 @@ export function parseCallback(body) {
   return { ...c.provider.parseCallback(body), provider: c.name };
 }
 
-/** The active disbursement provider's name, or null when none is configured. */
+/**
+ * The active disbursement provider, or null. Buni reports not-configured until
+ * KCB's transfer contract is confirmed, so this is null today and every payout
+ * stays manual + finance-confirmed — which is a decision, not a gap.
+ */
 export function activeDisbursementProvider() {
   for (const [name, p] of Object.entries(DISBURSEMENT_PROVIDERS)) {
     if (p.isPayoutConfigured && p.isPayoutConfigured()) return name;
@@ -106,6 +95,12 @@ export function providerStatus() {
     provider: active,
     payoutConfigured: Boolean(payout),
     collection: collectionName ? collectionProvider(collectionName).status() : null,
+    // Where the money would land, stated rather than implied, so an operator can
+    // see the sandbox/production line from the API instead of from a README.
+    rail: collectionName ? {
+      env: collectionProvider(collectionName).currentEnv?.() ?? null,
+      enablement: collectionProvider(collectionName).enablementState?.() ?? null
+    } : null,
     payout: payout ? disbursementProvider(payout).status() : null,
     providers: {
       ...Object.fromEntries(

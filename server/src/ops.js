@@ -86,8 +86,8 @@ export function startupDiagnostics({ store, capabilities }) {
     if (!capabilities.payments?.configured) {
       notes.push('no payment provider configured: Brief cannot collect or disburse money');
     }
-    if (!process.env.INTASEND_WEBHOOK_SECRET && capabilities.payments?.configured) {
-      problems.push('payments are configured but INTASEND_WEBHOOK_SECRET is unset: payment callbacks will be rejected');
+    if (!process.env.BUNI_WEBHOOK_SECRET && capabilities.payments?.configured) {
+      problems.push('payments are configured but BUNI_WEBHOOK_SECRET is unset: payment callbacks will be rejected');
     }
   }
 

@@ -58,13 +58,15 @@ async function main() {
   assert.equal(noProvider?.code, "provider_unavailable");
   pass("requestCollection refuses without a collection provider");
 
-  process.env.INTASEND_SECRET_KEY = "ISSecretKey_test_lmd";
-  process.env.INTASEND_BASE_URL = "https://stub.invalid";
-  process.env.INTASEND_WEBHOOK_SECRET = "lmd-cb-secret";
+  process.env.BUNI_CONSUMER_KEY = "ck_lmd";
+  process.env.BUNI_CONSUMER_SECRET = "cs_lmd";
+  process.env.BUNI_BASE_URL = "https://stub.invalid";
+  process.env.BUNI_WEBHOOK_SECRET = "lmd-cb-secret";
   process.env.BRIEF_PUBLIC_ORIGIN = "https://brief.example.com";
   const fakeFetch = async (url) => {
     const u = String(url);
-    if (u.includes("/api/v2/collections/collection")) return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: "lmd_CO_1", state: "Pending" } }) };
+    if (u.endsWith("/token?grant_type=client_credentials")) return { ok: true, status: 200, json: async () => ({ access_token: "jwt.lmd", expires_in: 3600 }) };
+    if (u.includes("/mm/api/request/1.0.0/stkpush")) return { ok: true, status: 200, json: async () => ({ Body: { stkPushResponseCode: { CheckoutRequestID: "lmd_CO_1", ResponseCode: 0 } } }) };
     throw new Error("unexpected URL " + u);
   };
   const res = await lmd.requestCollection(cCol.id, 0, { phone: "0722000111", idempotencyKey: "lmd-1", fetchImpl: fakeFetch });
