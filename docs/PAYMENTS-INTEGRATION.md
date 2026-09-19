@@ -124,13 +124,19 @@ reference — nothing else changes.
 
 ## Two things you should know are still open
 
-* **`preview/index.html` loads `https://telegram.org/js/telegram-web-app.js` on
-  every page view** — a third-party script for the feature you asked to kill. It
-  is currently *needed* by nothing in the production entry (the Mini App auth path
-  is `POST /api/telegram/init`, which 404s closed without bot credentials), but
-  removing it is part of the Telegram deletion pass, not a one-line delete,
-  because the harness suites still mount Telegram surfaces. Flagged so it is not
-  mistaken for an oversight: the tag stays until the rail it serves goes.
+* **`preview/index.html` no longer loads `telegram.org/js/telegram-web-app.js`**
+  (removed 2026-09-19). The old comment called it a "harmless no-op outside
+  Telegram", which was true of its behaviour and false of its cost: an unpaced
+  third-party script in `<head>` is a DNS + TLS + fetch ahead of first paint, on
+  every load, for users on metered data. Nothing in the production entry read the
+  global it defines — `main.jsx -> AppShell` has no Telegram reference, the one
+  hook that does (`shell/hooks/useSessionBoot.ts`) is not mounted, `App.tsx` is
+  the harness-only legacy tree, and `briefApi.isTelegramMiniApp()` returns false
+  when `window.Telegram` is absent, so the sign-in path just stops running.
+  **Still open, deliberately:** the server's Telegram ingest routes,
+  `/api/telegram/init`, `GET /api/media/telegram/:fileId` (which renders pictures
+  on already-published public feed cards) and 12 server suites that assert on
+  them. That is the deletion pass, and the media proxy goes last.
 * The production landing for a **disabled rail** is honest in the app itself — the
   "M-Pesa STK" chips on `LandingScreen`/`NearbyScreen` are NOT user-facing: the
   production entry is `main.jsx` → `AppShell`, and `App.tsx` survives only as the
