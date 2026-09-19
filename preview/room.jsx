@@ -186,7 +186,13 @@ async function main() {
     const themeCode = themeCss.replace(/\/\*[\s\S]*?\*\//g, '');
     assert.ok(!/#4F46E5|#06B6D4/.test(themeCode), 'the indigo/bright-cyan pair is gone from the theme, not aliased');
     // The type floor: fine print is what made the last revision read as a form.
-    assert.ok(!/text-\[(8|9)px\]/.test(sweep()), 'no 8px or 9px type survives in the app');
+    const allSrc = sweep();
+    assert.ok(!/text-\[(8|9)px\]/.test(allSrc), 'no 8px or 9px type survives in the app');
+    // The floor has to cover hand-written CSS too: the utility sweep missed two
+    // component stylesheets, and a claim of "smallest type is 11px" that only
+    // holds for Tailwind classes is not a claim about the app.
+    assert.ok(!/font-size:\s*(8|9|10)px/.test(allSrc),
+      'no font-size below 11px anywhere in the sources, utility or raw CSS');
     const tw = require('fs').readFileSync(require('path').join(__dirname, 'tailwind.config.js'), 'utf8');
     assert.ok(/xs:\s*\['13px'/.test(tw), "text-xs is remapped to 13px in one place, so the floor is real");
   }

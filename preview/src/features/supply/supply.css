@@ -135,7 +135,7 @@
 }
 .supply-facts dt {
   text-transform: uppercase;
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.09em;
   font-weight: 650;
   color: #6b746b;
@@ -283,7 +283,7 @@
     flex-wrap: wrap;
   }
   .supply-badge {
-    font-size: 10px;
+    font-size: 11px;
   }
   .supply-workspace .request-panel {
     padding: 18px;
