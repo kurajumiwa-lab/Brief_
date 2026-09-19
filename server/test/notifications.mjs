@@ -195,7 +195,23 @@ console.log('\n=== LOCATION: batch coalescing + alert priority ===');
   CLOCK_MIN = 27;
   r = sweep(user, 27);
   const locs2 = byType(user, 'location');
-  check('later items coalesce into the same batch row', locs2.length === 1 && locs2[0].metadata?.count === 5, JSON.stringify(locs2.map((n) => [n.title, n.metadata?.count])));
+  // The product's rule is ONE row per area per day, so that is the invariant
+  // asserted — not a row count that silently assumes the wall clock keeps minute
+  // 21 and minute 25 inside the same day. It used to assume that, and the check
+  // failed for roughly the last half hour of every UTC day (fixtures at T0+21..26
+  // min crossing midnight into the next bucket) for a reason no code change could
+  // fix. dayBucket is the module's own function, so the branch is derived, not
+  // guessed, and both outcomes are asserted explicitly.
+  const dayOfFirst = notifications.dayBucket(at(21));
+  const sameDay = dayOfFirst === notifications.dayBucket(at(25));
+  if (sameDay) {
+    check('later items in the same batch day coalesce into the same row',
+      locs2.length === 1 && locs2[0].metadata?.count === 5, JSON.stringify(locs2.map((n) => [n.title, n.metadata?.count])));
+  } else {
+    check('later items in a new batch day start a second row, and the first keeps its count',
+      locs2.length === 2 && locs2.some((n) => n.metadata?.count === 3) && locs2.some((n) => n.metadata?.count === 2),
+      JSON.stringify(locs2.map((n) => [n.title, n.metadata?.count])));
+  }
   check('coalescing bumps the row back to unread', locs2[0].read === false);
 
   // Alerts in a followed location are individually important.

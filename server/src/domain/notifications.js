@@ -129,7 +129,9 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function dayBucket(iso) {
+/** Exported for the suite: the coalescing checks need the module's own notion of
+ *  "which day is this", rather than re-deriving it and drifting from the product. */
+export function dayBucket(iso) {
   const t = Date.parse(iso);
   return Number.isFinite(t) ? String(new Date(t).toISOString().slice(0, 10)) : 'day';
 }
