@@ -34,7 +34,7 @@ are ported, not frameworks.
 | User verification / KYC | Compliance gates (five unmet requirements) | **T6 — verification records + review queue** |
 | Email subscriptions | Creator-plan subscribers only | **T7 — topic subscriptions, verify/unsubscribe, delivery log** |
 | Admin dashboard | F4 (P2) planned; ops API exists | **T8 — admin surface absorbs Tikiti's admin loops** |
-| Payments (M-Pesa Daraja / Stripe sandbox) | Tuma provider abstraction (unconfigured) | **T9 — provider adapters + webhook signatures behind Brief's payment domain** |
+| Payments (M-Pesa Daraja / Stripe sandbox) | Tuma provider abstraction (unconfigured) — *(superseded: Tuma deleted; KCB Buni is the rail)* | **T9 — provider adapters + webhook signatures behind Brief's payment domain** |
 | Security | F1 done (capabilities, audit, test isolation) | **T10 — webhook signature verification, fraud flags** |
 
 ## Phase order (user chose: everything, Tikiti-brief order), interleaved with Brief's F-phases

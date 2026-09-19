@@ -9,15 +9,32 @@ only, the ledger as the single economic truth)?
 
 | Layer | Choice | Why this one | Cost today |
 |---|---|---|---|
-| Collections (M-Pesa + cards) | **Paystack** (chosen primary), Tuma kept as gateway/alternate | Live for ALL merchants in Kenya since Aug 2023 with a Central Bank of Kenya PSP authorisation; collects over M-PESA and cards; settles in KES; no setup or monthly fee — per-transaction pricing only; free sandbox (test keys). Split payments exist for the platform cut, deliberately NOT wired yet (see below) | **0 KES/mo** until real money moves |
+| Collections + payouts (M-Pesa) | **KCB Buni** — the only rail in `providers.js` today | M-Pesa STK push against KCB's shared till (`sharedShortCode: true`), so no Safaricom paybill, no Daraja registration, no CMA wait. Bank-held relationship, sandbox at `uat.buni.kcbgroup.com`, go-live by signed letter to buni@kcbgroup.com. Payout is REFUSED until KCB confirms the transfer contract — see `docs/PAYMENTS-INTEGRATION.md` | **0 KES/mo**; per-transaction fees not published in the reviewed material, so none is booked, and that is stated in `payoutFeeNote()` |
 | KYC / verification assist | **Smile ID** | Nairobi-built; Kenyan national ID / passport / alien-card lookups against official registers; free developer sandbox; pay-per-check in production. It ASSISTS the human reviewer — it never auto-approves, and it never stores the ID number (DPA minimisation) | **0 KES/mo** in sandbox |
 | Ledger & wallets | **Brief's own `ledgerTransactions`** (unchanged) | Already self-hosted, double-entry-disciplined, the sole economic truth, tested by 1900+ assertions. A hosted/FaaS ledger would add a monthly cost and split the truth in two | **0** |
 | Vouchers / gift cards / airtime (Reloadly et al.) | **Deferred — deliberately** | Real and free-to-integrate, but Brief has no voucher surface in the product spec. The repo's own audit (F5) removed orphan server-only features; nothing gets a connector until a real surface needs it | **0** |
 | Hosting | Not a code decision | Any Node host + disk works (the store is atomic-write JSON with rotating backups). Pick by ops need, not by vendor lock-in | from ~KES 300–600/mo VPS class |
 
-Flutterwave remains an equally viable KE alternate (same free-entry shape) and
-would be a second connector in `COLLECTION_PROVIDERS` if ever needed; Korapay
-is Nigeria-centric — excluded. No percentage-of-anything is claimed about any
+### Correction, 2026-09-19 — read this before acting on the rest of this file
+
+This document once named **Paystack** as chosen primary with Tuma as alternate,
+and listed `PAYSTACK_SECRET_KEY` / `BRIEF_COLLECTION_PROVIDER` to set. **No
+Paystack connector exists in the tree, and `BRIEF_COLLECTION_PROVIDER` is not
+implemented** — both went when the seam was consolidated to one rail per
+direction. Setting those variables today does nothing at all, which is the worst
+kind of doc: silent rather than wrong. `git log` still shows `0e1ac80` wiring it;
+the decision outlived the code and the code was not the one to notice.
+
+What is true now: `providers.js` holds exactly one collection rail and one
+disbursement rail, both **KCB Buni**, and a rail is chosen by *being
+configured*, not by an override variable. The Paystack research below is kept as
+the fallback candidate if Buni's payout contract cannot be confirmed — its
+facts (CBN/CBK-authorised PSP, free sandbox, Starter ceiling of **KES 600,000**
+lifetime collections in Kenya per Paystack's current docs, **no Transfers** for
+Starter accounts) were re-verified on 2026-09-19. Flutterwave is a third option
+but requires a **KRA PIN and certificate even for an unregistered business**, on
+their own Kenya onboarding page. Korapay is Nigeria-centric — excluded.
+No percentage-of-anything is claimed about any
 provider's pricing beyond "you pay per transaction when live" — exact rates
 are on the provider's own pricing page.
 
@@ -48,10 +65,15 @@ are on the provider's own pricing page.
 
 ## Environment (all optional; absent = today's honest refusal)
 
-    # Collections (Paystack) — sk_test_... is the free sandbox
-    PAYSTACK_SECRET_KEY=
-    PAYSTACK_BASE_URL=            # optional override
-    BRIEF_COLLECTION_PROVIDER=    # 'tuma' | 'paystack' (must be configured)
+    # Collections + payouts — the only rail Brief reads (see PAYMENTS-INTEGRATION.md
+    # for what each one does and why the base URL must be stated for production)
+    BUNI_CONSUMER_KEY=
+    BUNI_CONSUMER_SECRET=
+    BUNI_ENV=                     # 'uat' (default) | 'production'
+    BUNI_BASE_URL=                # MANDATORY for production: KCB does not publish it
+    BUNI_ORG_SHORT_CODE=          # 522522 in sandbox
+    BUNI_TILL_NO=                 # prefixes invoiceNumber as {TILL}-{ref}
+    BUNI_WEBHOOK_SECRET=          # ours, not a KCB signature: their callback is unsigned
 
     # KYC assist (Smile ID) — sandbox is free
     SMILE_PARTNER_ID=

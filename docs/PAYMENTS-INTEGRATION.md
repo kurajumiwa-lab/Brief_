@@ -124,6 +124,20 @@ reference — nothing else changes.
 
 ## Two things you should know are still open
 
+* **`preview/index.html` loads `https://telegram.org/js/telegram-web-app.js` on
+  every page view** — a third-party script for the feature you asked to kill. It
+  is currently *needed* by nothing in the production entry (the Mini App auth path
+  is `POST /api/telegram/init`, which 404s closed without bot credentials), but
+  removing it is part of the Telegram deletion pass, not a one-line delete,
+  because the harness suites still mount Telegram surfaces. Flagged so it is not
+  mistaken for an oversight: the tag stays until the rail it serves goes.
+* The production landing for a **disabled rail** is honest in the app itself — the
+  "M-Pesa STK" chips on `LandingScreen`/`NearbyScreen` are NOT user-facing: the
+  production entry is `main.jsx` → `AppShell`, and `App.tsx` survives only as the
+  test harness for legacy suites (its own header comment says so). Verified, not
+  assumed, because a public page that advertises a payment rail which refuses to
+  move money is exactly the failure class this repo bans.
+
 * **Production is currently unreachable** — the old host answers
   `404 "Application not found"` from Railway's edge on every path including
   `/api/health`, across four pushes. That is consistent with your new

@@ -72,7 +72,7 @@ A green suite is not a walked product; the walk caught three real gaps:
 | F2+F3 Pulse, fifth destination, change-first | `8574500` | done |
 | F4+T8 operator desk | `12b2b2c` | done |
 | F5/F6/F7 removals + half-loop wiring | `498aa13` `94d4d89` `a7f34bc` | done |
-| T9 payments | resolved as Brief's provider truth: registry (`tuma`), real Daraja connector on the huduma rail, no mock provider, 503 `charged:false` when unconfigured (§17) — no sandbox-simulated success ported, deliberately | by design |
+| T9 payments | *(amended 2026-09-19: the registry named here no longer exists — Tuma was deleted and the rail is now `buni`; see `docs/PAYMENTS-INTEGRATION.md`. The line below is kept as the record of what was decided then.)* resolved as Brief's provider truth: registry (`tuma`), real Daraja connector on the huduma rail, no mock provider, 503 `charged:false` when unconfigured (§17) — no sandbox-simulated success ported, deliberately | by design |
 | T10 security | listing fraud screen (`b594cba`), verified webhooks with recorded rejects, capability-gated + audited operator surface (F1) | done |
 | Docs | `INTEGRATION-TIKITI.md` progress synced; `COMPLETION-AUDIT.md` close-out table | this batch |
 
