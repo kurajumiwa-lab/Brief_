@@ -31,7 +31,7 @@ import {
   activeDisbursementProvider,
   disbursementProvider
 } from '../providers.js';
-import { normalisePhone } from '../connectors/tuma.js';
+import { normalisePhone } from '../connectors/phone.js';
 import { store, newId } from '../store.js';
 
 /**

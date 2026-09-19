@@ -4,10 +4,10 @@
 // The single place that decides which provider moves money, for both
 // directions:
 //
-//   COLLECTION     customer -> merchant   (STK Push). Tuma is the gateway.
-//   DISBURSEMENT   merchant -> customer   (payout). No provider is connected
-//                  -- Tuma documents no payout endpoint, and no other payout
-//                  rail has been selected.
+//   COLLECTION     customer -> merchant   (M-Pesa STK Push).
+//   DISBURSEMENT   merchant -> customer   (M-Pesa B2C). Both rails are
+//                  configured-off until credentials exist, so the answer today
+//                  is "Brief cannot move money", and every surface says so.
 //
 // Each provider is a connector module exposing a common shape:
 //   capabilities, isConfigured(), status(),
@@ -15,31 +15,62 @@
 //   ...and for disbursement providers, disburse(), isPayoutConfigured(),
 //   payoutFee(amount) and a result parser.
 //
-// Adding another provider later (if one is ever chosen) is: write a connector
-// file + add it to the map below. Today the map is Tuma-only by deliberate
-// choice — one rail, fully integrated, nothing to guess.
+// Adding a provider is: write a connector exposing the common shape, add it to
+// the map below. One rail per direction by deliberate choice — Tuma was deleted
+// rather than kept beside IntaSend, because two rails means two fee schedules,
+// two callback shapes and two failure modes in every domain, and only one of
+// them can be active anyway.
 //
-// The rest of Brief NEVER depends on Tuma API details directly. Domain code
+// The rest of Brief NEVER depends on a provider's API details directly. Domain code
 // calls the provider-neutral operations here; the connector files are the only
 // place that know a provider's endpoints, auth and payload shapes.
 // ---------------------------------------------------------------------------
 
-import * as tuma from './connectors/tuma.js';
+import * as intasend from './connectors/intasend.js';
 import * as mpesa from './connectors/mpesa.js';
 
-// TUMA IS THE SOLE COLLECTION PROVIDER. One rail, one contract, no fallback
-// guessing: if Tuma is not configured, Brief honestly reports "no provider"
-// rather than silently trying another rail.
-export const COLLECTION_PROVIDERS = { tuma };
+// INTASEND IS THE SOLE COLLECTION PROVIDER. One rail, one contract, no fallback
+// guessing: if it is not configured, Brief honestly reports "no provider"
+// rather than silently trying another rail. Tuma was removed outright (2026-09-19)
+// rather than left as a second entry, because its prerequisite is a paybill/till
+// or a registered bank account — the exact thing Brief does not have, so a
+// "supported" rail there would be a promise the deployment cannot keep.
+export const COLLECTION_PROVIDERS = { intasend };
 // M-PESA DARAJA B2C is the disbursement provider: the cheapest payout rail in
 // Kenya (flat M-Pesa "send money" tariff, capped KES 108, free API, no
 // aggregator markup). Unconfigured until the B2C credentials are set, in
 // which case activeDisbursementProvider() honestly returns null.
-export const DISBURSEMENT_PROVIDERS = { mpesa };
+// Both rails are kept for payout: Daraja B2C (cheapest, needs registration)
+// and IntaSend B2C (needs a can_disburse wallet). Neither is configured today,
+// so activeDisbursementProvider() returns null and every payout stays manual.
+export const DISBURSEMENT_PROVIDERS = { intasend, mpesa };
 
-/** The active collection provider's name, or null when Tuma is unconfigured. */
+/** The active collection provider's name, or null when no rail is configured. */
 export function activeCollectionProvider() {
-  return tuma.isConfigured() ? 'tuma' : null;
+  return intasend.isConfigured() ? 'intasend' : null;
+}
+
+/**
+ * Provider-neutral callback handling, so the commerce route never learns a
+ * vendor's payload shape or secret mechanism. It resolves the ACTIVE
+ * collection rail first and falls back to the only registered one, which keeps
+ * the endpoint honest about "no provider" when nothing is configured.
+ */
+function callbackProvider() {
+  const name = activeCollectionProvider() ?? Object.keys(COLLECTION_PROVIDERS)[0] ?? null;
+  return name ? { name, provider: COLLECTION_PROVIDERS[name] } : null;
+}
+
+export function verifyCallbackSecret(secret) {
+  const c = callbackProvider();
+  if (!c) return { ok: false, reason: 'no_provider' };
+  return c.provider.verifyCallbackSecret(secret);
+}
+
+export function parseCallback(body) {
+  const c = callbackProvider();
+  if (!c) return { ok: false, reason: 'no_provider' };
+  return { ...c.provider.parseCallback(body), provider: c.name };
 }
 
 /** The active disbursement provider's name, or null when none is configured. */

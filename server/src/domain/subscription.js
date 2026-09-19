@@ -7,7 +7,7 @@
 // a balance, and it never auto-charges (collection is credential-gated).
 //
 // Honest scope: the schedule is real and derived; the payment rail is the same
-// Tuma/ledger path as everything else, so with no provider, a cycle simply
+// provider/ledger path as everything else, so with no provider, a cycle simply
 // cannot be charged and says so.
 // ---------------------------------------------------------------------------
 

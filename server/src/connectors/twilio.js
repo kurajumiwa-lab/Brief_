@@ -2,7 +2,7 @@
 // TWILIO OUTBOUND CONNECTOR (SMS + WhatsApp-send)
 //
 // The first outbound provider behind the channel seam (see outbound.js). It
-// mirrors the Tuma connector's discipline exactly: capabilities + credential
+// mirrors the payment connectors' discipline exactly: capabilities + credential
 // state + fail-closed send + a test seam, and it NEVER claims a message was
 // sent unless Twilio accepted it.
 //
@@ -55,7 +55,7 @@ export function credentialState() {
   };
 }
 
-/** Is a given channel sendable right now? Fail-closed, like Tuma. */
+/** Is a given channel sendable right now? Fail-closed, like every rail. */
 export function isConfigured(channel = 'sms') {
   const c = credentialState();
   if (!c.accountSid || !c.authToken) return false;

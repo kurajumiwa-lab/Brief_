@@ -38,7 +38,7 @@ import {
   collectionProvider,
   providerStatus as providerStatusView,
 } from "../providers.js";
-import { normalisePhone } from "../connectors/tuma.js";
+import { normalisePhone } from "../connectors/phone.js";
 import { CURRENCIES } from "./quoteValidation.js";
 import * as ledger from "./ledger.js";
 import { recordAudit } from "../routes/helpers.js";

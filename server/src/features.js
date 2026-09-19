@@ -75,7 +75,7 @@ const DEFINITIONS = [
   { key: 'calendar', domain: 'calendar', label: 'Calendar & waiting lists', configured: () => true },
   { key: 'vendor_syndication', domain: 'vendor', label: 'Vendor capabilities & syndication', configured: () => true },
   // Provider-backed: configured derives from LIVE credentials, never stored flag.
-  { key: 'payments',  domain: 'commerce',   label: 'Payment collection (Tuma STK)',   configured: () => providers.providerStatus().configured },
+  { key: 'payments',  domain: 'commerce',   label: 'Payment collection (IntaSend M-Pesa STK)',   configured: () => providers.providerStatus().configured },
   { key: 'payouts',   domain: 'commerce',   label: 'Merchant payouts (disbursement)', configured: () => providers.providerStatus().payoutConfigured },
   { key: 'outbound',  domain: 'connectors', label: 'Outbound messaging',              configured: () => outbound.status().anyConfigured },
   { key: 'telegram',  domain: 'connectors', label: 'Telegram ingest',                 configured: () => telegram.isConfigured() },

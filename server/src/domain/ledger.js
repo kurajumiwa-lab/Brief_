@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // LEDGER
 //
-// HONEST SCOPE. Brief's collection rail is Tuma (see connectors/tuma.js);
+// HONEST SCOPE. Brief's collection rail is IntaSend (see providers.js);
 // whether it is live depends on credentials being mounted. With none mounted
 // there is no card processor and no bank rail in reach. Therefore this module
 // deliberately does NOT:
@@ -39,7 +39,7 @@ const PENDING = new Set(['created', 'pending', 'confirmed', 'held']);
  * Is a real payment provider connected?
  *
  * A genuine credential check delegated to the provider registry: true only
- * when a collection provider (Tuma) has every credential it needs. There is
+ * when a collection provider has every credential it needs. There is
  * no override and no mock branch -- the single source of truth for "can Brief
  * move money" lives with the provider that would actually move it.
  */

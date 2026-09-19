@@ -303,21 +303,19 @@ console.log(`\nPASS ${count}`);
 
 // --- PROVIDER INITIATION via a deterministic mock (spec §27) ----------------
 {
-  // Configure Tuma just enough to be "configured", then inject a fetch mock
-  // that answers /auth/token and /payment/stk-push. No real network, no real
-  // money — this proves the initiation path accepts and marks authorized.
-  process.env.TUMA_EMAIL = "wpay@example.com";
-  process.env.TUMA_API_KEY = "wpay_test_key";
-  process.env.TUMA_WEBHOOK_SECRET = "wpay-cb-secret";
+  // Configure the rail just enough to be "configured", then inject a fetch mock
+  // that answers the collection endpoint. No real network, no real money — this
+  // proves the initiation path accepts and marks authorized.
+  process.env.INTASEND_SECRET_KEY = "ISSecretKey_test_wpay";
+  process.env.INTASEND_BASE_URL = "https://stub.invalid";
+  process.env.INTASEND_WEBHOOK_SECRET = "wpay-cb-secret";
   process.env.BRIEF_PUBLIC_ORIGIN = "https://brief.example.com";
-  const tuma = await import("../src/connectors/tuma.js");
-  tuma._resetTokenCache();
 
   // §32: the provider status surfaced to clients must NEVER contain the
   // callback secret (it is the only defence on unsigned callbacks).
   const statusJson = JSON.stringify(wp.providerStatus());
   assert.ok(!statusJson.includes("wpay-cb-secret"));
-  assert.ok(!statusJson.includes("/api/webhooks/tuma/"));
+  assert.ok(!statusJson.includes("/api/webhooks/intasend/"));
   count++;
   console.log("PASS Provider status never leaks the callback secret");
 
@@ -330,12 +328,9 @@ console.log(`\nPASS ${count}`);
   let stkSeen = null;
   const fakeFetch = async (url, opts) => {
     const u = String(url);
-    if (u.includes("/auth/token")) {
-      return { ok: true, status: 200, json: async () => ({ data: { token: "mock.jwt.token" } }) };
-    }
-    if (u.includes("/payment/stk-push")) {
+    if (u.includes("/api/v2/collections/collection")) {
       stkSeen = JSON.parse(opts.body);
-      return { ok: true, status: 200, json: async () => ({ success: true, data: { checkout_request_id: "wpay_CO_MOCK", merchant_request_id: "m1", customer_message: "Check your phone" } }) };
+      return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: "wpay_CO_MOCK", state: "Pending", merchant_request_id: "m1" } }) };
     }
     throw new Error("unexpected URL " + u);
   };
@@ -344,7 +339,7 @@ console.log(`\nPASS ${count}`);
   assert.equal(res.providerRef, "wpay_CO_MOCK");
   // The amount sent to the provider is the whole-unit collectible amount.
   assert.equal(stkSeen.amount, 1550);
-  assert.equal(stkSeen.phone, "254722000111");
+  assert.equal(stkSeen.phone_number, "254722000111");
   const updated = wp.getIntent(intent.id);
   assert.equal(updated.status, "authorized");
   // Initiation success is NOT payment success: no ledger entry yet.
@@ -359,11 +354,10 @@ console.log(`\nPASS ${count}`);
   count++;
   console.log("PASS Provider callback confirms the initiated payment");
 
-  delete process.env.TUMA_EMAIL;
-  delete process.env.TUMA_API_KEY;
-  delete process.env.TUMA_WEBHOOK_SECRET;
+  delete process.env.INTASEND_SECRET_KEY;
+  delete process.env.INTASEND_BASE_URL;
+  delete process.env.INTASEND_WEBHOOK_SECRET;
   delete process.env.BRIEF_PUBLIC_ORIGIN;
-  tuma._resetTokenCache();
 }
 
 // --- HTTP API (spec §28: domain/API tests) ----------------------------------

@@ -11,7 +11,7 @@ import * as payment from '../domain/payment.js';
 import * as workPayment from '../domain/workPayment.js';
 import * as lipaMdogo from '../domain/lipaMdogo.js';
 import * as settlement from '../domain/settlement.js';
-import * as tuma from '../connectors/tuma.js';
+import * as providers from '../providers.js';
 import * as mpesa from '../connectors/mpesa.js';
 import * as vendorSyndication from '../domain/vendorSyndication.js';
 import * as signals from '../domain/signal.js';
@@ -26,7 +26,7 @@ app.use('/api/orders', requireFeature('commerce'));
 app.use('/api/disputes', requireFeature('commerce'));
 app.use('/api/orders/:id/pay', requireFeature('payments'));
 app.use('/api/orders/:id/payments', requireFeature('payments'));
-app.use('/api/webhooks/tuma', requireFeature('payments'));
+app.use('/api/webhooks/intasend', requireFeature('payments'));
 app.use('/api/webhooks/mpesa-b2c', requireFeature('payouts'));
 app.use('/api/vendors/me/payouts', requireFeature('payouts'));
 // ---------------------------------------------------------------------------
@@ -629,10 +629,10 @@ app.get('/api/orders/:id/payments', (req, res) => {
 
 
 /**
- * Tuma STK Push callback.
+ * M-Pesa STK Push callback, through the provider seam.
  *
- * Tuma does not sign callbacks, so the deployment-controlled defence is a
- * secret path segment (TUMA_WEBHOOK_SECRET). The REAL authenticity check is
+ * The rail in use does not sign callbacks, so the deployment-controlled defence
+ * is a secret path segment (INTASEND_WEBHOOK_SECRET). The REAL authenticity check is
  * inside confirmPayment(): the
  * callback must carry a checkout_request_id Brief issued and an amount that
  * matches the stored intent. It FAILS CLOSED: with no secret configured,
@@ -640,21 +640,21 @@ app.get('/api/orders/:id/payments', (req, res) => {
  * replay or a malformed payload is auditable.
  */
 
-app.post('/api/webhooks/tuma/:secret', (req, res) => {
-  const check = tuma.verifyCallbackSecret(req.params.secret);
+app.post('/api/webhooks/intasend/:secret', (req, res) => {
+  const check = providers.verifyCallbackSecret(req.params.secret);
   store.insert('paymentCallbacks', {
-    id: newId('cb'), provider: 'tuma', accepted: check.ok,
+    id: newId('cb'), provider: check.provider ?? 'intasend', accepted: check.ok,
     reason: check.reason ?? null, body: req.body ?? null, at: now()
   });
   if (!check.ok) {
-    recordError('tuma_webhook', null, `rejected callback: ${check.reason}`);
+    recordError('payment_webhook', null, `rejected callback: ${check.reason}`);
     // 403, and deliberately no detail about why.
     return res.status(403).json({ error: 'rejected' });
   }
 
-  const parsed = tuma.parseCallback(req.body);
+  const parsed = providers.parseCallback(req.body);
   if (!parsed.ok) {
-    recordError('tuma_webhook', null, 'unrecognised callback payload');
+    recordError('payment_webhook', null, 'unrecognised callback payload');
     return res.status(400).json({ error: 'unrecognised payload' });
   }
 
@@ -667,7 +667,7 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
     cancelled: parsed.cancelled
   });
 
-  // Phase 8: the SAME Tuma callback also serves Work Order payments. The
+  // Phase 8: the SAME callback also serves Work Order payments. The
   // provider reference is globally unique across both rails, so dispatch is
   // unambiguous and both confirmations are idempotent.
   let appliedWork = null;
@@ -704,8 +704,8 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
   }
 
   if (!applied.ok) {
-    recordError('tuma_webhook', null, `callback not applied: ${applied.reason}`);
-    // 200 to the provider: retrying will not help, and Tuma retries on
+    recordError('payment_webhook', null, `callback not applied: ${applied.reason}`);
+    // 200 to the provider: retrying will not help, and the rail retries on
     // non-2xx (up to 5 attempts with backoff). The failure is recorded on
     // our side instead.
     return res.status(200).json({ ok: false, reason: applied.reason });
@@ -721,7 +721,7 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
         metadata: { orderId: applied.intent.orderId, transactionId: applied.transactionId }
       });
     } catch (e) {
-      recordError('tuma_webhook', null, `attach failed: ${String(e.message ?? e)}`);
+      recordError('payment_webhook', null, `attach failed: ${String(e.message ?? e)}`);
     }
     // The vault timeline records the settlement exactly once (dedupe by the
     // provider reference), independent of the ledger's own replay protection.
@@ -744,7 +744,7 @@ app.post('/api/webhooks/tuma/:secret', (req, res) => {
  * secret path segment (MPESA_CALLBACK_SECRET). The REAL check is inside
  * confirmPayout(): the ConversationID must match a payout Brief issued. It
  * fails closed. Every callback is persisted before processing so a replay or
- * malformed payload is auditable, mirroring the Tuma route.
+ * malformed payload is auditable, mirroring the payment webhook.
  */
 
 app.post('/api/webhooks/mpesa-b2c/:secret', (req, res) => {

@@ -38,7 +38,7 @@ import {
   collectionProvider,
   providerStatus as providerStatusView
 } from '../providers.js';
-import { normalisePhone } from '../connectors/tuma.js';
+import { normalisePhone } from '../connectors/phone.js';
 import * as ledger from './ledger.js';
 
 export const INTENT_STATUS = [
@@ -54,7 +54,7 @@ const TERMINAL = new Set(['confirmed', 'failed', 'cancelled', 'reversed']);
 
 /**
  * Which provider is active for COLLECTION. Resolved through the provider
- * registry (see ../providers.js) -- Tuma is the gateway. Only a genuinely
+ * registry (see ../providers.js) -- IntaSend is the gateway. Only a genuinely
  * configured provider counts; there is no "mock" provider, by design.
  */
 export function activeProvider() {
@@ -182,7 +182,7 @@ export async function requestPayment(intentId, { fetchImpl = fetch } = {}) {
   return {
     ok: true,
     providerRef: res.checkoutRequestId,
-    // STK providers (Tuma) push a prompt to the phone, not a hosted URL.
+    // An STK provider pushes a prompt to the phone, not a hosted URL.
     authorizationUrl: res.authorizationUrl ?? null,
     customerMessage: res.customerMessage
   };

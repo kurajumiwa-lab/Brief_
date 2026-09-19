@@ -1219,13 +1219,13 @@ export interface Dispute {
 }
 
 // ---------------------------------------------------------------------------
-// PAYMENT (Batch 5 -- Tuma)
+// PAYMENT (Batch 5 -- the configured M-Pesa rail)
 //
 // A payment intent is Brief's record of ONE attempt to collect money for an
-// order. The provider is Tuma (M-Pesa STK Push settling to the LOOP till);
+// order. The rail is whatever providers.js reports as active (M-Pesa STK Push);
 // the amount is server-derived from the order row and never client-supplied.
 //
-// `providerRef` is Tuma's `checkout_request_id`; Brief's own transaction id
+// `providerRef` is the rail's own invoice reference; Brief's transaction id
 // is `transactionId`. Both are kept so reconciliation works across a provider
 // migration. Status is a single state machine -- there is no second payment
 // status system anywhere in the client.
@@ -1245,7 +1245,7 @@ export interface PaymentIntent {
   phone: string | null;
   status: PaymentStatus;
   provider: string | null;
-  /** Tuma's checkout_request_id. */
+  /** The rail's provider reference (IntaSend: invoice_id). */
   providerRef: string | null;
   /** The M-Pesa receipt number, once paid. */
   receipt: string | null;

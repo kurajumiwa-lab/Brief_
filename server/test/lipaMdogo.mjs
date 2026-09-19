@@ -58,16 +58,13 @@ async function main() {
   assert.equal(noProvider?.code, "provider_unavailable");
   pass("requestCollection refuses without a collection provider");
 
-  process.env.TUMA_EMAIL = "lmd@example.com";
-  process.env.TUMA_API_KEY = "lmd_test_key";
-  process.env.TUMA_WEBHOOK_SECRET = "lmd-cb-secret";
+  process.env.INTASEND_SECRET_KEY = "ISSecretKey_test_lmd";
+  process.env.INTASEND_BASE_URL = "https://stub.invalid";
+  process.env.INTASEND_WEBHOOK_SECRET = "lmd-cb-secret";
   process.env.BRIEF_PUBLIC_ORIGIN = "https://brief.example.com";
-  const tuma = await import("../src/connectors/tuma.js");
-  tuma._resetTokenCache();
   const fakeFetch = async (url) => {
     const u = String(url);
-    if (u.includes("/auth/token")) return { ok: true, status: 200, json: async () => ({ data: { token: "mock.jwt.token" } }) };
-    if (u.includes("/payment/stk-push")) return { ok: true, status: 200, json: async () => ({ success: true, data: { checkout_request_id: "lmd_CO_1" } }) };
+    if (u.includes("/api/v2/collections/collection")) return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: "lmd_CO_1", state: "Pending" } }) };
     throw new Error("unexpected URL " + u);
   };
   const res = await lmd.requestCollection(cCol.id, 0, { phone: "0722000111", idempotencyKey: "lmd-1", fetchImpl: fakeFetch });

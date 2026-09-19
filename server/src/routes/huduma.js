@@ -148,7 +148,7 @@ export function register(app) {
 
   app.post('/api/huduma/webhooks/mpesa/:secret', async (req, res) => {
     const check = mpesa.verifyCallbackSecret(req.params.secret);
-    // Persist every callback (accepted or not) for audit, like the Tuma route.
+    // Persist every callback (accepted or not) for audit, like the payment rail.
     store.insert('paymentCallbacks', {
       id: `hcb_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
       provider: 'mpesa-daraja', accepted: check.ok,

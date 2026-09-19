@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // M-PESA DARAJA CONNECTOR (COLLECTION / STK PUSH  +  DISBURSEMENT / B2C)
 //
-// The direct Daraja integration (distinct from the Tuma gateway used for
+// The direct Daraja integration (distinct from the aggregator gateway used for
 // marketplace collection). Two rails live here:
 //
 //   COLLECTION    STK Push (C2B)  -- escrow/order payment for HudumaLink.
@@ -98,7 +98,7 @@ export function credentialState() {
 /**
  * Can we run the FULL STK loop? Requires the end-to-end chain, not just the
  * auth pair: without a callback URL we could push a PIN prompt we could never
- * confirm — a payment request that never resolves. Fail-closed, like Tuma.
+ * confirm — a payment request that never resolves. Fail-closed, like every
  */
 export function isConfigured() {
   return Object.values(credentialState()).every(Boolean);

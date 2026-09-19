@@ -33,7 +33,7 @@ import { store, newId } from '../store.js';
 import { getUser } from './auth.js';
 import { getPartnerByKey } from './partner.js';
 import { activeCollectionProvider, collectionProvider } from '../providers.js';
-import { normalisePhone } from '../connectors/tuma.js';
+import { normalisePhone } from '../connectors/phone.js';
 import * as ledger from './ledger.js';
 import { recordAudit } from '../routes/helpers.js';
 

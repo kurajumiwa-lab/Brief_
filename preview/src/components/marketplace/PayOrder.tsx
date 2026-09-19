@@ -4,7 +4,7 @@ import type { Order, PaymentIntent } from '../../api/types';
 import { money } from './ListingCard';
 
 // ---------------------------------------------------------------------------
-// PAY ORDER (Tuma / M-Pesa STK Push)
+// PAY ORDER (M-Pesa STK Push, via the configured payment rail)
 //
 // The buyer's checkout. One input (their phone number) and one button. The
 // amount is NEVER entered here -- the server reads it from the order row.

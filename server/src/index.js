@@ -192,7 +192,7 @@ app.use(ops.requestLogger);
 //   /api/email-subscriptions  the newsletter surface -- subscribing and
 //                           UNSUBSCRIBING must work account-less (privacy)
 //   /api/webhooks/*          machine-to-machine inbound callbacks (Telegram,
-//                           WhatsApp, Tuma). Each verifies its OWN
+//                           WhatsApp, payment rail). Each verifies its OWN
 //                           credential (secret header, HMAC signature, or a
 //                           secret path segment), so it must not ALSO demand a
 //                           Brief session -- a provider callback has no Brief

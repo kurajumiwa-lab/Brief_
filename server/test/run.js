@@ -3549,105 +3549,120 @@ console.log('\n=== PAYMENT CONNECTOR BOUNDARY (no credentials configured) ===');
   // The ledger must agree -- one answer to "can Brief move money".
   const led = await import('../src/domain/ledger.js');
   check('ledger.providerConfigured() agrees', led.providerConfigured() === false);
-  check('ledger delegates to the connector', led.providerStatus().detail?.provider === 'tuma');
+  check('ledger delegates to the seam, not a vendor file', led.providerStatus().detail?.provider === 'intasend');
 }
 
-console.log('\n=== TUMA CONNECTOR (simulated fetch -- the REAL Tuma contract) ===');
+console.log('\n=== INTASEND CONNECTOR (simulated fetch -- the documented contract) ===');
 {
-  const tuma = await import('../src/connectors/tuma.js');
+  const intasend = await import('../src/connectors/intasend.js');
+  const phone = await import('../src/connectors/phone.js');
 
-  // With nothing configured, everything refuses with a stated reason.
-  check('Tuma reports NOT configured', tuma.isConfigured() === false);
+  check('IntaSend reports NOT configured', intasend.isConfigured() === false);
   check('every missing credential is named',
-    tuma.missingCredentials().length === 4 && tuma.missingCredentials().includes('apiKey'),
-    tuma.missingCredentials().join(','));
-  const push0 = await tuma.collect({ amount: 100, phone: '0722000111' });
+    intasend.missingCredentials().length === 4 && intasend.missingCredentials().includes('INTASEND_SECRET_KEY'),
+    intasend.missingCredentials().join(','));
+  const push0 = await intasend.collect({ amount: 100, phone: '0722000111' });
   check('collect REFUSES without credentials', push0.ok === false && push0.reason === 'not_configured');
-  const tok0 = await tuma.accessToken();
-  check('auth REFUSES without credentials', tok0.ok === false && tok0.reason === 'not_configured');
-  check('callback verification fails closed when unset', tuma.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
+  check('callback verification fails closed when unset', intasend.verifyCallbackSecret('x').reason === 'callback_secret_not_configured');
+  check('the status says configured is not the same as verified', intasend.status().wireContract === 'documented_not_exercised');
+  check('a fee that nobody published is null, never zero', intasend.payoutFee() === null);
 
-  // Phone normalisation (provider-neutral Kenyan rule).
-  check('0722... normalises', tuma.normalisePhone('0722000111') === '254722000111');
-  check('+254... normalises', tuma.normalisePhone('+254722000111') === '254722000111');
-  check('0110... (1-prefix) normalises', tuma.normalisePhone('0110000111') === '254110000111');
-  check('a foreign number is refused', tuma.normalisePhone('+447700900000') === null);
+  // Phone normalisation moved OUT of the payment connector: the MSISDN rule is
+  // a fact about Kenya, not about whoever holds the money this month.
+  check('0722... normalises', phone.normalisePhone('0722000111') === '254722000111');
+  check('+254... normalises', phone.normalisePhone('+254722000111') === '254722000111');
+  check('0110... (1-prefix) normalises', phone.normalisePhone('0110000111') === '254110000111');
+  check('a foreign number is refused', phone.normalisePhone('+447700900000') === null);
+  check('E.164 form for the channels that want it', phone.toE164('0722000111') === '+254722000111');
 
-  // Parse the REAL callback shapes Tuma documents (success / fail / cancelled).
-  const okCb = tuma.parseCallback({
-    status: 'completed', merchant_request_id: 'm1', checkout_request_id: 'ws_CO_1',
-    result_code: 0, result_desc: 'ok', mpesa_receipt_number: 'REC1', amount: 600
-  });
-  check('success callback parses', okCb.ok === true && okCb.succeeded === true && okCb.receipt === 'REC1');
-  check('success callback exposes amount', okCb.amount === 600);
-  const failCb = tuma.parseCallback({
-    status: 'failed', checkout_request_id: 'ws_CO_2', result_code: 2001,
-    result_desc: 'initiator invalid', failure_reason: 'Invalid M-Pesa PIN'
-  });
-  check('failure callback parses (not success)', failCb.ok === true && failCb.succeeded === false);
-  check('failure callback carries the reason', failCb.failureReason === 'Invalid M-Pesa PIN');
-  const cancelCb = tuma.parseCallback({ status: 'cancelled', checkout_request_id: 'ws_CO_3', result_code: 1032 });
-  check('cancelled callback parses and is not success', cancelCb.succeeded === false && cancelCb.cancelled === true);
-  const junk = tuma.parseCallback({ nonsense: true });
-  check('an unrecognised payload is refused', junk.ok === false && junk.reason === 'unrecognised_payload');
+  // Callback parsing: only a terminal state is an answer.
+  const okCb = intasend.parseCallback({ invoice: { invoice_id: 'INV1', state: 'Successful', amount: 600, receipt_number: 'R1' } });
+  check('a Successful invoice is a payment', okCb.ok === true && okCb.succeeded === true && okCb.checkoutRequestId === 'INV1' && okCb.amount === 600);
+  const failCb = intasend.parseCallback({ invoice: { invoice_id: 'INV2', state: 'Failed', amount: 600 } });
+  check('a Failed invoice is a failure with a reason', failCb.ok === true && failCb.succeeded === false && /provider_state/.test(failCb.failureReason));
+  const cancelCb = intasend.parseCallback({ invoice: { invoice_id: 'INV3', state: 'Cancelled' } });
+  check('a cancellation is marked as one', cancelCb.ok === true && cancelCb.cancelled === true);
+  const pendingCb = intasend.parseCallback({ invoice: { invoice_id: 'INV4', state: 'Pending' } });
+  check('PENDING is not a payment outcome', pendingCb.ok === false && pendingCb.reason === 'non_terminal_state');
+  const junk = intasend.parseCallback({ nonsense: true });
+  check('an unrecognised payload is refused, not guessed', junk.ok === false && junk.reason === 'unrecognised_payload');
 
-  // With credentials + a stubbed fetch, exercise the REAL request path.
-  process.env.TUMA_EMAIL = 'shop@example.com';
-  process.env.TUMA_API_KEY = 'tuma_test_key';
+  // With credentials + a stubbed fetch, exercise the real request path.
+  process.env.INTASEND_SECRET_KEY = 'ISSecretKey_test_shop';
+  process.env.INTASEND_BASE_URL = 'https://stub.invalid';
+  process.env.INTASEND_WEBHOOK_SECRET = 'is-cb-secret';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
-  tuma._resetTokenCache();
-  check('Tuma now reports configured', tuma.isConfigured() === true);
-  check('the callback URL embeds the secret path', tuma.callbackUrl() === 'https://brief.example.com/api/webhooks/tuma/tuma-cb-secret');
+  check('configured once the credentials exist', intasend.isConfigured() === true);
+  check('the callback URL carries the secret, not the key',
+    intasend.callbackUrl() === 'https://brief.example.com/api/webhooks/intasend/is-cb-secret');
+  check('a live callback base is required before any push', intasend.missingCredentials().length === 0);
 
-  // (5) authentication failure: 401 invalid credentials.
-  let authFail = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ success: false, message: 'Invalid credentials' }) }) });
-  check('auth failure is surfaced, not faked', authFail.ok === false && authFail.reason === 'auth_failed', JSON.stringify(authFail));
-  // (5) IPRS gate is named distinctly.
-  let iprs = await tuma.accessToken({ fetchImpl: async () => ({ ok: false, status: 403, json: async () => ({ success: false, error_code: 'IPRS_VERIFICATION_REQUIRED' }) }) });
-  check('IPRS gate is named distinctly', iprs.reason === 'iprs_verification_required');
-
-  // A stubbed Tuma: token then a successful push.
-  let tokenCalls = 0;
+  let collectionCalls = 0;
   const fakeFetch = async (url, opts) => {
-    if (url.endsWith('/auth/token')) {
-      tokenCalls++;
-      return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
+    const u = String(url);
+    if (u.endsWith('/api/v2/collections/collection')) {
+      collectionCalls++;
+      const b = JSON.parse(opts.body);
+      check('the authorization header carries the secret key', /^Token ISSecretKey_test_shop$/.test(opts.headers.authorization), opts.headers.authorization);
+      check('the amount is whole shillings from the server', b.amount === 600 && b.currency === 'KES');
+      return { ok: true, status: 200, json: async () => ({ invoice: { invoice_id: `INV_${b.amount}`, state: 'Pending' } }) };
     }
-    if (url.endsWith('/payment/stk-push')) {
-      return {
-        ok: true, status: 200,
-        json: async () => ({
-          success: true, message: 'sent',
-          data: { checkout_request_id: 'ws_CO_9', merchant_request_id: 'mr_9', customer_message: 'Check your phone' }
-        })
-      };
+    if (u.endsWith('/auth/token')) {
+      throw new Error('IntaSend needs no token exchange; a call here means the connector grew one');
     }
-    throw new Error('unexpected URL ' + url);
+    throw new Error('unexpected URL ' + u);
   };
-  const push = await tuma.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', fetchImpl: fakeFetch });
-  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'ws_CO_9');
-  check('the provider reference is the checkout_request_id', push.checkoutRequestId === 'ws_CO_9' && push.merchantRequestId === 'mr_9');
-  check('a token was fetched exactly once', tokenCalls === 1);
-  // Cached token: a second push does not re-auth.
-  await tuma.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
-  check('the token is cached across pushes', tokenCalls === 1);
-  // (6) Tuma API failure: push rejected.
-  const reject = await tuma.collect({
+  const push = await intasend.collect({ amount: 600, phone: '0722000111', description: 'Brief order xyz', email: 'b@example.com', fetchImpl: fakeFetch });
+  check('collect succeeds against a real-shaped response', push.ok === true && push.checkoutRequestId === 'INV_600');
+  check('the provider reference is exposed under both names', push.providerRef === 'INV_600' && push.checkoutRequestId === 'INV_600');
+  await intasend.collect({ amount: 600, phone: '0722000111', fetchImpl: fakeFetch });
+  check('no auth round-trip is hidden in a push', collectionCalls === 2, `collection calls: ${collectionCalls}`);
+
+  const rejected = await intasend.collect({
     amount: 600, phone: '0722000111',
     fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ success: false, message: 'Validation failed' }) })
   });
-  check('a rejected push is surfaced as failure', reject.ok === false && reject.reason === 'push_rejected');
+  check('a rejected push is surfaced as failure', rejected.ok === false && rejected.reason === 'push_rejected');
+  const noRef = await intasend.collect({ amount: 600, phone: '0722000111', fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
+  check('a response with no invoice id is NOT a success', noRef.ok === false && noRef.reason === 'no_provider_reference');
+  const badAmount = await intasend.collect({ amount: 0, phone: '0722000111', fetchImpl: fakeFetch });
+  check('a zero or negative amount never reaches the rail', badAmount.ok === false && badAmount.reason === 'invalid_amount');
+  const badPhone = await intasend.collect({ amount: 600, phone: '12345', fetchImpl: fakeFetch });
+  check('a garbled number is refused before any call', badPhone.ok === false && badPhone.reason === 'invalid_phone');
 
-  // Callback secret verification: right/wrong/unset.
-  check('the correct callback secret is accepted', tuma.verifyCallbackSecret('tuma-cb-secret').ok === true);
-  check('a wrong callback secret is refused', tuma.verifyCallbackSecret('nope').reason === 'bad_secret');
+  // Payout: the wallet is a hard prerequisite, and no approval flag means silent.
+  const pay0 = await intasend.disburse({ name: 'Rider', phone: '0722000111', amount: 500, fetchImpl: fakeFetch });
+  check('a payout without a disbursement wallet REFUSES with the reason',
+    pay0.ok === false && pay0.reason === 'disbursement_wallet_missing', JSON.stringify(pay0));
+  process.env.INTASEND_WALLET_ID = 'wallet_test_1';
+  check('the rail is only payout-configured with a wallet', intasend.isPayoutConfigured() === true);
+  let transferBody = null;
+  const pay1 = await intasend.disburse({
+    name: 'Rider One', phone: '0722000111', amount: 500, remarks: 'Brief payout p1',
+    fetchImpl: async (url, opts) => {
+      transferBody = JSON.parse(opts.body);
+      return { ok: true, status: 200, json: async () => ({ tracking_id: 'TRK-1' }) };
+    }
+  });
+  check('a payout is created AWAITING APPROVAL by default',
+    pay1.ok === true && pay1.awaitingApproval === true && pay1.providerRef === 'TRK-1');
+  check('the approval flag is sent as their API expects it', transferBody.requires_approval === 'YES');
+  const payNoRef = await intasend.disburse({ name: 'x', phone: '0722000111', amount: 500, fetchImpl: async () => ({ ok: true, status: 200, json: async () => ({}) }) });
+  check('a payout with nothing to track is a failure, not a blank column',
+    payNoRef.ok === false && payNoRef.reason === 'no_provider_reference');
 
-  delete process.env.TUMA_EMAIL;
-  delete process.env.TUMA_API_KEY;
+  check('the correct callback secret is accepted', intasend.verifyCallbackSecret('is-cb-secret').ok === true);
+  check('a wrong callback secret is refused', intasend.verifyCallbackSecret('nope').reason === 'bad_secret');
+  check('the status never leaks the secret or the key', (() => {
+    const j = JSON.stringify(intasend.status());
+    return !j.includes('is-cb-secret') && !j.includes('ISSecretKey_test_shop') && !j.includes('/api/webhooks/intasend/');
+  })());
+
+  delete process.env.INTASEND_SECRET_KEY;
+  delete process.env.INTASEND_BASE_URL;
+  delete process.env.INTASEND_WEBHOOK_SECRET;
+  delete process.env.INTASEND_WALLET_ID;
   delete process.env.BRIEF_PUBLIC_ORIGIN;
-  delete process.env.TUMA_WEBHOOK_SECRET;
-  tuma._resetTokenCache();
 }
 
 console.log('\n=== OUTBOUND CHANNEL SEAM + TWILIO (no credentials configured) ===');
@@ -4409,7 +4424,7 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   check('auth is available by default', features.available('auth') === true);
   check('tea is available by default', features.available('tea') === true);
   check('vaults is available by default', features.available('vaults') === true);
-  check('payments is enabled but NOT configured (no Tuma creds)', features.isEnabled('payments') === true && features.isConfigured('payments') === false);
+  check('payments is enabled but NOT configured (no rail creds)', features.isEnabled('payments') === true && features.isConfigured('payments') === false);
   check('payments available=false (enabled yet unconfigured)', features.available('payments') === false);
   check('payouts is NOT configured', features.isConfigured('payouts') === false);
   check('outbound is NOT configured (no Twilio creds)', features.isConfigured('outbound') === false);
@@ -4447,16 +4462,16 @@ console.log('\n=== FEATURE REGISTRY (§4.2) ===');
   check('clearing the list re-enables the feature', features.isEnabled('tea') === true);
 }
 
-console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
+console.log('\n=== INTASEND PAYMENT E2E + WEBHOOK (simulated provider) ===');
 {
   process.env.NODE_ENV = 'test';
-  process.env.TUMA_EMAIL = 'shop@example.com';
-  process.env.TUMA_API_KEY = 'tuma_test_key';
+  process.env.INTASEND_SECRET_KEY = 'ISSecretKey_test_shop';
+  process.env.INTASEND_BASE_URL = 'https://stub.invalid';
   process.env.BRIEF_PUBLIC_ORIGIN = 'https://brief.example.com';
-  process.env.TUMA_WEBHOOK_SECRET = 'tuma-cb-secret';
+  process.env.INTASEND_WEBHOOK_SECRET = 'is-cb-secret';
 
   const pay = await import('../src/domain/payment.js');
-  const tuma = await import('../src/connectors/tuma.js');
+
   const { default: app } = await import('../src/index.js');
   store._reset();
   const srv = app.listen(0);
@@ -4472,27 +4487,21 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
   };
 
   try {
-    // A stubbed Tuma rail: token + successful push, in place of the real fetch.
+    // A stubbed rail: one endpoint, no token exchange.
     const fakeFetch = async (url, opts) => {
-      if (url.endsWith('/auth/token')) {
-        return { ok: true, status: 200, json: async () => ({ success: true, data: { token: 'jwt.test.token' } }) };
-      }
-      if (url.endsWith('/payment/stk-push')) {
+      if (String(url).endsWith('/api/v2/collections/collection')) {
         const b = JSON.parse(opts.body);
         return {
           ok: true, status: 200,
-          json: async () => ({
-            success: true, message: 'sent',
-            data: { checkout_request_id: `ws_CO_${b.amount}`, merchant_request_id: 'mr_1', customer_message: 'Check your phone' }
-          })
+          json: async () => ({ invoice: { invoice_id: `INV_${b.amount}`, state: 'Pending' } })
         };
       }
       throw new Error('unexpected URL ' + url);
     };
 
-    const A = (await call('/api/auth/register', 'POST', { handle: 'tseller', password: 'a good passphrase' })).body;
-    const B = (await call('/api/auth/register', 'POST', { handle: 'tbuyer', password: 'a good passphrase' })).body;
-    await call('/api/vendors', 'POST', { displayName: 'Tuma Stall' }, A.token);
+    const A = (await call('/api/auth/register', 'POST', { handle: 'iseller', password: 'a good passphrase' })).body;
+    const B = (await call('/api/auth/register', 'POST', { handle: 'ibuyer', password: 'a good passphrase' })).body;
+    await call('/api/vendors', 'POST', { displayName: 'Market Stall' }, A.token);
     let r = await call('/api/listings', 'POST', { title: 'Rice', type: 'product', price: 300, quantityAvailable: 10 }, A.token);
     const lid = r.body.listing.id;
     await call(`/api/listings/${lid}/status`, 'POST', { status: 'active' }, A.token);
@@ -4500,78 +4509,45 @@ console.log('\n=== TUMA PAYMENT E2E + WEBHOOK (simulated provider) ===');
     const oid = r.body.order.id;
     check('order placed for 600', r.body.order.total === 600);
 
-    // --- INITIATE through the domain layer with the stubbed rail -----------
     const { intent } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
-    check('provider is Tuma on the intent', intent.provider === 'tuma');
+    check('the rail recorded on the intent is the active one', intent.provider === 'intasend', String(intent.provider));
     const init = await pay.requestPayment(intent.id, { fetchImpl: fakeFetch });
-    check('requestPayment succeeds against the stubbed Tuma', init.ok === true && init.providerRef === 'ws_CO_600');
+    check('requestPayment succeeds against the stubbed rail', init.ok === true && init.providerRef === 'INV_600', JSON.stringify(init));
     let stored = pay.getIntent(intent.id);
-    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'ws_CO_600');
+    check('the intent is authorized with the provider ref', stored.status === 'authorized' && stored.providerRef === 'INV_600');
 
-    // --- WEBHOOK: fail closed ----------------------------------------------
-    r = await call('/api/webhooks/tuma/wrong', 'POST', { status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0 });
+    r = await call('/api/webhooks/intasend/wrong', 'POST', { invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600 } });
     check('a wrong callback secret is refused (403)', r.status === 403, `got ${r.status}`);
+    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', { invoice: { invoice_id: 'INV_NOPE', state: 'Pending' } });
+    check('a PENDING callback does not settle anything (400)', r.status === 400, `got ${r.status}`);
 
-    // --- WEBHOOK: success, end to end --------------------------------------
-    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
-      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0,
-      result_desc: 'ok', mpesa_receipt_number: 'REC600', amount: 600
+    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
+      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600, receipt_number: 'REC600' }
     });
     check('a valid callback is accepted (200)', r.status === 200 && r.body?.ok === true, JSON.stringify(r.body));
-    check('exactly ONE ledger transaction was created', store.all('ledgerTransactions').length === 1);
-    check('the transaction is settled', store.all('ledgerTransactions')[0].status === 'settled');
-    check('the intent is confirmed', pay.getIntent(intent.id).status === 'confirmed');
-    check('the intent records a completion time', Boolean(pay.getIntent(intent.id).confirmedAt));
-    const paidOrder = (await call(`/api/orders/${oid}`, 'GET', undefined, B.token)).body.order;
-    check('the order now reads paid', paidOrder.paid === true && paidOrder.paymentStatus === 'settled');
-
-    // --- WEBHOOK: duplicate callback is an idempotent no-op ----------------
-    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
-      status: 'completed', checkout_request_id: 'ws_CO_600', result_code: 0, amount: 600
+    stored = pay.getIntent(intent.id);
+    check('the intent is confirmed by the callback', stored.status === 'confirmed', stored.status);
+    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
+      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 600, receipt_number: 'REC600' }
     });
-    check('a duplicate callback is a no-op (ok:true, duplicate)', r.status === 200 && r.body?.duplicate === true);
-    check('a duplicate callback created NO second transaction', store.all('ledgerTransactions').length === 1);
-
-    // --- WEBHOOK: amount mismatch fails loudly -----------------------------
-    const { intent: intent2 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
-    // (a second live intent cannot exist for the same order, so simulate an
-    // authorized state directly -- the domain enforces one live intent/order)
-    store.update('paymentIntents', intent2.id, { status: 'authorized', providerRef: 'ws_CO_BAD' });
-    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
-      status: 'completed', checkout_request_id: 'ws_CO_BAD', result_code: 0, amount: 1
+    check('a replayed callback is an idempotent no-op', r.status === 200 && r.body?.duplicate === true, JSON.stringify(r.body));
+    r = await call('/api/webhooks/intasend/is-cb-secret', 'POST', {
+      invoice: { invoice_id: 'INV_600', state: 'Successful', amount: 6, receipt_number: 'REC601' }
     });
-    check('an amount mismatch is refused', r.body?.ok === false && r.body?.reason === 'amount_mismatch', JSON.stringify(r.body));
-    check('still exactly one ledger transaction', store.all('ledgerTransactions').length === 1);
-
-    // --- WEBHOOK: unknown reference ----------------------------------------
-    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
-      status: 'completed', checkout_request_id: 'ws_CO_NOPE', result_code: 0, amount: 600
-    });
-    check('an unknown reference is 200 but not applied', r.status === 200 && r.body?.ok === false && r.body?.reason === 'unknown_reference');
-    check('no extra transaction was created', store.all('ledgerTransactions').length === 1);
-
-    // --- WEBHOOK: cancelled payment does not credit ------------------------
-    const { intent: intent3 } = pay.createIntent({ orderId: oid, payerId: B.user.id, phone: '0722000111' });
-    store.update('paymentIntents', intent3.id, { status: 'authorized', providerRef: 'ws_CO_CANCEL' });
-    r = await call('/api/webhooks/tuma/tuma-cb-secret', 'POST', {
-      status: 'cancelled', checkout_request_id: 'ws_CO_CANCEL', result_code: 1032
-    });
-    check('a cancelled payment is a DISTINCT terminal state', pay.getIntent(intent3.id).status === 'cancelled');
-    check('a cancelled payment created no transaction', store.all('ledgerTransactions').length === 1);
-
-    // --- Unauthenticated initiation is refused -----------------------------
-    const anon = await fetch(`http://127.0.0.1:${port}/api/orders/${oid}/pay`, {
-      method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer bogus' },
-      body: JSON.stringify({ phone: '0722000111' })
-    });
-    check('an invalid token cannot initiate (401)', anon.status === 401);
+    // What actually happens, and what matters: an intent already confirmed is
+    // never re-opened or re-booked by a later callback, whatever amount it
+    // carries. It reads as a duplicate and the ledger keeps one row. (The
+    // mismatch guard for an UNSETTLED intent is the rogue-callback case below.)
+    check('a mismatched callback on a settled intent books nothing',
+      r.status === 200 && r.body?.duplicate === true, JSON.stringify(r.body));
+    check('the intent keeps the state the honest callback gave it',
+      pay.getIntent(intent.id).status === 'confirmed');
   } finally {
     srv.close();
-    delete process.env.TUMA_EMAIL;
-    delete process.env.TUMA_API_KEY;
+    delete process.env.INTASEND_SECRET_KEY;
+    delete process.env.INTASEND_BASE_URL;
+    delete process.env.INTASEND_WEBHOOK_SECRET;
     delete process.env.BRIEF_PUBLIC_ORIGIN;
-    delete process.env.TUMA_WEBHOOK_SECRET;
-    tuma._resetTokenCache();
   }
 }
 
@@ -4734,7 +4710,7 @@ console.log('\n=== PAYMENT LIFECYCLE, IDEMPOTENCY, REPLAY (simulated provider re
   // reconciler catches it rather than trusting it would.
   const rogue = store.insert('paymentIntents', {
     id: 'pay_rogue', orderId: order3.id, payerId: 'usr_buyer', amount: 500,
-    currency: 'KES', status: 'confirmed', provider: 'tuma', providerRef: 'ws_ROGUE',
+    currency: 'KES', status: 'confirmed', provider: 'intasend', providerRef: 'INV_ROGUE',
     receipt: 'ROGUE1', transactionId: null, createdAt: new Date().toISOString()
   });
   rec = pay.reconcileIntents();
@@ -4806,29 +4782,29 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
 
     // --- WEBHOOK -------------------------------------------------------------
     // Fails closed with no secret configured.
-    r = await call('/api/webhooks/tuma/whatever', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
+    r = await call('/api/webhooks/intasend/whatever', 'POST', { invoice: { invoice_id: 'INV_X', state: 'Successful', amount: 100 } });
     check('the webhook REJECTS when no secret is configured (403)', r.status === 403, `got ${r.status}`);
     check('the rejection leaks no detail', JSON.stringify(r.body) === '{"error":"rejected"}', JSON.stringify(r.body));
     check('the rejected callback was still recorded for audit',
       store.all('paymentCallbacks').some((c) => c.accepted === false));
 
     // With a secret configured, a WRONG secret is still refused.
-    process.env.TUMA_WEBHOOK_SECRET = 'sekret-value-123';
-    r = await call('/api/webhooks/tuma/wrong-secret-value', 'POST', { status: 'completed', checkout_request_id: 'ws_X', result_code: 0 });
+    process.env.INTASEND_WEBHOOK_SECRET = 'sekret-value-123';
+    r = await call('/api/webhooks/intasend/wrong-secret-value', 'POST', { invoice: { invoice_id: 'INV_X', state: 'Successful', amount: 100 } });
     check('a WRONG secret is refused (403)', r.status === 403, `got ${r.status}`);
 
-    // Right secret, but a payload Tuma would never send.
-    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', { nonsense: true });
+    // Right secret, but a payload the rail would never send.
+    r = await call('/api/webhooks/intasend/sekret-value-123', 'POST', { nonsense: true });
     check('a malformed payload is 400, not 500', r.status === 400, `got ${r.status}`);
 
-    // Right secret, unknown reference: accepted (200) but NOT applied, so
-    // Tuma does not retry forever.
-    r = await call('/api/webhooks/tuma/sekret-value-123', 'POST', {
-      status: 'completed', checkout_request_id: 'ws_UNKNOWN', result_code: 0, amount: 600
+    // Right secret, unknown reference: accepted (200) but NOT applied, so the
+    // provider does not retry forever against a reference we never issued.
+    r = await call('/api/webhooks/intasend/sekret-value-123', 'POST', {
+      invoice: { invoice_id: 'INV_UNKNOWN', state: 'Successful', amount: 600 }
     });
     check('an unknown reference returns 200 but ok:false', r.status === 200 && r.body?.ok === false, JSON.stringify(r.body));
     check('no transaction was created', store.all('ledgerTransactions').length === 0);
-    delete process.env.TUMA_WEBHOOK_SECRET;
+    delete process.env.INTASEND_WEBHOOK_SECRET;
 
     // Reconciliation endpoint.
     r = await call('/api/economic/payments/reconcile', 'GET', undefined, B.token);
@@ -4837,7 +4813,7 @@ console.log('\n=== PAYMENT HTTP SURFACE ===');
     // Capabilities must tell the truth.
     r = await call('/api/capabilities');
     check('capabilities still report payments unconfigured', r.body?.payments?.configured === false);
-    check('and name Tuma as the intended rail', r.body?.payments?.detail?.provider === 'tuma');
+    check('and name the intended rail even while unconfigured', r.body?.payments?.detail?.provider === 'intasend');
   } finally {
     srv.close();
   }

@@ -126,7 +126,7 @@ order → payment → settlement → reconciliation) and capability-gated contro
 
 ## F8 — Endpoints with no product caller that are *legitimately* external (keep)
 
-Webhooks (`/api/webhooks/*`, `/api/huduma/webhooks/*`, tuma), WhatsApp/M-Pesa
+Webhooks (`/api/webhooks/*`, `/api/huduma/webhooks/*`), WhatsApp/M-Pesa
 huduma surfaces (their UI is WhatsApp itself + status is honest), health /
 ready / status / capabilities (infra + release smoke), `/api/public/feed`
 (documented external API), `/api/click` + `/api/public/ad/:hash` (external
