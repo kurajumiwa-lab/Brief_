@@ -546,9 +546,14 @@ async function main() {
     assert.ok(t.includes('Pipeline') || t.includes('Inbox'), 'the pipeline surface rendered at all');
     assert.ok(!/today's net take-home/i.test(t), 'no all-time figure is labelled as today');
     assert.ok(!/\bnet take-home\b/i.test(t), 'and nothing is called net while expenses are untouched');
-    assert.ok(/Settled through Brief|Settled · all time/i.test(t), 'the honest label is used instead');
+    // The label names the BASIS now ("Marked settled"), because "Settled through
+    // Brief" promised a ledger row and the figure is orders whose own status says
+    // paid or settled. The assertion moved with the copy, not after it.
+    assert.ok(/Marked settled/i.test(t), 'the label states what was counted, not a nicer word for it');
+    assert.ok(!/Settled through Brief/i.test(t), 'and the ledger promise is gone from this surface');
     assert.ok(t.includes('84,200'), 'with the real figure');
     assert.ok(/Expenses are not subtracted here/i.test(t), 'and it says what it excludes');
+    assert.ok(/Not a ledger feed/i.test(t), 'and it says so plainly, without a nicer word');
   }
   pass('A settled total is labelled as a settled total, not as profit');
 

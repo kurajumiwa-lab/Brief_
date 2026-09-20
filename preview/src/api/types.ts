@@ -1813,6 +1813,14 @@ export interface SpaceMetrics {
   activeOrdersCount: number;
   totalOrdersCount: number;
   offersCount: number;
+  /** What `revenueKes` counted, in the server's words. Never inferred locally. */
+  revenueBasis?: string;
+  /** 'this space only' | 'sole space of this business'. */
+  scope?: string;
+  /** The vendor's orders that belong to no space. Shown, never absorbed. */
+  unattachedOrderCount?: number;
+  unattachedRevenueKes?: number;
+  unattachedOfferCount?: number;
 }
 
 export interface Space {
@@ -2250,11 +2258,21 @@ export interface SpaceMoneySummary {
   totalRevenueKes: number;
   totalExpensesKes: number;
   netProfitKes: number;
-  marginPercent: number;
+  /**
+   * `null` when nothing settled, which is not the same answer as `0`. A 0%
+   * margin means "sold, kept nothing"; there is no such fact before a sale.
+   */
+  marginPercent: number | null;
   totalReceivablesKes: number;
   activeTabsCount: number;
   recentExpenses: SpaceExpense[];
   tabs: SpaceCustomerTab[];
+  /** 'this space only' | 'sole space of this business'. */
+  scope?: string;
+  settledOrderCount?: number;
+  /** How many expense rows the owner typed. There is no bank feed here. */
+  expensesRecorded?: number;
+  unattached?: { orders: number; revenueKes: number };
 }
 
 export type SpaceDispatchStatus = 'staged' | 'in_transit' | 'ready_at_stage' | 'collected' | 'cancelled';

@@ -1221,16 +1221,14 @@ export function getSpaceMoneySummary(spaceId) {
   const space = store.find('spaces', (s) => s.id === spaceId);
   if (!space) throw new Error('Space not found');
 
-  const spaceOrders = store.filter('orders', (o) => o.spaceId === space.id || o.vendorId === space.vendorId);
+  const scope = spaceBookScope(space);
+  const spaceOrders = store.filter('orders', (o) => scope.belongsToOrder(o));
+  const unattachedOrders = store.filter('orders', (o) => scope.unattachedOrder(o));
   const expenses = getSpaceExpenses(spaceId);
   const tabs = getSpaceTabs(spaceId);
 
-  let totalRevenueKes = 0;
-  for (const ord of spaceOrders) {
-    if (ord.status === 'paid' || ord.status === 'completed' || ord.status === 'settled' || ord.status === 'fulfilled') {
-      totalRevenueKes += (ord.total || 0);
-    }
-  }
+  const totalRevenueKes = settledKes(spaceOrders);
+  const unattachedRevenueKes = settledKes(unattachedOrders);
 
   let totalExpensesKes = 0;
   for (const exp of expenses) {
@@ -1245,7 +1243,9 @@ export function getSpaceMoneySummary(spaceId) {
   }
 
   const netProfitKes = totalRevenueKes - totalExpensesKes;
-  const marginPercent = totalRevenueKes > 0 ? Math.round((netProfitKes / totalRevenueKes) * 100) : 0;
+  // A margin against no sales is not 0% — 0% is a real answer meaning "sold and
+  // kept nothing", which is a different fact from "nothing sold to measure".
+  const marginPercent = totalRevenueKes > 0 ? Math.round((netProfitKes / totalRevenueKes) * 100) : null;
 
   return {
     spaceId,
@@ -1256,7 +1256,18 @@ export function getSpaceMoneySummary(spaceId) {
     totalReceivablesKes,
     activeTabsCount: tabs.filter((t) => t.status === 'active').length,
     recentExpenses: expenses.slice(0, 10),
-    tabs: tabs.slice(0, 20)
+    tabs: tabs.slice(0, 20),
+    // The two things the panel must say out loud rather than let the reader
+    // assume: what the "in" covers, and that the "out" is only what the owner
+    // chose to record. Expenses have no import path and no bank feed, so a
+    // figure that looks like profit is only ever "recorded in minus recorded out".
+    scope: scope.sole ? 'sole space of this business' : 'this space only',
+    settledOrderCount: spaceOrders.filter((o) => SETTLED_ORDER_STATUSES.includes(o.status)).length,
+    expensesRecorded: expenses.length,
+    unattached: {
+      orders: unattachedOrders.length,
+      revenueKes: unattachedRevenueKes
+    }
   };
 }
 
@@ -1397,21 +1408,79 @@ export function getSpaceDispatches(spaceId) {
 }
 
 /**
+ * WHICH ROWS BELONG TO THIS SPACE.
+ *
+ * A space shares its owner's vendor, and the commerce rows are keyed on the
+ * VENDOR. So the honest answer is a join, not a `vendorId` filter:
+ *
+ *   * an order belongs to this space when it says so (`order.spaceId`, stamped
+ *     from the listing at creation), or when the LISTING it was placed against
+ *     names this space;
+ *   * a listing belongs when it names this space;
+ *   * a row of the vendor's that names no space folds in ONLY when this is the
+ *     vendor's only space — which is the state every shop was in before spaces
+ *     multiplied, and the only reason a fallback deserves to exist;
+ *   * when the vendor has more than one space, an unattached row belongs to
+ *     NONE of them, and it is counted and reported as unassigned. It is never
+ *     added to every space (that was the bug: two spaces, the same total, both
+ *     printed as their own, and a "Margin" computed from it) and never quietly
+ *     dropped, because a number that went missing without saying so is the same
+ *     lie in the other direction.
+ */
+export function spaceBookScope(space) {
+  const siblingCount = space.vendorId
+    ? store.filter('spaces', (x) => x.vendorId === space.vendorId && x.id !== space.id).length
+    : 0;
+  const sole = siblingCount === 0;
+  // One pass over the book, so an order can be resolved to the listing it was
+  // placed against. O(listings) per space read, which at this scale is cheaper
+  // than reasoning about ownership from a title.
+  const listingById = new Map(store.all('listings').map((l) => [l.id, l]));
+  const listingOf = (order) => (order?.listingId ? listingById.get(order.listingId) ?? null : null);
+  const mine = (row) => row.vendorId === space.vendorId || row.spaceId === space.id;
+
+  const belongsListing = (l) => (l.spaceId ? l.spaceId === space.id : sole && l.vendorId === space.vendorId);
+  const belongsOrder = (o) => {
+    if (o.spaceId) return o.spaceId === space.id;
+    const l = listingOf(o);
+    if (l?.spaceId) return l.spaceId === space.id;
+    return sole && (mine(o) || mine(l ?? {}));
+  };
+  // This vendor's row, no space of its own, and siblings exist to be confused with.
+  const unattachedOrder = (o) => {
+    if (o.spaceId) return false;
+    const l = listingOf(o);
+    if (l?.spaceId) return false;
+    return !sole && (mine(o) || mine(l ?? {}));
+  };
+  const unattachedListing = (l) => !sole && !l.spaceId && l.vendorId === space.vendorId;
+  return { sole, siblingCount, belongsToListing: belongsListing, belongsToOrder: belongsOrder, unattachedOrder, unattachedListing, listingOf };
+}
+
+/** The four order statuses whose money has actually moved. */
+export const SETTLED_ORDER_STATUSES = ['paid', 'completed', 'settled', 'fulfilled'];
+const settledKes = (rows) => rows.reduce((sum, o) => (
+  SETTLED_ORDER_STATUSES.includes(o.status) ? sum + (Number(o.total) || 0) : sum
+), 0);
+
+/**
  * Helper to hydrate a Space with real metrics and connected items.
  */
 function hydrateSpace(space, { callerId = null } = {}) {
-  const spaceListings = store.filter('listings', (l) => (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status !== 'archived');
-  const spaceOrders = store.filter('orders', (o) => o.spaceId === space.id || o.vendorId === space.vendorId);
+  // Scoped, not vendor-wide. See `spaceBookScope` for the rule and for why a
+  // vendorId filter alone was wrong for anyone with more than one space.
+  const scope = spaceBookScope(space);
+  const spaceListings = store.filter('listings', (l) => scope.belongsToListing(l) && l.status !== 'archived');
+  const spaceOrders = store.filter('orders', (o) => scope.belongsToOrder(o));
+  const unattachedOrders = store.filter('orders', (o) => scope.unattachedOrder(o));
+  const unattachedListings = store.filter('listings', (l) => scope.unattachedListing(l));
   const spaceConversations = store.filter('spaceConversations', (c) => c.spaceId === space.id);
   const activities = getSpaceActivities(space.id, { limit: 10 });
 
-  // Calculate real revenue from completed/paid ledger or orders
-  let revenueKes = 0;
-  for (const ord of spaceOrders) {
-    if (ord.status === 'paid' || ord.status === 'completed' || ord.status === 'settled' || ord.status === 'fulfilled') {
-      revenueKes += (ord.total || 0);
-    }
-  }
+  // Revenue is the sum of THIS space's settled orders — the same four statuses
+  // the money panel uses, from one shared helper, so the two numbers cannot
+  // disagree about what "settled" means.
+  const revenueKes = settledKes(spaceOrders);
 
   // Count distinct customers from orders & conversations
   const customerSet = new Set();
@@ -1428,8 +1497,7 @@ function hydrateSpace(space, { callerId = null } = {}) {
   // The derived maintenance reads ride along on every hydrate, so Home, the
   // space workspace and the directory can never disagree about them.
   const isOwnerView = callerId === null || callerId === space.ownerId;
-  const activeRows = store.filter('listings', (l) =>
-    (l.spaceId === space.id || l.vendorId === space.vendorId) && l.status === 'active');
+  const activeRows = spaceListings.filter((l) => l.status === 'active');
   const featuredIds = space.featured ?? [];
   // One pass over the queue, shared by the count and the buckets below, so the
   // list can say WHY something is open instead of only THAT it is.
@@ -1481,7 +1549,17 @@ function hydrateSpace(space, { callerId = null } = {}) {
       customerCount: customerSet.size,
       activeOrdersCount,
       totalOrdersCount: spaceOrders.length,
-      offersCount: spaceListings.filter((l) => l.status === 'active').length
+      offersCount: spaceListings.filter((l) => l.status === 'active').length,
+      // What this figure is, in the server's own words, so a surface prints the
+      // basis instead of implying one. It used to be captioned "Settled through
+      // Brief", which promised a ledger row; the rows behind it are orders whose
+      // STATUS says paid or settled, and an owner who marks an order settled
+      // without a payment recorded is in this number. Say what is counted.
+      revenueBasis: 'orders marked paid or settled',
+      scope: scope.sole ? 'sole space of this business' : 'this space only',
+      unattachedOrderCount: unattachedOrders.length,
+      unattachedRevenueKes: settledKes(unattachedOrders),
+      unattachedOfferCount: unattachedListings.length
     },
     offers: spaceListings,
     recentActivities: activities,

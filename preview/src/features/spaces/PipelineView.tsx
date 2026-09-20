@@ -247,7 +247,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
 
         <div className="flex items-center space-x-2 shrink-0">
           <div className="px-3 py-1.5 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] text-[color:var(--color-text)] text-right">
-            <span className="text-[11px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Settled · all time</span>
+            <span className="text-[11px] uppercase tracking-wider font-extrabold block text-[color:var(--color-text-muted)]">Marked settled{space.metrics?.scope === 'this space only' ? ' · this space' : ''}</span>
             <span className="text-xs font-black block text-[color:var(--color-text)]">KES {revenueKes.toLocaleString()}</span>
           </div>
           <div className="px-2.5 py-1.5 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-xs font-black">
@@ -661,13 +661,13 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
           <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
           <div>
             <span className="text-[11px] uppercase font-bold block" style={{ color: 'var(--brief-muted)' }}>
-              Settled through Brief · all time
+              Marked settled · all time
             </span>
             <span className="text-sm font-black font-mono" style={{ color: 'var(--brief-ink)' }}>
               KES {revenueKes.toLocaleString()}
             </span>
             <span className="text-[11px] block" style={{ color: 'var(--color-quiet)' }}>
-              Expenses are not subtracted here — they are in the Money tab.
+              Orders marked paid or settled. Not a ledger feed — expenses are not subtracted here.
             </span>
           </div>
         </div>

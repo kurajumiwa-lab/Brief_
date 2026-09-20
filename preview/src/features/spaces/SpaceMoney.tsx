@@ -204,9 +204,16 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
   const totalRev = summary?.totalRevenueKes ?? revenueKes;
   const totalExp = summary?.totalExpensesKes ?? 0;
+  // The server's arithmetic, or nothing. Re-deriving it here is how a panel
+  // ends up showing a different figure from the one the rows support.
   const netProfit = summary?.netProfitKes ?? (totalRev - totalExp);
-  const marginPct = summary?.marginPercent ?? (totalRev > 0 ? Math.round((netProfit / totalRev) * 100) : 0);
+  // `null` is the honest empty: a 0% margin is the claim "sold, kept nothing",
+  // and that fact does not exist before a sale. The client used to fall back to
+  // `0`, which printed a flattering nothing on a shop with no money in.
+  const marginPct = summary ? summary.marginPercent : null;
   const receivables = summary?.totalReceivablesKes ?? 0;
+  const scopeNote = summary?.scope === 'this space only' ? 'this space' : 'all of this business';
+  const unattached = summary?.unattached?.orders ?? 0;
 
   return (
     <section className={`space-y-6 max-w-2xl mx-auto ${className}`}>
@@ -225,7 +232,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
             <h3 className="text-sm font-black uppercase tracking-wider text-[color:var(--color-text)]">
-              Profit & Cash Flow
+              Cash in and out
             </h3>
           </div>
           <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-[color:var(--color-primary-subtle)] text-[color:var(--color-text)] text-[11px] font-black animate-pulse">
@@ -240,13 +247,13 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           <div className="p-4 rounded-2xl bg-[color:var(--color-primary-subtle)] border border-[color:var(--color-primary)] space-y-1">
             <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[11px] font-bold uppercase tracking-wider">
               <TrendingUp className="w-3.5 h-3.5 text-[color:var(--color-success)]" />
-              <span>Money In (Sales)</span>
+              <span>Marked settled</span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalRev.toLocaleString()}
             </p>
             <p className="text-[11px] text-[color:var(--color-text-muted)]">
-              Completed space orders
+              Orders marked paid or settled · {scopeNote}
             </p>
           </div>
 
@@ -254,35 +261,44 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
           <div className="p-4 rounded-2xl bg-[color:var(--color-surface-elevated)] border border-[color:var(--color-accent)] space-y-1">
             <div className="flex items-center space-x-1 text-[color:var(--color-text)] text-[11px] font-bold uppercase tracking-wider">
               <ArrowUp className="w-3.5 h-3.5 text-rose-700" />
-              <span>Money Out (Supplies)</span>
+              <span>Recorded out</span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-text)]">
               KES {totalExp.toLocaleString()}
             </p>
             <p className="text-[11px] text-[color:var(--color-text-muted)]">
-              Ingredients & costs
+              {summary?.expensesRecorded ?? 0} expense{summary?.expensesRecorded === 1 ? '' : 's'} you typed · no bank feed
             </p>
           </div>
 
-          {/* Net Profit */}
+          {/* The subtraction, named as a subtraction. */}
           <div className="p-4 rounded-2xl bg-[color:var(--color-text)] text-white space-y-1 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">
-                Net Profit
+                Marked in − recorded out
               </span>
               <span className="text-[11px] font-extrabold bg-white/20 text-[color:var(--color-primary)] px-1.5 py-0.5 rounded-full">
-                {marginPct}% Margin
+                {marginPct == null ? '—' : `${marginPct}%`}
               </span>
             </div>
             <p className="text-lg font-black text-[color:var(--color-primary)]">
               KES {netProfit.toLocaleString()}
             </p>
+            {/* Not "net profit", not "take-home": rent, credit not yet paid back,
+                M-Pesa fees and anything not typed in are absent from the
+                subtraction, so calling this profit would be an invention. */}
             <p className="text-[11px] text-white/70">
-              Clear operator take-home
+              Only what you recorded on both sides
             </p>
           </div>
         </div>
 
+        {unattached > 0 && (
+          <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
+            {unattached} order{unattached === 1 ? '' : 's'} of this business belong to no space, so they are in
+            none of the figures above — KES {(summary?.unattached?.revenueKes ?? 0).toLocaleString()} settled that way.
+          </p>
+        )}
         <p className="text-xs text-[color:var(--color-text-muted)]">Weekly profit trends will appear when recorded history is available.</p>
 
         {/* Action Button Strip */}
@@ -607,7 +623,7 @@ export const SpaceMoney: React.FC<SpaceMoneyProps> = ({
 
         {(!summary?.recentExpenses || summary.recentExpenses.length === 0) ? (
           <div className="p-4 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 text-center">
-            <p className="text-xs text-[color:var(--color-text-muted)]">No expenses recorded yet. Track ingredients and delivery costs to see your true daily take-home.</p>
+            <p className="text-xs text-[color:var(--color-text-muted)]">No expenses recorded yet. Until you type some, the out column is a 0 of its own making — and Trace will not estimate the rest for you.</p>
           </div>
         ) : (
           <div className="space-y-2">

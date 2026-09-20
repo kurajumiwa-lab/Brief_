@@ -681,16 +681,19 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       )}
 
       {/* ── STICKY RESULT BAR — the outcome of the first two tabs, kept in view.
-              It says "settled through Brief" rather than "net take-home",
-              because that is exactly what the rows say: money whose ledger row
-              reached settled. Everything else is not this number's business. */}
+              The label is the BASIS, not a nicer word for it. This figure is the
+              sum of orders whose status says paid or settled — NOT money whose
+              ledger row reached settled, which is what the old caption promised and
+              what `getSpaceMoneySummary` does not compute. An owner who marks an
+              order settled without recording a payment is inside this number, so
+              the bar says "marked" and the audit page says the rest. */}
       <div
         className="sticky bottom-20 md:bottom-4 z-30 rounded-2xl px-4 py-3 flex items-center gap-3"
         style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-3), inset 0 0 0 1px var(--brief-line)' }}
       >
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
-            Settled through Brief
+            Marked settled · {space.metrics?.scope === 'this space only' ? 'this space' : 'all of it'}
           </p>
           <p className="font-mono text-[32px] font-extrabold leading-none" style={{ color: 'var(--color-success)' }}>
             KES {Number(space.metrics?.revenueKes ?? 0).toLocaleString('en-KE')}
@@ -699,6 +702,12 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </div>
         <span className="text-[12px] font-mono shrink-0" style={{ color: 'var(--brief-muted)' }}>
           {space.metrics?.activeOrdersCount ?? 0} active · {space.metrics?.offersCount ?? 0} live
+          {/* An order of this business that belongs to no space is counted
+              nowhere rather than in every space — but it is said out loud here,
+              so a smaller number never looks like a finished one. */}
+          {(space.metrics?.unattachedOrderCount ?? 0) > 0 && (
+            <span className="font-bold"> · {space.metrics!.unattachedOrderCount} not in a space</span>
+          )}
         </span>
         <button
           type="button"

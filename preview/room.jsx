@@ -519,6 +519,8 @@ async function main() {
       ['your own offer’s total', 'what a missed capture is and is not'],
       ['maker and a checker', 'how the pool is actually run'],
       ['no attribution row', 'the five figures an operator cannot get'],
+      ['belong to no space', 'what a space-scoped number leaves out, and says'],
+      ['dash, not 0%', 'why an unmeasurable figure is not a zero'],
       ['never shows', 'the things the product refuses outright']
     ]) {
       assert.ok(t.includes(needle), `the audit page still carries ${why}`);

@@ -74,6 +74,10 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       title: 'Money',
       lines: [
         '“Settled through Brief” counts only money whose ledger row reached settled. Orders you took on WhatsApp, cash handed over at the counter and invoices paid elsewhere are not missing from the figure — they were never in it, and Brief does not guess them back in.',
+        '“Marked settled” counts orders whose own status says paid, completed, settled or fulfilled. It is not a bank statement: if you mark an order settled without recording a payment, it is in the figure, and if a payment settles in a ledger row the order was never linked to, it is not. The words on the number and the rule behind it come from one place — the server sends the basis, and no screen writes its own.',
+        'A space’s money is that space’s. An order joins to a space through the offer it was placed against, so two spaces of one business never both show the same takings — that was the bug, and a “Margin” was computed on top of it. An order of yours that belongs to no space is not quietly added to every space and not quietly dropped: it is counted out and said out loud, as “3 orders of this business belong to no space”.',
+        '“Money out” is only the expenses you typed. There is no bank feed, no import and no receipt reader, so the panel shows the number of rows behind it and never calls the subtraction net profit or take-home: rent, credit not yet paid back and anything you did not record are simply absent.',
+        'A margin against nothing sold is a dash, not 0%. “0%” states a fact — sold, kept nothing — and a shop with no settled order has not stated it.',
         'A mixed basket of currencies has no single total. The amount is dropped and the count is kept; nothing is converted at a rate Brief made up.',
         'A brief is not a bank. Brief holds no money, moves none, stores no card or M-Pesa credentials, and charges nothing. A payment you record is a record you attest to — the ledger’s authority is that you can trace every line back to a row, not that a stranger vouched for it.'
       ]

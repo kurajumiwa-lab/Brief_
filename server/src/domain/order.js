@@ -164,6 +164,11 @@ export function createOrder({ listingId, buyerId, quantity = 1, note = '', idemp
   const order = {
     id: newId('ord'),
     listingId: listing.id,
+    // Which space's book this lands in, copied from the listing at creation.
+    // Stamped, not looked up later: a listing can be re-filed, and an order
+    // must keep saying where the sale actually happened. null is honest — the
+    // listing belonged to no space when the order was placed.
+    spaceId: listing.spaceId ?? null,
     // Snapshot of what was bought. The listing may later be edited or
     // archived; an order must still say what it was actually for.
     listingTitle: listing.title,

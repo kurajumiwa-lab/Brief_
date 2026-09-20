@@ -377,10 +377,15 @@ async function runTests() {
   });
 
   const text8 = host8.textContent;
-  check('renders Profit & Cash Flow section', text8.includes('Profit & Cash Flow'));
-  check('renders Money In (Sales)', text8.includes('Money In (Sales)') && text8.includes('84,200'));
-  check('renders Money Out (Supplies)', text8.includes('Money Out (Supplies)'));
-  check('renders Net Profit card', text8.includes('Net Profit'));
+  // The words were moved, not deleted: this panel used to print "Money In
+  // (Sales)", "Money Out (Supplies)" and a "Net Profit" card over a subtraction
+  // of hand-typed rows. What the numbers actually are is now on the tile, and
+  // the long version lives on the How Trace works screen.
+  check('renders the cash section without calling it profit', text8.includes('Cash in and out') && !/Profit & Cash Flow/.test(text8));
+  check('money in is named by its basis', text8.includes('Marked settled') && text8.includes('84,200'));
+  check('money out says who typed it', text8.includes('Recorded out') && text8.includes('you typed'));
+  check('the subtraction is named as a subtraction', text8.includes('Marked in − recorded out') && !/Net Profit|Clear operator take-home/.test(text8));
+  check('an empty out column admits it is self-made', text8.includes('a 0 of its own making'));
   check('shows + Record Expense button', text8.includes('Record Expense'));
   check('shows + Open DukaBook Tab button', text8.includes('Open DukaBook Tab'));
   check('renders DukaBook Credit section', text8.includes('DukaBook Credit'));
