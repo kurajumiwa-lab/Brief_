@@ -134,6 +134,24 @@ async function main() {
   }
   pass('SpaceHeader prints only row-backed numbers, with its absences stated');
 
+  // --- 1b. the arm of the business: a word the owner chose, nothing more ----
+  {
+    const { container } = mount(React.createElement(SpaceStorefrontHeader, { space: space(), audience: AUDIENCE }));
+    const t = text(container);
+    assert.ok(!/\bRetail\b|\bWholesale\b|\bTraining\b/.test(t),
+      'an unmarked space names no arm — it is not filed under retail by default');
+
+    const bulk = mount(React.createElement(SpaceStorefrontHeader, {
+      space: space({ mode: 'wholesale', modeLabel: 'Wholesale' }), audience: AUDIENCE
+    }));
+    const t2 = text(bulk.container);
+    assert.ok(t2.includes('Wholesale'), 'a named arm is shown, in the server’s word');
+    assert.ok(!/Top rated|Premium|Verified|\bLevel\b|\bstreak\b/i.test(t2),
+      'and it is a description, not a badge: naming an arm earns nothing');
+    bulk.root.unmount();
+  }
+  pass('A space names its arm when the owner said it, and stays silent when they did not');
+
   // --- 2. no insights read -> dashes, never a flattering zero --------------
   {
     const bare = { ...AUDIENCE, insights: null, broadcasts: [], pastBroadcasts: 0, followers: 0 };

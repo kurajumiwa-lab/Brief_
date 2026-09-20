@@ -88,6 +88,20 @@ function chooseFile(input, name) {
   });
 }
 
+/**
+ * Hand the shared recorder back after a block that installed its own fetch.
+ * Every later test answers through `handler`, so a private fetch left in place
+ * makes the NEXT test read the wrong shop and fail for a reason that has
+ * nothing to do with what it is checking.
+ */
+function restoreFetch() {
+  global.fetch = async (input, init) => {
+    const url = String(input?.url ?? input ?? '');
+    calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? String(init.body) : null });
+    return handler(url, init);
+  };
+}
+
 const offer = (id, status, over = {}) => ({
   id, vendorId: 'v1', spaceId: 'spc_1', title: `${id} cake`, description: 'Two tiers', type: 'product',
   price: 4500, currency: 'KES', quantityAvailable: 6, status, createdAt: '', updatedAt: '',
@@ -348,12 +362,76 @@ async function main() {
   // Hand the shared recorder back: every later test installs its answers on
   // `handler`, so leaving this block's private handler in place would make the
   // next test read the wrong shop and fail for the wrong reason.
+  restoreFetch();
+  pass('Photos are editable after publish: uploaded, counted, removable, never gated');
+
+  // --- 3c. the arm of the business: a label the owner chooses, from the server
+  // A space with no mode is UNSTATED, so the select must offer that as its own
+  // answer, and the list of arms has to come from the read — a client that kept
+  // its own copy could offer something the row would refuse.
+  let modePatch;
   global.fetch = async (input, init) => {
     const url = String(input?.url ?? input ?? '');
-    calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? String(init.body) : null });
-    return handler(url, init);
+    const method = init?.method ?? 'GET';
+    calls.push({ url, method, body: init?.body ? String(init.body) : null });
+    const okp = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
+    if (url.includes('/api/spaces/spc_1/operating')) return okp({ fields: [], maintenance: null, editorial: [], pipeline: null });
+    if (url.endsWith('/api/spaces/spc_1') && method === 'GET') {
+      return okp({
+        space: spaceWith({ mode: 'wholesale', modeLabel: 'Wholesale' }),
+        modes: [
+          { id: 'retail', label: 'Retail', blurb: 'Selling to the person who walks in' },
+          { id: 'wholesale', label: 'Wholesale', blurb: 'Bulk, for other shops to resell' },
+          { id: 'other', label: 'Something else', blurb: 'Say it in your own words' }
+        ]
+      });
+    }
+    if (url.endsWith('/api/spaces/spc_1') && method === 'PATCH') {
+      const sent = JSON.parse(String(init.body));
+      modePatch = sent;
+      return okp({ space: spaceWith({ mode: sent.mode, modeLabel: sent.mode === null ? null : 'Retail' }) });
+    }
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
-  pass('Photos are editable after publish: uploaded, counted, removable, never gated');
+  {
+    const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_1', onBack: () => {}, onShare: () => {} }));
+    await flush();
+    click(byAria('Edit this space'));
+    await flush();
+    const select = q('select[aria-label="Space mode"]');
+    assert.ok(select, 'the editor can name which arm of the business this is');
+    assert.equal(select.value, 'wholesale', 'prefilled from the stored row');
+    // One option per server-supplied arm, plus the explicit "not stated".
+    const options = Array.from(select.querySelectorAll('option'));
+    assert.equal(options.length, 4, 'three arms from the read, and the blank answer');
+    assert.equal(options[0].value, '', 'and blank is a real choice, not a placeholder to be missed');
+    assert.match(options[0].textContent, /Not stated/, 'labelled in words a person reads');
+    assert.ok(!options.some((o) => /Retail \(\d+\)|\b\d+ offers\b/.test(o.textContent)), 'no tile counts, so no zero is printed as a shop window');
+    act(() => {
+      Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set.call(select, 'retail');
+      select.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    });
+    click(btn('Save'));
+    await flush();
+    assert.equal(modePatch.mode, 'retail', 'the choice is PATCHed as the id, not the label');
+    assert.ok(!('modeLabel' in modePatch), 'and the client never sends a label of its own');
+    // Clearing is an ordinary edit: null, not '' and not omission.
+    click(byAria('Edit this space'));
+    await flush();
+    act(() => {
+      const sel2 = q('select[aria-label="Space mode"]');
+      Object.getOwnPropertyDescriptor(dom.window.HTMLSelectElement.prototype, 'value').set.call(sel2, '');
+      sel2.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    });
+    click(btn('Save'));
+    await flush();
+    assert.equal(modePatch.mode, null, 'choosing "Not stated" stores null, so nothing defaults to retail');
+  }
+  // Back to the shared recorder: the tests after this one answer through
+  // `handler`, and a private fetch left in place makes the next test read the
+  // wrong shop and fail for the wrong reason. (This exact trap already bit 3b.)
+  restoreFetch();
+  pass('A space can name its arm of the business, or say nothing — and nothing is not "Retail"');
 
   // --- 4. withdrawn is terminal, and drafts get no nonsense --------------
   {

@@ -138,6 +138,16 @@ export function SpaceStorefrontHeader({
             <h1 className="text-[30px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
               {space.name}
             </h1>
+            {/* Which arm of the business this row is, in the server's word for it.
+                Printed only when the owner chose one: an unmarked space is not
+                "Retail" by default, and this line is not a badge — it grants
+                nothing, ranks nothing, and disappears when the owner takes it
+                back off. */}
+            {space.modeLabel && (
+              <p className="text-[12px] font-bold uppercase tracking-wider truncate" style={{ color: 'var(--brief-muted)' }}>
+                {space.modeLabel}
+              </p>
+            )}
             <p className="text-[14px] truncate" style={{ color: 'var(--brief-muted)' }}>
               {space.goal || (space.type ?? 'business').replace('_', ' ')}
             </p>

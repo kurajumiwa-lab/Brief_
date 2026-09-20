@@ -184,6 +184,12 @@ export function publicPageView(space, { origin = null, nowMs = Date.now() } = {}
   const open = openState(space, { nowMs });
   const operating = space.profile?.fields ?? {};
   const facts = [
+    // Which arm of the business this page is, in the owner's own words. Printed
+    // only when they chose it: an unstated mode is not a fact to advertise, and
+    // writing "Not stated" on a public page would be us editorialising about a
+    // blank field. No count of offers or orders rides along either — the numbers
+    // on this page are the ones below, each one read off a row.
+    ...(base.mode && base.modeLabel ? [{ key: 'mode', label: 'Which part of the business', answer: base.modeLabel }] : []),
     { key: 'what', label: 'What they say they provide', answer: formatAnswer('what', operating.what?.value) },
     { key: 'capacity', label: 'How much they can carry', answer: formatAnswer('capacity', operating.capacity?.value) },
     { key: 'coverage', label: 'Areas they serve', answer: formatAnswer('coverage', operating.coverage?.value) },

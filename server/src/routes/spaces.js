@@ -118,7 +118,16 @@ export function register(app) {
   // --- The PUBLIC DIRECTORY: every public, active space, for discovery and
   // collaboration. No session required; the projection is the safe public one. ---
   app.get('/api/public/spaces', (req, res) => {
-    res.json({ spaces: spaces.listPublicSpaces(Number(req.query?.limit) || 50) });
+    const mode = String(req.query?.mode ?? '').trim();
+    const rows = spaces.listPublicSpaces(Number(req.query?.limit) || 50, mode ? { mode } : {});
+    res.json({
+      spaces: rows,
+      // Sent so a directory can render the arms it can filter by and nothing
+      // else. An empty directory still gets the taxonomy, because the reason it
+      // is empty is not a missing category.
+      modes: spaces.SPACE_MODES,
+      filtered: mode ? { mode, modeLabel: spaces.modeLabel(mode) } : null
+    });
   });
 
   // --- ONE public space, by slug: the DIRECTORY card. It deliberately does not
@@ -250,8 +259,17 @@ export function register(app) {
       if (!me) {
         return res.json({ spaces: [] });
       }
-      const list = spaces.listSpacesForOwner(me);
-      res.json({ spaces: list });
+      const mode = String(req.query?.mode ?? '').trim();
+      const list = spaces.listSpacesForOwner(me, mode ? { mode } : {});
+      res.json({
+        spaces: list,
+        // The taxonomy comes from the server, so a client that groups by mode
+        // cannot invent one, and a mode nobody offered is never silently filed
+        // under "other".
+        modes: spaces.SPACE_MODES,
+        filtered: mode ? { mode, modeLabel: spaces.modeLabel(mode) } : null,
+        note: 'Grouped by the arm of the business its owner named. A space with no mode is unstated, not retail.'
+      });
     } catch (err) {
       recordError('spaces_list_failed', err);
       res.status(500).json({ error: 'failed to list spaces' });
@@ -272,7 +290,7 @@ export function register(app) {
   app.post('/api/spaces', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
-      const { name, type, goal, targetValueKes, image, visibility, initialOffer, profile } = req.body || {};
+      const { name, type, mode, goal, targetValueKes, image, visibility, initialOffer, profile } = req.body || {};
 
       if (!name || !String(name).trim()) {
         return res.status(400).json({ error: 'Space name is required' });
@@ -282,6 +300,9 @@ export function register(app) {
         ownerId: me,
         name,
         type,
+        // Which arm of the business. Validated by the domain, not here, so the
+        // refusal wording is the same whether it arrives on create or PATCH.
+        mode,
         goal,
         targetValueKes,
         image,
@@ -314,7 +335,10 @@ export function register(app) {
       if (!space) {
         return res.status(404).json({ error: 'space not found' });
       }
-      res.json({ space });
+      // The taxonomy travels with the row it describes, so an editor that lets
+      // an owner name their arm of the business never has to keep its own copy
+      // of the list — and can never offer an arm the server would refuse.
+      res.json({ space, modes: spaces.SPACE_MODES });
     } catch (err) {
       recordError('space_get_failed', err);
       res.status(500).json({ error: 'failed to get space' });

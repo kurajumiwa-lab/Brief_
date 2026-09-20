@@ -37,6 +37,47 @@ export const SPACE_TYPES = [
 export const SPACE_VISIBILITY = ['private', 'unlisted', 'public'];
 
 /**
+ * The MODE of a space: which arm of one business it is. A vendor is already the
+ * business — it owns the M-Pesa till, the ledger and the members — so a second
+ * "shop" table would be a second owner of the same facts. What a business with
+ * more than one thing going on needs is a way to say that its retail counter,
+ * its wholesale book and its delivery arm are different rooms of one shop.
+ *
+ * `type` (business / side_hustle / creator / community) answers WHAT THE SPACE
+ * IS; `mode` answers WHO IT IS FOR. Both are labels the owner chooses.
+ *
+ * Deliberately: no counts here, no ordering, and no default. A space with no
+ * mode is not "retail" — it is unstated, and it renders as unstated. The list
+ * is flat on purpose; a hierarchy would be a schema, and a schema is a thing
+ * that has to be migrated.
+ */
+export const SPACE_MODES = [
+  { id: 'retail', label: 'Retail', blurb: 'Selling to the person who walks in' },
+  { id: 'wholesale', label: 'Wholesale', blurb: 'Bulk, for other shops to resell' },
+  { id: 'services', label: 'Services', blurb: 'Work done, not goods sold' },
+  { id: 'training', label: 'Training', blurb: 'Classes, workshops, sessions' },
+  { id: 'delivery', label: 'Delivery', blurb: 'The carrying, for you or for others' },
+  { id: 'other', label: 'Something else', blurb: 'Say it in your own words' }
+];
+export const SPACE_MODE_IDS = SPACE_MODES.map((m) => m.id);
+export const modeLabel = (id) => SPACE_MODES.find((m) => m.id === id)?.label ?? null;
+
+/**
+ * The one rule, used by the create path and the PATCH alike, so the same bad
+ * value cannot be accepted through one door and refused through the other. Blank
+ * (in any shape a client sends it — absent, null, "", "  ") is not a mode to
+ * coerce: it is the owner saying nothing, and that is stored as nothing.
+ */
+function validMode(mode) {
+  const want = typeof mode === 'string' ? mode.trim() : mode;
+  if (want === null || want === undefined || want === '') return null;
+  if (!SPACE_MODE_IDS.includes(want)) {
+    throw new Error(`mode must be one of ${SPACE_MODE_IDS.join(', ')} — or left blank`);
+  }
+  return want;
+}
+
+/**
  * Creates a Space for an owner. If this is a commercial space (business / side_hustle),
  * it ensures an underlying vendor identity exists in the commerce layer.
  */
@@ -44,6 +85,7 @@ export function createSpace({
   ownerId,
   name,
   type = 'business',
+  mode = null,
   goal = '',
   targetValueKes = null,
   image = null,
@@ -81,6 +123,10 @@ export function createSpace({
     vendorId,
     name: name.trim(),
     type: SPACE_TYPES.includes(type) ? type : 'business',
+    // Which arm of the business this is. Validated rather than guessed: a bad
+    // id is refused out loud, and a blank one stays null so the UI can say
+    // "mode not stated" instead of filing a shop under retail by default.
+    mode: validMode(mode),
     goal: goal ? goal.trim() : '',
     targetValueKes: targetValueKes ? Number(targetValueKes) : null,
     // A cover image reference (an uploaded media URL, e.g. /api/media/file/<id>).
@@ -160,9 +206,17 @@ export function getSpace(spaceId, { callerId = null } = {}) {
 /**
  * Lists all spaces owned by a person.
  */
-export function listSpacesForOwner(ownerId) {
+/**
+ * The owner's own spaces — the "my business" read. `mode` filters, and an
+ * unknown mode returns nothing rather than everything: a filter that quietly
+ * ignores what it cannot honour is how a dashboard ends up claiming a number it
+ * never scoped.
+ */
+export function listSpacesForOwner(ownerId, { mode = null } = {}) {
   if (!ownerId) return [];
-  const rows = store.filter('spaces', (s) => s.ownerId === ownerId);
+  const want = mode ? String(mode).trim() : null;
+  if (want !== null && !SPACE_MODE_IDS.includes(want)) return [];
+  const rows = store.filter('spaces', (s) => s.ownerId === ownerId && (want === null || s.mode === want));
   return rows.map((s) => hydrateSpace(s));
 }
 
@@ -181,6 +235,9 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
   if (updates.goal !== undefined) patch.goal = String(updates.goal).trim();
   if (updates.targetValueKes !== undefined) patch.targetValueKes = updates.targetValueKes ? Number(updates.targetValueKes) : null;
   if (updates.status) patch.status = updates.status;
+  // A mode can be set, changed, or cleared back to "not stated" — clearing is
+  // an ordinary edit, not a special route.
+  if (updates.mode !== undefined) patch.mode = validMode(updates.mode);
   // The cover image may be set, changed, or cleared (null).
   if (updates.image !== undefined) patch.image = updates.image ? String(updates.image) : null;
   // Visibility: private (owner only) / unlisted / public. The owner's explicit
@@ -269,6 +326,11 @@ export function publicSpaceView(space) {
     id: space.id,
     name: space.name,
     type: space.type,
+    // Which arm of the business this page is. Public because it is the owner's
+    // own declaration, and a buyer telling retail from wholesale is the whole
+    // point of saying it. Null stays null: no "Retail" by default.
+    mode: space.mode ?? null,
+    modeLabel: modeLabel(space.mode),
     goal: space.goal || '',
     image: space.image ?? null,
     activeOfferCount: activeOffers.length,
@@ -302,8 +364,16 @@ export function findPublicSpace(slugOrId) {
   return publicSpaceView(space);
 }
 
-export function listPublicSpaces(limit = 50) {
-  return store.filter('spaces', (s) => s.visibility === 'public' && s.status === 'active')
+/**
+ * The public directory. `mode` narrows it to one arm of the businesses listed
+ * here — the difference between "a bakery" and "the wholesale book of that
+ * bakery". Unknown mode => nothing, never the whole list with a label on it.
+ */
+export function listPublicSpaces(limit = 50, { mode = null } = {}) {
+  const want = mode ? String(mode).trim() : null;
+  if (want !== null && !SPACE_MODE_IDS.includes(want)) return [];
+  return store.filter('spaces', (s) => s.visibility === 'public' && s.status === 'active'
+    && (want === null || s.mode === want))
     .slice()
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     .slice(0, Math.min(limit, 100))
@@ -1402,6 +1472,10 @@ function hydrateSpace(space, { callerId = null } = {}) {
   return {
     ...space,
     ...derived,
+    // The label comes from the server's list, so a client never re-declares it
+    // and the two cannot drift into different words for the same arm.
+    mode: space.mode ?? null,
+    modeLabel: modeLabel(space.mode),
     metrics: {
       revenueKes,
       customerCount: customerSet.size,

@@ -51,8 +51,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   // target and cover stay editable by the owner, and the public directory is
   // derived per read, so the next look shows the change.
   const [identityOpen, setIdentityOpen] = useState<boolean>(false);
-  const [identity, setIdentity] = useState<{ name: string; goal: string; target: string; image: string | null }>({
-    name: '', goal: '', target: '', image: null
+  const [identity, setIdentity] = useState<{ name: string; mode: string; goal: string; target: string; image: string | null }>({
+    name: '', mode: '', goal: '', target: '', image: null
   });
   // The audience read: followers, live updates, insights, templates. Fetched
   // once per load so the header strip and the Tools panel never disagree.
@@ -65,6 +65,10 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
   const [pendingPublic, setPendingPublic] = useState<boolean>(false);
   const [identityBusy, setIdentityBusy] = useState<boolean>(false);
   const [identityError, setIdentityError] = useState<string | null>(null);
+  // The arms of a business, as the server names them, read with the space. Kept
+  // here rather than in a client list so a picker can never offer — or refuse —
+  // something the row would not accept.
+  const [modes, setModes] = useState<Array<{ id: string; label: string; blurb: string }>>([]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -77,6 +81,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       const res = await briefApi.getSpace(spaceId);
       if (res.ok && res.data?.space) {
         setSpace(res.data.space);
+        setModes(res.data.modes ?? []);
         const [aud, f] = await Promise.all([
           briefApi.getSpaceAudience(spaceId),
           briefApi.getSpacePublicFace(spaceId)
@@ -99,6 +104,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     soundEngine.play('tap');
     setIdentity({
       name: space?.name ?? '',
+      mode: space?.mode ?? '',
       goal: space?.goal ?? '',
       target: space?.targetValueKes ? String(space.targetValueKes) : '',
       image: space?.image ?? null
@@ -114,6 +120,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
     setIdentityError(null);
     const res = await briefApi.updateSpace(space.id, {
       name: identity.name.trim(),
+      // '' is the owner taking the label off: the server stores null, and a
+      // space with no mode renders as unstated instead of defaulting to retail.
+      mode: identity.mode.trim() === '' ? null : identity.mode.trim(),
       goal: identity.goal.trim(),
       // null clears the target rather than silently meaning "zero".
       targetValueKes: identity.target.trim() === '' ? null : Number(identity.target),
@@ -453,6 +462,28 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               onChange={(e) => setIdentity((v) => ({ ...v, name: e.target.value }))}
               className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
             />
+            {modes.length > 0 && (
+              <div className="space-y-1">
+                <label htmlFor="space-mode" className="block text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                  Which part of the business is this?
+                </label>
+                <select
+                  id="space-mode"
+                  aria-label="Space mode"
+                  value={identity.mode}
+                  onChange={(e) => setIdentity((v) => ({ ...v, mode: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
+                >
+                  <option value="">Not stated</option>
+                  {modes.map((m) => (
+                    <option key={m.id} value={m.id}>{m.label} — {m.blurb}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                  One business, several rooms: the till, the ledger and the members stay shared. A label says who this room is for — it is not a ranking, and nothing is boosted by it.
+                </p>
+              </div>
+            )}
             <input
               type="text"
               aria-label="Space goal"

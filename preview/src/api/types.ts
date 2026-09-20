@@ -1821,6 +1821,15 @@ export interface Space {
   vendorId?: string;
   name: string;
   type: SpaceType;
+  /**
+   * Which arm of the owner's business this space is. The taxonomy is the
+   * server's (`SPACE_MODES` in server/src/domain/space.js); null means the owner
+   * never said, which renders as "mode not stated" and never as a guessed
+   * "Retail". `modeLabel` is the server's own word for it, so the client keeps
+   * no copy of the list to drift from.
+   */
+  mode?: string | null;
+  modeLabel?: string | null;
   goal: string;
   targetValueKes: number;
   /** Cover image reference (an uploaded media URL, e.g. /api/media/file/<id>). */
@@ -1947,6 +1956,8 @@ export interface SpaceOperating {
 export interface SpaceCreate {
   name: string;
   type?: SpaceType;
+  /** Which arm of the business. Optional; absent means "not stated". */
+  mode?: string | null;
   goal?: string;
   targetValueKes?: number;
   image?: string | null;
@@ -1964,9 +1975,27 @@ export interface SpaceCreate {
   };
 }
 
+/** One arm of a business, as the server names it. No counts: a tile that could
+* print a zero is a tile that will. */
+export interface SpaceMode {
+  id: string;
+  label: string;
+  blurb: string;
+}
+
+/** The owner's own list of spaces, with the taxonomy it is grouped by. */
+export interface SpaceListResponse {
+  spaces: Space[];
+  modes?: SpaceMode[];
+  filtered?: { mode: string; modeLabel: string | null } | null;
+  note?: string;
+}
+
 /** Editable space fields (name, goal, targetValueKes, image, visibility, status). */
 export interface SpaceUpdate {
   name?: string;
+  /** Set it, change it, or send null to say nothing about the arm. */
+  mode?: string | null;
   goal?: string;
   targetValueKes?: number | null;
   image?: string | null;

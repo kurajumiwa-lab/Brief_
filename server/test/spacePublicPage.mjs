@@ -230,6 +230,23 @@ await test("a stock figure is the owner's number; no number is not zero", () => 
   assert.match(html, /Sold out for now/, "a true zero is allowed, and says what it means");
 });
 
+await test("the arm of the business is printed when named, and silent when not", () => {
+  const bulk = spaces.createSpace({ ownerId: owner.id, name: "Bulk Room", visibility: "public", mode: "wholesale" });
+  const v = page.publicPageView(store.find("spaces", (x) => x.id === bulk.id), { origin: "https://t.test" });
+  const fact = v.facts.find((f) => f.key === "mode");
+  assert.ok(fact, "a named mode is a fact on the page");
+  assert.equal(fact.answer, "Wholesale", "in the server's own word, not a client's");
+  const html = page.renderPage(v);
+  assert.ok(html.includes("Wholesale"), "and it reaches the served HTML");
+  assert.ok(!/Top rated|Premium seller|Best price/i.test(html), "naming an arm is not a badge, a rank or a boost");
+
+  const quiet = spaces.createSpace({ ownerId: owner.id, name: "Unmarked Room", visibility: "public" });
+  const q = page.publicPageView(store.find("spaces", (x) => x.id === quiet.id), { origin: "https://t.test" });
+  assert.ok(!q.facts.some((f) => f.key === "mode"), "an unstated mode yields no fact at all");
+  const qhtml = page.renderPage(q);
+  assert.ok(!/Not stated|mode not stated/i.test(qhtml), "and the page never editorialises about the blank field");
+});
+
 await test("a private space is not a page in disguise", () => {
   const sp = spaces.createSpace({ ownerId: owner.id, name: "Hidden Counter", visibility: "private" });
   const info = page.unavailableReason(sp.slug);

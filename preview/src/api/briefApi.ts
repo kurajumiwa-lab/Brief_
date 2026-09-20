@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing,  ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingRevision, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing,  ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingRevision, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceMode, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
@@ -4011,10 +4011,16 @@ export function createSpace(input: SpaceCreate): Promise<ApiResult<{ space: Spac
   }, (r) => r && r.space ? { space: r.space } : undefined);
 }
 
-/** Get a space by ID with hydrated metrics, offers and activities. */
-export function getSpace(spaceId: string): Promise<ApiResult<{ space: Space }>> {
-  return request<{ space: Space }>(`/api/spaces/${encodeURIComponent(spaceId)}`, undefined, (r) =>
-    r && r.space ? { space: r.space } : undefined);
+/**
+ * Get a space by ID with hydrated metrics, offers and activities.
+ *
+ * `modes` is the server's own arm-of-business list, read alongside the row it
+ * describes: an editor that kept its own copy could offer an arm the server
+ * would refuse, and that is how a picker becomes a lie.
+ */
+export function getSpace(spaceId: string): Promise<ApiResult<{ space: Space; modes: SpaceMode[] }>> {
+  return request<{ space: Space; modes: SpaceMode[] }>(`/api/spaces/${encodeURIComponent(spaceId)}`, undefined, (r) =>
+    r && r.space ? { space: r.space, modes: Array.isArray(r.modes) ? r.modes : [] } : undefined);
 }
 
 /** The public directory: every public, active space, for discovery and collaboration. */
