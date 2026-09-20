@@ -15,6 +15,7 @@ import { Vault } from "../../components/vault/Vault";
 import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
+import { SessionSignIn } from "../../components/SessionSignIn";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -195,15 +196,19 @@ export function YouSurface({
   }
 
   if (signedOut) {
+    // A dead end, not a gate. This panel used to say "Sign in to see your
+    // profile" with no way to do it — no field, no button, nothing to click —
+    // so a signed-out member on #you could only read the sentence and leave.
+    // The form is the one the Requests workspace already uses: handle +
+    // password, and a real "create account" toggle, because a fresh deployment
+    // has no account to sign in to yet.
     return (
-      <div
-        className="mt-6 rounded-2xl border border-dashed p-8 text-center"
-        style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
-      >
-        <h2 className="text-lg font-black" style={{ color: "var(--color-text)" }}>Sign in to see your profile</h2>
-        <p className="text-sm mt-1" style={{ color: "var(--color-text-muted)" }}>
-          Your identity, follows and subscriptions are yours alone.
+      <div className="mt-6 space-y-3">
+        <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>
+          Your identity, follows and subscriptions are yours alone — they are on
+          this device only once you are signed in.
         </p>
+        <SessionSignIn onSignedIn={load} title="Sign in to see your profile" />
       </div>
     );
   }

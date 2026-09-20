@@ -55,16 +55,44 @@ global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ??
 
 async function main() {
   // --- 1. signed out ---
-  fetchHandler = async (url) => {
-    if (url.includes('/auth/me')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
+  // This block used to assert one sentence ("Sign in to see your profile") and
+  // it passed against a panel that offered NO way to do it — a dead end with good
+  // copy. A gate is only real if the control exists, the submit hits the auth
+  // endpoint, and the answer comes back; all three are asserted here now.
+  const calls = [];
+  fetchHandler = async (url, init) => {
+    const u = String(url);
+    if (u.includes('/auth/me')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
+    if (u.includes('/auth/login')) {
+      calls.push(JSON.parse(init.body));
+      return { ok: true, status: 200, text: async () => JSON.stringify({ user: authedUser }) };
+    }
     return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'x' }) };
   };
   {
     const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
     await flush();
-    assert.ok(text(container).includes('Sign in to see your profile'), 'signed-out state');
+    const t = text(container);
+    assert.ok(t.includes('Sign in to see your profile'), 'the signed-out state names itself');
+    const handle = container.querySelector('input[autocomplete="username"]');
+    const pass_ = container.querySelector('input[type="password"]');
+    assert.ok(handle && pass_, 'the form has a handle and a password field, not just a message');
+    assert.ok(container.querySelector('form'), 'and it is a real form');
+    const setValue = (el, v) => act(() => {
+      Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(el, v);
+      el.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    });
+    setValue(handle, 'wanjiku');
+    setValue(pass_, 'a good passphrase');
+    const submit = Array.from(container.querySelectorAll('form > button, form button')).find((b) => /sign in/i.test(text(b)));
+    assert.ok(submit, 'with a submit control');
+    await act(async () => { submit.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); });
+    await flush();
+    assert.equal(calls.length, 1, 'submitting posts exactly once');
+    assert.deepEqual(calls[0], { handle: 'wanjiku', password: 'a good passphrase' }, 'with the credentials the member typed');
+    assert.ok(/create|account/i.test(t), 'and a fresh deployment offers account creation, because there is no account to sign into yet');
   }
-  pass('YouSurface: a signed-out member sees the signed-out state');
+  pass('YouSurface: the signed-out state is a working sign-in, not a notice');
 
   // --- 2. profile ---
   fetchHandler = async (url) => {
