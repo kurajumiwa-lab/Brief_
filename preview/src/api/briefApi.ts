@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing, ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing,  ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingRevision, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
@@ -1435,6 +1435,11 @@ export function createListing(body: ListingCreate): Promise<ApiResult<Listing>> 
   );
 }
 
+/**
+ * `reason` travels with the body: the server refuses a money-field change on a
+ * published offer without one, and keeps it on the record. The response carries
+ * the revised history so the caller can show it without a second round-trip.
+ */
 export function updateListing(id: string, body: ListingUpdate): Promise<ApiResult<Listing>> {
   return request(
     `/api/listings/${encodeURIComponent(id)}`,

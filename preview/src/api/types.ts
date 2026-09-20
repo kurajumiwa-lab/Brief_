@@ -1132,6 +1132,22 @@ export interface ListingUpdate {
   quantityAvailable?: number | null;
   locationName?: string | null;
   media?: string[];
+  /** "per crate" — a money field, because it changes what the price means. */
+  unitLabel?: string | null;
+  minOrderQuantity?: number | null;
+  /** Required by the server when a money field changes on a published offer. */
+  reason?: string;
+}
+
+/** One entry in an offer's money history. Appended, never edited. */
+export interface ListingRevision {
+  id: string;
+  field: string;
+  before: string | number | null;
+  after: string | number | null;
+  reason: string;
+  at: string;
+  actorId: string | null;
 }
 
 export type OrderStatus =

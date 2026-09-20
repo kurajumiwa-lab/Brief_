@@ -254,17 +254,42 @@ export function listListings({ vendorId = null, type = null, status = 'active', 
     .map(hydrate);
 }
 
-/** Descriptive edits. Status is NOT here -- it moves only via transitionListing. */
-export function updateListing(id, patch) {
+/**
+ * The edit policy for an offer, stated as data so the UI, the route and the
+ * tests all read the same rule.
+ *
+ *   • DESCRIPTIVE fields describe the thing — what it is, where it stands, how
+ *     many, what photo shows it. They are the fields a business expects to
+ *     change daily, so they stay editable forever, with no friction: an offer
+ *     whose photo cannot be swapped is an offer that stops being updated.
+ *   • MONEY fields decide what a buyer pays. They are ALSO changeable after
+ *     publishing, because a catalogue whose price can never move becomes fiction
+ *     the week maize moves. What changes is the accountability: once the offer
+ *     has been public, a money edit needs a reason and is appended, immutably,
+ *     to the offer's revision history.
+ *
+ * A hard lock was the obvious design and the wrong one: `order.js` snapshots
+ * `unitPrice` when an order is placed, so a price change can never retro-bill
+ * anybody, and locking prices would only push sellers to delete-and-repost —
+ * which destroys the history a buyer would rather have seen.
+ * `status` is in neither list: a lifecycle move goes through transitionListing,
+ * so the transition table cannot be bypassed by PATCHing a field.
+ */
+export const DESCRIPTIVE_FIELDS = [
+  'title', 'description', 'type', 'media', 'locationName', 'quantityAvailable',
+  'flow', 'originKind', 'originName', 'destinationKind', 'destinationName', 'commodity'
+];
+export const MONEY_FIELDS = ['price', 'currency', 'unitLabel', 'minOrderQuantity'];
+/** Short enough to be a sentence, long enough that "fix" is not an answer. */
+export const REASON_MIN = 6;
+
+const sameValue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+
+export function updateListing(id, patch, { actorId = null, reason = null } = {}) {
   const listing = store.find('listings', (l) => l.id === id);
   if (!listing) return null;
 
-  const allowed = [
-    'title', 'description', 'type', 'price', 'currency',
-    'quantityAvailable', 'locationName', 'media',
-    'flow', 'originKind', 'originName', 'destinationKind', 'destinationName',
-    'unitLabel', 'minOrderQuantity', 'commodity'
-  ];
+  const allowed = [...DESCRIPTIVE_FIELDS, ...MONEY_FIELDS];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
 
@@ -295,10 +320,70 @@ export function updateListing(id, patch) {
       throw new Error('quantityAvailable must be a whole number of zero or more when provided');
     }
   }
+
+  // Only a REAL change is a money change: re-saving the same price from a form
+  // that posts every field is not an event, and demanding a reason for it would
+  // train people to type noise just to clear a gate.
+  const wasPublished = listing.status !== 'draft';
+  const touchedMoney = MONEY_FIELDS.filter((k) => k in clean && !sameValue(clean[k], listing[k]));
+  // The reason may arrive as a call option (what the route passes) or inside the
+  // patch itself (what a JSON client naturally sends). Accepting only one of the
+  // two means a caller who included a perfectly good reason is refused for not
+  // including it — and it is never `reason` itself that gets written to the row,
+  // because it is not in `allowed`.
+  const why = String(reason ?? patch?.reason ?? '').trim();
+  if (wasPublished && touchedMoney.length && why.length < REASON_MIN) {
+    throw new Error(
+      `say why the ${touchedMoney.length === 1 ? 'price is changing' : 'terms are changing'} — it goes on the offer's record, not in a message`
+    );
+  }
+
+  // The pre-image is taken NOW. `store.update` hands back the live row, so a
+  // snapshot read after the write would show the new value as the old one —
+  // which is how a history ends up describing its own present tense.
+  const before = { ...listing };
   clean.updatedAt = new Date().toISOString();
 
   const updated = store.update('listings', id, clean);
+  if (updated && wasPublished && touchedMoney.length) {
+    const at = new Date().toISOString();
+    for (const field of touchedMoney) {
+      store.insert('listingRevisions', {
+        id: newId('lrev'),
+        listingId: id,
+        vendorId: listing.vendorId,
+        field,
+        before: before[field] ?? null,
+        after: updated[field] ?? null,
+        reason: why.slice(0, 400),
+        actorId: actorId ?? null,
+        at
+      });
+    }
+  }
   return updated ? hydrate(updated) : null;
+}
+
+/**
+ * The money history of one offer, oldest first — the record a buyer is owed and
+ * the reason a seller cannot quietly reprice. Nothing here aggregates or scores:
+ * it is the list, with each row's own reason.
+ */
+export function revisionsFor(id, { limit = 50 } = {}) {
+  const rows = store.filter('listingRevisions', (r) => r.listingId === id);
+  return rows
+    .slice()
+    .sort((a, b) => (a.at < b.at ? -1 : 1))
+    .slice(0, limit)
+    .map((r) => ({
+      id: r.id,
+      field: r.field,
+      before: r.before,
+      after: r.after,
+      reason: r.reason,
+      at: r.at,
+      actorId: r.actorId
+    }));
 }
 
 /**

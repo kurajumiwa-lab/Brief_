@@ -143,6 +143,9 @@ const EMPTY = {
   // See guardians.js: an unconfirmed claim is worth nothing by construction, and
   // the credit a confirmed one produces is a referralPoints row, not a ledger.
   attributions: [],
+  // One row per published price/term change, with the seller's own reason. Never
+  // edited, never deleted: see domain/listing.js -> updateListing.
+  listingRevisions: [],
   // Errands — a posted task someone can carry (a parcel, a queue, a document,
   // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
   // anyone may post. The fee a poster states is a stated amount, NOT money

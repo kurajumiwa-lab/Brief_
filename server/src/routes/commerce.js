@@ -241,11 +241,30 @@ app.patch('/api/listings/:id', (req, res) => {
   try {
     // `status` is not in the domain allow-list: a status moves only through
     // the transition endpoint, so the lifecycle table cannot be bypassed by
-    // PATCHing a field.
-    res.json({ listing: listings.updateListing(l.id, req.body ?? {}) });
+    // PATCHing a field. A change to a MONEY field on a published offer needs a
+    // `reason`, and lands in the offer's revision history.
+    const listing = listings.updateListing(l.id, req.body ?? {}, {
+      actorId: callerId(req),
+      reason: (req.body ?? {}).reason
+    });
+    res.json({
+      listing,
+      revisions: listings.revisionsFor(l.id, { limit: 20 }),
+      moneyFields: listings.MONEY_FIELDS,
+      note: 'Prices and terms on a published offer change with a stated reason, and every change stays on the record. Orders already placed keep the price they were quoted at.'
+    });
   } catch (e) {
     res.status(400).json({ error: String(e.message ?? e) });
   }
+});
+
+// The money history of one offer: what it cost before, what it costs now, and the
+// owner's own words for why. Same ownership guard as the PATCH, and it is NOT a
+// public route — a shop's pricing history is commercial information.
+app.get('/api/listings/:id/revisions', (req, res) => {
+  const l = ownedListing(req, res);
+  if (!l) return;
+  res.json({ revisions: listings.revisionsFor(l.id) });
 });
 
 
