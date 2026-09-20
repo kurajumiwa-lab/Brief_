@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { X, Tag, Sparkles, Check } from 'lucide-react';
+import { X, Tag, Sparkles, Check, ImagePlus } from 'lucide-react';
 import type { Listing } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
+import { ImageField } from '../../components/ImageField';
 import { soundEngine } from '../../utils/SoundEngine';
 
 export interface CreateOfferModalProps {
@@ -21,6 +22,8 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
   const [price, setPrice] = useState<string>('4500');
   const [description, setDescription] = useState<string>('');
   const [publishImmediately, setPublishImmediately] = useState<boolean>(true);
+  /** Uploaded photos. Held as media ids/urls exactly as the server returns them. */
+  const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -48,7 +51,11 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
         price: priceNum,
         description: description.trim(),
         currency: 'KES',
-        type: 'product'
+        type: 'product',
+        // Named `images` on this rail and mapped to the listing's `media` by
+        // the server (space.js) — that mapping used to be wrong and the photos
+        // were silently dropped, which is why no offer had a picture.
+        images
       });
 
       if (!createRes.ok || !createRes.data?.offer) {
@@ -140,6 +147,36 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
               placeholder="Custom birthday cake for 10-15 people. Vanilla sponge with strawberry butter cream."
               rows={3}
               className="w-full px-4 py-2.5 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-xs text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="flex items-center gap-1.5 text-xs font-bold text-[color:var(--color-text)]">
+              <ImagePlus className="w-3.5 h-3.5" /> Photos of the actual goods
+            </label>
+            {images.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {images.map((src, i) => (
+                  <div key={`${src}-${i}`} className="relative">
+                    <img src={src} alt="" className="h-16 w-20 rounded-xl object-cover border border-black/10" />
+                    <button
+                      type="button"
+                      aria-label={`Remove photo ${i + 1}`}
+                      onClick={() => setImages((v) => v.filter((_, j) => j !== i))}
+                      className="absolute -top-1.5 -right-1.5 rounded-full bg-[#0A0E14] p-1 cursor-pointer"
+                    >
+                      <X className="w-2.5 h-2.5 text-white" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <ImageField
+              compact
+              multiple
+              label={images.length ? 'Add more' : 'Choose photos'}
+              hint="A photo of these goods. Nothing here is a stock image: an offer with no photo shows no photo."
+              onAdd={(url) => setImages((v) => (v.includes(url) ? v : [...v, url]))}
             />
           </div>
 

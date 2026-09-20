@@ -1959,6 +1959,8 @@ export interface SpaceCreate {
     price: number;
     currency?: string;
     type?: 'product' | 'service' | 'experience' | 'event';
+    /** Uploads from `/api/media/upload`, mapped to the listing's `media`. */
+    images?: string[];
   };
 }
 

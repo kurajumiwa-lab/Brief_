@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Space, SpaceType } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { X, Sparkles, Store, Briefcase, Tag, Users, ArrowRight, Check } from 'lucide-react';
+import { ImageField } from '../../components/ImageField';
 import { soundEngine } from '../../utils/SoundEngine';
 
 export interface CreateFlowModalProps {
@@ -38,6 +39,12 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
   const [offerPrice, setOfferPrice] = useState('4500');
   const [offerDescription, setOfferDescription] = useState('Custom 2-tier celebration cake, baked fresh');
   const [offerType, setOfferType] = useState<'product' | 'service'>('product');
+  /**
+   * Photos taken at this step. A first offer used to be born photoless because
+   * the create path never carried images — and the edit path could not add any,
+   * so it stayed that way forever.
+   */
+  const [offerImages, setOfferImages] = useState<string[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -57,7 +64,8 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
           price: Number(offerPrice) || 0,
           description: offerDescription.trim(),
           type: offerType,
-          currency: 'KES'
+          currency: 'KES',
+          images: offerImages
         });
 
         if (offerRes.ok && offerRes.data?.offer) {
@@ -80,7 +88,8 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
             description: offerDescription.trim(),
             price: Number(offerPrice),
             currency: 'KES',
-            type: offerType
+            type: offerType,
+            images: offerImages
           }
         });
 
@@ -262,6 +271,36 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
                   value={offerDescription}
                   onChange={(e) => setOfferDescription(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
+                />
+              </div>
+
+              {/* Photos are optional here and can be added later from the
+                  catalog row. Nothing is filled in for you: no stock image, no
+                  illustration, and an offer with no photo shows no photo. */}
+              <div className="space-y-1.5">
+                {offerImages.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {offerImages.map((src, i) => (
+                      <div key={`${src}-${i}`} className="relative">
+                        <img src={src} alt="" className="h-14 w-20 rounded-xl object-cover border border-black/10" />
+                        <button
+                          type="button"
+                          aria-label={`Remove photo ${i + 1}`}
+                          onClick={() => setOfferImages((v) => v.filter((_, j) => j !== i))}
+                          className="absolute -top-1.5 -right-1.5 rounded-full bg-[#0A0E14] p-1 cursor-pointer"
+                        >
+                          <X className="w-2.5 h-2.5 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <ImageField
+                  compact
+                  multiple
+                  label="Photos of it"
+                  hint="Optional. A photo of your actual goods, from this phone."
+                  onAdd={(url) => setOfferImages((v) => (v.includes(url) ? v : [...v, url]))}
                 />
               </div>
 

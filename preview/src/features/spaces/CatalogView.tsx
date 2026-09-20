@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import type { Listing, ListingUpdate } from '../../api/types';
-import { Tag, Plus, ShoppingBag, X, Package } from 'lucide-react';
+import { Tag, Plus, ShoppingBag, X, Package, ImagePlus, Trash2 } from 'lucide-react';
 import { soundEngine } from '../../utils/SoundEngine';
 import { MicroBadge } from '../../ui/MicroBadge';
 import { ContextMenu } from '../../ui/ContextMenu';
+import { ImageField } from '../../components/ImageField';
 import { PLASTER, plateGlow } from '../city/room';
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,14 @@ import { PLASTER, plateGlow } from '../city/room';
 // The transition map below is a COURTESY, so a menu never offers what the
 // server will refuse. The server stays authoritative and its refusal is shown
 // word for word.
+//
+//   3. THE ROW EDITOR MUST COVER EVERY FIELD THE PATCH ALLOWS. It used to
+//      carry title, description, price, stock and place — so the photos, which
+//      `PATCH /api/listings/:id` accepts and which buyers see first, were
+//      uneditable after publishing: an offer could never be re-photographed.
+//      And a published price change needs a stated reason from the seller, so
+//      the row now collects one instead of bouncing the seller off the
+//      server's refusal with no way to answer it.
 // ---------------------------------------------------------------------------
 
 type LifecycleMove = 'active' | 'paused' | 'sold_out' | 'archived';
@@ -56,11 +65,36 @@ const STATUS_LABEL: Record<string, string> = {
   draft: 'DRAFT', active: 'ACTIVE', paused: 'PAUSED', sold_out: 'SOLD OUT', archived: 'WITHDRAWN'
 };
 
+/**
+ * The money fields, mirrored from the server's MONEY_FIELDS in
+ * `server/src/domain/listing.js`, and the same minimum length the server
+ * requires of the reason. Mirrored, not invented: the only fields that raise
+ * the reason row here are the ones the server demands a reason for, the prompt
+ * is no stricter than the gate, and the PATCH never carries a reason the server
+ * did not ask for. `spaceedit.jsx` compares both against the server's source,
+ * so the two cannot drift apart quietly.
+ */
+const MONEY_FIELDS: Array<keyof ListingUpdate> = ['price', 'currency', 'unitLabel', 'minOrderQuantity'];
+const REASON_MIN = 6;
+const MONEY_LABEL: Record<string, string> = {
+  price: 'price', currency: 'currency', unitLabel: 'the unit it is priced per', minOrderQuantity: 'the minimum order'
+};
+const moneyChangedIn = (offer: Listing, draft: ListingUpdate) => {
+  const row = offer as unknown as Record<string, unknown>;
+  return MONEY_FIELDS.filter((f) => (
+    JSON.stringify(row[f as string] ?? null) !== JSON.stringify(draft[f] ?? null)
+  ));
+};
+
 export interface CatalogViewProps {
   offers: Listing[];
   onAddOffer: () => void;
   onPublishOffer?: (offerId: string) => void;
-  onShareOffer?: (offer: Listing) => void;
+  /**
+   * The link was copied, or the browser refused to copy it. `false` means the
+   * host must NOT say "copied" — it should point at the link shown on the card.
+   */
+  onShareOffer?: (offer: Listing, copied: boolean) => void;
   /** A real lifecycle move. Resolves to an error string, or null on success. */
   onOfferStatus?: (offerId: string, next: LifecycleMove) => Promise<string | null | undefined> | void;
   /** A real content edit. Resolves to an error string, or null on success. */
@@ -81,10 +115,16 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   className = ''
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  /** The link the last share produced, per offer — shown when a clipboard refuses. */
+  const [shareUrl, setShareUrl] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<ListingUpdate>({});
   const [busy, setBusy] = useState(false);
   const [rowError, setRowError] = useState<Record<string, string>>({});
+  // "A money field moved, so the next save needs your words." An inline note,
+  // not an error: nothing was refused yet, and a false alert on a legal draft
+  // teaches the seller to ignore alerts.
+  const [notice, setNotice] = useState<Record<string, string>>({});
 
   const move = async (offerId: string, to: LifecycleMove) => {
     soundEngine.play('tap');
@@ -104,36 +144,79 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
       price: offer.price,
       currency: offer.currency ?? 'KES',
       quantityAvailable: offer.quantityAvailable ?? null,
-      locationName: (offer as { locationName?: string }).locationName ?? null
+      locationName: (offer as { locationName?: string }).locationName ?? null,
+      // Photos ride along, or the editor silently deletes them on save.
+      media: offer.media ?? [],
+      reason: ''
     });
+    setNotice((p) => { const n = { ...p }; delete n[offer.id]; return n; });
     setEditingId(offer.id);
   };
 
-  const saveEdit = async (offerId: string) => {
+  /** Any edit clears the note: it describes the draft as it stood a moment ago. */
+  const editDraft = (patch: ListingUpdate, offerId: string) => {
+    setDraft((d) => ({ ...d, ...patch }));
+    setNotice((p) => { const n = { ...p }; delete n[offerId]; return n; });
+  };
+
+  const saveEdit = async (offer: Listing) => {
     if (!onSaveOffer) return;
+    const why = String(draft.reason ?? '').trim();
+    const touched = moneyChangedIn(offer, draft);
+    // A draft has no buyers to explain anything to — a reason there would be a
+    // fee for a form field, so the row asks only once the offer is published.
+    if (offer.status !== 'draft' && touched.length) {
+      if (why.length < REASON_MIN) {
+        setNotice((p) => ({
+          ...p,
+          [offer.id]: `Say why ${touched.length === 1 ? `the ${MONEY_LABEL[touched[0]] ?? touched[0]} is changing` : 'the terms are changing'} — at least ${REASON_MIN} characters.`
+        }));
+        return;
+      }
+    }
+    const payload: ListingUpdate = { ...draft, reason: why };
+    if (!why) delete payload.reason;
     setBusy(true);
-    const err = await onSaveOffer(offerId, draft);
+    const err = await onSaveOffer(offer.id, payload);
     setBusy(false);
     if (err) {
-      setRowError((p) => ({ ...p, [offerId]: String(err) }));
+      setRowError((p) => ({ ...p, [offer.id]: String(err) }));
       return;
     }
     setEditingId(null);
-    setRowError((p) => { const n = { ...p }; delete n[offerId]; return n; });
+    setNotice((p) => { const n = { ...p }; delete n[offer.id]; return n; });
+    setRowError((p) => { const n = { ...p }; delete n[offer.id]; return n; });
+  };
+
+  /**
+   * The link a seller pastes into WhatsApp. `#offer/<id>` is a real route in
+   * this app (AppShell reads it), so it resolves wherever this bundle is
+   * served. What is NOT allowed here is a brand domain: this file used to hand
+   * out `https://brief.africa/offers/<id>` whenever the window was missing, and
+   * nobody owns that host any more — a seller would paste a dead link into a
+   * buyer's chat and Trace would be the one who wrote it.
+   */
+  const linkFor = (offer: Listing) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/#offer/${encodeURIComponent(offer.id)}`;
   };
 
   const handleCopyLink = (offer: Listing) => {
     soundEngine.play('tap');
-    const shareUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/#offer/${offer.id}`
-      : `https://brief.africa/offers/${offer.id}`;
+    const url = linkFor(offer);
+    setShareUrl((p) => ({ ...p, [offer.id]: url }));
 
+    // "Link copied" must not be printed for a clipboard that was never
+    // written to. jsdom and a denied Android permission both land here, and in
+    // both cases the honest answer is: show the link so it can be copied by
+    // hand. `copied` follows the promise, not the click.
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl).catch(() => {});
+      return navigator.clipboard.writeText(url).then(
+        () => { setCopiedId(offer.id); setTimeout(() => setCopiedId(null), 2500); return true; },
+        () => false
+      );
     }
-    setCopiedId(offer.id);
-    setTimeout(() => setCopiedId(null), 2500);
-    onShareOffer?.(offer);
+    return Promise.resolve(false);
   };
 
   return (
@@ -300,7 +383,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       actions={[
                         {
                           label: copiedId === offer.id ? "Link copied" : "Share link",
-                          onSelect: () => handleCopyLink(offer)
+                          onSelect: async () => onShareOffer?.(offer, await handleCopyLink(offer))
                         },
                         ...moves.map((m) => ({
                           label: m.label,
@@ -318,20 +401,28 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                   </p>
                 )}
 
+                {/* Nothing was copied, so nothing is claimed as copied: the
+                    link is simply shown, and the seller takes it by hand. */}
+                {shareUrl[offer.id] && copiedId !== offer.id && (
+                  <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                    Clipboard unavailable here — copy it yourself: <span className="font-mono break-all">{shareUrl[offer.id]}</span>
+                  </p>
+                )}
+
                 {editingId === offer.id && (
                   <div className="pt-3 border-t border-black/5 space-y-2">
                     <input
                       type="text"
                       aria-label="Offer title"
                       value={draft.title ?? ''}
-                      onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+                      onChange={(e) => editDraft({ title: e.target.value }, offer.id)}
                       className="w-full px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
                     />
                     <textarea
                       aria-label="Offer description"
                       rows={2}
                       value={draft.description ?? ''}
-                      onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+                      onChange={(e) => editDraft({ description: e.target.value }, offer.id)}
                       className="w-full px-3 py-2 rounded-xl text-[12px] border border-black/10 bg-[color:var(--color-paper)] resize-none"
                     />
                     <div className="flex gap-2">
@@ -340,7 +431,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         min={0}
                         aria-label="Offer price"
                         value={draft.price ?? 0}
-                        onChange={(e) => setDraft((d) => ({ ...d, price: Number(e.target.value) }))}
+                        onChange={(e) => editDraft({ price: Number(e.target.value) }, offer.id)}
                         className="w-28 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
                       />
                       <input
@@ -349,7 +440,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         aria-label="Stock available"
                         placeholder="stock"
                         value={draft.quantityAvailable ?? ''}
-                        onChange={(e) => setDraft((d) => ({ ...d, quantityAvailable: e.target.value === '' ? null : Number(e.target.value) }))}
+                        onChange={(e) => editDraft({ quantityAvailable: e.target.value === '' ? null : Number(e.target.value) }, offer.id)}
                         className="w-24 px-3 py-2 rounded-xl text-xs font-mono border border-black/10 bg-[color:var(--color-paper)]"
                       />
                       <input
@@ -357,16 +448,82 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                         aria-label="Offer location"
                         placeholder="Place (optional)"
                         value={draft.locationName ?? ''}
-                        onChange={(e) => setDraft((d) => ({ ...d, locationName: e.target.value }))}
+                        onChange={(e) => editDraft({ locationName: e.target.value }, offer.id)}
                         className="flex-1 min-w-0 px-3 py-2 rounded-xl text-xs border border-black/10 bg-[color:var(--color-paper)]"
                       />
                     </div>
+
+                    {/* The photos. Uploaded, not linked: the field refuses to
+                        show a preview it did not receive from the server, and a
+                        photo nobody took is a plate that says so, not stock
+                        imagery standing in for goods. */}
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                        Photos ({(draft.media ?? []).length})
+                      </p>
+                      {(draft.media ?? []).map((src, i) => (
+                        <div key={`${src}-${i}`} className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ background: 'var(--color-well)' }}>
+                          <img src={src} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+                          <p className="min-w-0 flex-1 truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{src}</p>
+                          <button
+                            type="button"
+                            aria-label={`Remove photo ${i + 1} from ${offer.title}`}
+                            onClick={() => editDraft({ media: (draft.media ?? []).filter((_, j) => j !== i) }, offer.id)}
+                            className="shrink-0 rounded-lg p-1.5 cursor-pointer"
+                            style={{ color: 'var(--color-text-muted)' }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      {!(draft.media ?? []).length && (
+                        <p className="flex items-center gap-1.5 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                          <ImagePlus className="w-3.5 h-3.5" /> No photo yet — buyers see the name and the price alone.
+                        </p>
+                      )}
+                      <ImageField
+                        compact
+                        multiple
+                        label="Photos of these goods"
+                        hint="The file, not a link. The server decides what the bytes really are."
+                        onAdd={(url) => editDraft({ media: [...(draft.media ?? []), url] }, offer.id)}
+                      />
+                    </div>
+
+                    {/* A published money change is free — it only has to be
+                        explained. The reason is stored on the offer's record,
+                        so a buyer can see what it cost before, and why. */}
+                    {moneyChangedIn(offer, draft).length > 0 && (
+                      <div className="space-y-1.5 rounded-xl p-2.5" style={{ background: 'var(--color-well)' }}>
+                        <label className="block text-[11px] font-black uppercase tracking-wider" htmlFor={`reason-${offer.id}`} style={{ color: 'var(--color-text-muted)' }}>
+                          Why is the price changing?
+                        </label>
+                        <input
+                          id={`reason-${offer.id}`}
+                          type="text"
+                          aria-label="Reason for the price change"
+                          placeholder="e.g. Sugar went up at the mill this week"
+                          value={draft.reason ?? ''}
+                          onChange={(e) => editDraft({ reason: e.target.value }, offer.id)}
+                          className="w-full px-3 py-2 rounded-xl text-[12px] border border-black/10 bg-[color:var(--color-paper)]"
+                        />
+                        <p className="text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+                          {offer.status === 'draft'
+                            ? 'This one is still a draft, so no reason is needed to save it.'
+                            : 'Goes on the offer’s record. Buyers can read it; orders already placed keep the price they were quoted.'}
+                        </p>
+                      </div>
+                    )}
+                    {notice[offer.id] && (
+                      <p className="text-[11px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>
+                        {notice[offer.id]}
+                      </p>
+                    )}
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void saveEdit(offer.id)}
-                        className="px-3 py-1.5 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
+                        onClick={() => void saveEdit(offer)}                        className="px-3 py-1.5 rounded-full text-[12px] font-black cursor-pointer disabled:opacity-50"
                         style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
                       >
                         {busy ? 'Saving…' : 'Save changes'}
@@ -394,3 +551,13 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
 };
 
 export default CatalogView;
+
+/**
+ * The mirror, exposed for the suite only: `spaceedit.jsx` reads the server's
+ * own MONEY_FIELDS / REASON_MIN out of `server/src/domain/listing.js` and
+ * fails if these two no longer match. A gate that drifts from the rule it
+ * mirrors is worse than no gate, because it refuses legal edits.
+ */
+export const MIRROR_MONEY_FIELDS: string[] = MONEY_FIELDS;
+export const MIRROR_REASON_MIN: number = REASON_MIN;
+

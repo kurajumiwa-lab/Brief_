@@ -235,7 +235,10 @@ const space2 = spaces.createSpace({
   name: 'My New Shop',
   type: 'business',
   goal: 'launch',
-  initialOffer: { title: 'New Cake', price: 4500, currency: 'KES' }
+  // The photos a seller attaches while creating the space used to stop at the
+  // route: `initialOffer` was copied field by field and `images` was not one of
+  // the copied names, so the first offer of a brand-new shop was born photoless.
+  initialOffer: { title: 'New Cake', price: 4500, currency: 'KES', images: ['/api/media/file/upl_first', '/api/media/file/upl_first'] }
 });
 
 check('createSpace returns the specific initialOfferId', Boolean(space2.initialOfferId) && space2.initialOfferId.startsWith('list_'));
@@ -248,5 +251,12 @@ check('publishing by initialOfferId activates the NEW offer', pub2.status === 'a
 const again2 = spaces.getSpace(space2.id, { callerId: repeatOwner.id });
 const newOffer = again2.offers.find((o) => o.id === space2.initialOfferId);
 check('the new offer is active after publishing it specifically', newOffer && newOffer.status === 'active');
+check('the initial offer carries the photos it was created with',
+  Array.isArray(newOffer?.media) && newOffer.media.length === 1,
+  `media=${JSON.stringify(newOffer?.media)}`);
+check('and the same photo twice is one photo, not two tiles',
+  newOffer?.media?.[0] === '/api/media/file/upl_first');
+check('the pre-existing listing was not touched by the new offer’s photos',
+  JSON.stringify(store.find('listings', (l) => l.id === oldListing.id)?.media) === '[]');
 
 console.log('SPACES DOMAIN, CHAT, MONEY & CARGO DISPATCH TESTS PASSED!\n');

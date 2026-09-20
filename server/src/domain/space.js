@@ -127,6 +127,9 @@ export function createSpace({
       currency: initialOffer.currency || 'KES',
       type: initialOffer.type || 'product',
       description: initialOffer.description || '',
+      // The photos a seller took at creation. Dropped before, which is how a
+      // first offer ended up photoless forever.
+      images: initialOffer.images,
       callerId: ownerId
     });
     initialOfferId = created.id;

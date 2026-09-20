@@ -614,7 +614,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
             offers={space.offers}
             onAddOffer={() => setCreateFlowOpen(true)}
             onPublishOffer={handlePublishOffer}
-            onShareOffer={(o) => showToast(`Link for "${o.title}" copied — buyers sign in to open it.`)}
+            onShareOffer={(o, copied) => showToast(copied
+              ? `Link for "${o.title}" copied — buyers sign in to open it.`
+              : `Clipboard is blocked here, so copy the link the card is showing for "${o.title}".`)}
             onOfferStatus={(id, next) => offerStatus(id, next)}
             onSaveOffer={(id, patch) => saveOffer(id, patch)}
             featured={space.featured ?? []}

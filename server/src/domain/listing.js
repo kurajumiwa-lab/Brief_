@@ -92,6 +92,30 @@ const UNORDERABLE_REASON = {
   archived: 'this listing has been archived and is not taking orders'
 };
 
+/**
+ * Photos, normalised. `Array.isArray(media) ? media : []` was the whole rule,
+ * which meant a client posting a single string stored that string under a field
+ * every reader treats as an array — and one bogus entry in a published offer's
+ * media renders as a broken plate on every card and on the public page.
+ *
+ * So: an array or nothing, non-empty strings only, deduplicated, and a sane
+ * cap. An offer with eight pictures has said what it has to say.
+ */
+export const MEDIA_CAP = 8;
+export function cleanMedia(media) {
+  if (!Array.isArray(media)) return [];
+  const out = [];
+  for (const m of media) {
+    // A number, an object, a nested array: not a photo, and coercing it would
+    // store "42" as a path that 404s in front of a buyer. Drop it.
+    if (typeof m !== 'string') continue;
+    const s = m.trim();
+    if (s && !out.includes(s)) out.push(s);
+    if (out.length >= MEDIA_CAP) break;
+  }
+  return out;
+}
+
 export function createListing({
   vendorId,
   title,
@@ -169,7 +193,7 @@ export function createListing({
     // listing into one geographic model would make half of them lie.
     locationName: locationName ?? null,
     objectId: objectId ?? null,
-    media: Array.isArray(media) ? media : [],
+    media: cleanMedia(media),
     // The two axes. Optional, and null renders as "not stated" — never as a
     // guessed warehouse or an invented destination.
     flow: flow || null,
@@ -320,6 +344,11 @@ export function updateListing(id, patch, { actorId = null, reason = null } = {})
       throw new Error('quantityAvailable must be a whole number of zero or more when provided');
     }
   }
+  // Photos are the field the catalog editor now really sends (add, reorder,
+  // remove after publishing), so it gets the same normalisation the create path
+  // gives it. An empty array is a legitimate value here: it means "take the
+  // photos down", and it must not be confused with "this field was not sent".
+  if ('media' in clean) clean.media = cleanMedia(clean.media);
 
   // Only a REAL change is a money change: re-saving the same price from a form
   // that posts every field is not an event, and demanding a reason for it would

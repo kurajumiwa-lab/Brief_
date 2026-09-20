@@ -69,6 +69,38 @@ await test("descriptive edits are free after publishing", () => {
     "descriptive edits are not money events");
 });
 
+await test("photos are normalised on both doors, so junk cannot sit in a published offer", () => {
+  // An offer is shown to buyers by its pictures. A field that stores anything
+  // a client sends is a broken plate waiting on every card and on the public
+  // page, so both the create path and the edit path run the same normaliser.
+  const l = listings.createListing({
+    vendorId: vendor.id,
+    title: "Sukuma wiki, crate",
+    price: 300,
+    // A bare string, not an array: exactly what a client that forgot the
+    // brackets sends, and what used to be stored verbatim.
+    media: "/api/media/file/upl_junk"
+  });
+  assert.deepEqual(l.media, [], "a non-array is an empty gallery, not a string in an array-shaped field");
+
+  const dupes = listings.createListing({
+    vendorId: vendor.id, title: "Spinach", price: 300,
+    media: ["/api/media/file/a", "/api/media/file/a", "   ", 42, "/api/media/file/b"]
+  });
+  assert.deepEqual(dupes.media, ["/api/media/file/a", "/api/media/file/b"],
+    "duplicates and non-strings are dropped; a blank caption is not a photo");
+
+  listings.transitionListing(l.id, "active");
+  const out = listings.updateListing(l.id, { media: ["/api/media/file/upl_1", "/api/media/file/upl_1", null] });
+  assert.deepEqual(out.media, ["/api/media/file/upl_1"], "the edit path normalises the same way");
+
+  const many = listings.updateListing(l.id, { media: Array.from({ length: 30 }, (_, i) => `/api/media/file/u${i}`) });
+  assert.equal(many.media.length, listings.MEDIA_CAP, "and a gallery stops at the stated cap");
+
+  const cleared = listings.updateListing(l.id, { media: [] });
+  assert.deepEqual(cleared.media, [], "removing every photo is a real edit, not an ignored field");
+});
+
 await test("a published price change demands a reason and states it", () => {
   const l = mk();
   listings.transitionListing(l.id, "active");

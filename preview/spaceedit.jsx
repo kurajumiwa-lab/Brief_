@@ -27,6 +27,10 @@ global.Element = dom.window.Element;
 global.Node = dom.window.Node;
 global.MouseEvent = dom.window.MouseEvent;
 global.getComputedStyle = dom.window.getComputedStyle;
+// FormData, File and Blob must come from ONE realm. Node's global FormData
+// rejects a jsdom File as "not of type Blob", so the upload path is bound to
+// jsdom's. Without this line the suite fails on plumbing, not on behaviour.
+global.FormData = dom.window.FormData;
 global.IS_REACT_ACT_ENVIRONMENT = true;
 global.localStorage = dom.window.localStorage;
 // jsdom ships no clipboard: the copy path must degrade to telling the user what
@@ -34,9 +38,12 @@ global.localStorage = dom.window.localStorage;
 Object.defineProperty(dom.window.navigator, 'clipboard', { value: undefined, configurable: true });
 
 const React = require('react');
+const path = require('path');
+const fs = require('fs');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const { SpaceShell } = require('./src/features/spaces/SpaceShell.tsx');
+const { MIRROR_MONEY_FIELDS, MIRROR_REASON_MIN } = require('./src/features/spaces/CatalogView.tsx');
 
 let count = 0;
 const pass = (n) => { count++; console.log('PASS ' + n); };
@@ -53,7 +60,13 @@ const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const q = (sel) => document.querySelector(sel);
 const btn = (want) => Array.from(document.querySelectorAll('button')).find((b) => text(b) === want || text(b).startsWith(want));
 const byAria = (label) => Array.from(document.querySelectorAll('button')).find((b) => b.getAttribute('aria-label') === label);
-const click = (el) => act(() => el.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
+const click = (el, what = 'control') => act(() => {
+  // A missing element used to surface as "cannot read dispatchEvent of
+  // undefined" pointing at a helper. Name the control instead, so a
+  // failure says which button the UI failed to render.
+  if (!el) throw new Error('no such control in the rendered UI: ' + what);
+  el.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true }));
+});
 const setValue = (el, value) => {
   const proto = el.tagName === 'TEXTAREA' ? dom.window.HTMLTextAreaElement.prototype : dom.window.HTMLInputElement.prototype;
   act(() => {
@@ -62,9 +75,33 @@ const setValue = (el, value) => {
   });
 };
 
+/** jsdom will not let a test type into a file input, so hand it a FileList. */
+function chooseFile(input, name) {
+  const file = new dom.window.File([Buffer.from('fake png bytes')], name, { type: 'image/png' });
+  const list = { 0: file, length: 1, item: (i) => (i === 0 ? file : null), [Symbol.iterator]: function* () { yield file; } };
+  Object.defineProperty(input, 'files', { value: list, configurable: true });
+  // React listens for 'change' on a file input, and 'input' elsewhere: send
+  // both so the suite is not coupled to that detail.
+  act(() => {
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+    input.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+  });
+}
+
 const offer = (id, status, over = {}) => ({
   id, vendorId: 'v1', spaceId: 'spc_1', title: `${id} cake`, description: 'Two tiers', type: 'product',
-  price: 4500, currency: 'KES', quantityAvailable: 6, status, createdAt: '', updatedAt: '', ...over
+  price: 4500, currency: 'KES', quantityAvailable: 6, status, createdAt: '', updatedAt: '',
+  // The client's own `isListing` guard (src/api/validate.ts) refuses a row
+  // without these two, and a refused row never reaches the card. A fixture that
+  // fails validation makes every "the badge follows the row" assertion vacuous:
+  // the badge would still say ACTIVE because nothing was applied at all.
+  orderable: status === 'active', unorderableReason: status === 'active' ? null : 'this listing is not published yet',
+  // `locationName` has to be PRESENT and null: `isStrOrNull(undefined)` is
+  // false, so an omitted field makes the client reject the whole row, the
+  // editor stays open on an error, and any later assertion about the card is
+  // reading a card that never received the server's answer.
+  locationName: null,
+  media: [], ...over
 });
 
 const spaceWith = (over = {}) => ({
@@ -182,12 +219,141 @@ async function main() {
     click(editOffer);
     await flush();
     assert.ok(q('input[aria-label="Offer price"]'), 'the offer editor opens');
+    // The photos are in the same editor. They used to be missing, which made a
+    // published offer permanently un-photographable even though the server
+    // accepts `media` on the very same PATCH.
+    assert.ok(q('input[aria-label="Add Photos of these goods"]'), 'the editor carries a real photo uploader');
     setValue(q('input[aria-label="Offer price"]'), '3900');
+    await flush();
+    // A published money change asks for the seller's reason IN THE ROW, instead
+    // of bouncing them off the server's refusal with no way to answer it.
+    const reason = q('input[aria-label="Reason for the price change"]');
+    assert.ok(reason, 'a published price change opens a reason field');
+    click(btn('Save changes'));
+    await flush();
+    assert.equal(editedPrice, null, 'a money change with no reason does not reach the network');
+    assert.equal(calls.filter((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).length, 0,
+      'no doomed request is sent, so the server is not the one teaching this');
+    assert.match(text(container), /Say why the price is changing/, 'and the row says what it wants, in plain words');
+    setValue(reason, 'sugar went up at the mill');
     click(btn('Save changes'));
     await flush();
     assert.equal(editedPrice, 3900, 'the price PATCHes the real listing rail');
+    assert.equal(text(container).includes('Saving…'), false, 'and the row is not stuck mid-save');
+    const patchBody = JSON.parse(calls.find((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).body);
+    assert.equal(patchBody.reason, 'sugar went up at the mill', 'with the seller’s own reason attached');
+    assert.ok(Array.isArray(patchBody.media), 'and the photo list rides along, so an edit cannot wipe it');
+    // A plain content edit needs no reason: the gate is on money, not on effort.
+    // The row closed on save, so it is opened again from the row itself.
+    const reopen = Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Edit');
+    click(reopen);
+    await flush();
+    setValue(q('input[aria-label="Offer title"]'), 'Red velvet, 2 tiers');
+    await flush();
+    assert.equal(q('input[aria-label="Reason for the price change"]'), null, 'a title edit alone raises no reason row');
+    click(btn('Save changes'));
+    await flush();
+    const lastPatch = calls.filter((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).pop();
+    const lastBody = JSON.parse(lastPatch.body);
+    assert.equal(lastBody.title, 'Red velvet, 2 tiers', 'and the title still saves');
+    assert.equal(lastBody.reason, undefined, 'with no reason invented for a field nobody gated');
+
+    // The client mirrors the server's money list rather than re-declaring it.
+    const serverListing = fs.readFileSync(path.join(__dirname, '../server/src/domain/listing.js'), 'utf8');
+    const serverMoney = (serverListing.match(/export const MONEY_FIELDS = \[([^\]]*)\]/) || [])[1];
+    assert.ok(serverMoney, 'the server declares the money set');
+    assert.deepEqual(
+      MIRROR_MONEY_FIELDS,
+      serverMoney.split(',').map((s) => s.trim().replace(/^'|'$/g, '')),
+      'the editor gates exactly the fields the server gates'
+    );
+    assert.match(serverListing, /export const REASON_MIN = 6;/, 'the server minimum is still 6');
+    assert.equal(MIRROR_REASON_MIN, 6, 'and the editor asks at the same length, not a stricter one');
   }
-  pass('Offer pause and price edits are server calls; the badge follows the returned row');
+  pass('Offer pause and price edits are server calls; a money change carries a reason');
+
+  // --- 3b. the photos are edited on the row, with no reason gate ------------
+  // A picture is a descriptive field: the server never asks why you swapped it,
+  // and the row must not ask either. This is the half of the editor that did not
+  // exist at all — published offers could not be re-photographed.
+  // One stored value, read back after the write, so the card shows what the
+  // server has rather than what the fixture always returns. A test that cannot
+  // see its own save is a test of the request, not of the product.
+  let storedMedia = [];
+  const h3b = async (url, init) => {
+    const method = init?.method ?? 'GET';
+    if (url.includes('/api/media/status')) return ok({ media: null, uploads: { maxBytes: 5242880, persisted: false } });
+    if (url.includes('/api/media/upload') && method === 'POST') {
+      return { ok: true, status: 201, text: async () => JSON.stringify({
+        upload: { id: 'upl_photo', url: '/api/media/file/upl_photo', mimeType: 'image/png', bytes: 14, sha256: 'c'.repeat(64), originalName: 'cake.png', alt: null, createdAt: '2026-09-20T00:00:00Z' },
+        duplicate: false
+      }) };
+    }
+    if (url.includes('/api/listings/lst_1') && method === 'PATCH') {
+      storedMedia = JSON.parse(String(init.body)).media ?? [];
+      return ok({ listing: offer('lst_1', 'active', { media: storedMedia }) });
+    }
+    if (url.includes('/api/spaces/spc_1/operating')) return ok({ fields: [], maintenance: null, editorial: [], pipeline: null });
+    if (url.endsWith('/api/spaces/spc_1') && method === 'GET') {
+      return ok({ space: spaceWith({ offers: [offer('lst_1', 'active', { media: storedMedia }), offer('lst_2', 'draft'), offer('lst_3', 'archived')] }) });
+    }
+    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
+  };
+  global.fetch = async (input, init) => {
+    const url = String(input?.url ?? input ?? '');
+    calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? String(init.body) : null });
+    return h3b(url, init);
+  };
+  {
+    const { container } = mount(React.createElement(SpaceShell, { spaceId: 'spc_1', onBack: () => {}, onShare: () => {}, initialTab: 'catalog' }));
+    await flush();
+    click(Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Edit'), 'offer Edit');
+    await flush();
+    assert.match(text(container), /No photo yet/, 'an offer with no picture says so, rather than showing a stock one');
+    const picker = q('input[type="file"]');
+    assert.ok(picker, 'the row carries a real file input');
+    chooseFile(picker, 'cake.png');
+    await flush(140);
+    assert.match(text(container), /Photos \(1\)/, 'the upload lands in the row’s own count');
+    assert.ok(
+      Array.from(container.querySelectorAll('img')).some((im) => String(im.getAttribute('src')).includes('api/media/file/upl_photo')),
+      'and the picture is the file the server took, not a placeholder'
+    );
+    assert.equal(q('input[aria-label="Reason for the price change"]'), null, 'a photo edit raises no reason row');
+    click(btn('Save changes'));
+    await flush();
+    const mediaPatch = calls.filter((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).pop();
+    assert.ok(mediaPatch, 'the photo save goes to the listing rail');
+    const mediaBody = JSON.parse(mediaPatch.body);
+    assert.deepEqual(mediaBody.media, ['/ingest/api/media/file/upl_photo'], 'the media list is what was uploaded');
+    assert.equal(mediaBody.reason, undefined, 'and no reason is demanded for a picture');
+
+    // Remove it again: an empty gallery is a real edit, not an ignored field.
+    // The save closed the row, so it is opened again from the refreshed card —
+    // and the refreshed card still carries the photo, because the server has it.
+    assert.ok(
+      Array.from(container.querySelectorAll('img')).some((im) => String(im.getAttribute('src')).includes('api/media/file/upl_photo')),
+      'and the photo is on the card itself after the save, not only inside the editor'
+    );
+    click(Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Edit'), 'offer Edit again');
+    await flush();
+    click(byAria('Remove photo 1 from lst_1 cake'), 'remove photo');
+    await flush();
+    assert.match(text(container), /Photos \(0\)/, 'the row can take the picture back down');
+    click(btn('Save changes'));
+    await flush();
+    const cleared = JSON.parse(calls.filter((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).pop().body);
+    assert.deepEqual(cleared.media, [], 'and an empty gallery is sent as empty, not omitted');
+  }
+  // Hand the shared recorder back: every later test installs its answers on
+  // `handler`, so leaving this block's private handler in place would make the
+  // next test read the wrong shop and fail for the wrong reason.
+  global.fetch = async (input, init) => {
+    const url = String(input?.url ?? input ?? '');
+    calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? String(init.body) : null });
+    return handler(url, init);
+  };
+  pass('Photos are editable after publish: uploaded, counted, removable, never gated');
 
   // --- 4. withdrawn is terminal, and drafts get no nonsense --------------
   {
