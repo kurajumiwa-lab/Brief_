@@ -234,7 +234,7 @@ export function YouSurface({
         {tab("archive", "Archive")}
         {tab("tableBanking", "Table Banking")}
         {tab("network", "Your network")}
-        {tab("how", "How Brief works")}
+        {tab("how", "How Trace works")}
       </div>
 
       {notice && (

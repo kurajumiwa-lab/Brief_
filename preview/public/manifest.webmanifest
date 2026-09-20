@@ -1,6 +1,6 @@
 {
-  "name": "Brief",
-  "short_name": "Brief",
+  "name": "Trace",
+  "short_name": "Trace",
   "description": "Everything happening around you — and your shop, your arena, your records.",
   "start_url": "/",
   "display": "standalone",

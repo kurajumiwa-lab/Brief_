@@ -287,7 +287,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       <Navigation
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
-        spaceName={activeSpace?.name || 'Your Brief'}
+        spaceName={activeSpace?.name || 'Your Trace'}
         revenueKes={activeSpace?.metrics?.revenueKes ?? 0}
         offersCount={activeSpace?.offers?.length ?? 0}
         pendingInquiriesCount={activeSpace?.recentConversations?.filter((c) => c.status !== 'converted').length ?? 0}
@@ -583,7 +583,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <PublicOfferModal
           isOpen={publicOfferModalOpen}
           offer={activePublicOffer}
-          spaceName={activeSpace?.name ?? 'Brief seller'}
+          spaceName={activeSpace?.name ?? 'Trace seller'}
           onClose={() => setPublicOfferModalOpen(false)}
           onInquirySent={() => showToast('Inquiry submitted to seller!')}
         />

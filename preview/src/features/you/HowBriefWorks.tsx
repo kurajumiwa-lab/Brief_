@@ -151,7 +151,7 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
   return (
     <div className={`space-y-3 max-w-2xl mx-auto ${className}`}>
       <div className="space-y-1">
-        <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Brief works</h2>
+        <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Trace works</h2>
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
           Everything the screens deliberately do not say, in one place.
         </p>

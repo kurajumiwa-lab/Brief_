@@ -488,7 +488,7 @@ async function main() {
   // --- 11. the flow reads in a glance; the reasoning lives on one page -------
   // Two rules, tested together, because one without the other is just deleting
   // the audit trail: (a) no sentence does a dot's job on a working surface, and
-  // (b) every explanation that came out of the flow exists on the How Brief works
+  // (b) every explanation that came out of the flow exists on the How Trace works
   // screen. A terse UI that hides how a number was made is a marketing site; a
   // documented UI that makes you read it is a legal disclaimer. This is neither.
   {

@@ -117,7 +117,7 @@ const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =>
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
-  spaceName = 'Your Brief',
+  spaceName = 'Your Trace',
   pendingInquiriesCount = 0,
   revenueKes = 0,
   offersCount = 0,

@@ -94,6 +94,11 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
     return () => { live = false; };
   }, [isOpen]);
 
+  // The server's own rule (space.js): a space needs a name of its own. Every
+  // other answer on this form is refreshable later in the space file, so the
+  // gate is the name and not a guess about which answers matter most.
+  const nameReady = String(name ?? '').trim().length >= 2;
+
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
@@ -134,12 +139,12 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-4 overflow-y-auto animate-fadeIn"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-[color:var(--color-surface)] text-[color:var(--color-text)] rounded-3xl p-6 shadow-2xl space-y-5 animate-slideUp border border-black/5"
+        className="relative w-full max-w-md my-auto bg-[color:var(--color-surface)] text-[color:var(--color-text)] rounded-3xl p-6 pb-24 shadow-2xl space-y-5 animate-slideUp"
       >
         {/* Top Progress & Close */}
         <div className="flex items-center justify-between">
@@ -444,21 +449,23 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
               <p className="text-xs text-rose-600 font-bold">{errorMsg}</p>
             )}
 
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="sticky bottom-0 -mx-6 -mb-6 px-6 pt-3 pb-[calc(env(safe-area-inset-bottom)+16px)] flex items-center space-x-2"
+                 style={{ background: 'var(--color-surface)', boxShadow: '0 -8px 16px -12px rgba(10, 14, 20, 0.35)' }}>
               <button
                 type="button"
                 onClick={() => setStep(4)}
-                className="px-4 py-3 rounded-full bg-gray-100 hover:bg-gray-200 text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
+                className="px-4 py-3 rounded-full text-xs font-bold text-[color:var(--color-text)] transition-all cursor-pointer"
+                style={{ background: 'var(--color-well, var(--color-surface-elevated))' }}
               >
                 Back
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !nameReady}
                 className="flex-1 py-3 rounded-full bg-[color:var(--color-primary)] hover:bg-[color:var(--color-primary-strong)] active:scale-95 text-[color:var(--accent-ink)] font-black text-xs flex items-center justify-center space-x-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
               >
-                <span>{isSubmitting ? 'Creating Space...' : 'Create Space'}</span>
+                <span>{isSubmitting ? 'Creating Space...' : nameReady ? 'Create Space' : 'Name the space first'}</span>
                 <Check className="w-4 h-4 text-[color:var(--color-primary)]" />
               </button>
             </div>

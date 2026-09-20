@@ -446,7 +446,7 @@ ${updates}
 ${facts}
   </article>
   <p class="foot">This page is a mirror of the shop's Brief space — they edit it in the app, and it updates here. Prices and words only; their orders, customers and money stay with them.
-    <br /><a href="https://brief.app">Made with Brief</a> · <a href="#report">Report this page</a></p>
+    <br />${brandLine(view)} · <a href="#report">Report this page</a></p>
   <section class="card" id="report" style="margin-top:14px">
     <h2>Report this page</h2>
     <p class="line">Writes a report row that Brief and the owner can read. It does not take a page down, and no automatic review exists yet — say what is wrong and someone can act on it.</p>
@@ -459,6 +459,18 @@ ${facts}
 </body>
 </html>
 `;
+}
+
+/**
+ * The footer credit. A link appears ONLY when the deployment declared its own
+ * public origin; until then it is plain words. It used to point at
+ * https://brief.app, a domain this project neither owns nor resolves — a
+ * decorative link to nowhere is exactly the fabricated authority this product
+ * refuses, and it was on the one page a stranger trusts.
+ */
+function brandLine(view) {
+  const origin = String(view.pageUrl ?? '').replace(/\/s\/.*$/, '');
+  return origin ? `<a href="${esc(origin)}">Made with Trace</a>` : 'Made with Trace';
 }
 
 function humanType(type) {

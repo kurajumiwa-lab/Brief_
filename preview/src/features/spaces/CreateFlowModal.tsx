@@ -108,8 +108,8 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-      <div className="w-full max-w-lg bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden animate-scaleIn border border-black/5">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 bg-black/50 backdrop-blur-xs overflow-y-auto animate-fadeIn">
+      <div className="w-full max-w-lg my-auto bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden animate-scaleIn">
         {/* Progress Bar */}
         <div className="w-full bg-[color:var(--color-surface)] h-1.5">
           <div
