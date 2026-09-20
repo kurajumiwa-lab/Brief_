@@ -159,73 +159,118 @@ async function main() {
 
 
 
-  // --- WorldStrip: the country's movement, not the user's ------------------
-  const WORLD = {
-    ok: true, available: true, provider: 'Open-Meteo', kind: 'forecast', observedAt: null, horizonDays: 7,
-    place: 'Nairobi', placeIsDefault: true, defaultPlace: 'Nairobi',
-    resolvedPlace: { name: 'Nairobi', admin: 'Nairobi County', country: 'Kenya' },
-    elevationM: 1671, model: 'best_match', retrievedAt: '2026-09-17T06:00:00Z', ageHours: 0.2, fromCache: false, stale: false,
-    facts: [
-      { kind: 'rain', text: 'Heavy rain forecast in 3 days (Sat): 24.3 mm, 99% likely', value: 24.3, unit: 'mm', date: '2026-09-20', inDays: 3, chance: 99 },
-      { kind: 'dry', text: 'Dry spell holds: no rain for the next 2 days', value: 2, unit: 'days', thresholdMm: 1 },
-      { kind: 'heat', text: 'Hottest afternoon in 5 days: 28.1 °C', value: 28.1, unit: '°C', date: '2026-09-22' }
-    ],
-    dryRunDays: 2, wetDays: 3,
-    prices: { status: 'not_configured', reason: 'no key-free commodity-price endpoint is reachable' },
-    fuel: { status: 'not_configured', reason: 'EPRA publishes a document, not an API' },
-    error: null
+  // --- PlannedWeather: a forecast only where it lands on a planned day -----
+  const MATCHED = {
+    available: true,
+    reason: null,
+    provider: 'Open-Meteo', providerLicence: 'CC BY 4.0', horizonDays: 7,
+    note: 'Weather is shown only for a day you have something planned. Nothing planned, nothing shown.',
+    unmatchedDays: 0,
+    plannedDays: [{ date: '2026-09-20', dayIndex: 3, events: [{ title: 'Kisii Saturday market' }] }],
+    matched: [{
+      date: '2026-09-20', dayIndex: 3, eventTitle: 'Kisii Saturday market', eventCount: 1,
+      campaignId: 'cmp_1', slug: 'kisii-market', startsAt: '2026-09-20T08:00:00+03:00', location: 'Kisii',
+      fact: { kind: 'rain', text: 'Heavy rain forecast in 3 days (Sat): 24.3 mm, 99% likely', value: 24.3, unit: 'mm' }
+    }]
   };
-  fetchHandler = async (url) => ({
-    ok: true, status: 200,
-    text: async () => JSON.stringify(String(url).includes('/api/world') ? WORLD : PULSE)
-  });
-  {
-    const { WorldStrip } = require('./src/features/home/WorldStrip.tsx');
+  const EMPTY_PLAN = { ...MATCHED, matched: [], plannedDays: [], reason: 'nothing_planned' };
+  const BROKEN = {
+    available: false, matched: [], plannedDays: [{ date: '2026-09-20', dayIndex: 3, events: [] }],
+    reason: 'world_read_unavailable', provider: null, providerLicence: null, horizonDays: null,
+    note: MATCHED.note, unmatchedDays: 1
+  };
+  const mountWeather = async (payload) => {
+    fetchHandler = async (url) => ({
+      ok: true, status: 200,
+      text: async () => JSON.stringify(String(url).includes('/api/planned-weather') ? payload : PULSE)
+    });
+    const { PlannedWeather } = require('./src/features/home/PlannedWeather.tsx');
     const c = document.createElement('div');
     document.body.appendChild(c);
     const root = createRoot(c);
-    act(() => root.render(React.createElement(WorldStrip, {})));
+    act(() => root.render(React.createElement(PlannedWeather, {})));
     await flush();
-    const t = text(c);
-    // One line, expandable. This used to be a card with four facts, a licence
-    // paragraph and a derivation control; the glance is the forecast.
-    assert.ok(/Rain in 3 days \(Sat\): 24\.3 mm, 99% likely/.test(t), 'the headline fact is the server’s, compressed to a line');
-    assert.ok(t.includes('Nairobi'), 'the place rides on the line');
-    assert.ok(!/Nairobi County|Open-Meteo|not wired|Licence:|How this is derived/.test(t), 'no provenance paragraph, no footnote control');
-    assert.ok(!/\+\d+(\.\d+)?%\s|maize|KES \d/i.test(t), 'no invented commodity movement and no money figure');
+    return { c, root, t: text(c) };
+  };
+  {
+    const { c, root, t } = await mountWeather(MATCHED);
+    assert.ok(t.includes('Kisii Saturday market'), 'the line names the plan the weather is about');
+    assert.ok(/24\.3 mm, 99% likely/.test(t), 'and quotes the provider\'s sentence, unchanged');
+    const link = Array.from(c.querySelectorAll('a')).find((a) => /\/c\//.test(a.getAttribute('href') || ''));
+    assert.ok(link && link.getAttribute('href') === '/c/kisii-market', 'a plan with a real page links to it');
+    assert.ok(/a model, not a measurement/.test(t), 'and says a forecast is a model output');
+    assert.ok(!/bring|cover|warning|alert|avoid/.test(t), 'no advice, no alarm: the fact is the whole card');
     assert.ok(!/\bLIVE\b/.test(t), 'a forecast is not a live feed');
-    act(() => c.querySelector('button[aria-label="See the week"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
-    await flush();
-    const opened = text(c);
-    assert.ok(opened.includes('Dry spell holds') && opened.includes('Hottest afternoon'), 'one tap shows the rest of the week');
-    // the placeholder is an attribute, never textContent, in jsdom
-    const placeInput = c.querySelector('input[aria-label="Place"]');
-    assert.ok(placeInput && /place/i.test(placeInput.getAttribute('placeholder') || ''), 'with the place control inside the fold');
-  }
-  pass('WorldStrip is one line about the country, expandable, with no prose in the way');
-
-
-  // --- WorldStrip: an outage is a gap, not a zero --------------------------
-  fetchHandler = async (url) => ({
-    ok: true, status: 200,
-    text: async () => JSON.stringify(String(url).includes('/api/world')
-      ? { ok: false, available: false, provider: 'Open-Meteo', facts: [], error: 'the provider could not be reached (socket hang up), and Brief has no recent read to show instead. A gap is shown as a gap.', place: 'Nairobi', placeIsDefault: true, prices: { status: 'not_configured' }, fuel: { status: 'not_configured' } }
-      : PULSE)
-  });
-  {
-    const { WorldStrip } = require('./src/features/home/WorldStrip.tsx');
-    const c = document.createElement('div');
-    document.body.appendChild(c);
-    const root = createRoot(c);
-    act(() => root.render(React.createElement(WorldStrip, {})));
-    await flush();
-    const t = text(c);
-    assert.ok(t.includes('could not be reached'), 'the failure is the provider\'s, stated');
-    assert.ok(!/0 mm|0 days|no rain/i.test(t), 'and it is not rendered as a measurement of zero');
-    assert.ok(Boolean(Array.from(c.querySelectorAll('button')).find((b) => text(b) === 'Retry')), 'with a way to try again');
     root.unmount(); c.remove();
   }
-  pass('A failed world read says it failed — no zeros, no stale fact dressed as current');
+  pass('PlannedWeather quotes one dated fact against one planned day, and links only a real page');
+
+  // --- the two cases where the honest answer is: no card at all ------------
+  {
+    const { c, root, t } = await mountWeather(EMPTY_PLAN);
+    assert.equal(t, '', 'nothing planned, nothing rendered — not a generic week, not a zero');
+    root.unmount(); c.remove();
+  }
+  {
+    const { c, root, t } = await mountWeather(BROKEN);
+    assert.equal(t, '', 'an unreachable provider yields silence, not a stale line dressed as current');
+    root.unmount(); c.remove();
+  }
+  {
+    fetchHandler = async () => ({ ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) });
+    const { PlannedWeather } = require('./src/features/home/PlannedWeather.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(PlannedWeather, {})));
+    await flush();
+    assert.equal(text(c), '', 'and a signed-out visitor is not shown a card about a gap they were never in');
+    root.unmount(); c.remove();
+  }
+  pass('No plan, no dated fact, no provider, no session — Home shows no weather card');
+
+  // --- EarnStrip: the income rails, quoted from the server -----------------
+  const REFERRALS = {
+    code: 'ABC', maxDepth: 2, link: '/c/x',
+    balance: { earned: 900, locked: 300, available: 600 },
+    pool: { balanceKes: 12000 },
+    conversion: { ptsToKes: 0.1, minPoints: 500 },
+    events: [{ id: 'e1', kind: 'guardian_order', points: 600, valueKes: 60000, at: '2026-09-01T00:00:00Z' }],
+    conversions: [{ id: 'c1', points: 500, kes: 50, status: 'pending', refusedReason: null, createdAt: '2026-09-10T00:00:00Z' }]
+  };
+  const AGENT = {
+    claims: [], settlements: [],
+    override: {
+      agentId: 'u1', rate: 0.75, months: 24,
+      claims: [{ claimId: 'vc1', vendorId: 'v1', vendorName: 'Testshop', claimedAt: '2026-08-01T00:00:00Z', expiresAt: null, settledOrders: 4, grossKes: 40000, overrideKes: 300, contactName: 'Jane', contactPhone: '+254700000000' }]
+    }
+  };
+  {
+    fetchHandler = async (url) => {
+      const u = String(url);
+      const body = u.includes('/api/referrals/mine') ? REFERRALS
+        : u.includes('/api/me/field-agent') ? AGENT
+          : u.includes('/api/me/lipa-mdogo') ? { contracts: [{ id: 'lm1', maturity: 'paying', status: 'active', summary: {}, asset: {} }] }
+            : PULSE;
+      return { ok: true, status: 200, text: async () => JSON.stringify(body) };
+    };
+    const { EarnStrip } = require('./src/features/home/EarnStrip.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(EarnStrip, {})));
+    await flush();
+    const t = text(c);
+    assert.ok(/600/.test(t), 'the points the server says are available');
+    assert.ok(/100 points = KES 10/.test(t), 'with the server\'s rate quoted, not applied to anything');
+    assert.ok(/1 shop/.test(t) && /KES 300/.test(t), 'the territory rail counts its rows and its settled money');
+    assert.ok(/0\.75% for 24 months/.test(t), 'naming the terms the server set');
+    assert.ok(/1 conversion waiting on finance/.test(t) && /Not cash yet/.test(t), 'a pending conversion is a queue entry, not money in a pocket');
+    assert.ok(!/could have earned|missed|forecast|project/i.test(t), 'no missed-income framing, no projection');
+    assert.ok(!/tier|badge|level|streak|rank/i.test(t), 'and no ladder — the pool has none');
+    root.unmount(); c.remove();
+  }
+  pass('EarnStrip surfaces the real income rails on Home, with the server\'s rate and no projection');
 
   // --- SignalBar: a dead read is an error, not an all-clear ----------------
   fetchHandler = async () => ({ ok: false, status: 500, text: async () => JSON.stringify({ error: 'boom' }) });

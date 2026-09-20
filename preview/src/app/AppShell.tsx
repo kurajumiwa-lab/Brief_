@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import type { Space, Listing } from '../api/types';
 import * as briefApi from '../api/briefApi';
 import { Navigation, BriefNavigationTab } from './Navigation';
+import { AppBelt, readPlace, PLACE_KEY } from './AppBelt';
+import { NavSheet, type SheetTarget } from './NavSheet';
+import { SearchResults } from '../components/SearchResults';
 import { HomeSurface } from '../features/home/HomeSurface';
 import { SpaceShell } from '../features/spaces/SpaceShell';
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
@@ -60,6 +63,13 @@ export const AppShell: React.FC<AppShellProps> = ({
   // One room per deep link, and the type comes from the taxonomy module so the
   // shell can never name a room the board does not have.
   const [discoverSubTab, setDiscoverSubTab] = useState<DiscoverRoom>('all');
+  // The belt's two owned pieces of state: the sheet (the long list of
+  // destinations, which is why the band above can stay short) and the search
+  // query, which lives in the URL hash so a searched view can be pasted,
+  // reloaded and shared like every other surface here.
+  const [sheetOpen, setSheetOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [place, setPlace] = useState<string>(readPlace);
   const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
 
   // Modals
@@ -78,6 +88,28 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   // Citizen Post Dialog on City Tab
   const [cityPostModalOpen, setCityPostModalOpen] = useState<boolean>(false);
+
+  /**
+   * Where a sheet entry goes. Every target lands on a surface that already
+   * exists — a tab, a discover room, or a You section — because a nav item that
+   * opened nothing is worse than no nav item.
+   */
+  const goSheetTarget = (target: SheetTarget) => {
+    if (target.kind === 'tab') {
+      setActiveTab(target.tab);
+      window.location.hash = target.tab === 'pipeline' ? 'pipeline' : target.tab;
+      return;
+    }
+    if (target.kind === 'room') {
+      setDiscoverSubTab(target.room);
+      setActiveTab('city');
+      window.location.hash = 'city';
+      return;
+    }
+    setYouSection(target.section);
+    setActiveTab('you');
+    window.location.hash = 'you';
+  };
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -136,11 +168,18 @@ export const AppShell: React.FC<AppShellProps> = ({
         // public offer view — for a signed-in buyer, because ordering needs a
         // session. It is not presented as an anonymous storefront link.
         try { setOfferLinkId(decodeURIComponent(hash.slice(6))); } catch { setOfferLinkId('invalid'); }
+      } else if (hash === 'search' || hash.startsWith('search/')) {
+        // #search/<term> is a real surface: it renders /api/search's answer.
+        // An empty term clears it rather than showing an empty results card.
+        const term = hash === 'search' ? '' : decodeURIComponent(hash.slice(7));
+        setSearchQuery(term);
+        setEntityId(null);
       } else if (hash === 'entity' || hash.startsWith('entity/')) {
         const id = decodeURIComponent(hash.slice(7));
         if (id) { setEntityId(id); setActiveTab('you'); }
       } else if (hash === '' || (hash && hash !== 'join')) {
         setJoinCode('');
+        setSearchQuery('');
         const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); }
         else if (!hash) setActiveTab(initialTab);
@@ -295,6 +334,17 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-44 md:pb-8 overflow-y-auto min-h-screen">
+        {/* The band: what the sheet is not, in one short row, plus the
+            departments rail and the message slot. It lives inside the scroll
+            column so it behaves the same on a phone and on a desktop. */}
+        <AppBelt
+          onOpenSheet={() => setSheetOpen(true)}
+          onHome={() => { window.location.hash = ''; setActiveTab('home'); }}
+          onOpenRoom={(room) => { setDiscoverSubTab(room); setActiveTab('city'); window.location.hash = 'city'; }}
+          onSearch={(term) => { window.location.hash = `search/${encodeURIComponent(term)}`; }}
+          activeRoom={activeTab === 'city' ? discoverSubTab : null}
+          className="-mx-4 sm:-mx-6 -mt-6 mb-5"
+        />
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
         {/* SPACES with no space open is the STREET: the shopfronts you operate
             and the ones you follow. Circles and vaults are not here — belonging
@@ -345,6 +395,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             onOpenSpaces={() => setActiveTab('pipeline')}
             onGetPaid={() => setActiveTab('ledger')}
             onOpenHow={() => { setYouSection('how'); setActiveTab('you'); }}
+            onOpenEarn={() => { setYouSection('earn'); setActiveTab('you'); window.location.hash = 'you'; }}
           />
         ) : (
           <div>
@@ -575,6 +626,64 @@ export const AppShell: React.FC<AppShellProps> = ({
             onRequireAuth={() => showToast('Sign in or create an account to join a room.')}
             onOpenCircles={() => { setJoinCode(''); window.location.hash = 'city'; setActiveTab('city'); }}
           />
+        </div>
+      )}
+
+      {/* The long list of destinations, held in one place so the band above
+          stays short and the screens below stay uncluttered. */}
+      <NavSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        place={place}
+        onSetPlace={(next) => {
+          setPlace(next);
+          try {
+            if (next) window.localStorage.setItem(PLACE_KEY, next);
+            else window.localStorage.removeItem(PLACE_KEY);
+          } catch {
+            showToast('This browser will not store the area, so the forecast stays on the default.');
+          }
+        }}
+        onGo={(target) => goSheetTarget(target)}
+      />
+
+      {/* #search/<term>: the belt's box resolves here, on the real /api/search
+          surface. A view that nothing can reach would have been a decoration,
+          and a decoration in a search box is the fastest way to teach someone
+          that the numbers on this app are also decorative. */}
+      {searchQuery && (
+        <div className="fixed inset-0 z-[60] overflow-y-auto px-4 py-6" style={{ background: 'var(--color-bg)' }} role="dialog" aria-modal="true" aria-label={`Search results for ${searchQuery}`}>
+          <div className="max-w-2xl mx-auto space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                Search · {searchQuery}
+              </p>
+              <button
+                type="button"
+                onClick={() => { window.location.hash = ''; setSearchQuery(''); }}
+                className="text-[12px] font-bold underline cursor-pointer"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                Back to the app
+              </button>
+            </div>
+            <SearchResults
+              query={searchQuery}
+              onOpenObject={(o) => {
+                // Objects open where the shell already shows an object: the
+                // entity page. Anything without an id is left unclickable
+                // rather than wired to a view that would show nothing.
+                const id = o?.id ?? o?.objectId ?? null;
+                if (!id) return;
+                setSearchQuery('');
+                window.location.hash = `entity/${encodeURIComponent(String(id))}`;
+              }}
+              onOpenEntity={(entityId) => {
+                setSearchQuery('');
+                window.location.hash = `entity/${encodeURIComponent(entityId)}`;
+              }}
+            />
+          </div>
         </div>
       )}
 

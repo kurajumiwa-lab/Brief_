@@ -5241,6 +5241,42 @@ export function getWorld(place?: string | null): Promise<ApiResult<WorldSignal>>
     r && Array.isArray(r.facts) ? (r as WorldSignal) : undefined);
 }
 
+/**
+ * The member's planned days, with a weather fact only where the provider's
+ * dated forecast lands on one of them. `matched` is empty whenever there is
+ * nothing to join, which is the point: this is not a weather feed.
+ */
+export interface PlannedWeatherMatch {
+  date: string;
+  dayIndex: number;
+  eventTitle: string;
+  /** The plan's own identity. `slug` is null when it has no public page. */
+  campaignId: string | null;
+  slug: string | null;
+  eventCount: number;
+  startsAt: string | null;
+  location: string | null;
+  fact: { kind: string; text: string; value: number | null; unit: string | null };
+}
+
+export interface PlannedWeather {
+  available: boolean;
+  matched: PlannedWeatherMatch[];
+  plannedDays?: Array<{ date: string; dayIndex: number; events: unknown[] }>;
+  unmatchedDays?: number;
+  reason: string | null;
+  provider: string | null;
+  providerLicence?: string | null;
+  horizonDays?: number | null;
+  note?: string;
+}
+
+export function getPlannedWeather(place?: string | null): Promise<ApiResult<PlannedWeather>> {
+  const q = place && place.trim() ? `?place=${encodeURIComponent(place.trim().slice(0, 80))}` : '';
+  return request<PlannedWeather>(`/api/planned-weather${q}`, undefined, (r) =>
+    r && Array.isArray(r.matched) && typeof r.available === 'boolean' ? (r as PlannedWeather) : undefined);
+}
+
 export function getPulse(): Promise<ApiResult<Pulse>> {
   return request('/api/pulse', undefined, r =>
     r && Array.isArray(r.facts) && r.sections ? (r as Pulse) : undefined);

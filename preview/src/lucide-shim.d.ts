@@ -136,4 +136,5 @@ declare module 'lucide-react' {
   export const Package: LucideIcon;
   export const Info: LucideIcon;
   export const SlidersHorizontal: LucideIcon;
+  export const LayoutGrid: LucideIcon;
 }

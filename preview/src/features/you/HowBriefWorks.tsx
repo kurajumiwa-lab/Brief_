@@ -64,9 +64,11 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       id: 'world',
       title: 'The weather line',
       lines: [
-        'The world facts come from Open-Meteo, a key-free public forecast service, resolved through their own gazetteer and cached for six hours per place. The payload carries the provider, the model, the elevation it read, when it was retrieved and how old that is.',
-        'It is a forecast, not a measurement — the payload has no observation time, and the horizon is stated. When the provider cannot be reached, the last read is shown only within its tolerance and labelled with its age; after that the strip says it could not be read. A gap is printed as a gap.',
-        'Commodity prices and pump prices are not wired. There is no key-free price source Brief can legitimately read, so the strip carries no percentage and no market movement, and says so rather than dressing a quiet screen up with an invented number.'
+        'Weather is shown on one condition: the day it describes is a day you have already committed to. The join is your own registration rows for a published or live event against a dated forecast fact for that same date — so Home carries no weather at all for a member with nothing planned, and no card is printed “because the screen needs something in it”.',
+        'The facts come from Open-Meteo, a key-free public forecast service, resolved through their own gazetteer and cached for six hours per place. The payload carries the provider, the model, the elevation it read, when it was retrieved and how old that is, and the sentence on your screen is that payload’s own words — nothing is rounded, averaged or re-phrased into a stronger claim.',
+        'It is a forecast, not a measurement — the payload has no observation time, and the horizon is stated. A planned day the provider gave no dated fact for is reported as unmatched, not filled with a generic forecast; and when the provider cannot be reached, no line appears at all. A gap is printed as a gap, which here means the absence of a card.',
+        'A day beyond the forecast horizon is left out of the planned list rather than shown with a guess, and a campaign with no date is never defaulted to today — that would be Brief inventing a schedule.',
+        'Commodity prices and pump prices are not wired. There is no key-free price source Trace can legitimately read, so no percentage and no market movement is shown anywhere, and the screen says so rather than dressing a quiet week up with an invented number.'
       ]
     },
     {

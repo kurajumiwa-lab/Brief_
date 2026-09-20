@@ -1,0 +1,171 @@
+// ---------------------------------------------------------------------------
+// EARN STRIP — the income rails, on the screen people actually open.
+//
+// The brief's point: the money rails live on You → Earn, and a member who never
+// opens that screen never sees that the rails exist. So the rails get a surface
+// here — the SAME three reads EarnSurface uses, from the same endpoints, with no
+// second copy of the arithmetic. Two rails are counts of rows, one is a
+// conversion rate the server publishes, and every one of them renders as `—`
+// when the read failed, never as 0 and never as an estimate.
+//
+// What this deliberately does not do:
+//   * no "you could have earned", no missed-KES, no projection of next month;
+//   * no tier, badge, rank or streak on any of it (the pool has none — see
+//     `position.js`: "deliberately NO fabricated rider queue, NO tier/badge
+//     ladder, NO streak");
+//   * no "1 conversion pending" dressed as money in the pocket: a pending
+//     conversion is finance's queue, not cash, and it is labelled that way.
+// The rate line states the ratio it uses, because a number divided by a rate the
+// reader cannot see is not information.
+// ---------------------------------------------------------------------------
+import React, { useEffect, useState } from 'react';
+import { Coins, Users, Wallet, ArrowRight } from 'lucide-react';
+import * as briefApi from '../../api/briefApi';
+import type { MyReferrals, FieldAgentOverview, LipaMdogoContract } from '../../api/briefApi';
+import { soundEngine } from '../../utils/SoundEngine';
+
+const EMPTY = '—';
+const kes = (n: number | null | undefined) =>
+  typeof n === 'number' && Number.isFinite(n) ? `KES ${n.toLocaleString('en-KE')}` : EMPTY;
+
+type Rail = {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  /** A real count behind the value, or null when the read failed. */
+  sub: string;
+  failed: boolean;
+};
+
+export function EarnStrip({
+  onOpenEarn,
+  className = ''
+}: {
+  onOpenEarn?: () => void;
+  className?: string;
+}) {
+  const [refs, setRefs] = useState<MyReferrals | null>(null);
+  const [agent, setAgent] = useState<FieldAgentOverview | null>(null);
+  const [contracts, setContracts] = useState<LipaMdogoContract[] | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState({ refs: false, agent: false, contracts: false });
+
+  useEffect(() => {
+    let live = true;
+    void Promise.all([
+      briefApi.myReferrals(),
+      briefApi.getMyFieldAgent(),
+      briefApi.getMyLipaMdogo()
+    ]).then(([r, a, c]) => {
+      if (!live) return;
+      setLoaded(true);
+      setFailed({ refs: !r.ok, agent: !a.ok, contracts: !c.ok });
+      setRefs(r.ok ? r.data : null);
+      setAgent(a.ok ? a.data : null);
+      setContracts(c.ok ? c.data : null);
+    });
+    return () => { live = false; };
+  }, []);
+
+  // A 401 means there is no member, not that they have nothing. The card says
+  // what the rails ARE and lets the sign-in do the rest — it does not print
+  // three zeros, which would read as "you have earned nothing here".
+  const signedOut = loaded && failed.refs && failed.agent && failed.contracts;
+
+  const pending = refs?.conversions.filter((x) => x.status === 'pending').length ?? 0;
+  const rails: Rail[] = [
+    {
+      key: 'points',
+      icon: <Coins className="w-3.5 h-3.5" />,
+      label: 'Points available',
+      value: refs ? String(refs.balance.available) : EMPTY,
+      // The rate is quoted, never applied here. The server decides what a
+      // conversion is worth at the moment it is requested (and refuses when the
+      // pool cannot pay); a second copy of that arithmetic on a home screen would
+      // be a number that can quietly disagree with the money.
+      sub: refs
+        ? `100 points = KES ${Math.round(100 * refs.conversion.ptsToKes)} · min ${refs.conversion.minPoints} to convert`
+        : 'the pool, when it can be read',
+      failed: !refs
+    },
+    {
+      key: 'territory',
+      icon: <Users className="w-3.5 h-3.5" />,
+      label: 'Territory override',
+      value: agent ? `${agent.override.claims.length} ${agent.override.claims.length === 1 ? 'shop' : 'shops'}` : EMPTY,
+      sub: agent
+        ? `${kes(agent.override.claims.reduce((n, x) => n + (x.overrideKes ?? 0), 0))} settled to date · ${agent.override.rate}% for ${agent.override.months} months`
+        : 'claims on shops you onboarded',
+      failed: !agent
+    },
+    {
+      key: 'financing',
+      icon: <Wallet className="w-3.5 h-3.5" />,
+      label: 'Lipa mdogo',
+      value: contracts ? String(contracts.length) : EMPTY,
+      sub: contracts
+        ? `${contracts.filter((c) => c.maturity === 'overdue').length} overdue · ${contracts.filter((c) => c.maturity === 'matured').length} matured`
+        : 'contracts you are party to',
+      failed: !contracts
+    }
+  ];
+
+  return (
+    <section
+      className={`rounded-2xl p-3 ${className}`}
+      style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+      aria-label="What you earn through Trace"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+          What you can earn here
+        </h2>
+        {onOpenEarn && (
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('tap'); onOpenEarn(); }}
+            className="inline-flex items-center gap-1 text-[11px] font-bold cursor-pointer"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            Earn
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
+      {signedOut ? (
+        <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+          Three rails run through here — points from the referral pool, a territory override on shops
+          you onboard, and the Lipa mdogo contracts you are party to. Sign in and your own figures appear
+          in place of this line.
+        </p>
+      ) : (
+        <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {rails.map((r) => (
+            <li key={r.key} className="rounded-xl p-2.5" style={{ background: 'var(--color-primary-subtle)' }}>
+              <p className="flex items-center gap-1.5 text-[11px] font-bold" style={{ color: 'var(--color-text-muted)' }}>
+                {r.icon}
+                {r.label}
+              </p>
+              <p className="mt-1 text-[15px] font-black leading-none" style={{ color: 'var(--color-text)' }}>
+                {loaded ? r.value : EMPTY}
+              </p>
+              <p className="mt-1 text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+                {loaded ? r.sub : 'reading your rows'}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {loaded && !signedOut && pending > 0 && (
+        <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+          {pending} conversion{pending === 1 ? '' : 's'} waiting on finance. Not cash yet, and not counted as available.
+        </p>
+      )}
+    </section>
+  );
+}
+
+export default EarnStrip;

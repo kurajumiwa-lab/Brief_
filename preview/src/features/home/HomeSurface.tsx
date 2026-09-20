@@ -18,20 +18,18 @@ import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { MuseumGallery } from '../city/MuseumGallery';
 import { SignalBar } from './SignalBar';
-import { WorldStrip } from './WorldStrip';
+import { PlannedWeather } from './PlannedWeather';
+import { EarnStrip } from './EarnStrip';
 import { StakesLine } from './StakesLine';
 import { NextMoveCard } from './NextMoveCard';
 import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
-import { PositionCard } from './PositionCard';
-import { CommitmentsCard } from './CommitmentsCard';
-import { ReciprocityCard } from './ReciprocityCard';
 
 // ---------------------------------------------------------------------------
 // HOME — three zones, one glance (§9 of the reformation).
 //
 //   1. What is the world doing?   → SignalBar   (real rows, snapshot-stamped)
-//                              + WorldStrip     (a public provider, dated)
+//                              + PlannedWeather (a dated forecast on a PLANNED day, else nothing)
 //   2. What should I do?          → NextMoveCard (one decision, derived)
 //   3. What is out there?         → MuseumGallery (real published events)
 //
@@ -44,6 +42,9 @@ import { ReciprocityCard } from './ReciprocityCard';
 // ---------------------------------------------------------------------------
 
 export interface HomeSurfaceProps {
+  /** Jump to You → Earn. The rails are surfaced on Home; the acting is done on
+      Earn, which is where the conversion control and its refusals live. */
+  onOpenEarn?: () => void;
   userName?: string;
   onOpenSpace: (spaceId: string) => void;
   onExploreDiscover?: (subTab?: 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all') => void;
@@ -64,6 +65,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   onGetPaid,
   onOpenSpaces,
   onOpenPulse,
+  onOpenEarn,
   className = ''
 }) => {
   const [spaces, setSpaces] = useState<Space[]>([]);
@@ -195,10 +197,16 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
       <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('all'))} />
 
-      {/* Zone 1's other half. The ledger is the user's; this is the country's —
-          so a first week in Brief has something true to read instead of four
-          zeros. Every sentence here came from the provider, not from this file. */}
-      <WorldStrip />
+      {/* Weather, and only where it is useful: a week of forecast for a member
+          with nothing planned is what every other app prints, so it is what
+          nobody reads. This renders one line where a dated forecast fact lands on
+          a day the member already committed to, and renders nothing otherwise. */}
+      <PlannedWeather />
+
+      {/* The income rails used to exist only behind You → Earn, which most
+          members never open. Same three reads, same endpoints, no second copy of
+          the arithmetic. */}
+      <EarnStrip onOpenEarn={() => onOpenEarn?.()} />
 
       {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
       <NextMoveCard position={position} denied={positionDenied} />
@@ -233,18 +241,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         }}
       />
 
-      {/* ── BELOW THE FOLD: the full derivation, then management ── */}
-      <div className="space-y-4 pt-1">
-        <PositionCard position={position} />
-        <CommitmentsCard commitments={commitments} />
-        <ReciprocityCard reciprocity={reciprocity} />
-      </div>
-
-      <div className="p-3 rounded-2xl bg-[color:var(--color-primary-subtle)]" style={{ boxShadow: 'var(--lift-signal)' }}>
-        <p className="text-[12px] leading-snug" style={{ color: "var(--color-text)" }}>
-          <strong style={{ color: "var(--color-primary)" }}>Tip:</strong> a space is your project — add an offer, take orders, track the money. Make it <strong>Public</strong> to be found by others, or keep it <strong>Private</strong>.
-        </p>
-      </div>
+      {/* The full derivation of your standing — position, commitments,
+          reciprocity — lives on ONE screen (You → Standing), and the belt's
+          sheet links it. Home used to repeat all three cards here, which is how
+          a screen fills up with the same numbers wearing different hats. The
+          "Tip" box went the same way: a definition of what a space is belongs on
+          the audit screen (You → How Trace works), not above your own list. */}
 
       {/* ── RUN YOUR SPACES — management, collapsed by default: it is work,
              not the thing you came to see. ── */}
