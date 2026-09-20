@@ -4,6 +4,9 @@ declare module 'lucide-react' {
   export const Building2: LucideIcon;
   export const Search: LucideIcon;
   export const ShieldAlert: LucideIcon;
+  export const UtensilsCrossed: LucideIcon;
+  export const HeartHandshake: LucideIcon;
+  export const Shapes: LucideIcon;
   export const ShieldQuestion: LucideIcon;
   export const ShieldX: LucideIcon;
   export const Snowflake: LucideIcon;

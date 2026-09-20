@@ -34,6 +34,30 @@ import { platformRolesOf } from '../identity.js';
 import { notify } from './notifications.js';
 
 export const ERRAND_STATUS = ['open', 'accepted', 'picked_up', 'delivered', 'cancelled'];
+
+/**
+ * What kind of job it is. A small, honest set — six, chosen so that a person can
+ * find their errand in one glance and a carrier can read it in the same second.
+ *
+ * Two rules that come with it:
+ *   • `kind` is OPTIONAL. An errand with no kind is not misfiled and not hidden;
+ *     it appears under "Any kind" and in no filter. Same doctrine as the
+ *     marketplace flows: an untagged listing is counted as untagged rather than
+ *     guessed into a category by reading its title.
+ *   • there is deliberately NO count on a tile. Six tiles each saying "0" is a
+ *     picture of an empty shelf, and a number that only exists to be zero is not
+ *     information. If a count is added later it must be a real one, on read.
+ */
+export const ERRAND_KINDS = [
+  { id: 'delivery', label: 'Delivery', blurb: 'A to B, someone carries it' },
+  { id: 'pickup', label: 'Pickup', blurb: 'Collect it and bring it back' },
+  { id: 'food', label: 'Food', blurb: 'Meals, market runs, hot now' },
+  { id: 'skilled', label: 'Repairs & skilled', blurb: 'Needs a hand that knows' },
+  { id: 'care', label: 'Care & household', blurb: 'People, pets, the house' },
+  { id: 'other', label: 'Something else', blurb: 'Say it in your own words' }
+];
+export const ERRAND_KIND_IDS = ERRAND_KINDS.map((k) => k.id);
+export const kindLabel = (id) => ERRAND_KINDS.find((k) => k.id === id)?.label ?? null;
 export const RATING_MIN = 1;
 export const RATING_MAX = 5;
 
@@ -119,9 +143,14 @@ export function postErrand({
   whenNeeded = null,
   offeredFeeKes = null,
   note = '',
-  sizeOrWeight = null
+  sizeOrWeight = null,
+  kind = null
 } = {}) {
   if (!actorId) return err('a session is required to post an errand', 401);
+  const chosenKind = kind == null || String(kind).trim() === '' ? null : String(kind).trim().toLowerCase();
+  if (chosenKind !== null && !ERRAND_KIND_IDS.includes(chosenKind)) {
+    return err(`kind must be one of ${ERRAND_KIND_IDS.join(', ')} — or left blank`, 400);
+  }
   const title = text(what, 140);
   if (title.length < 4) return err('say what needs carrying in at least 4 characters');
   if (!text(pickup, 200)) return err('name the place to collect from');
@@ -143,6 +172,7 @@ export function postErrand({
     pickup: text(pickup, 200),
     dropoff: text(dropoff, 200),
     sizeOrWeight: sizeOrWeight ? text(sizeOrWeight, 80) : null,
+    kind: chosenKind ?? null,
     whenNeeded: when,
     offeredFeeKes: fee,
     currency: 'KES',
@@ -199,9 +229,13 @@ function notifyCarriers(errand) {
   };
 }
 
-export function listErrands({ viewerId = null, status = null, limit = 50 } = {}) {
+export function listErrands({ viewerId = null, status = null, kind = null, limit = 50 } = {}) {
+  const want = kind == null || String(kind).trim() === '' || String(kind) === 'any'
+    ? null
+    : String(kind).trim().toLowerCase();
+  if (want && !ERRAND_KIND_IDS.includes(want)) return [];
   const rows = store
-    .filter('errands', (e) => (status ? e.status === status : true))
+    .filter('errands', (e) => (status ? e.status === status : true) && (want ? e.kind === want : true))
     .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
     .slice(0, Math.max(1, Math.min(limit, 200)));
   return rows.map((r) => errandView(r, viewerId));
@@ -442,6 +476,9 @@ export function errandView(row, viewerId = null) {
     pickup: row.pickup,
     dropoff: row.dropoff,
     sizeOrWeight: row.sizeOrWeight,
+    // Stated as both id and words, so no surface re-maps the list and drifts.
+    kind: row.kind ?? null,
+    kindLabel: kindLabel(row.kind),
     whenNeeded: row.whenNeeded,
     offeredFeeKes: row.offeredFeeKes,
     currency: row.currency,

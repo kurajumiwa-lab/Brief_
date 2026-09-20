@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bike, Check, Plus, Star, Truck, Users } from 'lucide-react';
+import { Bike, Check, HeartHandshake, Package, Plus, Shapes, Star, Truck, Users, UtensilsCrossed, Wrench } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import type { Errand, ErrandBoard, ErrandProviders } from '../../api/briefApi';
 import { WairoDispatchPanel } from './WairoDispatchPanel';
@@ -56,6 +56,15 @@ export function basisLabel(code: string): string {
   return raw;
 }
 
+const KIND_ICON: Record<string, React.ComponentType<{ className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>> = {
+  delivery: Truck,
+  pickup: Package,
+  food: UtensilsCrossed,
+  skilled: Wrench,
+  care: HeartHandshake,
+  other: Shapes
+};
+
 export function ErrandsLobby({ className = '' }: { className?: string }) {
   const [board, setBoard] = useState<ErrandBoard | null>(null);
   const [providers, setProviders] = useState<ErrandProviders | null>(null);
@@ -68,6 +77,10 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
   // surface: the card states the limit in a clause, the reason is a tap away.
   const [whyOpen, setWhyOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState({ what: '', pickup: '', dropoff: '', sizeOrWeight: '', whenNeeded: '', offeredFeeKes: '', note: '' });
+  // The chosen kind lives with the board, not the composer: tapping a tile both
+  // labels what you are about to post and filters what you can see, which is the
+  // only reason the grid is on the screen at all.
+  const [kind, setKind] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await briefApi.getErrandBoard();
@@ -143,7 +156,8 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
       sizeOrWeight: draft.sizeOrWeight.trim() || null,
       whenNeeded: draft.whenNeeded || null,
       offeredFeeKes: draft.offeredFeeKes.trim() === '' ? null : Number(draft.offeredFeeKes),
-      note: draft.note.trim()
+      note: draft.note.trim(),
+      kind
     });
     setBusy(null);
     if (!res.ok) {
@@ -153,6 +167,7 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
     const n = res.data.notified?.notified ?? 0;
     setNotice(`Posted. ${n} carrier${n === 1 ? '' : 's'} with a record on Brief ${n === 1 ? 'was' : 'were'} notified in their app — nothing was texted or sent on WhatsApp.`);
     setDraft({ what: '', pickup: '', dropoff: '', sizeOrWeight: '', whenNeeded: '', offeredFeeKes: '', note: '' });
+    setKind(null);
     setPosting(false);
     await load();
   };
@@ -175,6 +190,12 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
   }
 
   const eligibility = board.eligibility;
+  // The filter runs over the rows the board already returned, and the reset chip
+  // says so as a true count. The API also accepts ?kind= for anyone paging the
+  // board directly; filtering here avoids a second request for a list this screen
+  // has in hand, and it means the grid can never show a number the server did not
+  // answer with.
+  const visibleOpen = kind ? board.open.filter((e) => e.kind === kind) : board.open;
 
   return (
     <div className={`brief-lobby p-4 sm:p-5 space-y-5 ${className}`}>
@@ -269,6 +290,63 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: '#241F1A' }}>
           On the board
         </h3>
+        {/* ── The kinds ──────────────────────────────────────────────────
+            1xBet's category grid is worth stealing; its category *page* is not.
+            These tiles are honest because the taxonomy is stored on the errand
+            row (validated on the server, `domain/errands.js`), not inferred from
+            the words in a title. Untyped errands stay on the board under "Any
+            kind" — an unlabelled row is a real state, and silently filing it
+            would be the same invention as a padded count. No tile carries a
+            number, so six zeros cannot be painted as a shop window. */}
+        {(board.kinds?.length ?? 0) > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {board.kinds!.map((k) => {
+              const on = kind === k.id;
+              const Icon = KIND_ICON[k.id] ?? Shapes;
+              return (
+                <button
+                  key={k.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setKind(on ? null : k.id)}
+                  className="flex items-center gap-2.5 p-3 rounded-2xl text-left cursor-pointer"
+                  style={{
+                    background: on ? 'var(--color-primary)' : 'var(--color-well)',
+                    color: on ? 'var(--accent-ink)' : 'var(--brief-ink)',
+                    boxShadow: on ? 'var(--lift-signal)' : 'none'
+                  }}
+                >
+                  <span
+                    className="w-9 h-9 rounded-full grid place-items-center shrink-0"
+                    style={{ background: on ? 'rgba(255,255,255,0.16)' : 'var(--color-paper)' }}
+                  >
+                    <Icon className="w-4 h-4" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-bold leading-tight">{k.label}</span>
+                    <span
+                      className="block text-[11px] leading-tight mt-0.5"
+                      style={{ color: on ? 'rgba(255,255,255,0.8)' : 'var(--brief-muted)' }}
+                    >
+                      {k.blurb}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+            {kind && (
+              <button
+                type="button"
+                onClick={() => setKind(null)}
+                className="col-span-2 py-2 rounded-full text-[12px] font-bold cursor-pointer"
+                style={{ background: 'var(--color-paper)', color: 'var(--color-primary)' }}
+              >
+                Any kind · showing {visibleOpen.length} of {board.open.length}
+              </button>
+            )}
+          </div>
+        )}
+
         {board.open.length === 0 ? (
           <div className="brief-lobby-card p-4" data-urgency="quiet">
             <p className="text-sm font-bold" style={{ color: '#241F1A' }}>Nothing is posted right now.</p>
@@ -278,8 +356,13 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
           </div>
         ) : (
           <ul className="space-y-2.5">
-            {board.open.map((e) => (
+            {visibleOpen.map((e) => (
               <li key={e.id}>
+                {kind && e.kind === kind ? (
+                  <p className="mb-1 text-[11px] font-bold" style={{ color: 'var(--brief-muted)' }}>
+                    Matched on “{e.kindLabel}” — the kind the poster chose
+                  </p>
+                ) : null}
                 <ErrandCard
                   errand={e}
                   stages={board.stages}

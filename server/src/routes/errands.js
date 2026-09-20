@@ -39,11 +39,18 @@ export function register(app) {
   app.get('/api/errands', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
+    // The tile list comes from the server, so the grid and the store can never
+    // disagree about what kinds exist. A client-side copy would be a second
+    // taxonomy that drifts the first time one of them is edited.
+    const kind = req.query.kind ?? null;
     res.json({
-      open: errands.listErrands({ viewerId: me, status: 'open' }),
+      open: errands.listErrands({ kind, viewerId: me, status: 'open' }),
       mine: errands.myErrands(me),
       eligibility: errands.canCarry(me),
       carriersAround: errands.carryBoard().length,
+      carriers: errands.carryBoard(),
+      kinds: errands.ERRAND_KINDS,
+      filtered: kind != null && String(kind) !== '' && String(kind) !== 'any',
       stages: errands.LOOP_STAGES
     });
   });
@@ -60,7 +67,8 @@ export function register(app) {
       whenNeeded: b.whenNeeded,
       offeredFeeKes: b.offeredFeeKes,
       note: b.note,
-      sizeOrWeight: b.sizeOrWeight
+      sizeOrWeight: b.sizeOrWeight,
+      kind: b.kind
     }));
   });
 

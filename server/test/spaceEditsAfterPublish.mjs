@@ -81,10 +81,19 @@ await test("an offer edits after publishing, through its lawful moves only", () 
   const published = spaces.publishSpaceOffer(sp.id, offer.id, { callerId: owner.id });
   assert.equal(published.status, "active", "publishing is a real transition");
 
-  // The price is editable while live...
-  const repriced = listings.updateListing(offer.id, { price: 3900 });
+  // The price is editable while live — with a reason, and the reason is kept.
+  // (Amended 2026-09-20: a published money change now needs `reason` and appends
+  // a revision row. The offer stays editable; what it can no longer do is change
+  // quietly.)
+  const repriced = listings.updateListing(offer.id, { price: 3900, reason: "eggs and flour came down at the market" });
   assert.equal(repriced.price, 3900, "a live offer's price can be changed");
   assert.equal(repriced.status, "active", "and an edit never moves it through the lifecycle");
+  {
+    const [rev] = listings.revisionsFor(offer.id);
+    assert.deepEqual([rev.field, rev.before, rev.after], ["price", 4500, 3900], "the change is on the record with its true before-value");
+    assert.equal(rev.reason, "eggs and flour came down at the market", "in the seller's own words");
+  }
+  assert.throws(() => listings.updateListing(offer.id, { price: 4100 }), /say why/, "a silent repricing is what is gone, not the ability to reprice");
 
   // ...but a status sent as a content field is not a patchable field at all.
   const sneaky = listings.updateListing(offer.id, { status: "draft" });
@@ -114,12 +123,16 @@ await test("a price change after an order never rewrites the order the buyer pla
   const order = spaces.createSpaceOrder({ spaceId: sp.id, offerId: offer.id, quantity: 3, customerName: "Wanjiku", callerId: owner.id });
   assert.equal(order.total, 3600, "the order carries the total it was created with");
 
-  listings.updateListing(offer.id, { price: 2000 });
+  listings.updateListing(offer.id, { price: 2000, reason: "butter and sugar went up" });
   const stillSame = store.find("orders", (o) => o.id === order.id);
   assert.equal(stillSame.total, 3600, "and the new price does not reach back into it");
 
   // An archived/paused listing stops taking orders, with a reason a buyer reads.
+  // Re-sending the SAME price is not an event: it needs no reason and writes no
+  // row — the gate catches changes, not form submissions.
+  const beforeNoop = listings.revisionsFor(offer.id).length;
   listings.updateListing(offer.id, { price: 2000 });
+  assert.equal(listings.revisionsFor(offer.id).length, beforeNoop, "an unchanged price is not recorded as a change");
   const check = listings.orderableReason(store.find("listings", (l) => l.id === offer.id));
   assert.equal(check.ok, true, "an active offer is still orderable");
   listings.transitionListing(offer.id, "archived");

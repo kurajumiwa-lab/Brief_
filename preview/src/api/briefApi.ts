@@ -5048,9 +5048,18 @@ export interface ErrandRating {
   note: string | null;
   createdAt: string;
 }
+export interface ErrandKind {
+  id: string;
+  label: string;
+  blurb: string;
+}
 export interface Errand {
   id: string;
   what: string;
+  /** Which kind of job, as stored on the row. null means "nobody labelled it",
+   *  which is a real state and not a value to be guessed into. */
+  kind: string | null;
+  kindLabel: string | null;
   pickup: string;
   dropoff: string;
   sizeOrWeight: string | null;
@@ -5091,6 +5100,8 @@ export interface ErrandBoard {
   eligibility: ErrandEligibility;
   carriersAround: number;
   stages: Array<{ key: string; label: string }>;
+  /** Served by the API so the grid and the store cannot hold two taxonomies. */
+  kinds?: ErrandKind[];
 }
 export function getErrandBoard(): Promise<ApiResult<ErrandBoard>> {
   return request<ErrandBoard>('/api/errands', undefined, (r) =>
@@ -5099,6 +5110,7 @@ export function getErrandBoard(): Promise<ApiResult<ErrandBoard>> {
 export function postErrand(body: {
   what: string; pickup: string; dropoff: string;
   whenNeeded?: string | null; offeredFeeKes?: number | null; note?: string; sizeOrWeight?: string | null;
+  kind?: string | null;
 }): Promise<ApiResult<{ errand: Errand; notified: { notified: number; skippedByPreference: number; channels: Record<string, string>; note: string } }>> {
   return request('/api/errands', { method: 'POST', body: JSON.stringify(body) }, (r) =>
     r?.errand ? { errand: r.errand, notified: r.notified } : undefined);

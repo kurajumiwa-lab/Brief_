@@ -63,6 +63,7 @@ const OPEN_ERRAND = {
   id: 'erd_1', what: 'Seal a file at City Hall', pickup: 'Wakulima stall 42', dropoff: 'City Hall, tower section',
   sizeOrWeight: 'one folder', whenNeeded: '2026-09-17', offeredFeeKes: 300, currency: 'KES', note: 'cash on arrival',
   status: 'open', posterId: 'usr_poster', posterName: 'Amina', acceptedBy: null, carrierName: null, carrierBasis: [],
+  kind: 'delivery', kindLabel: 'Delivery',
   settlement: null, cancelReason: null, isMine: false, iAmTheCarrier: false, iAmThePoster: false,
   canRate: false, canConfirmFee: false, createdAt: nowIso, updatedAt: nowIso,
   history: [{ action: 'errand_posted', at: nowIso, by: 'Amina' }],
@@ -73,7 +74,7 @@ const OPEN_ERRAND = {
 const MINE_DELIVERED = {
   ...OPEN_ERRAND, id: 'erd_2', what: 'Take the prescription to Kilimani', status: 'delivered',
   isMine: true, iAmThePoster: true, acceptedBy: 'usr_agent', carrierName: 'Otieno', carrierBasis: ['agent:2 active shop claims'],
-  canRate: true, canConfirmFee: true,
+  canRate: true, canConfirmFee: true, kind: null, kindLabel: null,
   settlement: { amountKes: 250, currency: 'KES', confirmedBy: ['usr_agent'], confirmedNames: ['Otieno'], at: null, movedBy: null },
   loop: [stage('posted', 'Posted', nowIso), stage('accepted', 'A carrier took it', nowIso), stage('picked_up', 'Collected at the source', nowIso), stage('delivered', 'Delivered', nowIso), stage('settled', 'Fee agreed between you', null), stage('rated', 'Rated by both sides', null)],
   ratings: [{ id: 'erat_1', by: 'Otieno', about: 'poster', stars: 4, note: 'met me at the gate', createdAt: nowIso }]
@@ -82,7 +83,15 @@ const MINE_DELIVERED = {
 const ELIGIBLE = { eligible: true, basis: ['agent:2 active shop claims'], howToJoin: 'Carry rights follow a real record', note: 'derived' };
 const NOT_ELIGIBLE = { eligible: false, basis: [], howToJoin: 'Carry rights follow a real record — onboard a shop, hold a role, or complete a pickup.', note: 'derived' };
 
-let board = { open: [OPEN_ERRAND], mine: [MINE_DELIVERED], eligibility: NOT_ELIGIBLE, carriersAround: 3, stages: OPEN_ERRAND.loop.map((l) => ({ key: l.key, label: l.label })) };
+const KINDS = [
+  { id: 'delivery', label: 'Delivery', blurb: 'A to B, someone carries it' },
+  { id: 'pickup', label: 'Pickup', blurb: 'Collect it and bring it back' },
+  { id: 'food', label: 'Food', blurb: 'Meals, market runs, hot now' },
+  { id: 'skilled', label: 'Repairs & skilled', blurb: 'Needs a hand that knows' },
+  { id: 'care', label: 'Care & household', blurb: 'People, pets, the house' },
+  { id: 'other', label: 'Something else', blurb: 'Say it in your own words' }
+];
+let board = { open: [OPEN_ERRAND], mine: [MINE_DELIVERED], eligibility: NOT_ELIGIBLE, carriersAround: 3, kinds: KINDS, stages: OPEN_ERRAND.loop.map((l) => ({ key: l.key, label: l.label })) };
 let providers = {
   integrated: [{ key: 'wairo', name: 'WAIRO riders', what: 'Bike and foot errands around town', canDispatchThroughBrief: true, agentsOnRecord: 2, deliveredPickups: 5, note: 'Dispatched and tracked in Brief.' }],
   usedHere: [{ key: 'sacco:Easy Ride', name: 'Easy Ride', what: 'Inter-county cargo, stage-to-stage', canDispatchThroughBrief: false, dispatchesRecorded: 4, waybillsCaptured: 3, note: 'Named by people using Brief.' }],
@@ -259,6 +268,53 @@ async function main() {
     }
   }
   pass('Eligibility says what it means, and keeps the audit code one attribute away');
+
+  // --- 9. the kinds grid: a filter that filters something real -------------
+  // 1xBet's category grid is copied here only because the kind is a column on
+  // the errand row (validated in domain/errands.js). Six tiles that filtered
+  // nothing, or filed an unlabelled errand into a guess, would be the same lie
+  // wearing better typography.
+  {
+    board = {
+      ...board,
+      kinds: KINDS,
+      open: [OPEN_ERRAND, { ...OPEN_ERRAND, id: 'erd_untyped', what: 'Hold my place at the queue', kind: null, kindLabel: null }]
+    };
+    const { container } = mount(React.createElement(ErrandsLobby, {}));
+    await flush();
+    const t = text(container);
+    for (const k of KINDS) assert.ok(t.includes(k.label), `the tile "${k.label}" is rendered from the server's list`);
+    assert.ok(t.includes('Seal a file at City Hall') && t.includes('Hold my place at the queue'),
+      'both errands show unfiltered, the unlabelled one included');
+    assert.ok(!/Delivery · 1|\b6 new\b/.test(t), 'no tile carries a count, so no tile can print a decorative zero');
+
+    const tile = Array.from(container.querySelectorAll('button')).find((b) => text(b).startsWith('Delivery'));
+    assert.ok(tile, 'the tile is a button, not a picture');
+    assert.equal(tile.getAttribute('aria-pressed'), 'false', 'unselected, and stated');
+    act(() => { tile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const t2 = text(container);
+    assert.ok(t2.includes('Seal a file at City Hall'), 'the labelled errand survives the filter');
+    assert.ok(!t2.includes('Hold my place at the queue'), 'the unlabelled one is out of the filtered view');
+    assert.ok(t2.includes('Matched on “Delivery”'), "and the row says why it matched, in the poster's own words");
+    const reset = Array.from(container.querySelectorAll('button')).find((b) => text(b).includes('Any kind'));
+    assert.ok(reset && text(reset).includes('1 of 2'), 'the reset chip states the true count, not a vague "fewer"');
+    act(() => { reset.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    assert.ok(text(container).includes('Hold my place at the queue'), 'clearing the filter brings the unlabelled row back');
+  }
+  {
+    // If the API does not send a taxonomy, the grid is absent. A client-side copy
+    // of the kinds would be a second source of truth, ready to drift.
+    board = { ...board, kinds: undefined };
+    const { container } = mount(React.createElement(ErrandsLobby, {}));
+    await flush();
+    assert.ok(!text(container).includes('Repairs & skilled'), 'no hard-coded fallback list');
+    assert.ok(text(container).includes('Seal a file at City Hall'), 'the board itself still works');
+    board = { ...board, kinds: KINDS };
+  }
+  pass('Kinds grid: filters a stored field, shows unlabelled rows, invents no counts and no taxonomy');
+
 
   console.log('\nPASS ' + count);
   process.exit(0);
