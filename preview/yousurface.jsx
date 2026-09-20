@@ -254,6 +254,29 @@ async function main() {
   }
   pass('YouSurface: Standing, Orders and Selling rails exist and stay derived-only');
 
+  // --- 6b. the four-group layout keeps every rail reachable -----------------
+  {
+    const src = require('fs')
+      .readFileSync(require('path').join(__dirname, 'src/features/you/YouSurface.tsx'), 'utf8')
+      .toString();
+    const groupBlock = src.slice(src.indexOf('const YOU_GROUPS'), src.indexOf('type Section ='));
+    // Group entries span lines; item entries are one line each — so this picks
+    // out exactly the pills, and nothing else.
+    const items = [...groupBlock.matchAll(/\{ id: "([a-zA-Z]+)", label: "([^"]+)" \}/g)].map((m) => [m[1], m[2]]);
+    const ids = items.map(([id]) => id);
+    const expected = ['profile', 'standing', 'following', 'selling', 'orders', 'network', 'earn', 'tableBanking', 'subscriptions', 'archive', 'how'];
+    assert.deepEqual([...ids].sort(), [...expected].sort(),
+      'the grouping lists every section exactly once — a reorganisation may move a rail, never drop or rename one');
+    assert.equal(new Set(ids).size, ids.length, 'no section sits in two groups');
+    // The labels are what the suite elsewhere clicks on; they must survive too.
+    for (const label of ['Standing', 'Orders', 'Selling', 'Subscriptions', 'How Trace works']) {
+      assert.ok(items.some(([, l]) => l === label), `the "${label}" pill is still labelled "${label}"`);
+    }
+    assert.ok(/YOU_GROUPS\.map/.test(src) && !/mt-4 flex flex-wrap gap-2">\s*\{tab\("profile"/.test(src),
+      'the surface renders the groups, not a flat eleven-pill row');
+  }
+  pass('YouSurface: four groups, eleven rails, nothing dropped');
+
   console.log('\nPASS ' + count);
   process.exit(0);
 }

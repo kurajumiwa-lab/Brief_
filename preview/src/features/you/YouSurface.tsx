@@ -43,6 +43,46 @@ const KIND_LABELS: Record<string, string> = {
   community: "Communities"
 };
 
+// The grouping of the You surface, in one list so the order, the labels and the
+// membership of each group are stated once. Kept as data (not as markup) so the
+// suite can assert that no section was silently dropped in a reorganisation:
+// every Section below appears exactly once here.
+const YOU_GROUPS: Array<{ id: string; label: string; items: Array<{ id: Section; label: string }> }> = [
+  {
+    id: "identity",
+    label: "Identity",
+    items: [
+      { id: "profile", label: "Profile" },
+      { id: "standing", label: "Standing" },
+      { id: "following", label: "Following" }
+    ]
+  },
+  {
+    id: "business",
+    label: "Business",
+    items: [
+      { id: "selling", label: "Selling" },
+      { id: "orders", label: "Orders" },
+      { id: "network", label: "Your network" }
+    ]
+  },
+  {
+    id: "money",
+    label: "Money",
+    items: [
+      { id: "earn", label: "Earn" },
+      { id: "tableBanking", label: "Table Banking" },
+      { id: "subscriptions", label: "Subscriptions" },
+      { id: "archive", label: "Archive" }
+    ]
+  },
+  {
+    id: "about",
+    label: "About",
+    items: [{ id: "how", label: "How Trace works" }]
+  }
+];
+
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
   | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how";
@@ -223,18 +263,26 @@ export function YouSurface({
         {me?.handle && <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>@{me.handle}</p>}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {tab("profile", "Profile")}
-        {tab("standing", "Standing")}
-        {tab("following", "Following")}
-        {tab("subscriptions", "Subscriptions")}
-        {tab("earn", "Earn")}
-        {tab("orders", "Orders")}
-        {tab("selling", "Selling")}
-        {tab("archive", "Archive")}
-        {tab("tableBanking", "Table Banking")}
-        {tab("network", "Your network")}
-        {tab("how", "How Trace works")}
+      {/* Four labelled groups, eleven pills in, eleven pills out.
+          The borrow here is only the geometry: a person scanning this screen
+          learns where to look in about a second. Nothing was deleted on the way
+          and nothing was renamed — Subscriptions stays because those rows are
+          real paid plans, and "Archive" stays because a member must be able to
+          find what they closed. Grouping is the whole change. */}
+      <div className="mt-4 space-y-3">
+        {YOU_GROUPS.map((group) => (
+          <div key={group.id}>
+            <p
+              className="text-[11px] font-mono uppercase tracking-wider"
+              style={{ color: "var(--brief-faint)" }}
+            >
+              {group.label}
+            </p>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {group.items.map((item) => tab(item.id, item.label))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {notice && (
