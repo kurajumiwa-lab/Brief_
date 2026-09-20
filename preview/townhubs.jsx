@@ -25,7 +25,6 @@ const { TodayOpportunities } = require('./src/components/home/TodayOpportunities
 const { CommitteeDesk } = require('./src/components/life/CommitteeDesk.tsx');
 const { WellbeingDesk } = require('./src/components/wellbeing/WellbeingDesk.tsx');
 const { CivicKnowledgeGuide } = require('./src/components/civic/CivicKnowledgeGuide.tsx');
-const { BriefAiAssistant } = require('./src/components/ai/BriefAiAssistant.tsx');
 const { UssdSimulatorDesk } = require('./src/components/offline/UssdSimulatorDesk.tsx');
 const { InterCountyDesk } = require('./src/components/wairo/InterCountyDesk.tsx');
 const { PrivateCarrierAuctionDesk } = require('./src/components/wairo/PrivateCarrierAuctionDesk.tsx');
@@ -166,22 +165,10 @@ async function main() {
   check('shows 10-action Universal Protocol Bar', text4.includes('Save') && text4.includes('Share') && text4.includes('Verify'));
   await act(async () => { root4.unmount(); host4.remove(); });
 
-  // --- 5. BriefAiAssistant (The Mayor) ---
-  console.log('\n--- 5. BriefAiAssistant ---');
-  const host5 = document.createElement('div');
-  document.body.appendChild(host5);
-  const root5 = createRoot(host5);
-  await act(async () => {
-    root5.render(React.createElement(BriefAiAssistant, {
-      onClose: () => {},
-      onOpenCardAction: () => {}
-    }));
-  });
-
-  const text5 = host5.textContent;
-  check('renders Town Concierge header', text5.includes('Town Concierge') && text5.includes('The Mayor'));
-  check('renders greeting message', text5.includes('Hello Neighbor!') && text5.includes('Town Concierge'));
-  await act(async () => { root5.unmount(); host5.remove(); });
+  // Section 5 (BriefAiAssistant, "The Mayor") was removed with the component: it
+  // was reachable from no app surface, and its default cards carried a hard-coded
+  // 4.9 rating with a review count for vendors that do not exist. The suite only
+  // ever proved the header text rendered — coverage for a fabrication.
 
   // --- 7. UssdSimulatorDesk (2G GSM / SMS Fallback) ---
   console.log('\n--- 7. UssdSimulatorDesk ---');

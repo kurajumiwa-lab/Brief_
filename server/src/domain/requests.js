@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { store, newId } from "../store.js";
 import { recordAudit } from "../routes/helpers.js";
 import { readFile } from "./upload.js";
+import { todayKey } from '../dayBoundary.js';
 
 export const REQUEST_STATUSES = [
   "draft",
@@ -234,7 +235,7 @@ function check(row, publishing = false) {
   if (
     publishing &&
     row.requiredBy &&
-    row.requiredBy < new Date().toISOString().slice(0, 10)
+    row.requiredBy < todayKey()
   )
     fail("Choose a deadline today or later before submitting");
 }
@@ -401,7 +402,7 @@ export function updateRequest(userId, id, input) {
   if (
     patch.requiredBy &&
     patch.requiredBy !== row.requiredBy &&
-    patch.requiredBy < new Date().toISOString().slice(0, 10)
+    patch.requiredBy < todayKey()
   )
     fail("Choose a deadline today or later");
   const e = event(

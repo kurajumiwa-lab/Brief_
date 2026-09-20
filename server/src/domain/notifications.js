@@ -22,6 +22,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import { dayBucket } from '../dayBoundary.js';
 import * as discovery from './discovery.js';
 import * as publicFeed from './publicFeed.js';
 import * as personal from './personal.js';
@@ -129,12 +130,12 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-/** Exported for the suite: the coalescing checks need the module's own notion of
- *  "which day is this", rather than re-deriving it and drifting from the product. */
-export function dayBucket(iso) {
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? String(new Date(t).toISOString().slice(0, 10)) : 'day';
-}
+// The day a notification belongs to comes from the one shared rule
+// (src/dayBoundary.js), so a batch can never disagree with an overdue deadline
+// about when "today" ends. Re-exported here because the day rule is part of this
+// domain's contract with the people it notifies — the suite reads it off this
+// module on purpose.
+export { dayBucket };
 
 // ---------------------------------------------------------------------------
 // PREFERENCES (one row per user, created lazily, defaults ON)

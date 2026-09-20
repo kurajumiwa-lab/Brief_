@@ -1,4 +1,5 @@
 import React from 'react';
+import { TraceMark } from '../components/TraceMark';
 import { TrendingUp, Search } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
@@ -275,11 +276,19 @@ export const Navigation: React.FC<NavigationProps> = ({
           {/* Top Brand & Space Switcher Block */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-2xl bg-[color:var(--color-text)] text-[color:var(--color-primary)] font-black text-base flex items-center justify-center shadow-xs">
-                B
-              </div>
+              {/* The brand mark, not a letter in a box: a mark says "this is the
+                  product", an initial says "this is somebody's avatar". The tints
+                  come from the room so a palette change cannot leave a stale logo
+                  behind. */}
+              <span
+                className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+                aria-hidden="true"
+              >
+                <TraceMark size={20} title="" />
+              </span>
               <span className="text-xl font-black text-[color:var(--color-text)] tracking-tight">
-                Brief
+                Trace
               </span>
             </div>
 

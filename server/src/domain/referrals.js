@@ -20,6 +20,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import { todayKey } from '../dayBoundary.js';
 import { getUser } from './auth.js';
 import * as guardians from './guardians.js';
 import { confirmedServiceRevenue } from './fees.js';
@@ -138,7 +139,7 @@ export function recordOrder(orderId) {
 
 /** One unique visit through a referral link: deduped by day+visitor, and
  *  capped per referrer per day so traffic points cannot be farmed. */
-export function recordTraffic(code, visitorKey, day = new Date().toISOString().slice(0, 10)) {
+export function recordTraffic(code, visitorKey, day = todayKey()) {
   const referrerId = userIdForCode(code);
   if (!referrerId) return null;
   const key = `traffic:${referrerId}:${day}:${String(visitorKey ?? '').slice(0, 64)}`;
