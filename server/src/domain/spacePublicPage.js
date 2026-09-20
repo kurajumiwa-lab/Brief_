@@ -286,7 +286,7 @@ export function unavailableReason(slug) {
   const space = store.find('spaces', (s) => s.slug === key || s.id === key);
   if (!space) return { status: 404, kind: 'unknown', heading: 'No page by that name.', line: 'Brief has nothing at this address — not a hidden shop, just nothing.' };
   if (space.status !== 'active') {
-    return { status: 404, kind: 'archived', heading: `${space.name} has closed on Brief.`, line: 'The owner archived this space, so its page is down.' };
+    return { status: 404, kind: 'archived', heading: `${space.name} has closed on Trace.`, line: 'The owner archived this space, so its page is down.' };
   }
   const visibility = space.visibility ?? 'private';
   if (visibility === 'public') {
@@ -408,7 +408,7 @@ ${view.facts.map((f) => `      <div class="fact"><dt>${esc(f.label)}</dt><dd>${e
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- brief:public-page -->
-<title>${esc(view.name)} — on Brief</title>
+<title>${esc(view.name)} — on Trace</title>
 <meta name="description" content="${esc(DESCRIPTION_LINE(view))}" />
 <meta property="og:type" content="business.business" />
 <meta property="og:site_name" content="Brief" />
@@ -565,7 +565,7 @@ export function renderUnavailable(info, { origin = null } = {}) {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <!-- brief:public-page -->
-<title>Not on Brief</title>
+<title>Not on Trace</title>
 <meta name="robots" content="noindex,nofollow" />
 <meta property="og:title" content="${esc(info.heading)}" />
 <meta property="og:description" content="${esc(info.line)}" />
