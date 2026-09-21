@@ -1167,7 +1167,8 @@ operator has not yet received — the series has now drawn it seven times.
 The recap promoted a second phantom: the Notification System now appears
 in the delivered table, one row above Cooperatives, depending on
 "Everything." Group Buy Streams enters its fifth recap as delivered. The
-honest count is sixteen received of seventeen claimed — and the tree's
+honest count is fifteen received of seventeen claimed (the difference is
+exactly the two phantoms) — and the tree's
 irony this time is that the delivered-looking rows are the missing ones,
 while the row that arrived describes the most-built system in the repo.
 
