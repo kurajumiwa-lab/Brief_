@@ -29,7 +29,6 @@ import { ConnectedGroups } from './components/ConnectedGroups';
 import { MoneyPanel } from './components/MoneyPanel';
 import { ResaleDesk } from './components/ResaleDesk';
 import { MyTickets } from './components/MyTickets';
-import { EventResale } from './components/EventResale';
 import { EventsHub } from './components/EventsHub';
 import { MshikanoDesk } from './components/MshikanoDesk';
 import { VerificationPanel } from './components/VerificationPanel';

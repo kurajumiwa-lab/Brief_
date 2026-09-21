@@ -28,7 +28,6 @@ import { ConnectedGroups } from '../components/ConnectedGroups';
 import { MoneyPanel } from '../components/MoneyPanel';
 import { ResaleDesk } from '../components/ResaleDesk';
 import { MyTickets } from '../components/MyTickets';
-import { EventResale } from '../components/EventResale';
 import { EventsHub } from '../components/EventsHub';
 import { MshikanoDesk } from '../components/MshikanoDesk';
 import { VerificationPanel } from '../components/VerificationPanel';
@@ -4576,10 +4575,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                 </div>
               )}
 
-            {/* Commerce only inside context: this event's own resale seats.
-                Holders list seats they cannot use; buying here holds the seat
-                at the listed price while money is settled with the seller. */}
-            {load.status === 'ready' && <EventResale slug={c.slug} />}
+            {/* Decision 6: no resale market on an event page. The ticket still
+                exists and can still be GIVEN (POST /api/ticket-market/tickets/
+                :id/transfer stays live), but nothing here offers seats for sale
+                — every listing and order route now answers 404. */}
           </>
         )}
       </div>

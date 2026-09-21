@@ -232,4 +232,87 @@ test("D6: GET /api/events ignores featured and sort=popularity, and serves no co
   }
 });
 
+// ---------------------------------------------------------------------------
+// D6 — RESALE. "It cannot be sold through Trace. No resale flow. No transfer
+// marketplace." The ticket itself stays, and so does giving it away: "the
+// ticket can be *given* to someone else."
+//
+// The market is GATED, not deleted. domain/ticketMarket.js is 522 lines of
+// money-adjacent code with zero test coverage, and an uncovered caller is found
+// by a live reference rather than by a grep — so it stays on disk, unreachable
+// for sales, until nothing has broken. These tests fail if it is switched back
+// on, and equally if the permitted half (the ticket, the door scan, the gift)
+// is removed by mistake.
+// ---------------------------------------------------------------------------
+const ticketMarket = await import("../src/domain/ticketMarket.js");
+
+test("D6: the resale market is switched off at its source", () => {
+  assert.equal(ticketMarket.D6_RESALE_MARKET_ENABLED, false,
+    "D6_RESALE_MARKET_ENABLED must stay false (D6: no transfer marketplace)");
+});
+
+test("D6: every sale function refuses, naming the decision", () => {
+  const sales = {
+    listForResale: () => ticketMarket.listForResale(host.id, "tkt_nope", 500),
+    buyListing: () => ticketMarket.buyListing(host.id, "lst_nope"),
+    settleOrder: () => ticketMarket.settleOrder(host.id, "ord_nope"),
+    cancelOrder: () => ticketMarket.cancelOrder(host.id, "ord_nope"),
+    sellerConfirmReceived: () => ticketMarket.sellerConfirmReceived(host.id, "ord_nope"),
+    refundOrder: () => ticketMarket.refundOrder(host.id, "ord_nope"),
+    cancelListing: () => ticketMarket.cancelListing(host.id, "lst_nope"),
+    removeListing: () => ticketMarket.removeListing(host.id, "lst_nope", "reason"),
+    listingsForEvent: () => ticketMarket.listingsForEvent(later.id)
+  };
+  for (const [name, call] of Object.entries(sales)) {
+    let err = null;
+    try { call(); } catch (e) { err = e; }
+    assert.ok(err, `${name} must refuse while the market is closed`);
+    assert.equal(err.code, "resale_closed",
+      `${name} refused with code ${err.code}, not resale_closed`);
+  }
+});
+
+test("D6: the permitted half survives — ticket, door scan, gift, moderation", () => {
+  // Removing the market must not remove the ticket. Decision 6 keeps issuance,
+  // the QR at the door, giving a ticket away and voiding one for cause.
+  for (const fn of ["issueForRegistration", "ticketOwnerView", "parseScannedCode",
+                    "resolveGateCode", "resolveEvent", "transferTicket", "voidTicket"]) {
+    assert.equal(typeof ticketMarket[fn], "function",
+      `${fn} must still exist (D6 keeps the ticket; only the SALE is closed)`);
+  }
+});
+
+test("D6: the market routes 404, while the ticket routes stay live", async () => {
+  const { default: app } = await import("../src/index.js");
+  const srv = app.listen(0);
+  const port = srv.address().port;
+  const { token } = auth.issueSession(host.id);
+  const hit = async (p, m = "GET") => {
+    const r = await fetch(`http://127.0.0.1:${port}${p}`, {
+      method: m,
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: m === "POST" ? "{}" : undefined
+    });
+    return r.status;
+  };
+  try {
+    // A sale: not mounted. 404 rather than 403 — a closed market reads as
+    // "this does not exist", not "you are not allowed".
+    for (const [p, m] of [["/api/ticket-market/listings", "POST"],
+                          ["/api/ticket-market/orders", "POST"],
+                          ["/api/ticket-market/me/listings", "GET"],
+                          ["/api/ticket-market/events/any/listings", "GET"]]) {
+      assert.equal(await hit(p, m), 404, `${m} ${p} must be closed (D6)`);
+    }
+    // The ticket: still reachable. Not 404.
+    assert.equal(await hit("/api/ticket-market/me/tickets", "GET"), 200,
+      "your own tickets are still served (D6 keeps the ticket)");
+    const transfer = await hit("/api/ticket-market/tickets/tkt_nope/transfer", "POST");
+    assert.notEqual(transfer, 404,
+      "the gift route is still mounted — it refuses the unknown ticket, not the concept");
+  } finally {
+    srv.close();
+  }
+});
+
 await run();

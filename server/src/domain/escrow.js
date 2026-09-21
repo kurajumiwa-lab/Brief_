@@ -52,6 +52,12 @@ function groupBuyRows(userId) {
     });
 }
 
+// Decision 6 froze this rail rather than emptying it. `buyListing` and
+// `settleOrder` are gated in domain/ticketMarket.js, so no ticket order can be
+// created any more — but a row written before the gate is still a real
+// commitment between two people, and erasing it from the escrow view would
+// hide money that genuinely moved. So: nothing new can enter, and what is
+// already here stays readable until it settles.
 function ticketRows(userId) {
   return store
     .filter('ticketOrders', (o) => o.buyerId === userId || o.sellerId === userId)

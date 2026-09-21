@@ -18,6 +18,47 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+
+// ---------------------------------------------------------------------------
+// DECISION 6 GATE — the resale MARKET is off. Not deleted: gated.
+//
+// docs/DECISIONS.md D6: "It cannot be sold through Trace. No resale flow. No
+// transfer marketplace." But the same decision keeps the ticket itself, and
+// keeps giving it away: "When opted-in, the ticket can be *given* to someone
+// else." So the line runs through this module, not around it:
+//
+//   OFF  listForResale, buyListing, settleOrder, cancelOrder,
+//        sellerConfirmReceived, refundOrder, cancelListing, removeListing,
+//        listingsForEvent -- every function whose job is a SALE.
+//   ON   issueForRegistration, ticketOwnerView, parseScannedCode,
+//        resolveGateCode, resolveEvent, findUserRef, transferTicket,
+//        voidTicket -- the ticket, the door scan, the gift and moderation.
+//
+// `transferTicket` is a pure gift: it writes kind 'gift' with value 0 and
+// touches no ledger row, so it is the thing D6 permits and not the thing it
+// forbids. Gating ISSUANCE instead -- the obvious reading of "stop the resale
+// hooks" -- would have deleted the ticket altogether and taken the gate scan
+// with it, because both live in this same file.
+//
+// The module stays on disk deliberately. It is 522 lines of money-adjacent code
+// with ZERO test coverage, which is exactly the wrong thing to delete blind: an
+// uncovered caller is found by a live reference, not by a grep. It is now
+// unreachable for sales, and server/test/decisions.mjs fails the build if any
+// of it is switched back on. Remove the corpse once nothing has broken.
+// ---------------------------------------------------------------------------
+
+/** Decision 6: the resale market is closed. Flip this and the refusal suite fails. */
+export const D6_RESALE_MARKET_ENABLED = false;
+
+/** Refuse a sale loudly, naming the decision, rather than silently no-oping. */
+function refuseResale(what) {
+  if (D6_RESALE_MARKET_ENABLED) return;
+  const err = new Error(
+    `ticket resale is closed: ${what} is not available (Decision 6 — no resale flow, no transfer marketplace)`
+  );
+  err.code = 'resale_closed';
+  throw err;
+}
 import * as signals from './signal.js';
 import * as ledger from './ledger.js';
 
@@ -158,6 +199,7 @@ function activeListingFor(ticketId) {
 
 /** List a owned seat for resale. Server-priced, single-listing enforced. */
 export function listForResale(ownerId, ticketId, priceKes, { note = null, expiresAt = null } = {}) {
+  refuseResale('listForResale');
   const ticket = store.find('tickets', (t) => t.id === ticketId);
   if (!ticket) throw new Error('ticket not found');
   if (ticket.ownerUserId !== ownerId) throw new Error('only the ticket owner may list it');
@@ -229,6 +271,7 @@ export function listForResale(ownerId, ticketId, priceKes, { note = null, expire
 
 /** Seller pulls the listing. A pending listing (open order) cannot be pulled. */
 export function cancelListing(sellerId, listingId) {
+  refuseResale('cancelListing');
   const listing = store.find('ticketListings', (l) => l.id === listingId);
   if (!listing) throw new Error('listing not found');
   if (listing.sellerId !== sellerId) throw new Error('only the seller may cancel this listing');
@@ -248,6 +291,7 @@ export function resolveEvent(slugOrId) {
 }
 
 export function listingsForEvent(eventId) {
+  refuseResale('listingsForEvent');
   return store.filter('ticketListings', (l) => l.eventId === eventId && l.status === 'active' && !l.flagged)
     .sort((a, b) => a.price - b.price)
     .map((l) => {
@@ -273,6 +317,7 @@ export function listingsForEvent(eventId) {
 
 /** A buyer opens an order against an active listing. Server-fixed price. */
 export function buyListing(buyerId, listingId) {
+  refuseResale('buyListing');
   const listing = store.find('ticketListings', (l) => l.id === listingId);
   if (!listing) throw new Error('listing not found');
   if (listing.status !== 'active') throw new Error('this listing is no longer available');
@@ -310,6 +355,7 @@ export function buyListing(buyerId, listingId) {
 
 /** Buyer abandons a pending order; the listing returns to active. */
 export function cancelOrder(buyerId, orderId) {
+  refuseResale('cancelOrder');
   const order = store.find('ticketOrders', (o) => o.id === orderId);
   if (!order) throw new Error('order not found');
   if (order.buyerId !== buyerId) throw new Error('only the buyer may cancel this order');
@@ -326,6 +372,7 @@ export function cancelOrder(buyerId, orderId) {
  * the product marketplace enforces via orders.attachTransaction.
  */
 export function sellerConfirmReceived(sellerId, orderId) {
+  refuseResale('sellerConfirmReceived');
   const order = store.find('ticketOrders', (o) => o.id === orderId);
   if (!order) throw new Error('order not found');
   if (order.sellerId !== sellerId) throw new Error('only the seller may confirm receiving payment');
@@ -349,6 +396,7 @@ export function sellerConfirmReceived(sellerId, orderId) {
 }
 
 export function settleOrder(buyerId, orderId, { transactionId } = {}) {
+  refuseResale('settleOrder');
   const order = store.find('ticketOrders', (o) => o.id === orderId);
   if (!order) throw new Error('order not found');
   if (order.buyerId !== buyerId) throw new Error('only the buyer may settle this order');
@@ -400,6 +448,7 @@ export function settleOrder(buyerId, orderId, { transactionId } = {}) {
 
 /** A completed order is refunded ONLY by refunding its real ledger row. */
 export function refundOrder(callerId, orderId) {
+  refuseResale('refundOrder');
   const order = store.find('ticketOrders', (o) => o.id === orderId);
   if (!order) throw new Error('order not found');
   const isParty = order.buyerId === callerId || order.sellerId === callerId;
@@ -480,6 +529,7 @@ export function transferTicket(ownerId, ticketId, toUserId) {
 
 /** Moderation: pull a listing. Capability-gated and audited at the route. */
 export function removeListing(moderatorId, listingId, reason) {
+  refuseResale('removeListing');
   const listing = store.find('ticketListings', (l) => l.id === listingId);
   if (!listing) throw new Error('listing not found');
   if (!reason || !String(reason).trim()) throw new Error('a removal reason is required');

@@ -15,7 +15,31 @@ import * as ticketMarket from '../domain/ticketMarket.js';
 import * as payment from '../domain/payment.js';
 import { requireAuth, requireCap, recordAudit, recordError } from './helpers.js';
 
+// Decision 6 closed the resale MARKET but kept the ticket. The paths split
+// accordingly, and the split is enforced here rather than by deleting handlers,
+// so the module can be switched back on in one place if the operator ever
+// reverses the decision:
+//   404  /events/:id/listings, /me/listings, /listings*, /orders*   (a sale)
+//   LIVE /me/tickets, /tickets/:id/transfer, /tickets/:id/void      (the ticket,
+//        the gift, and moderation)
+// `req.path` is relative to the mount, so the pattern starts after
+// /api/ticket-market. A 404 rather than a 403: a closed market reads as "not
+// mounted", not as "you are not allowed".
+const D6_MARKET_PATH = /^\/(events\/[^/]+\/listings|me\/listings|listings|orders)(\/|$)/;
+
 export function register(app) {
+  app.use('/api/ticket-market', (req, res, next) => {
+    if (!ticketMarket.D6_RESALE_MARKET_ENABLED && D6_MARKET_PATH.test(req.path)) {
+      return res.status(404).json({
+        error: 'ticket resale is closed',
+        code: 'resale_closed',
+        // The reason is stated, not implied: a ticket may still be GIVEN.
+        note: 'Decision 6 — no resale flow, no transfer marketplace. A ticket can still be transferred as a gift.'
+      });
+    }
+    next();
+  });
+
   app.use('/api/ticket-market', (req, res, next) => {
     // Every surface here belongs to a signed-in person: browsing a market is
     // not a public crawl, and every listing names its seller.
