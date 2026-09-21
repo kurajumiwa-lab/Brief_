@@ -71,6 +71,16 @@ export function start() {
       });
     });
   }, INTERVAL_MS);
+  // Do not hold the process open just to sweep — the same unref'd-timer
+  // discipline the calendar (domain/calendar.js:218), the workflow sweep
+  // (domain/workflow.js:201), the morning brief (domain/shopBrief.js:664),
+  // the backup cadence (ops.js:246) and the ingestion poller
+  // (pipeline/scheduler.js:167) all follow. This one shipped ref'd, and
+  // because index.js started it at import time, every process that imported
+  // the app stayed alive for the full hour after its work was done: 18 of the
+  // 70 files in `npm test` printed their summary and then hung, and the chain
+  // stalled at test/requests.mjs without ever reaching the rail's own tests.
+  timer.unref?.();
 }
 
 export function stop() {
