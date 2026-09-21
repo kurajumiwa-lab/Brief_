@@ -9,8 +9,19 @@
 //   * otherwise the CATEGORY's tint — the same wing is always the same colour.
 //     The oversized title initial is gone: "W" for "Wedding" mapped to nothing
 //     the reader knows, so it read as a placeholder rather than a design;
-//   * category chip, title, date · location · price, and the counted
-//     "N going" — every figure derived, never seeded.
+//   * category chip, title, date · location · price. That is the whole card.
+//
+// DECISION 6 (docs/DECISIONS.md) removed three things this card used to carry,
+// and server/test/decisions.mjs fails if the server starts serving them again:
+// the "★ Featured" badge (no featured slot anywhere), the counted "N going"
+// (no social proof — "No 'X going.' No attendee names. No view count."), and
+// the "N from your Circle going" line (the decision's supersession note ends
+// the per-viewer overlap explicitly). The only number an event may print is
+// seats, and the listing projection carries none — capacity and remaining live
+// on the detail page, which is where "27 of 40 seats remaining" belongs.
+//
+// What is left is not a thinner card by accident. The rationale is the
+// operator's: these mechanics drive FOMO, and FOMO does not pay the host.
 // ---------------------------------------------------------------------------
 
 import React from "react";
@@ -54,14 +65,9 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
         >
           {event.categoryLabel}
         </span>
-        {event.featured && (
-          <span
-            className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[11px] font-extrabold"
-            style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
-          >
-            ★ Featured
-          </span>
-        )}
+        {/* No "★ Featured" badge — Decision 6: no featured slot anywhere. The
+            server no longer sends `featured`, and the route that set it is
+            retired (404), so there is nothing this badge could honestly mean. */}
       </div>
 
       {/* Body */}
@@ -73,15 +79,11 @@ export function EventCard({ event, onOpen }: { event: EventListing; onOpen: (slu
           {event.startsAt && <span>{event.startsAt.slice(0, 10)}</span>}
           {event.location && <span className="truncate">{event.location}</span>}
           <span>{event.goalAmount != null ? "Cause / pot" : money(event.price, event.currency)}</span>
-          <span>{event.popularity} going</span>
+          {/* No "{popularity} going" and no "N from your Circle going".
+              Decision 6 forbids both: no "X going", no attendee names, no view
+              count. The circle line was derived from real rows and was still
+              social proof — the decision says so explicitly. */}
         </div>
-        {/* Group overlap — the unique, derived social proof. Only shown when
-            the viewer's own group genuinely has members going. */}
-        {event.tableBankingOverlap && event.tableBankingOverlap.length > 0 && (
-          <p className="text-[11px] font-bold" style={{ color: "var(--color-primary)" }}>
-            {event.tableBankingOverlap.map((o) => `${o.memberCount} from ${o.tableBankingName ?? "your Circle"}`).join(" · ")} going
-          </p>
-        )}
       </div>
     </button>
   );

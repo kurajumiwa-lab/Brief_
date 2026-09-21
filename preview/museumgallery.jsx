@@ -50,13 +50,17 @@ const btnByText = (want) =>
 let fetchHandler;
 global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
 
-const ev = (slug, title, popularity, overlap, extra = {}) => ({
+// `_popularity` and `_overlap` are still accepted positionally so the call
+// sites below read unchanged, but neither field is emitted, and neither is
+// `featured`: Decision 6 removed all three from the server's listing
+// projection, so a fixture carrying them would test a contract that is gone.
+const ev = (slug, title, _popularity, _overlap, extra = {}) => ({
   slug, title, description: null, coverImageUrl: null,
   category: 'event', categoryLabel: 'Events',
   location: 'Kilimani', startsAt: '2026-09-20T06:00:00Z', endsAt: null,
-  price: 0, currency: 'KES', goalAmount: null, featured: false,
+  price: 0, currency: 'KES', goalAmount: null,
   publishedAt: '2026-09-01T06:00:00Z',
-  popularity, tableBankingOverlap: overlap, ...extra
+  ...extra
 });
 
 const CATEGORIES_BODY = { categories: ['event'], labels: { event: 'Events' } };
@@ -89,8 +93,11 @@ async function main() {
     const t = text(c);
     assert.ok(t.includes('Kilimani Night Market'), 'first exhibit renders');
     assert.ok(t.includes('Birthday Cake Drop'), 'second exhibit renders');
-    assert.ok(t.includes('12 going'), 'counted popularity rendered');
-    assert.ok(t.includes('1 from Kejani going'), 'real group overlap rendered');
+    // Decision 6: no "X going", no attendee names, no view count — so the
+    // gallery renders the exhibit's title, date, place and price and nothing
+    // that pressures the reader with a crowd.
+    assert.ok(!/going/i.test(t), 'no "going" count is rendered');
+    assert.ok(!/from Kejani/i.test(t), 'and no circle-overlap line either');
 
     // The counter is gone by design ("if you can see them, you can count them").
     assert.ok(!/shown/i.test(t), 'no "N shown" metadata');
@@ -124,11 +131,15 @@ async function main() {
     act(() => { btnByText('All exhibits').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     assert.ok(text(document.body).includes('Filter the case'), 'the sheet opens from the control line');
-    assert.ok(text(document.body).includes('★ Featured only'), 'the sheet holds the deep filters');
+    // Decision 6: the sheet no longer holds a featured toggle or a popularity
+    // sort, because the server has neither to offer. Both controls were deleted
+    // rather than disabled — a disabled control still advertises a choice the
+    // product does not make.
+    assert.ok(!text(document.body).includes('★ Featured only'), 'no featured toggle in the sheet');
+    assert.ok(!/most people first/i.test(text(document.body)), 'no popularity sort control either');
 
-    // Pick a wing + a place + featured, then apply.
+    // Pick a wing + a place, then apply.
     act(() => { btnByText('Events').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    act(() => { btnByText('★ Featured only').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     const input = document.querySelector('input[aria-label], #museum-loc');
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
@@ -139,7 +150,8 @@ async function main() {
     await flush();
     const q = new URLSearchParams(lastQuery.replace(/&amp;/g, '&'));
     assert.equal(q.get('category'), 'event', 'the sheet applies the real category filter');
-    assert.equal(q.get('featured'), '1', 'the sheet applies the real featured filter');
+    assert.equal(q.get('featured'), null, 'no featured parameter reaches the server (D6)');
+    assert.equal(q.get('sort'), null, 'and no sort parameter either — the order is startsAt ascending (D6)');
     assert.equal(q.get('location'), 'Kisii', 'the sheet applies the real place filter');
 
     // The applied state is now named on the control line, with a way out.

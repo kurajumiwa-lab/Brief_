@@ -257,8 +257,11 @@ export function isPublicCampaign(v: unknown): v is PublicCampaign {
   if ('ownerId' in v || 'id' in v || 'objectId' in v || 'metrics' in v) return false;
   return (
     isStr(v.slug) && isStr(v.title) && isStr(v.status) &&
-    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining) &&
-    isNum(v.registered)
+    isNum(v.price) && isStr(v.currency) && isNumOrNull(v.remaining)
+    // `isNum(v.registered)` is gone on purpose. Decision 6 removed the
+    // registration count from the server's public campaign projection, so
+    // requiring it here would have made EVERY real event response fail
+    // validation — a validator rejecting the truth is worse than no validator.
   );
 }
 

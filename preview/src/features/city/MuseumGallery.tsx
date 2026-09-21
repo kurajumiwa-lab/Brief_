@@ -7,7 +7,10 @@
 //   * every event is a REAL published campaign row from /api/events — nothing
 //     is seeded to fill the case;
 //   * the control row is ONE line. The deep filters (wing, place, window,
-//     featured, sort) live in a bottom sheet, because a filter is not content
+//     dates) live in a bottom sheet, because a filter is not content. Decision 6
+//     removed the featured toggle and the popularity sort: the server has no
+//     featured flag and no order but startsAt ascending, so a control for either
+//     would visibly do nothing
 //     and an untouched pair of date boxes reads as broken, not empty;
 //   * no result counter — if you can see the exhibits, you can count them;
 //   * the active card is the only one with an action;
@@ -37,8 +40,6 @@ export interface MuseumFilters {
   location: string;
   from: string;
   to: string;
-  featured: boolean;
-  sort: 'date' | 'popularity';
 }
 
 const EMPTY: MuseumFilters = {
@@ -46,8 +47,7 @@ const EMPTY: MuseumFilters = {
   location: '',
   from: '',
   to: '',
-  featured: false,
-  sort: 'date'
+  // No featured, no sort — see Decision 6 above.
 };
 
 const CATEGORIES = ["popup", "session", "drop", "event", "contribution"];
@@ -76,8 +76,6 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
       location: f.location.trim() || undefined,
       from: f.from || undefined,
       to: f.to || undefined,
-      featured: f.featured || undefined,
-      sort: f.sort,
       limit: 50
     });
     if (!res.ok) {
@@ -150,8 +148,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
         filters.category,
         filters.location.trim(),
         filters.from,
-        filters.to,
-        filters.featured ? 'featured' : null
+        filters.to
       ].filter(Boolean).length,
     [filters]
   );
@@ -165,9 +162,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
     filters.location.trim() ? `near ${filters.location.trim()}` : null,
     filters.from || filters.to
       ? `${filters.from || '…'} → ${filters.to || '…'}`
-      : null,
-    filters.featured ? 'featured only' : null,
-    filters.sort === 'popularity' ? 'most people first' : null
+      : null
   ].filter(Boolean) as string[];
 
   return (
@@ -359,29 +354,10 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            aria-pressed={filters.featured}
-            onClick={() => setFilters((f) => ({ ...f, featured: !f.featured }))}
-            className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
-            style={{
-              background: filters.featured ? 'var(--color-primary)' : 'var(--color-paper)',
-              color: filters.featured ? 'var(--accent-ink)' : 'var(--color-text-muted)',
-              borderColor: filters.featured ? 'transparent' : 'var(--color-border)'
-            }}
-          >
-            ★ Featured only
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilters((f) => ({ ...f, sort: f.sort === 'date' ? 'popularity' : 'date' }))}
-            className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
-            style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
-          >
-            Sort: {filters.sort === 'date' ? 'soonest first' : 'most people first'}
-          </button>
-        </div>
+        {/* No "★ Featured only" toggle and no "Sort: most people first" button.
+            Decision 6 removed both from the server, so both controls were
+            deleted rather than disabled — a disabled control still advertises a
+            choice the product does not offer. Exhibits are soonest first. */}
       </FilterSheet>
     </div>
   );

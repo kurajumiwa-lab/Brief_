@@ -753,8 +753,11 @@ export interface PublicCampaign {
   capacity: number | null;
   remaining: number | null;
   soldOut: boolean;
-  /** Aggregate social proof: HOW MANY are registered, never WHO. */
-  registered: number;
+  // NO `registered` count. Decision 6 removed it: "No 'X going.' No attendee
+  // names. No view count." The seats fields below are the only numbers an event
+  // surface may print, and the server no longer serves this one at all -- so
+  // `validate.ts` stopped requiring it, or every real response would have
+  // failed validation against a field that no longer exists.
   /** Contribution pots only (null for fixed-price events). */
   goalAmount?: number | null;
   /** Derived from SETTLED ledger rows only; null when there is no goal. */
@@ -770,7 +773,9 @@ export interface PublicCampaign {
   /** DERIVED host profile: a display name plus a counted number of their events. */
   host?: { name: string | null; eventsHosted: number } | null;
   /** DERIVED per-viewer: which of the viewer's groups have members going. */
-  tableBankingOverlap?: Array<{ tableBankingId: string; tableBankingName: string | null; memberCount: number }> | null;
+  // NO `tableBankingOverlap`. Decision 6's supersession note ends the
+  // per-viewer circle overlap explicitly: "'no attendee names' also ends the
+  // record's sparing of the per-viewer circle overlap."
   /** DERIVED: a dated event whose endsAt has passed. The page says "ended". */
   hasEnded?: boolean;
 }

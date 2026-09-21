@@ -4023,7 +4023,10 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
       if (live) setUpdates(res.ok ? res.data : []);
     });
     return () => { live = false; };
-  }, [slug, load.data?.registered]);
+    // The dependency used to be `load.data?.registered` — a social-proof count
+    // Decision 6 removed. `slug` is the stable identity that actually means
+    // "the campaign resolved", so the effect still re-runs exactly when it should.
+  }, [slug, load.data?.slug]);
 
   React.useEffect(() => {
     let live = true;
@@ -4386,29 +4389,11 @@ export function PublicCampaignPage({ slug }: { slug: string }) {
                   </span>
                 </div>
               )}
-              {c.registered > 0 && (
-                <div className="flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5 text-[var(--brief-ink)] shrink-0" />
-                  <span className="text-xs text-[var(--brief-ink)]">
-                    {c.registered} {c.registered === 1 ? 'person' : 'people'} registered
-                  </span>
-                </div>
-              )}
-              {/* "N from your Circle" (T4) — derived per viewer, only for a
-                  signed-in viewer whose group members are actually going. */}
-              {c.tableBankingOverlap && c.tableBankingOverlap.length > 0 && (
-                <div className="flex items-start gap-2">
-                  <Users className="w-3.5 h-3.5 text-[var(--brief-ink)] shrink-0 mt-0.5" />
-                  <span className="text-xs text-[var(--brief-ink)]">
-                    {c.tableBankingOverlap.map((o, i) => (
-                      <span key={o.tableBankingId}>
-                        {i > 0 && ', '}
-                        {o.memberCount} from {o.tableBankingName ?? 'your Circle'} going
-                      </span>
-                    ))}
-                  </span>
-                </div>
-              )}
+              {/* No "N people registered" — Decision 6: no social proof, no
+                  "X going", no attendee names. The seats line below is the one
+                  number this page is allowed to print. */}
+              {/* No "N from your Circle going" — Decision 6's supersession note
+                  ends the per-viewer overlap explicitly. */}
               {c.capacity !== null && c.remaining !== null && c.capacity > 0 && (
                 <div className="space-y-1 pt-1">
                   <div className="flex items-center justify-between text-[11px]">

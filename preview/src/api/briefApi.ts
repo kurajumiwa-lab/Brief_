@@ -2944,26 +2944,26 @@ export interface EventListing {
   price: number;
   currency: string;
   goalAmount: number | null;
-  featured: boolean;
+  // NO `featured`: Decision 6 — no featured slot anywhere.
   /** The campaign row's own createdAt — when this was actually published. */
   publishedAt?: string | null;
-  /** COUNTED registrations, never a seeded number. */
-  popularity: number;
-  /** DERIVED per-viewer: which of the viewer's groups have members going. */
-  tableBankingOverlap: Array<{ tableBankingId: string; tableBankingName: string | null; memberCount: number }> | null;
+  // NO `popularity` and NO `tableBankingOverlap`: Decision 6 forbids social
+  // proof on events — no "X going", no attendee names, no view count. The
+  // server's listing projection carries neither, so a card cannot render them.
 }
 
 export function browseEvents(opts: {
   category?: string; location?: string; from?: string; to?: string;
-  featured?: boolean; sort?: 'date' | 'popularity'; limit?: number;
+  // No `featured`, no `sort`: Decision 6 removed the featured filter and the
+  // popularity sort from the server, so there is nothing to ask for. The order
+  // is startsAt ascending and the endpoint ignores both parameters.
+  limit?: number;
 } = {}): Promise<ApiResult<{ events: EventListing[]; total: number }>> {
   const q = new URLSearchParams();
   if (opts.category) q.set('category', opts.category);
   if (opts.location) q.set('location', opts.location);
   if (opts.from) q.set('from', opts.from);
   if (opts.to) q.set('to', opts.to);
-  if (opts.featured) q.set('featured', '1');
-  if (opts.sort) q.set('sort', opts.sort);
   if (opts.limit) q.set('limit', String(opts.limit));
   const qs = q.toString();
   return request(`/api/events${qs ? `?${qs}` : ''}`, undefined, (r) =>

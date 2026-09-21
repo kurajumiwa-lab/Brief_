@@ -11,10 +11,18 @@ import { SlidersHorizontal, X } from 'lucide-react';
 //
 // Everything here is a real published campaign row from /api/events:
 //   * category chips are the server's own five, labels and all,
-//   * popularity is COUNTED registrations (a number the server derived),
-//   * "Featured" is the organiser's explicit choice, never a ranking,
 //   * a card opens the event's public page by SLUG — internal ids stay
 //     private, and there is no sixth destination to visit.
+//
+// DECISION 6 (docs/DECISIONS.md) removed the other two knobs this panel used to
+// offer. There is no "★ Featured only" toggle and no "most people first" sort,
+// because the server no longer has a featured flag or a popularity order to
+// serve — `POST /api/campaigns/:id/feature` is retired (404), and
+// `?sort=popularity` is ignored rather than honoured. Leaving the controls here
+// would have made them visibly do nothing, which is worse than not having them:
+// a control that appears to work and does not is a lie with a border radius.
+// The order is soonest first and there is no other order. Enforced server-side
+// by server/test/decisions.mjs.
 // An empty result says so plainly; nothing is seeded to fill the screen.
 //
 // The reformation: the four-row filter panel (a location box, two untouched
@@ -25,15 +33,15 @@ import { SlidersHorizontal, X } from 'lucide-react';
 
 const categories = ['popup', 'session', 'drop', 'event', 'contribution'];
 
+// No `featured` and no `sort`: Decision 6 removed both from the server, so
+// carrying them here would only let this panel build a query nothing honours.
 interface FilterState {
   location: string;
   from: string;
   to: string;
-  featured: boolean;
-  sort: 'date' | 'popularity';
 }
 
-const EMPTY: FilterState = { location: '', from: '', to: '', featured: false, sort: 'date' };
+const EMPTY: FilterState = { location: '', from: '', to: '' };
 
 export function EventsHub() {
   const [rows, setRows] = React.useState<EventListing[] | null>(null);
@@ -58,8 +66,6 @@ export function EventsHub() {
       location: filters.location.trim() || undefined,
       from: filters.from || undefined,
       to: filters.to || undefined,
-      featured: filters.featured || undefined,
-      sort: filters.sort,
       limit: 50
     });
     setBusy(false);
@@ -83,17 +89,13 @@ export function EventsHub() {
     category,
     filters.location.trim(),
     filters.from,
-    filters.to,
-    filters.featured ? 'featured' : null,
-    filters.sort === 'popularity' ? 'popularity' : null
+    filters.to
   ].filter(Boolean).length;
 
   const summary = [
     category ? (labels[category] ?? category) : 'Everything',
     filters.location.trim() ? `near ${filters.location.trim()}` : null,
-    filters.from || filters.to ? `${filters.from || '…'} → ${filters.to || '…'}` : null,
-    filters.featured ? 'featured only' : null,
-    filters.sort === 'popularity' ? 'most people first' : null
+    filters.from || filters.to ? `${filters.from || '…'} → ${filters.to || '…'}` : null
   ].filter(Boolean).join(' · ');
 
   return (
@@ -104,7 +106,8 @@ export function EventsHub() {
             What&rsquo;s on
           </h2>
           <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
-            Popularity is counted people, never a seeded number.
+            Soonest first. Nothing here is promoted, and no card tells you how
+            many other people are going.
           </p>
         </div>
         <button
@@ -225,29 +228,12 @@ export function EventsHub() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            type="button"
-            aria-pressed={filters.featured}
-            onClick={() => setFilters((f) => ({ ...f, featured: !f.featured }))}
-            className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
-            style={{
-              background: filters.featured ? 'var(--color-primary)' : 'var(--color-paper)',
-              color: filters.featured ? 'var(--accent-ink)' : 'var(--color-text-muted)',
-              borderColor: filters.featured ? 'transparent' : 'var(--color-border)'
-            }}
-          >
-            ★ Featured only
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilters((f) => ({ ...f, sort: f.sort === 'date' ? 'popularity' : 'date' }))}
-            className="px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
-          >
-            Sort: {filters.sort === 'date' ? 'soonest first' : 'most people first'}
-          </button>
-        </div>
+        {/* No "★ Featured only" toggle and no "Sort: most people first" button.
+            Decision 6: no featured slot anywhere, and sorting is startsAt
+            ascending, period. Both controls were removed rather than disabled —
+            a disabled control still advertises a choice the product does not
+            offer. The list is soonest first and the panel says so in its
+            subtitle instead. */}
 
         <div className="flex gap-2 pt-1">
           <button

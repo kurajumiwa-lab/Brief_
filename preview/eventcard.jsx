@@ -38,8 +38,10 @@ const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const base = {
   slug: 's1', title: 'Kilimani Wellness Day', description: 'A day of calm', coverImageUrl: null,
   category: 'session', categoryLabel: 'Sessions & classes', location: 'Kilimani', startsAt: '2026-09-14T12:00:00Z',
-  endsAt: null, price: 500, currency: 'KES', goalAmount: null, featured: true, popularity: 34,
-  tableBankingOverlap: null
+  // No `featured`, no `popularity`, no `tableBankingOverlap`: the server's
+  // listing projection stopped carrying them (Decision 6), so a fixture that
+  // still had them would test against a contract that no longer exists.
+  endsAt: null, price: 500, currency: 'KES', goalAmount: null
 };
 
 async function main() {
@@ -97,23 +99,33 @@ async function main() {
     const t = text(container);
     assert.ok(t.includes('Kilimani Wellness Day'), 'title');
     assert.ok(t.includes('Sessions & classes'), 'category chip');
-    assert.ok(t.includes('34 going'), 'counted popularity');
     assert.ok(t.includes('KES 500'), 'price');
-    assert.ok(!t.includes('from your Circle'), 'no group overlap when null');
+    // Decision 6: no "X going", no attendee names, no view count.
+    assert.ok(!/going/i.test(t), 'the card prints no "going" count of any kind');
+    assert.ok(!/featured/i.test(t), 'and no featured badge');
   }
-  pass('EventCard shows title, category, price and counted popularity');
+  pass('EventCard shows title, category and price — and no social proof');
 
-  // --- group overlap social proof ---
+  // --- REFUSAL: the fields are gone from the contract, so hand the card a
+  // --- fixture that still carries them and assert it renders none of it. This
+  // --- is the test that fails if the badge or the crowd count comes back.
   {
     const { container } = mount(React.createElement(EventCard, {
-      event: { ...base, tableBankingOverlap: [{ tableBankingId: 'c1', tableBankingName: 'Kilimani Circle', memberCount: 8 }] },
+      event: {
+        ...base,
+        featured: true,
+        popularity: 34,
+        tableBankingOverlap: [{ tableBankingId: 'c1', tableBankingName: 'Kilimani Circle', memberCount: 8 }]
+      },
       onOpen: () => {}
     }));
     const t = text(container);
-    assert.ok(t.includes('8 from Kilimani Circle'), 'group overlap line');
-    assert.ok(t.includes('going'), 'overlap ends with going');
+    assert.ok(!t.includes('34 going'), 'a popularity count in the data is not rendered (D6)');
+    assert.ok(!t.includes('8 from Kilimani Circle'), 'a circle overlap in the data is not rendered (D6)');
+    assert.ok(!/featured/i.test(t), 'a featured flag in the data is not rendered (D6)');
+    assert.ok(t.includes('Kilimani Wellness Day'), 'the card still renders the event itself');
   }
-  pass('EventCard surfaces the derived group overlap ("8 from Kilimani Circle")');
+  pass('EventCard refuses featured/popularity/overlap even when a caller supplies them');
 
   console.log('\nPASS ' + count);
   process.exit(0);
