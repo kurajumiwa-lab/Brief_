@@ -99,13 +99,13 @@ export function EarnStrip({
       failed: !refs
     },
     {
-      key: 'territory',
+      key: 'visits',
       icon: <Users className="w-3.5 h-3.5" />,
-      label: 'Territory override',
-      value: agent ? `${agent.override.claims.length} ${agent.override.claims.length === 1 ? 'shop' : 'shops'}` : EMPTY,
+      label: 'Field visits',
+      value: agent ? `${agent.earnings.approved} approved` : EMPTY,
       sub: agent
-        ? `${kes(agent.override.claims.reduce((n, x) => n + (x.overrideKes ?? 0), 0))} settled to date · ${agent.override.rate}% for ${agent.override.months} months`
-        : 'claims on shops you onboarded',
+        ? `${kes(agent.earnings.approvedKes)} earned · KES ${agent.earnings.feeKes} per approved visit, paid weekly`
+        : 'visits to shops, once an operator approves them',
       failed: !agent
     },
     {
@@ -132,7 +132,7 @@ export function EarnStrip({
     (refs?.balance.available ?? 0) === 0 &&
     refs.events.length === 0 &&
     refs.conversions.length === 0 &&
-    (agent?.override.claims.length ?? 0) === 0 &&
+    (agent?.earnings.visits.length ?? 0) === 0 &&
     agent.settlements.length === 0 &&
     (contracts?.length ?? 0) === 0;
   if (nothingAtAll) return null;
@@ -162,9 +162,9 @@ export function EarnStrip({
 
       {signedOut ? (
         <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
-          Three rails run through here — points from the referral pool, a territory override on shops you
-          onboard, and the Lipa mdogo contracts you are party to. Sign in and your own figures appear in
-          place of this line.
+          Three rails run through here — points from the referral pool, KES 150 for each approved visit to a
+          shop you onboard, and the Lipa mdogo contracts you are party to. Sign in and your own figures appear
+          in place of this line.
         </p>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2">

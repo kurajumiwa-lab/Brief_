@@ -10,6 +10,12 @@
 // Motion honours the canonical tokens (--motion-normal, --ease-emphasized) and
 // prefers-reduced-motion (auto-advance stops, sliding becomes instant). With
 // no published events the carousel renders nothing — never a fabricated promo.
+//
+// DECISION 6: nothing here is promoted. The rotation used to lead with featured
+// events and print "{popularity} going" on each card. The server no longer has a
+// featured flag or a popularity count, so the carousel is simply the soonest
+// events — the order the server already returns — with their date, place and
+// price. "Promo" survives only as this component's name.
 // ---------------------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
@@ -55,14 +61,12 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
 
   useEffect(() => {
     let live = true;
-    void briefApi.browseEvents({ sort: "date", limit: 8 }).then((res) => {
+    void briefApi.browseEvents({ limit: 8 }).then((res) => {
       if (!live) return;
       if (!res.ok) { setEvents([]); return; }
-      const list = res.data.events ?? [];
-      // Featured events lead the rotation; the rest follow soonest-first.
-      const featured = list.filter((e) => e.featured);
-      const rest = list.filter((e) => !e.featured);
-      setEvents([...featured, ...rest]);
+      // The server sorts startsAt ascending and Decision 6 removed the featured
+      // flag that used to lead this rotation, so the list is used as it arrives.
+      setEvents(res.data.events ?? []);
     });
     return () => { live = false; };
   }, []);
@@ -107,7 +111,7 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
             <div className="min-w-0 flex-1">
               <p className="text-xs font-black text-[color:var(--color-text)] truncate">{e.title}</p>
               <p className="text-[11px] text-[color:var(--color-text-muted)] truncate">
-                {[e.categoryLabel, fmtDate(e.startsAt), money(e.price, e.currency), e.popularity > 0 ? `${e.popularity} going` : null]
+                {[e.categoryLabel, fmtDate(e.startsAt), money(e.price, e.currency)]
                   .filter(Boolean).join(' · ')}
               </p>
             </div>
@@ -175,7 +179,7 @@ export function PromoCarousel({ className = "", variant = 'horizontal' }: { clas
                   </span>
                   <p className="text-base font-black leading-tight">{e.title}</p>
                   <p className="text-[11px] text-white/80">
-                    {[fmtDate(e.startsAt), e.location, money(e.price, e.currency), e.popularity > 0 ? `${e.popularity} going` : null]
+                    {[fmtDate(e.startsAt), e.location, money(e.price, e.currency)]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>

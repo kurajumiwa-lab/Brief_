@@ -102,17 +102,7 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
         )}
       </div>
 
-      {/* Featured mark — the organiser's explicit choice, never a ranking */}
-      {event.featured && (
-        <div className="absolute top-4 right-4">
-          <span
-            className="text-[11px] font-extrabold px-2.5 py-1 rounded-full"
-            style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}
-          >
-            ★ Featured
-          </span>
-        </div>
-      )}
+      {/* No "★ Featured" mark — Decision 6: no featured slot anywhere. */}
 
       {/* Content overlay — bottom of the card */}
       <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
@@ -129,16 +119,11 @@ export function MuseumCard({ event, isActive, onOpen, isNew = false, openedAgoDa
           )}
           <span className="w-1 h-1 rounded-full bg-[var(--paper-40)]" />
           <span>{price}</span>
-          <span className="w-1 h-1 rounded-full bg-[var(--paper-40)]" />
-          <span>{event.popularity} going</span>
+          {/* No "{popularity} going" — Decision 6: no "X going", no view count. */}
         </div>
 
-        {/* Social proof — the viewer's own group, derived. Real, not invented. */}
-        {event.tableBankingOverlap && event.tableBankingOverlap.length > 0 && (
-          <p className="mt-1.5 text-[13px] text-white/80">
-            {event.tableBankingOverlap.map((o) => `${o.memberCount} from ${o.tableBankingName ?? "your Circle"}`).join(" · ")} going
-          </p>
-        )}
+        {/* No "N from your Circle going" — Decision 6 ends the per-viewer
+            overlap explicitly, even though it was derived from real rows. */}
 
         {/* A real local fact: this device opened this exhibit. */}
         {openedAgoDays != null && (

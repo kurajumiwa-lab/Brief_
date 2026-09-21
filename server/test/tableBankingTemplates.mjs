@@ -16,8 +16,8 @@ const { store } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const tableBanking = await import("../src/domain/tableBanking.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const rejects = (fn, code) => assert.throws(fn, (e) => !code || e.code === code);
 const user = (handle) => auth.createUser({ handle, password: "templates-pw" });
 
@@ -58,18 +58,41 @@ test("API: templates are served, and a group can be created from one", async () 
   };
   try {
     const A = (await call("/api/auth/register", "POST", { handle: "tp_http" + Date.now().toString(36), password: "a good passphrase" })).body;
-    const t = await call("/api/table-banking/templates", "GET");
+    // Everything under /api needs a session unless index.js PUBLIC_WITHOUT_SESSION
+    // names it, and it does not name table-banking/templates. The route handler is
+    // written as though it were public — (_req, res), no requireAuth — but the
+    // global gate answers first, so in practice this is a signed-in read. Pinning
+    // both halves: the gate really does refuse an anonymous caller, and a member
+    // really does get the catalogue.
+    const anon = await call("/api/table-banking/templates", "GET");
+    assert.equal(anon.status, 401, "templates sit behind the session gate like the rest of /api");
+
+    const t = await call("/api/table-banking/templates", "GET", undefined, A.token);
     assert.equal(t.status, 200);
     assert.ok(Array.isArray(t.body.templates) && t.body.templates.length >= 5);
 
     const grp = await call("/api/table-banking", "POST", { name: "From Template", template: "table_banking" }, A.token);
     assert.equal(grp.status, 201);
     assert.equal(grp.body.group.contributionAmount, 5000, "template default applied over the wire");
-    assert.equal(grp.body.group.latePenaltyKes, 100);
+    assert.equal(grp.body.group.latePenaltyKes, 100, "the template's late penalty survives the wire");
+
+    // The other half of the same bug, and the more damaging one: `welfare_first`
+    // exists to earmark an emergency pot, so if the route defaults an omitted
+    // field to 0 the pot vanishes and the group looks created but is not the
+    // group the member picked.
+    const wf = await call("/api/table-banking", "POST", { name: "From Welfare First", template: "welfare_first" }, A.token);
+    assert.equal(wf.status, 201);
+    assert.equal(wf.body.group.welfareContributionAmount, 500, "the template's welfare pot survives the wire");
+    assert.equal(wf.body.group.contributionAmount, 1000, "and its rotation amount with it");
+
+    // An explicit field still wins over the template — that is the other half of
+    // the contract, and it must not be broken by the fix above.
+    const over = await call("/api/table-banking", "POST", { name: "Explicit Wins", template: "table_banking", latePenaltyKes: 250 }, A.token);
+    assert.equal(over.status, 201);
+    assert.equal(over.body.group.latePenaltyKes, 250, "an explicit field overrides the template default");
   } finally {
     srv.close();
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

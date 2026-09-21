@@ -20,8 +20,8 @@ const listing = await import("../src/domain/listing.js");
 const order = await import("../src/domain/order.js");
 const commitments = await import("../src/domain/commitments.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 
 const buyer = auth.createUser({ handle: "cmt_buyer", password: "commitments-pw" });
 const seller = auth.createUser({ handle: "cmt_seller", password: "commitments-pw" });
@@ -78,5 +78,4 @@ test("API: /api/me/commitments is wired and auth-gated", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

@@ -18,3 +18,4 @@ playwright-report/
 
 # Isolated local preview records (not production data or test fixtures)
 .preview-data/
+.tmp.*

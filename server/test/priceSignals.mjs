@@ -16,8 +16,8 @@ const { store } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const priceSignals = await import("../src/domain/priceSignals.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const user = (handle) => auth.createUser({ handle, password: "pricesig-pw" });
 
 const owner = user("ps_owner");
@@ -94,5 +94,4 @@ test("API: GET /api/price-signals is public", async () => {
   srv.close();
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

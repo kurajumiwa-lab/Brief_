@@ -26,7 +26,7 @@ import { store, newId, newTicketCode } from '../store.js';
 import * as ticketMarket from './ticketMarket.js';
 import { emitSignal } from './signal.js';
 import { personIdIfUser } from './person.js';
-import { tableBankingOverlapFor, hasEnded } from './events.js';
+import { hasEnded } from './events.js';
 
 export const CAMPAIGN_TYPES = ['popup', 'session', 'drop', 'event', 'contribution'];
 // A contribution campaign is a pot with a GOAL, not seats with a price: its
@@ -495,10 +495,12 @@ export function getPublicBySlug(slug) {
  * The public projection. Deliberately allow-listed: internal ids, ownerId,
  * transactions, member data and analytics never appear.
  *
- * `viewerId` is resolved SERVER-SIDE from the session token (never a client
- * claim) and enables two honest, per-viewer derivations:
- *   - `tableBankingOverlap` ("N from your Circle going") — null anonymously;
- *   - `host`/related context is always derivable regardless of viewer.
+ * `viewerId` is still resolved SERVER-SIDE from the session token (never a
+ * client claim), but Decision 6 removed the one per-viewer derivation it fed:
+ * the "N from your Circle going" overlap was social proof, and the decision's
+ * supersession note ends it explicitly. `host`/related context is derivable
+ * regardless of viewer, so the parameter is retained for callers and no longer
+ * changes what an event says about itself.
  */
 export function publicView(campaign, viewerId = null) {
   const m = analytics(campaign.id);
@@ -527,9 +529,12 @@ export function publicView(campaign, viewerId = null) {
     capacity: campaign.capacity,
     remaining: m.remaining,
     soldOut: m.remaining === 0,
-    // Aggregate social proof: HOW MANY are registered, never WHO. This is a
-    // counted fact ("42 registered"), not a roster.
-    registered: m.registrations,
+    // NO `registered` count (Decision 6). This line used to serve "42
+    // registered" under a comment calling it "aggregate social proof" -- and
+    // that is precisely what the decision forbids: "No 'X going.' No attendee
+    // names." Seats are the only number left, and they are above: capacity,
+    // remaining, soldOut. A host still sees their own registrations in their
+    // own analytics; that is a private dashboard, not a public nudge.
     // Contribution progress: derived from settled ledger rows only. Raised
     // money that has not settled is not raised (the same rule the wallet
     // lives by). Anonymous contributors are counted, never listed.
@@ -558,8 +563,8 @@ export function publicView(campaign, viewerId = null) {
     // Host profile: display name + a counted number of their public events.
     // Derived on every read; never a stored roster, never the ownerId.
     host,
-    // "N from your Circle going" — derived per viewer, null anonymously.
-    tableBankingOverlap: tableBankingOverlapFor(campaign.id, viewerId),
+    // NO `tableBankingOverlap` (Decision 6) -- see events.js, which no longer
+    // exports the helper that computed it.
     // Natural expiry — a dated event that has passed ends itself on the
     // calendar. Derived from endsAt; the public page can say "ended" instead
     // of showing a registration form that the server would refuse.

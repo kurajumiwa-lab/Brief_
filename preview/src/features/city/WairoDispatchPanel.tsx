@@ -9,17 +9,21 @@
 //   * ROUTE — the rider picker lets a dispatcher name WHO delivers: default is
 //     self-dispatch, but any derived rider (an onboarding agent or a known
 //     rider) can be assigned by id. The directory is derived, never seeded.
-//   * DELIVERED — the rider marks a pickup delivered; the ONBOARDING agent
-//     earns a derived flat per-pickup origin fee (shown honestly, "not money
-//     until finance confirms").
+//   * DELIVERED — the rider marks a pickup delivered, and the ONBOARDING agent
+//     sees a COUNT of the deliveries that started at their shops. It used to be
+//     a KES 20 per-pickup origin fee with its own finance-gated settlement;
+//     Decision 5 (docs/DECISIONS.md) ended that — a field agent is paid KES 150
+//     per approved VISIT and nothing else, and a per-delivery fee is a volume
+//     tier. The routing stays; the money does not. Old settlement rows are
+//     still shown, labelled as the history they are.
 //
 // Nothing here is fabricated: origins come from real claims, pickups from real
-// rows, the fee is derived. WAIRO's boda/indigo visual identity only.
+// rows, and the count is derived — no KES is printed where no KES is owed. WAIRO's boda/indigo visual identity only.
 // ---------------------------------------------------------------------------
 
 import React, { useEffect, useState } from "react";
 import * as api from "../../api/briefApi";
-import type { PickupOrigin, Pickup, PickupOriginObligation, Rider, PickupFeeSettlement } from "../../api/briefApi";
+import type { PickupOrigin, Pickup, PickupOriginStats, Rider, PickupFeeSettlement } from "../../api/briefApi";
 import { Bike, MapPin, Package, CheckCircle2, Plus, ArrowRight, Wallet, User } from "lucide-react";
 import { soundEngine } from "../../utils/SoundEngine";
 
@@ -27,7 +31,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
   const [origins, setOrigins] = useState<PickupOrigin[] | null>(null);
   const [riders, setRiders] = useState<Rider[] | null>(null);
   const [pickups, setPickups] = useState<Pickup[] | null>(null);
-  const [fee, setFee] = useState<PickupOriginObligation | null>(null);
+  const [fee, setFee] = useState<PickupOriginStats | null>(null);
   const [settlements, setSettlements] = useState<PickupFeeSettlement[] | null>(null);
   const [notice, setNotice] = useState("");
 
@@ -45,7 +49,7 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
       api.getPickupOrigins(),
       api.getPickupRiders(),
       api.listMyPickups(),
-      api.getMyPickupOriginFee(),
+      api.getMyPickupOriginStats(),
       api.getMyPickupFeeSettlements()
     ]);
     setOrigins(o.ok ? o.data : []);
@@ -190,12 +194,12 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
         )}
       </div>
 
-      {/* ── Origin fee (the onboarding agent's take) + settlement state ── */}
+      {/* ── Deliveries from the shops you onboarded: a COUNT, not a fee ── */}
       {fee && (
         <div className="p-3 rounded-2xl flex items-center justify-between gap-2" style={{ borderColor: "var(--color-border)", background: "var(--color-paper)", border: "1px solid var(--color-border)" }}>
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>
-              <Wallet className="w-3 h-3 inline mr-1" /> Your origin fee
+              <Wallet className="w-3 h-3 inline mr-1" /> Deliveries from your shops
             </p>
             <p className="text-[11px] leading-snug" style={{ color: "var(--color-text-muted)" }}>{fee.note}</p>
             {(settlements ?? []).length > 0 && (() => {
@@ -204,12 +208,14 @@ export function WairoDispatchPanel({ className = "" }: { className?: string }) {
                 ? "var(--color-success)"
                 : latest.status === "refused" ? "var(--color-danger)" : "var(--color-warning)";
               const label = latest.status === "confirmed"
-                ? `KES ${latest.originFeeKes.toLocaleString()} settled by finance`
-                : latest.status === "refused" ? "Last settlement refused by finance" : "Settlement pending — awaiting finance";
+                ? `History: KES ${latest.originFeeKes.toLocaleString()} was settled by finance under the old per-pickup fee`
+                : latest.status === "refused" ? "History: a settlement under the old per-pickup fee was refused" : "History: a settlement under the old per-pickup fee is pending";
               return <p className="text-[11px] font-bold mt-0.5" style={{ color }}>{label}</p>;
             })()}
           </div>
-          <span className="shrink-0 text-sm font-black" style={{ color: "var(--color-success)" }}>KES {fee.originFeeKes.toLocaleString()}</span>
+          <span className="shrink-0 text-sm font-black" style={{ color: "var(--color-text)" }}>
+            {fee.pickupCount} delivered · {fee.shops} shop{fee.shops === 1 ? '' : 's'}
+          </span>
         </div>
       )}
     </div>

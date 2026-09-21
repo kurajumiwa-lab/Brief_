@@ -18,8 +18,8 @@ const { store, newId } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const position = await import("../src/domain/position.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 
 const me = auth.createUser({ handle: "pos_me", password: "position-pw" });
 const buyer = auth.createUser({ handle: "pos_buyer", password: "position-pw" });
@@ -74,7 +74,9 @@ store.insert("waitlistEntries", {
   reservedAt: now.toISOString()
 });
 
-// A territory override with a window ~2 months out.
+// A territory claim carrying a pre-Decision-5 window (~2 months out). It stays
+// in the fixture on purpose: the decay rail must not read it, and the assert
+// below proves the key is gone even when a row like this exists.
 store.insert("vendors", { id: "vnd_1", ownerId: me.id, displayName: "Mama Njeri Grocers", status: "active", businessType: "retailer", location: "Gikomba", createdAt: now.toISOString(), updatedAt: now.toISOString() });
 store.insert("vendorClaims", {
   id: "vcl_1", vendorId: "vnd_1", agentId: me.id, claimType: "full_registration",
@@ -107,9 +109,11 @@ test("positionFor derives expiring quotes, waitlist, override, overdue and open 
   assert.equal(p.decay.waitlist[0].status, "offered");
   assert.ok(p.decay.waitlist[0].hoursLeft > 0);
 
-  // Decay: override window derived from the claim's expiresAt.
-  assert.equal(p.decay.override.claimCount, 1);
-  assert.ok(p.decay.override.monthsLeft >= 1 && p.decay.override.monthsLeft <= 2, "override window ~2 months");
+  // Decay: the field-agent override window is GONE, not zero. Decision 5
+  // (docs/DECISIONS.md) replaced the 24-month override with a flat KES 150 per
+  // approved visit, so there is no window to run down and the decay rail does
+  // not carry a key that can never be non-null.
+  assert.equal("override" in p.decay, false, "the override decay row is removed with the window it measured");
 
   // Decay: one overdue instalment.
   assert.equal(p.decay.overdueInstallments, 1, "one overdue instalment");
@@ -141,7 +145,7 @@ test("an empty account returns honest zeroes, never fabricated numbers", () => {
   const p = position.positionFor(fresh.id);
   assert.equal(p.decay.expiringQuotes.length, 0);
   assert.equal(p.decay.waitlist.length, 0);
-  assert.equal(p.decay.override, null);
+  assert.equal("override" in p.decay, false);
   assert.equal(p.decay.overdueInstallments, 0);
   assert.equal(p.missedCapture.count, 0);
   // Open demand is global, so it may be non-zero; only the user's own rows are zero.
@@ -152,10 +156,14 @@ test("an empty account returns honest zeroes, never fabricated numbers", () => {
 // NEXT MOVE + MISSED VALUE — the two places a number could be invented, so
 // both are pinned to rows.
 // ---------------------------------------------------------------------------
-store.insert("matches", {
-  id: "mtch_1", requestId: "req_open", participantId: "vnd_1", capabilityId: null,
-  status: "suggested", requesterState: "suggested", revision: 1,
-  createdAt: now.toISOString(), updatedAt: now.toISOString(), history: []
+// Ordered setup, not a test: it asserts nothing, but it has to land BETWEEN the
+// two blocks below or the earlier zero-count assertions read the wrong store.
+step("fixture: a real match row puts an open request in front of me", () => {
+  store.insert("matches", {
+    id: "mtch_1", requestId: "req_open", participantId: "vnd_1", capabilityId: null,
+    status: "suggested", requesterState: "suggested", revision: 1,
+    createdAt: now.toISOString(), updatedAt: now.toISOString(), history: []
+  });
 });
 
 test("nextMove is the real open request a match row put in front of me", () => {
@@ -236,5 +244,4 @@ test("API: /api/me/position is wired and auth-gated", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

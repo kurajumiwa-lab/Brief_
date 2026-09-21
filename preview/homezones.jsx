@@ -239,10 +239,17 @@ async function main() {
     conversions: [{ id: 'c1', points: 500, kes: 50, status: 'pending', refusedReason: null, createdAt: '2026-09-10T00:00:00Z' }]
   };
   const AGENT = {
-    claims: [], settlements: [],
-    override: {
-      agentId: 'u1', rate: 0.75, months: 24,
-      claims: [{ claimId: 'vc1', vendorId: 'v1', vendorName: 'Testshop', claimedAt: '2026-08-01T00:00:00Z', expiresAt: null, settledOrders: 4, grossKes: 40000, overrideKes: 300, contactName: 'Jane', contactPhone: '+254700000000' }]
+    claims: [], settlements: [], visits: [],
+    // Decision 5: two approved visits x KES 150 = KES 300. No rate, no window.
+    earnings: {
+      agentId: 'u1', feeKes: 150, currency: 'KES',
+      visits: [
+        { visitId: 'fv1', vendorId: 'v1', vendorName: 'Testshop', purpose: 'full_registration', status: 'approved', notes: 'Met the owner.', submittedAt: '2026-08-01T00:00:00Z', decidedAt: '2026-08-02T00:00:00Z', decidedBy: 'op1', rejectReason: null, week: '2026-W31', feeKes: 150, contactName: 'Jane', contactMethod: '+254700000000', businessType: 'retailer', location: 'Kilimani' },
+        { visitId: 'fv2', vendorId: 'v2', vendorName: 'Secondshop', purpose: 'menu_upload', status: 'approved', notes: 'Photographed the menu.', submittedAt: '2026-08-03T00:00:00Z', decidedAt: '2026-08-04T00:00:00Z', decidedBy: 'op1', rejectReason: null, week: '2026-W31', feeKes: 150, contactName: 'Jim', contactMethod: '+254711111111', businessType: 'retailer', location: 'CBD' }
+      ],
+      approved: 2, pending: 0, rejected: 0, approvedKes: 300, unsettledKes: 300,
+      weeks: [{ week: '2026-W31', visits: 2, kes: 300, feeKes: 150, currency: 'KES', settlementId: null, settlementStatus: null }],
+      note: 'derived'
     }
   };
   {
@@ -263,8 +270,9 @@ async function main() {
     const t = text(c);
     assert.ok(/600/.test(t), 'the points the server says are available');
     assert.ok(/100 points = KES 10/.test(t), 'with the server\'s rate quoted, not applied to anything');
-    assert.ok(/1 shop/.test(t) && /KES 300/.test(t), 'the territory rail counts its rows and its settled money');
-    assert.ok(/0\.75% for 24 months/.test(t), 'naming the terms the server set');
+    assert.ok(/2 approved/.test(t) && /KES 300/.test(t), 'the visits rail counts its approved rows and their money');
+    assert.ok(/KES 150 per approved visit, paid weekly/.test(t), 'naming the terms the server set — one flat number');
+    assert.ok(!/0\.75%|24 months|override/i.test(t), 'the old rate-and-window copy is gone from Home');
     assert.ok(/1 conversion waiting on finance/.test(t) && /Not cash yet/.test(t), 'a pending conversion is a queue entry, not money in a pocket');
     assert.ok(!/could have earned|missed|forecast|project/i.test(t), 'no missed-income framing, no projection');
     assert.ok(!/tier|badge|level|streak|rank/i.test(t), 'and no ladder — the pool has none');
@@ -287,7 +295,7 @@ async function main() {
           conversion: { ptsToKes: 0.1, minPoints: 500 }, events: [], conversions: []
         }) };
       }
-      if (u.includes('/api/me/field-agent')) return { ok: true, status: 200, text: async () => JSON.stringify({ claims: [], settlements: [], override: { agentId: 'u1', rate: 0.75, months: 24, claims: [] } }) };
+      if (u.includes('/api/me/field-agent')) return { ok: true, status: 200, text: async () => JSON.stringify({ claims: [], visits: [], settlements: [], earnings: { agentId: 'u1', feeKes: 150, currency: 'KES', visits: [], approved: 0, pending: 0, rejected: 0, approvedKes: 0, unsettledKes: 0, weeks: [], note: 'derived' } }) };
       if (u.includes('/api/me/lipa-mdogo')) return { ok: true, status: 200, text: async () => JSON.stringify({ contracts: [] }) };
       return { ok: true, status: 200, text: async () => JSON.stringify(PULSE) };
     };

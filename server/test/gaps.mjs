@@ -18,8 +18,8 @@ const { store } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const gaps = await import("../src/domain/gaps.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const user = (handle) => auth.createUser({ handle, password: "gaps-password" });
 
 const owner = user("gp_owner");
@@ -103,5 +103,4 @@ test("API: GET /api/gaps is moderate-gated", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

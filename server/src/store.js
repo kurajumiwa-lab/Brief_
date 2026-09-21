@@ -126,16 +126,20 @@ const EMPTY = {
   commercialAgreements: [], // append-only; one active agreement per partner
   partnerSettlements: [],   // finance-confirmed revenue-share payouts (ledger-backed)
   // Field agents (riders / door-to-door agents) who onboard vendors. A claim is
-  // first-touch-wins per vendor; a full_registration claim opens a 24-month
-  // override on settled orders (derived), a menu_upload claim pays a one-off
-  // bounty. Settlements are finance-confirmed ledger payouts. See
-  // src/domain/fieldAgent.js.
+  // first-touch-wins per vendor and is attribution only — a claim is not
+  // payable by itself. Pay follows an approved visit (see fieldVisits).
+  // Settlements are finance-confirmed ledger payouts, one per agent per week.
+  // See src/domain/fieldAgent.js.
   vendorClaims: [],
   fieldAgentSettlements: [],
+  // Field-agent VISITS — the payable act under Decision 5 (docs/DECISIONS.md):
+  // KES 150 flat per APPROVED visit, settled weekly. A row stores the agent,
+  // the shop, the purpose, the agent's own words and the approval; it stores
+  // NO fee and NO week, because both are derived from the rows on read.
+  fieldVisits: [],
   // Rider pickups — a local delivery assigned to a rider, originating from an
-  // onboarded shop. When a DIFFERENT rider completes a pickup from a shop the
-  // original onboarding agent claimed, that agent earns a flat per-pickup
-  // origin fee (derived, never stored as a balance). See src/domain/pickups.js.
+  // onboarded shop. Routing and completion are the product; the per-pickup
+  // origin fee Decision 5 ended is not (see src/domain/pickups.js).
   pickups: [],
   // Space audience — who follows a space, what it has broadcast to them, and
   // the message templates its owner reuses. All three are ordinary rows: a
@@ -177,10 +181,11 @@ const EMPTY = {
   // about ONE completed delivery. Nothing aggregates it into a score, a tier or
   // a ranking, and no endpoint computes one.
   errandRatings: [],
-  // Finance-confirmed payouts of the derived pickup origin fee. The fee is
-  // derived on read (delivered pickups x PICKUP_ORIGIN_FEE_KES); it only
-  // becomes money through one of these ledger-backed settlements, mirroring
-  // fieldAgentSettlements exactly. See src/domain/pickups.js.
+  // HISTORY ONLY. These were the finance-confirmed payouts of the derived
+  // pickup origin fee (delivered pickups x KES 20). Decision 5 ended that fee
+  // — a field agent is paid KES 150 per approved visit and nothing else — so
+  // the writers are gone from src/domain/pickups.js and this collection is
+  // readable history that nothing adds to and nothing can re-pay.
   pickupFeeSettlements: [],
   // Lipa Mdogo — asset-financing RECORDS + collection. Brief is not the
   // lender: the lender is a bank/sacco/cooperative partner who owns the risk;

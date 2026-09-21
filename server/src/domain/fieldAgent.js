@@ -1,50 +1,71 @@
 // ---------------------------------------------------------------------------
-// FIELD AGENTS — riders and door-to-door agents who onboard vendors and earn
-// a territory override on the merchant's future orders.
+// FIELD AGENTS — riders and door-to-door agents who bring shops into Brief and
+// are paid a flat fee for each visit an approver accepts.
 //
-// The second layer of the distribution flywheel. An agent claims a vendor two
-// ways:
+// PAY — the operator's Decision 5, 2026-09-21 (docs/DECISIONS.md):
 //
-//   menu_upload        a light, one-off act (photos + basic info) -> a flat,
-//                      deterministic bounty, paid once per vendor, ever.
-//   full_registration  a deeper KYC onboarding -> a 24-month override on the
-//                      merchant's SETTLED orders.
+//     KES 150 flat per APPROVED visit. Weekly payout. Nothing else.
 //
-// HONESTY (unchanged rules, restated):
+// No bonus. No volume tier. No speed incentive. No quality multiplier. One
+// number replaces the four this module used to carry: the 0.75% override rate,
+// its 24-month window, the 100-point menu-upload bounty, and the 0.5%–1.0%
+// clamp those were tuned inside. The operator's reason is about behaviour, not
+// budget — a share of a merchant's settled orders pays an agent for throughput,
+// and throughput is precisely what a flat per-visit fee refuses to reward. A
+// rejected visit pays nothing.
+//
+// HONESTY (the standing laws, unchanged):
 //   * first-touch-wins: only ONE active full_registration claim per vendor.
 //     A second agent cannot overwrite the first — attribution is a fact, not
 //     a prize to be re-raced.
-//   * depth stays at ONE: an agent earns only from the merchant they
-//     personally claimed, never from agents they recruited. There is no
+//   * depth stays at ONE: an agent earns only from shops they personally
+//     visited and onboarded, never from agents they recruited. There is no
 //     upline anywhere in this module.
-//   * the override is DERIVED from settled orders only — floor(rate x settled
-//     value) inside the claim's 24-month window. No settled orders, no
-//     override. Nothing is stored as a balance.
+//   * one paid visit per agent, per shop, per purpose — ever. The fee is not a
+//     meter that can be run twice on the same door.
+//   * NOTHING IS STORED AS A BALANCE. Earnings are `KES 150 x approved visits`,
+//     recomputed from rows on every read. A rejected or still-pending visit
+//     contributes zero, and the arithmetic is printed beside the number.
 //   * money moves only through a finance-confirmed settlement that writes a
-//     real ledger transaction (type field_agent_override), mirroring the
-//     partner share exactly.
-//   * a vendor owner cannot claim their own shop (self-dealing refusal), and
-//     neither can the buyer's lead agent be the vendor (already guarded in
-//     order.js).
+//     real ledger transaction (type `field_agent_visit_fee`), pending until
+//     finance accepts — mirroring the partner share exactly.
+//   * self-dealing is refused: a vendor owner is not paid to visit a shop they
+//     already own. The one exception is the onboarding act itself, and it is
+//     the same exception `claimVendor`/`onboardVendor` have always carried:
+//     under the current 1:1 person<->vendor model the agent owns the vendor
+//     they just created, and refusing that would refuse the agent's whole job.
+//   * a visit carries the agent's own words about what they saw. An approver
+//     who cannot read what happened cannot approve it, and a rejection without
+//     a reason is refused — both minimums are printed, never hidden.
+//
+// Rows written before Decision 5 (`fieldAgentSettlements` with `rate`,
+// `grossKes` and a from/to `periodKey`) are left exactly as they are: they are
+// history, they are readable, and their period key can never collide with the
+// `agentId:YYYY-Www` key this module now writes, so none of them can be paid
+// twice. Nothing is migrated and nothing is deleted.
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
 import { getUser } from './auth.js';
 import { createTransaction, transitionTransaction } from './ledger.js';
-import * as referrals from './referrals.js';
 import * as vendors from './vendor.js';
 import { BUSINESS_TYPES } from './supply.js';
 
 export const CLAIM_TYPES = ['menu_upload', 'full_registration'];
 export const CLAIM_STATUS = ['active', 'expired', 'revoked'];
 export const SETTLEMENT_STATUS = ['pending', 'confirmed', 'refused'];
+export const VISIT_STATUS = ['pending', 'approved', 'rejected'];
 
-// The override: a fraction of the merchant's settled orders, paid for 24
-// months. Clamped 0.5%–1.0%; the default sits inside the distribution budget
-// (the 6.5% cap in referrals.js) alongside the lead reward and partner share.
-export const OVERRIDE_RATE = 0.0075; // 0.75%
-export const OVERRIDE_MONTHS = 24;
-export const MENU_UPLOAD_BOUNTY = 100; // flat points, one-off, on the claim
+// Decision 5: the one number. Everything payable in this module is a multiple
+// of it, and the multiple is a count of approved visit rows — never a share of
+// anybody's trade.
+export const VISIT_FEE_KES = 150;
+
+// Printed, not hidden: the shortest note an agent can submit (an approver has
+// to be able to read what happened) and the shortest reason a rejection can
+// carry (the same rule the settlement refusal has always followed).
+export const VISIT_NOTE_MIN = 8;
+export const REJECT_REASON_MIN = 4;
 
 function fail(message, status = 400, code = 'validation_error') {
   const e = new Error(message);
@@ -53,28 +74,27 @@ function fail(message, status = 400, code = 'validation_error') {
   throw e;
 }
 
-function expiresAtOf(nowMs) {
-  return new Date(nowMs + OVERRIDE_MONTHS * 30 * 86400000).toISOString();
-}
-
-/** Settled orders for a vendor inside a window. `settled` is only ever reached
- *  when a real settled ledger transaction backs the order, so this is real
- *  money, never optimism. */
-function settledOrdersFor(vendorId, since, until) {
-  return store.filter('orders', (o) => {
-    if (o.vendorId !== vendorId || o.status !== 'settled') return false;
-    const at = o.settledAt;
-    if (!at) return false;
-    if (since && at < since) return false;
-    if (until && at > until) return false;
-    return true;
-  });
+/**
+ * The ISO-8601 week an instant falls in, as `YYYY-Www` (UTC). This is the
+ * payout period: a visit belongs to the week it was APPROVED in, because that
+ * is the moment it became payable — not the week it was submitted, which would
+ * let a slow approval silently move money between two weeks.
+ */
+export function isoWeekOf(iso) {
+  const d = new Date(iso);
+  if (!iso || Number.isNaN(d.getTime())) return null;
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = date.getUTCDay() || 7; // Monday=1 … Sunday=7
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum); // nearest Thursday
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return `${date.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
 }
 
 /**
  * Claim a vendor. First-touch-wins within each claim type; self-dealing is
- * refused. A menu_upload claim mints the one-off bounty; a full_registration
- * claim opens the 24-month override window.
+ * refused. A claim is ATTRIBUTION — it records who brought the shop in. It is
+ * not, by itself, payable: pay follows an approved visit (Decision 5).
  */
 export function claimVendor({ agentId, vendorId, claimType, territoryKey = null }) {
   if (!agentId) fail('an agent is required');
@@ -94,7 +114,7 @@ export function claimVendor({ agentId, vendorId, claimType, territoryKey = null 
   }
 
   const now = new Date().toISOString();
-  const claim = store.insert('vendorClaims', {
+  return store.insert('vendorClaims', {
     id: newId('vcl'),
     vendorId,
     agentId,
@@ -102,21 +122,169 @@ export function claimVendor({ agentId, vendorId, claimType, territoryKey = null 
     territoryKey: territoryKey ? String(territoryKey).slice(0, 96) : null,
     status: 'active',
     claimedAt: now,
-    expiresAt: claimType === 'full_registration' ? expiresAtOf(Date.now()) : null,
+    // No window is minted any more. The 24-month override it used to open is
+    // gone with Decision 5, so the field stays null and says so rather than
+    // carrying a date nothing honours.
+    expiresAt: null,
     createdAt: now
   });
-
-  if (claimType === 'menu_upload') {
-    try { referrals.recordFieldBounty(agentId, vendorId, MENU_UPLOAD_BOUNTY); }
-    catch { /* the bounty must never break the claim */ }
-  }
-  return claim;
 }
 
 /** The active territory holder for a vendor, or null when nobody holds it. */
 export function vendorClaim(vendorId) {
   return store.find('vendorClaims', (c) =>
     c.vendorId === vendorId && c.claimType === 'full_registration' && c.status === 'active') ?? null;
+}
+
+// The visit row, written in one place so the public and the onboarding paths
+// cannot drift apart. Deliberately stores NO fee and NO week: both are derived
+// on read, because a stored number is a number that can disagree with the rows.
+function insertVisitRow({ agentId, vendorId, purpose, notes }) {
+  const now = new Date().toISOString();
+  return store.insert('fieldVisits', {
+    id: newId('fvt'),
+    agentId,
+    vendorId,
+    purpose,
+    status: 'pending',
+    notes: String(notes).trim().slice(0, 600),
+    submittedAt: now,
+    decidedBy: null,
+    decidedAt: null,
+    rejectReason: null,
+    createdAt: now
+  });
+}
+
+/**
+ * RECORD A VISIT — the payable act. One per agent, per shop, per purpose; a
+ * rejected visit may be submitted again (the rejection is an answer about that
+ * attempt, not a ban on the door), a pending or approved one may not.
+ */
+export function recordVisit({ agentId, vendorId, purpose = 'full_registration', notes = '' }) {
+  if (!agentId) fail('an agent is required');
+  if (!getUser(agentId)) fail('agent not found', 404, 'not_found');
+  if (!CLAIM_TYPES.includes(purpose)) fail(`purpose must be one of ${CLAIM_TYPES.join(', ')}`);
+  const vendor = store.find('vendors', (v) => v.id === vendorId);
+  if (!vendor) fail('vendor not found', 404, 'not_found');
+  if (vendor.ownerId === agentId) fail('a vendor owner is not paid to visit their own shop', 409, 'self_visit');
+  if (String(notes ?? '').trim().length < VISIT_NOTE_MIN) {
+    fail(`say what you saw at the shop — at least ${VISIT_NOTE_MIN} characters, because that is what the approver reads`);
+  }
+  const existing = store.find('fieldVisits', (v) =>
+    v.agentId === agentId && v.vendorId === vendorId && v.purpose === purpose && v.status !== 'rejected');
+  if (existing) fail('this shop was already visited for that purpose', 409, 'already_visited');
+
+  return insertVisitRow({ agentId, vendorId, purpose, notes });
+}
+
+/**
+ * APPROVE OR REJECT A VISIT — the only place a visit becomes payable, and it
+ * is a human act. Terminal states are final: a decided visit cannot be
+ * re-decided, so a week's count can never move after its settlement is written.
+ */
+export function decideVisit(visitId, { accept = true, note = '', decidedBy = null } = {}) {
+  const row = store.find('fieldVisits', (v) => v.id === visitId);
+  if (!row) fail('visit not found', 404, 'not_found');
+  if (row.status !== 'pending') fail(`this visit is already ${row.status}`, 409, 'invalid_state');
+  const now = new Date().toISOString();
+  if (!accept) {
+    const reason = String(note ?? '').trim();
+    if (reason.length < REJECT_REASON_MIN) fail(`say why the visit is rejected — at least ${REJECT_REASON_MIN} characters`);
+    return store.update('fieldVisits', row.id, {
+      status: 'rejected',
+      rejectReason: reason.slice(0, 300),
+      decidedBy: decidedBy ?? null,
+      decidedAt: now
+    });
+  }
+  return store.update('fieldVisits', row.id, {
+    status: 'approved',
+    rejectReason: null,
+    decidedBy: decidedBy ?? null,
+    decidedAt: now
+  });
+}
+
+export function myVisits(agentId) {
+  return store.filter('fieldVisits', (v) => v.agentId === agentId)
+    .slice().sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
+}
+
+export function listVisits() {
+  return store.all('fieldVisits').slice().sort((a, b) => (a.submittedAt < b.submittedAt ? 1 : -1));
+}
+
+/**
+ * The agent's DERIVED earnings: KES 150 for every approved visit, grouped into
+ * the weeks they were approved in. Nothing is stored; the counts are printed
+ * beside the money so the number can always be checked against the rows.
+ */
+export function visitEarnings(agentId) {
+  const visits = myVisits(agentId);
+  const settlements = store.filter('fieldAgentSettlements', (s) => s.agentId === agentId);
+
+  const rows = visits.map((v) => {
+    const vendor = store.find('vendors', (x) => x.id === v.vendorId);
+    const approved = v.status === 'approved';
+    return {
+      visitId: v.id,
+      vendorId: v.vendorId,
+      vendorName: vendor?.displayName ?? null,
+      purpose: v.purpose,
+      status: v.status,
+      notes: v.notes,
+      submittedAt: v.submittedAt,
+      decidedAt: v.decidedAt,
+      decidedBy: v.decidedBy ?? null,
+      rejectReason: v.rejectReason ?? null,
+      week: approved ? isoWeekOf(v.decidedAt) : null,
+      feeKes: approved ? VISIT_FEE_KES : 0,
+      // The direct contact the agent captured at onboarding — the person you
+      // actually reach at the shop (name + phone), so the agent can call or
+      // WhatsApp a shop they brought in.
+      contactName: vendor?.contactName ?? null,
+      contactMethod: vendor?.contactMethod ?? null,
+      businessType: vendor?.businessType ?? null,
+      location: vendor?.location ?? null
+    };
+  });
+
+  const byWeek = new Map();
+  for (const r of rows) {
+    if (r.status !== 'approved' || !r.week) continue;
+    const w = byWeek.get(r.week) ?? { week: r.week, visits: 0, kes: 0 };
+    w.visits += 1;
+    w.kes += VISIT_FEE_KES;
+    byWeek.set(r.week, w);
+  }
+  const weeks = [...byWeek.values()]
+    .sort((a, b) => (a.week < b.week ? 1 : -1))
+    .map((w) => {
+      const s = settlements.find((x) => x.week === w.week && x.status !== 'refused');
+      return {
+        ...w,
+        feeKes: VISIT_FEE_KES,
+        currency: 'KES',
+        settlementId: s?.id ?? null,
+        settlementStatus: s?.status ?? null
+      };
+    });
+
+  const approved = rows.filter((r) => r.status === 'approved').length;
+  return {
+    agentId,
+    feeKes: VISIT_FEE_KES,
+    currency: 'KES',
+    visits: rows,
+    approved,
+    pending: rows.filter((r) => r.status === 'pending').length,
+    rejected: rows.filter((r) => r.status === 'rejected').length,
+    approvedKes: approved * VISIT_FEE_KES,
+    unsettledKes: weeks.filter((w) => !w.settlementId).reduce((s, w) => s + w.kes, 0),
+    weeks,
+    note: `KES ${VISIT_FEE_KES} per approved visit, paid weekly; a rejected or waiting visit pays nothing. Derived from the visit rows on every read — nothing is stored as a balance, and none of it is money until a settlement is recorded and confirmed by finance.`
+  };
 }
 
 /**
@@ -132,19 +300,22 @@ export function vendorClaim(vendorId) {
  * person<->vendor model: one person, one seller identity), then the claim is
  * recorded DIRECTLY — NOT through claimVendor, whose self-claim guard exists
  * to stop an owner double-dipping their own existing shop, not to stop the
- * onboarding that is the agent's whole job.
+ * onboarding that is the agent's whole job. The visit row is written the same
+ * way and for the same reason: the onboarding IS the visit, it arrives
+ * pending like any other, and it is paid only if an approver accepts it.
  *
- * Honesty (unchanged): first-touch-wins per claim type; menu_upload mints the
- * one-off bounty; full_registration opens the 24-month override on SETTLED
- * orders. Nothing here stores a balance.
+ * Honesty (unchanged): first-touch-wins per claim type; nothing here stores a
+ * balance; the fee is the one flat number.
  */
-export function onboardVendor({ agentId, displayName, contactMethod = null, contactName = null, businessType = null, location = null, description = '', claimType = 'full_registration' }) {
+export function onboardVendor({ agentId, displayName, contactMethod = null, contactName = null, businessType = null, location = null, description = '', claimType = 'full_registration', notes = '' }) {
   if (!agentId) fail('an agent is required');
   if (!CLAIM_TYPES.includes(claimType)) fail(`claimType must be one of ${CLAIM_TYPES.join(', ')}`);
   if (!displayName || !String(displayName).trim()) fail('a vendor name is required');
   // ANTI-FRAUD GATE: an onboarded shop must say what it IS and where it
   // physically is, before it is created. A shell shop with no type or no
-  // location would otherwise slip into the public vendor list.
+  // location would otherwise slip into the public vendor list — and under
+  // Decision 5 a shell shop is now also a KES 150 claim, so the gate carries
+  // the whole weight of the fee's honesty.
   if (!businessType || !BUSINESS_TYPES.includes(businessType)) {
     fail(`businessType must be one of ${BUSINESS_TYPES.join(', ')}`);
   }
@@ -182,15 +353,22 @@ export function onboardVendor({ agentId, displayName, contactMethod = null, cont
     territoryKey: null,
     status: 'active',
     claimedAt: now,
-    expiresAt: claimType === 'full_registration' ? expiresAtOf(Date.now()) : null,
+    expiresAt: null,
     createdAt: now
   });
 
-  if (claimType === 'menu_upload') {
-    try { referrals.recordFieldBounty(agentId, vendor.id, MENU_UPLOAD_BOUNTY); }
-    catch { /* the bounty must never break the claim */ }
-  }
-  return { vendor, claim };
+  // The visit the onboarding act is. The agent's own words go with it when
+  // they sent any; otherwise the row says what the shop row already proves —
+  // a name, a type and a physical location the agent captured in person.
+  const visit = insertVisitRow({
+    agentId,
+    vendorId: vendor.id,
+    purpose: claimType,
+    notes: String(notes ?? '').trim() ||
+      `Onboarded ${vendor.displayName} in person — ${vendor.businessType} at ${vendor.location}.`
+  });
+
+  return { vendor, claim, visit };
 }
 
 export function myClaims(agentId) {
@@ -202,83 +380,39 @@ export function listClaims() {
   return store.all('vendorClaims').slice().sort((a, b) => (a.claimedAt < b.claimedAt ? 1 : -1));
 }
 
-/**
- * The agent's DERIVED override: per active full_registration claim, the sum of
- * settled orders inside its window times the rate. Nothing stored; zero when
- * there are no settled orders. The per-claim rows are included so the agent
- * sees exactly which merchant produced what.
- */
-export function overrideObligation(agentId) {
-  const claims = store.filter('vendorClaims', (c) =>
-    c.agentId === agentId && c.claimType === 'full_registration' && c.status === 'active');
-
-  const rows = claims.map((claim) => {
-    const vendor = store.find('vendors', (v) => v.id === claim.vendorId);
-    const orders = settledOrdersFor(claim.vendorId, claim.claimedAt, claim.expiresAt);
-    const grossKes = orders.reduce((s, o) => s + (Number(o.total) || 0), 0);
-    const overrideKes = Math.floor(OVERRIDE_RATE * grossKes);
-    return {
-      claimId: claim.id,
-      vendorId: claim.vendorId,
-      vendorName: vendor?.displayName ?? null,
-      claimedAt: claim.claimedAt,
-      expiresAt: claim.expiresAt,
-      settledOrders: orders.length,
-      grossKes,
-      overrideKes,
-      // The direct contact the agent captured at onboarding — the person you
-      // actually reach at the shop (name + phone). Surfaced here so the agent
-      // can call or WhatsApp their own onboarded contacts.
-      contactName: vendor?.contactName ?? null,
-      contactMethod: vendor?.contactMethod ?? null,
-      businessType: vendor?.businessType ?? null,
-      location: vendor?.location ?? null
-    };
-  });
-
-  return {
-    agentId,
-    rate: OVERRIDE_RATE,
-    months: OVERRIDE_MONTHS,
-    claims: rows,
-    grossKes: rows.reduce((s, r) => s + r.grossKes, 0),
-    overrideKes: rows.reduce((s, r) => s + r.overrideKes, 0),
-    currency: 'KES',
-    note: 'The override is a derived obligation against settled orders only. It is not money until a settlement is recorded and confirmed by finance.'
-  };
-}
-
 // ---------------------------------------------------------------------------
-// SETTLEMENT — the only place the override becomes money.
+// SETTLEMENT — the only place a visit fee becomes money. One settlement per
+// agent per week, written against that week's approved rows and pending until
+// finance confirms it.
 // ---------------------------------------------------------------------------
-export function requestOverrideSettlement(agentId, { from = null, to = null } = {}) {
+export function requestWeeklySettlement(agentId, week) {
   if (!getUser(agentId)) fail('agent not found', 404, 'not_found');
-  const obl = overrideObligation(agentId);
-  if (obl.overrideKes <= 0) fail('no settled override to settle against', 409, 'no_activity');
+  const key = String(week ?? '').trim();
+  if (!/^\d{4}-W\d{2}$/.test(key)) fail('a week is required, as YYYY-Www (for example 2026-W38)');
 
-  const periodKey = `${agentId}:${from ?? 'all'}:${to ?? 'all'}`;
-  if (store.find('fieldAgentSettlements', (s) => s.periodKey === periodKey && s.status !== 'refused')) {
-    fail('a settlement for this period already exists', 409, 'duplicate_settlement');
-  }
+  const earn = visitEarnings(agentId);
+  const row = earn.weeks.find((w) => w.week === key);
+  if (!row) fail('no approved visits in that week', 409, 'no_activity');
+  if (row.settlementId) fail('a settlement for that week already exists', 409, 'duplicate_settlement');
 
   const tx = createTransaction({
-    amount: obl.overrideKes,
-    type: 'field_agent_override',
-    description: `Field agent override — ${OVERRIDE_RATE * 100}% of settled orders`,
+    amount: row.kes,
+    type: 'field_agent_visit_fee',
+    description: `Field agent — ${row.visits} approved visit${row.visits === 1 ? '' : 's'} × KES ${VISIT_FEE_KES} (week ${key})`,
     counterparty: agentId,
-    metadata: { agentId, rate: OVERRIDE_RATE, grossKes: obl.grossKes, periodFrom: from, periodTo: to }
+    metadata: { agentId, week: key, visits: row.visits, feeKes: VISIT_FEE_KES }
   });
-  transitionTransaction(tx.id, 'pending', 'awaiting finance confirmation of agent override');
+  transitionTransaction(tx.id, 'pending', 'awaiting finance confirmation of agent visit fees');
+
   const now = new Date().toISOString();
   return store.insert('fieldAgentSettlements', {
     id: newId('fas'),
     agentId,
-    periodKey,
-    periodFrom: from,
-    periodTo: to,
-    grossKes: obl.grossKes,
-    rate: OVERRIDE_RATE,
-    overrideKes: obl.overrideKes,
+    week: key,
+    periodKey: `${agentId}:${key}`,
+    visits: row.visits,
+    feeKes: VISIT_FEE_KES,
+    amountKes: row.kes,
     ledgerId: tx.id,
     status: 'pending',
     confirmedBy: null,
@@ -289,21 +423,24 @@ export function requestOverrideSettlement(agentId, { from = null, to = null } = 
   });
 }
 
-export function confirmOverrideSettlement(settlementId, { accept = true, note = '' } = {}) {
+export function confirmVisitSettlement(settlementId, { accept = true, note = '', confirmedBy = null } = {}) {
   const row = store.find('fieldAgentSettlements', (s) => s.id === settlementId);
   if (!row) fail('settlement not found', 404, 'not_found');
   if (row.status !== 'pending') fail(`this settlement is already ${row.status}`, 409, 'invalid_state');
   const reason = String(note ?? '').trim();
   if (!accept) {
-    if (reason.length < 4) fail('say why the settlement is refused');
+    if (reason.length < REJECT_REASON_MIN) fail('say why the settlement is refused');
     transitionTransaction(row.ledgerId, 'failed', reason.slice(0, 200));
     return store.update('fieldAgentSettlements', row.id, {
       status: 'refused', refusedReason: reason.slice(0, 300), updatedAt: new Date().toISOString()
     });
   }
-  transitionTransaction(row.ledgerId, 'confirmed', 'agent override payout confirmed by finance');
+  transitionTransaction(row.ledgerId, 'confirmed', 'agent visit fees confirmed by finance');
   return store.update('fieldAgentSettlements', row.id, {
-    status: 'confirmed', confirmedAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+    status: 'confirmed',
+    confirmedBy: confirmedBy ?? null,
+    confirmedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
 }
 

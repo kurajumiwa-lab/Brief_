@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 process.env.NODE_ENV = 'test';
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brief-rail-'));
@@ -27,8 +28,14 @@ store._reset();
 
 let pass = 0, fail = 0;
 const check = (name, cond, detail = '') => {
+  // A Promise is truthy whatever it resolves to, so an un-awaited condition
+  // would print PASS no matter what happened. Refuse it loudly instead.
+  if (cond && typeof cond.then === 'function') {
+    fail++; console.log(`  FAIL  ${name} -> condition is a Promise; await it before asserting`);
+    process.exitCode = 1; return;
+  }
   if (cond) { pass++; console.log(`  PASS  ${name}`); }
-  else { fail++; console.log(`  FAIL  ${name}${detail ? '  -> ' + detail : ''}`); }
+  else { fail++; console.log(`  FAIL  ${name}${det}`); process.exitCode = 1; }
 };
 
 const log = (msg) => console.log(msg);
@@ -274,6 +281,52 @@ log('\n=== RECONCILE + ESCALATE — finds a stuck in_flight attempt, once ===');
   await reconciler.runOnce();
   const escalations = store.filter('settlementEscalations', (e) => e.attemptId === 'sat_stuck_test' && e.status === 'open');
   check('exactly one open escalation after two sweeps', escalations.length === 1, `found ${escalations.length}`);
+}
+
+// ---------------------------------------------------------------------------
+log('\n=== THE APP IMPORT MUST NOT HOLD THE PROCESS OPEN ===');
+{
+  // Regression, and the reason this check lives in the rail's own test:
+  // reconciler.start() was called at import time in src/index.js and installed
+  // a REF'D hourly interval. Every process that imported the app therefore
+  // stayed alive for an hour after finishing its work — 18 of the 70 files in
+  // `npm test` printed their summary and hung, and the chain stalled at
+  // test/requests.mjs, never reaching this file at all. The suites that looked
+  // green were green by being run one at a time.
+  //
+  // Checked the only honest way: a fresh process, importing the app under
+  // NODE_ENV=test, with nothing to wait for. If it does not exit on its own,
+  // a ref'd timer is back and this fails with the reason.
+  const script = [
+    'process.env.NODE_ENV = "test";',
+    'await import("./src/index.js");',
+    'console.log("IMPORT_CLEAN");'
+  ].join(' ');
+  const probeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'brief-rail-probe-'));
+  let exitedOnItsOwn = false;
+  let detail = '';
+  try {
+    const out = execFileSync(
+      process.execPath,
+      ['--input-type=module', '-e', script],
+      {
+        cwd: path.resolve(import.meta.dirname, '../..'),
+        env: { ...process.env, NODE_ENV: 'test', BRIEF_DATA_DIR: probeDir },
+        encoding: 'utf8',
+        timeout: 20000,
+        stdio: ['ignore', 'pipe', 'pipe']
+      }
+    );
+    exitedOnItsOwn = out.includes('IMPORT_CLEAN');
+    if (!exitedOnItsOwn) detail = 'the probe produced no marker';
+  } catch (err) {
+    detail = (err?.killed || err?.signal)
+      ? `still alive after 20s (killed by ${err.signal}) — a ref'd sweep timer is holding the process open`
+      : String(err?.message ?? err);
+  } finally {
+    fs.rmSync(probeDir, { recursive: true, force: true });
+  }
+  check('a process that imports the app exits on its own', exitedOnItsOwn, detail);
 }
 
 // ---------------------------------------------------------------------------

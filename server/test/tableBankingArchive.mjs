@@ -17,8 +17,8 @@ const { store } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const tableBanking = await import("../src/domain/tableBanking.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const rejects = (fn, code) => assert.throws(fn, (e) => !code || e.code === code);
 const user = (handle) => auth.createUser({ handle, password: "archive-pw" });
 
@@ -105,5 +105,4 @@ test("API: archive over the wire; non-owner refused", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

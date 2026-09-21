@@ -93,7 +93,7 @@ await test("a pin pointing at an archived listing cannot keep something on the f
   assert.notEqual(s.featured.id, draft.id, "once archived it is not featured, because it is not on the counter");
 });
 
-await test("an event can hold the slot, with counted registrations and no invented crowd", () => {
+await test("an event can hold the slot, and reports NO crowd even when one exists", () => {
   const other = spaces.createSpace({ ownerId: buyer.id, name: "Weekend Plates", type: "side_hustle" });
   for (const l of store.filter("listings", (x) => x.vendorId === other.vendorId)) void l;
   // Remove the seller's live offers so only events remain.
@@ -119,9 +119,18 @@ await test("an event can hold the slot, with counted registrations and no invent
   const s = discoverSummary({});
   assert.equal(s.featured.kind, "event");
   assert.equal(s.featured.title, "Kilimani Night Market");
-  assert.equal(s.featured.interest.label, "registrations");
-  assert.equal(s.featured.interest.count, 1, "a cancelled registration is not a person coming");
-  assert.match(s.featured.why, /1 registered/);
+  // The two registration rows above are still inserted on purpose. One is a
+  // real, non-cancelled registration by a known user -- exactly the row the old
+  // code counted into `interest` and printed as "1 registered". Decision 6
+  // forbids that, so the honest test is that the summary refuses to report a
+  // crowd it could perfectly well have counted. Keeping the fixture is what
+  // makes this a refusal test instead of a tautology.
+  assert.equal(s.featured.interest, null, "no interest count on an event slot (D6)");
+  assert.equal(s.featured.why, "the soonest event", "the only reason an event holds the slot is when it starts");
+  assert.equal(s.featured.group, null, "no 'N from your circle' line (D6)");
+  const asJson = JSON.stringify(s);
+  assert.equal(/"label":"registrations?"/.test(asJson), false, "no registration label survives anywhere in the summary");
+  assert.equal(/registered|busiest/i.test(asJson), false, "and no social-proof wording either");
   assert.equal(s.counts.marketplace ?? s.counts.listings, 0, "the market tile drops to zero when everything is archived");
 });
 

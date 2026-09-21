@@ -68,7 +68,7 @@ global.fetch = async (input) => {
   if (url.includes('/pickups/origins')) return ok({ origins: [] });
   if (url.includes('/pickups/riders')) return ok({ riders: [] });
   if (url.includes('/pickups/mine')) return ok({ pickups: [] });
-  if (url.includes('/pickup-origin-fee')) return ok({ obligation: { agentId: 'me', pickupCount: 0, feePerPickupKes: 20, originFeeKes: 0, note: 'derived' } });
+  if (url.includes('/pickup-origins')) return ok({ stats: { agentId: 'me', pickupCount: 0, shops: 0, currency: null, note: 'derived count' } });
   if (url.includes('/pickup-fee/settlements')) return ok({ settlements: [] });
   if (url.includes('/api/circles')) return ok({ circles: [] });
   if (url.includes('/api/errands/providers')) {

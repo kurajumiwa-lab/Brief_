@@ -4,6 +4,12 @@ import * as spaces from '../src/domain/space.js';
 import * as auth from '../src/domain/auth.js';
 
 function check(label, pass, detail) {
+  // A Promise is truthy whatever it resolves to — refuse it rather than print PASS.
+  if (pass && typeof pass.then === 'function') {
+    console.error(`  FAIL  ${label} — condition is a Promise; await it before asserting`);
+    process.exitCode = 1;
+    return;
+  }
   if (pass) {
     console.log(`  PASS  ${label}`);
   } else {

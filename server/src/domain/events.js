@@ -3,9 +3,20 @@
 //
 // One honest browsing surface over the events that actually exist: published
 // campaigns (with their types as categories) + calendar entries. It creates
-// NO second event table -- a category is a campaign type, popularity is
-// counted registrations, "featured" is an explicit organiser choice. Filters
-// that match nothing return nothing, with counts the caller can trust.
+// NO second event table -- a category is a campaign type. Filters that match
+// nothing return nothing, with counts the caller can trust.
+//
+// DECISION 6 (docs/DECISIONS.md) scopes this surface hard, and the scoping is
+// enforced by server/test/decisions.mjs:
+//   * NO featured events, NO promoted events, NO featured slot. There is no
+//     `setFeatured` here and no featured filter; prominence is neither the
+//     organiser's to claim nor the platform's to sell.
+//   * NO social proof. No "X going", no attendee names, no registration count,
+//     no view count. The only number an event surface may print is seats:
+//     "27 of 40 seats remaining."
+//   * Sorting is `startsAt` ascending. Period -- there is no other order.
+// The rationale is the operator's: these mechanics drive FOMO, and FOMO does
+// not pay the host.
 //
 // T4 detail model: the rich detail screen needs context that is DERIVED, never
 // stored -- a host's other events, related events, and series occurrences are
@@ -26,10 +37,6 @@ export const CATEGORY_LABELS = {
   contribution: 'Causes & pots'
 };
 
-function registrationsOf(campaignId) {
-  return store.filter('registrations', (r) => r.campaignId === campaignId && r.status !== 'cancelled').length;
-}
-
 /**
  * NATURAL EXPIRY — a dated event that has passed ends itself on the calendar,
  * not on someone remembering to close it. Derived from endsAt, never a stored
@@ -40,47 +47,26 @@ export function hasEnded(campaign) {
 }
 
 // ---------------------------------------------------------------------------
-// TABLE-BANKING OVERLAP (derived, per viewer)
+// NO CIRCLE OVERLAP (Decision 6)
 //
-// "3 from your Circle going" is computed by scanning the viewer's own groups
-// against the registrations of the event. It is never stored and never seeded;
-// an anonymous viewer (or a viewer in no group) gets null, because no overlap
-// can be honestly computed.
+// This module used to derive "3 from your Circle going" by scanning the
+// viewer's own table-banking groups against an event's registrations. The rows
+// were real and the count was honest -- and it is still social proof, which is
+// what Decision 6 forbids: "No 'X going.' No attendee names." The decision's
+// supersession note settles it explicitly, so this is not an open judgement
+// call: "'no attendee names' also ends the record's sparing of the per-viewer
+// circle overlap."
+//
+// What an event may still say about itself: when it starts, where it is, what
+// it costs, and how many seats are left.
 // ---------------------------------------------------------------------------
-
-/** tableBankingId -> Set(userId), built once for a viewer. Null when none. */
-function tableBankingMemberIdsFor(viewerId) {
-  if (!viewerId) return null;
-  const map = new Map();
-  for (const grp of store.filter('tableBanking', (c) => c.members.some((m) => m.userId === viewerId))) {
-    map.set(grp.id, new Set((grp.members ?? []).map((m) => m.userId)));
-  }
-  return map.size > 0 ? map : null;
-}
-
-function overlapOf(campaignId, map) {
-  if (!map) return null;
-  const regs = store.filter('registrations', (r) => r.campaignId === campaignId && r.userId && r.status !== 'cancelled');
-  const out = [];
-  for (const [tableBankingId, memberSet] of map) {
-    const count = regs.filter((r) => memberSet.has(r.userId)).length;
-    if (count > 0) {
-      const grp = store.find('tableBanking', (c) => c.id === tableBankingId);
-      out.push({ tableBankingId, tableBankingName: grp?.name ?? null, memberCount: count });
-    }
-  }
-  return out.length ? out : null;
-}
-
-/** The overlap for a single campaign, resolved from a server-derived viewer. */
-export function tableBankingOverlapFor(campaignId, viewerId) {
-  return overlapOf(campaignId, tableBankingMemberIdsFor(viewerId));
-}
 
 /**
  * The public listing identity of a campaign. This is the ONE shape a feed
  * card, a related-events rail and a host rail all share -- the internal id
- * never appears, and popularity is always a counted number.
+ * never appears. It carries no featured flag, no registration count and no
+ * circle overlap: Decision 6 allows an event to state when, where, how much,
+ * and how many seats are left -- nothing that pressures a reader.
  */
 export function listingView(campaign) {
   return {
@@ -98,30 +84,29 @@ export function listingView(campaign) {
     price: campaign.price,
     currency: campaign.currency,
     goalAmount: campaign.goalAmount ?? null,
-    featured: campaign.metadata?.featured === true,
     // The row's own timestamp, so a surface can honestly say "published 2d ago"
     // instead of implying realtime it does not have.
-    publishedAt: campaign.createdAt ?? null,
-    popularity: registrationsOf(campaign.id),
-    // No overlap here: it is a per-viewer fact, attached by the caller.
-    tableBankingOverlap: null
+    publishedAt: campaign.createdAt ?? null
+    // No `popularity`, no `featured`, no `tableBankingOverlap` -- Decision 6.
   };
 }
 
 /**
  * Browse events. Filters: category (campaign type), location (substring,
- * case-insensitive), from/to (date window on startsAt), featured only.
- * Sort: 'popularity' (registrations) or 'date' (soonest first).
+ * case-insensitive), from/to (date window on startsAt).
+ *
+ * Sort: `startsAt` ascending. There is no other option. `sort` and `featured`
+ * are deliberately NOT parameters -- a caller that passes them is ignored
+ * rather than served a different order, which is what Decision 6 means by
+ * "Sorting is startsAt ascending. Period." `viewerId` went with the circle
+ * overlap it existed to resolve.
  */
 export function browseEvents({
   category = null,
   location = null,
   from = null,
   to = null,
-  featured = null,
-  sort = 'date',
-  limit = 50,
-  viewerId = null
+  limit = 50
 } = {}) {
   if (category != null && !EVENT_CATEGORIES.includes(category)) {
     throw new Error(`category must be one of ${EVENT_CATEGORIES.join(', ')}`);
@@ -141,22 +126,15 @@ export function browseEvents({
     const t = Date.parse(to);
     if (Number.isFinite(t)) rows = rows.filter((c) => !c.startsAt || Date.parse(c.startsAt) <= t);
   }
-  if (featured === true) rows = rows.filter((c) => c.metadata?.featured === true);
-
   // Natural expiry: a dated event whose endsAt has passed no longer belongs in
   // "what's on". It stays resolvable by its slug; it just stops being advertised.
   rows = rows.filter((c) => !hasEnded(c));
 
-  // Table-banking overlap: the viewer's own groups, and how many of their
-  // members have registered for each event. DERIVED by scanning real rows —
-  // the viewer is resolved from the auth token server-side, never a client
-  // claim. Anonymous viewers get null (no overlap can be honestly computed).
-  const memberMap = tableBankingMemberIdsFor(viewerId);
+  const views = rows.map((c) => listingView(c));
 
-  const views = rows.map((c) => ({ ...listingView(c), tableBankingOverlap: overlapOf(c.id, memberMap) }));
-
-  if (sort === 'popularity') views.sort((a, b) => b.popularity - a.popularity);
-  else views.sort((a, b) => String(a.startsAt ?? '9999').localeCompare(String(b.startsAt ?? '9999')));
+  // The only order this surface has. Undated events sort last rather than
+  // floating to the top of "what's on".
+  views.sort((a, b) => String(a.startsAt ?? '9999').localeCompare(String(b.startsAt ?? '9999')));
 
   return { events: views.slice(0, Math.min(limit, 100)), total: views.length };
 }
@@ -214,11 +192,13 @@ export function seriesOccurrences(seriesId, excludeId, limit = 12) {
     .map(listingView);
 }
 
-/** The organiser's explicit choice; never derived, never seeded. */
-export function setFeatured(ownerId, campaignId, featured) {
-  const c = store.find('campaigns', (x) => x.id === campaignId);
-  if (!c) throw new Error('campaign not found');
-  if (c.ownerId !== ownerId) throw new Error('only the organiser may feature their event');
-  const meta = { ...(c.metadata ?? {}), featured: Boolean(featured) };
-  return store.update('campaigns', campaignId, { metadata: meta });
-}
+// ---------------------------------------------------------------------------
+// NO setFeatured (Decision 6)
+//
+// This module used to export `setFeatured(ownerId, campaignId, featured)` --
+// "the organiser's explicit choice; never derived, never seeded". The Events
+// record allowed it and banned only platform-sold slots. The operator decided
+// stronger, and the supersession note in docs/DECISIONS.md says so plainly:
+// "no featured slot anywhere." So there is nothing to set and nothing to
+// unset, and server/test/decisions.mjs fails if this export comes back.
+// ---------------------------------------------------------------------------

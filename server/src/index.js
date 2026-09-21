@@ -298,9 +298,10 @@ commitmentsRoutes(app);
 reciprocityRoutes(app);
 settlementRoutes(app);
 
-// The settlement reconciler: hourly sweep for stuck rail attempts. Boot-time
-// start is safe — it only reads and escalates, never transitions money.
-startSettlementReconciler();
+// The settlement reconciler is NOT started here. It is installed below, beside
+// the other five sweeps, inside the NODE_ENV !== 'test' guard — a sweep started
+// at import time is carried by every process that imports the app, tests
+// included. See settlement/reconciler.js.
 
 // --- Production frontend serving -------------------------------------------
 //
@@ -454,6 +455,12 @@ if (process.env.NODE_ENV !== 'test') {
   scheduler.installPoller({
     intervalMs: Number(process.env.BRIEF_INGEST_INTERVAL_MS) || 15 * 60 * 1000
   });
+  // The settlement reconciler: hourly sweep for stuck rail attempts. Boot-time
+  // start is safe — it only reads and escalates, never transitions money. It
+  // lives here with the other sweeps rather than at import time so that a
+  // process importing the app under NODE_ENV=test carries no hourly timer; the
+  // timer is unref'd as well, so the two mistakes cannot recur together.
+  startSettlementReconciler();
 
   const server = app.listen(PORT, '0.0.0.0', () => {
     const diag = ops.startupDiagnostics({
