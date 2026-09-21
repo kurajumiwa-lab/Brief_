@@ -83,6 +83,15 @@ const EMPTY = {
   // Disbursements to sellers. A payout is a RECORD of money sent, not a
   // balance -- withdrawable is always derived as (settled net - paid - pending).
   payouts: [],
+  // THE SETTLEMENT RAIL — generic money-movement attempts (server/settlement/).
+  // One row per rail attempt: the manual rail queues here, a human confirms.
+  // Vendor payouts keep their derived-amount lifecycle in domain/settlement.js;
+  // this collection is the seam for movements that have no domain payout
+  // machinery yet. States: pending/in_flight/settled/failed/reversed.
+  settlementAttempts: [],
+  // Rows the hourly reconciler opens for attempts stuck in_flight too long.
+  // One open escalation per attempt; closed by a human, never by the sweep.
+  settlementEscalations: [],
   // Service fees paid to Brief via Pochi la Biashara (manual M-Pesa code flow).
   servicePayments: [],
   // Referral reward events (append-only, deduped by key) and point-to-cash

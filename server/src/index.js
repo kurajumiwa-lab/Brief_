@@ -68,6 +68,8 @@ import { register as teaRoutes } from './routes/tea.js';
 import { register as wireRoutes } from './routes/wire.js';
 import { register as mediaRoutes } from './routes/media.js';
 import { register as feedRoutes } from './routes/feed.js';
+import { register as settlementRoutes } from './settlement/routes.js';
+import { start as startSettlementReconciler } from './settlement/reconciler.js';
 import { register as collectionsRoutes } from './routes/collections.js';
 import { register as personalCollectionsRoutes } from './routes/personalCollections.js';
 import { register as searchRoutes } from './routes/search.js';
@@ -294,6 +296,11 @@ pickupsRoutes(app);
 positionRoutes(app);
 commitmentsRoutes(app);
 reciprocityRoutes(app);
+settlementRoutes(app);
+
+// The settlement reconciler: hourly sweep for stuck rail attempts. Boot-time
+// start is safe — it only reads and escalates, never transitions money.
+startSettlementReconciler();
 
 // --- Production frontend serving -------------------------------------------
 //
