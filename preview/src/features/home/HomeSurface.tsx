@@ -16,7 +16,6 @@ import type { MyCommitments, MyPosition, MyReciprocity } from '../../api/briefAp
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
-import { MuseumGallery } from '../city/MuseumGallery';
 import { SignalBar } from './SignalBar';
 import { PlannedWeather } from './PlannedWeather';
 import { EarnStrip } from './EarnStrip';
@@ -31,7 +30,11 @@ import { CirclesStrip } from './CirclesStrip';
 //   1. What is the world doing?   → SignalBar   (real rows, snapshot-stamped)
 //                              + PlannedWeather (a dated forecast on a PLANNED day, else nothing)
 //   2. What should I do?          → NextMoveCard (one decision, derived)
-//   3. What is out there?         → MuseumGallery (real published events)
+//
+// Home used to carry a third zone — "What's out there" — a heading, a
+// "Browse everything" link and the events shelf, all saying the same thing
+// three ways over an empty board. The shelf now lives where browsing happens:
+// Discover → What's on.
 //
 // Everything else sits behind a tap: commerce lives in Discover → Market,
 // space management is collapsed under "Run your spaces", and the position /
@@ -210,24 +213,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
       <NextMoveCard position={position} denied={positionDenied} />
-
-      {/* ── ZONE 3 — WHAT IS OUT THERE (inventory, not a feed) ── */}
-      <section className="space-y-1.5" aria-label="What's out there">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
-            What&rsquo;s out there
-          </h2>
-          <button
-            type="button"
-            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
-            className="inline-flex items-center gap-1 text-[12px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
-          >
-            Browse everything
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <MuseumGallery />
-      </section>
 
       {/* ── PERSONAL CONTEXT — you are part of things, not only a browser ── */}
       <CirclesStrip

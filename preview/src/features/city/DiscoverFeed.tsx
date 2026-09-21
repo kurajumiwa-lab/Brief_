@@ -103,7 +103,13 @@ function plateIcon(item: DiscoverFeedItem): React.ReactNode {
  */
 // A count and one word. The sentence it replaces ("no settled orders through
 // Brief yet — this starts at your first settled order") was fifteen words for 0.
-function interestLine(item: DiscoverFeedItem): string {
+// Null for event rows: Decision 6 gives an event no number at all, and a UI
+// that prints "0" for an absent number is inventing data.
+function interestLine(item: DiscoverFeedItem): string | null {
+  if (!item.interest) return null;
+  // A zero is not a headline. "0 settled" reads as an indictment of the
+  // listing; the row's actual state is that it is new, so say that.
+  if (item.interest.count === 0 && item.interest.label === 'settled orders') return 'New listing';
   const label = item.interest.label === 'settled orders' ? 'settled' : item.interest.label;
   return `${item.interest.count} ${label}`;
 }
@@ -111,6 +117,16 @@ function interestLine(item: DiscoverFeedItem): string {
 function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: DiscoverFeedItem) => void }) {
   const dateLabel = item.kind === 'event' ? shortDate(item.dateLabel ?? undefined) ?? item.dateLabel : item.dateLabel;
   const stamp = item.kind === 'listing' ? listedAgo(item.listedAt) : null;
+  const interest = interestLine(item);
+  // The photoless plate already carries the row's timestamp ("listed 1d ago"),
+  // so printing it again in this line is how a card came to say
+  // "listed 1d ago · listed 1d ago". One stamp per card, period. Photo cards
+  // have no plate, so the stamp lives here for them.
+  const metaLine = [
+    item.minOrder ? `min ${item.minOrder}${item.unit ? ` ${item.unit}` : ''}` : null,
+    interest,
+    item.mediaUrl && stamp ? stamp : null
+  ].filter(Boolean).join(' · ') || null;
   return (
     <button
       type="button"
@@ -156,16 +172,12 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
         </span>
       )}
 
-      {!item.mediaUrl && (
-        <span className="absolute left-3 top-3 block pointer-events-none">
-          <span className="block font-mono text-[30px] font-black leading-none" style={{ color: 'var(--brief-ink)' }}>
-            {item.interest.count}
-          </span>
-          <span className="block text-[11px] font-black uppercase tracking-[0.14em] mt-0.5" style={{ color: 'var(--brief-muted)' }}>
-            {item.interest.label}
-          </span>
-        </span>
-      )}
+      {/* No number hero. This used to print the interest count at 30px — a
+          photoless listing with no sales yet led with a giant "0 SETTLED
+          ORDERS", an indictment where the offer itself should be. The card
+          now leads with what the offer IS: its title below, its price chip
+          top-right. The count stays in the metadata line, as one of several
+          facts, never as the headline. */}
 
       <span className="absolute left-3 right-3 bottom-3 block text-white">
         <span className="flex items-center gap-2 flex-wrap">
@@ -184,10 +196,9 @@ function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: Dis
           )}
         </span>
         <span className="block text-[16px] font-extrabold leading-snug mt-1 line-clamp-2">{item.title}</span>
-        <span className="block text-[12px] opacity-90 mt-0.5 truncate">
-          {item.minOrder ? `min ${item.minOrder}${item.unit ? ` ${item.unit}` : ''} · ` : ''}
-          {interestLine(item)}{stamp ? ` · ${stamp}` : ''}
-        </span>
+        {metaLine && (
+          <span className="block text-[12px] opacity-90 mt-0.5 truncate">{metaLine}</span>
+        )}
       </span>
     </button>
   );
@@ -331,7 +342,11 @@ function FeedSheet({ item, onClose, onOpenFull }: {
               ['commodity', item.commodity ?? 'not declared'],
               ['where', item.location ?? 'no place given'],
               ['when', item.dateLabel ?? 'no date given'],
-              ['taken so far', `${item.interest.count} ${item.interest.label}`],
+              // Event rows carry no number (Decision 6): the tile is omitted
+              // rather than printed as a zero that never existed.
+              ...(item.interest
+                ? [['taken so far', `${item.interest.count} ${item.interest.label}`] as [string, string]]
+                : []),
               ['stock', item.stock != null ? String(item.stock) : 'not tracked']
             ].map(([k, v]) => (
               <div key={k} className="p-2.5 rounded-xl" style={{ background: 'var(--color-well)' }}>

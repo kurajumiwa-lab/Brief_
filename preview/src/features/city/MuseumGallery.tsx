@@ -153,9 +153,13 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
     [filters]
   );
 
+  // The filter drawer is wired to real server-side filters (wing, location,
+  // date window) on /api/events — so this control filters, and the label says
+  // what the shelf holds. It used to read "All exhibits", which advertised a
+  // museum where the rows are events.
   const wingLabel = filters.category
     ? labels[filters.category] ?? filters.category
-    : 'All exhibits';
+    : 'All events';
 
   const summaryParts = [
     wingLabel,
