@@ -152,8 +152,11 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
       unit: null,
       minOrder: null,
       commodity: null,
-      interest: { label: 'registered', count: e.popularity ?? 0 },
-      why: e.featured ? 'the organiser marked it featured' : (e.popularity > 0 ? 'most registrations' : 'soonest date')
+      // Decision 6: an event row carries no social proof and no prominence.
+      // No registration count, no featured claim -- the only reason an event is
+      // here is that it is happening soonest.
+      interest: null,
+      why: 'soonest date'
     }))
   ];
   const circles = listCircles(viewerId);
@@ -189,7 +192,10 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
     };
     featuredFrom = byPin ? 'seller-pin' : orders > 0 ? 'settled-orders' : 'newest';
   } else if ((events.events ?? []).length > 0) {
-    const e = [...events.events].sort((a, b) => b.popularity - a.popularity || (a.startsAt < b.startsAt ? -1 : 1))[0];
+    // browseEvents already sorts startsAt ascending, so the soonest event is
+    // the first row. Decision 6 removed the popularity sort that used to
+    // promote "the busiest thing on" into this slot.
+    const e = (events.events ?? [])[0];
     featured = {
       kind: 'event',
       id: e.slug,
@@ -200,15 +206,13 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
       location: e.location ?? null,
       startsAt: e.startsAt ?? null,
       mediaUrl: e.coverImageUrl ?? null,
-      interest: { label: 'registrations', count: e.popularity },
-      why: e.popularity > 0
-        ? `${e.popularity} registered — the busiest thing on`
-        : 'the soonest event, nobody has registered yet',
-      group: (e.tableBankingOverlap ?? [])[0]?.memberCount
-        ? `${e.tableBankingOverlap[0].memberCount} from ${e.tableBankingOverlap[0].tableBankingName ?? 'your circle'}`
-        : null
+      // No registrations count, no "busiest thing on", and no "N from your
+      // circle" -- all three are social proof, which Decision 6 forbids.
+      interest: null,
+      why: 'the soonest event',
+      group: null
     };
-    featuredFrom = e.popularity > 0 ? 'registrations' : 'soonest';
+    featuredFrom = 'soonest';
   }
 
   const tiles = [

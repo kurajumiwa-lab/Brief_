@@ -7452,22 +7452,26 @@ console.log('\n=== EVENTS HUB (Tikiti T4) ===');
     check('a browse listing carries coverImageUrl and description', 'coverImageUrl' in nightMarket && 'description' in nightMarket, JSON.stringify(nightMarket));
     // tableBankingOverlap is derived per viewer: null anonymously, real when
     // the viewer's group members registered.
-    check('anonymous browse has no group overlap', nightMarket.tableBankingOverlap === null, JSON.stringify(nightMarket.tableBankingOverlap));
+    // DECISION 6 replaced the four checks that used to live here. They asserted
+    // that a per-viewer circle overlap, a popularity sort and an organiser-set
+    // featured flag all worked. The decision removes all three, so the honest
+    // assertion is now their ABSENCE -- not a weaker version of the old claim.
+    // (server/test/decisions.mjs carries the full refusal suite, including the
+    // HTTP 404 on the retired feature route, which needs a session to reach.)
+    check('an event row carries no circle overlap', !('tableBankingOverlap' in nightMarket), JSON.stringify(Object.keys(nightMarket)));
     r = await call('/api/events?location=kilimani', 'GET');
     check('location search is case-insensitive', (r.body?.events ?? []).length === 2, `${r.body?.events?.length}`);
     r = await call('/api/events?category=horoscope', 'GET');
     check('an unknown category is refused', r.status === 400);
+    const plainOrder = (await call('/api/events', 'GET')).body?.events?.map((e) => e.title) ?? [];
     r = await call('/api/events?sort=popularity', 'GET');
-    check('popularity sort answers with counted people', Array.isArray(r.body?.events) && r.body.events.every((e) => typeof e.popularity === 'number'));
+    check('sort=popularity is ignored, not served', Array.isArray(r.body?.events) && r.body.events.every((e) => !('popularity' in e)));
+    check('sort=popularity does not reorder the list', JSON.stringify((r.body?.events ?? []).map((e) => e.title)) === JSON.stringify(plainOrder));
     check('internal ids never appear in browse', !JSON.stringify(r.body).includes('"id":"camp_'));
-    // Featuring is the organiser's explicit act.
-    const camp = store.find('campaigns', (c) => c.title === 'Night Market X');
-    let threw = null;
-    try { events.setFeatured(X.user.id, camp.id, true); } catch (e) { threw = String(e.message); }
-    check('a stranger cannot feature someone else\'s event', /organiser/.test(threw ?? ''), threw);
-    events.setFeatured(O.user.id, camp.id, true);
     r = await call('/api/events?featured=1', 'GET');
-    check('featured is an explicit flag, not a guess', (r.body?.events ?? []).every((e) => e.featured) && r.body.events.length === 1, `${r.body?.events?.length}`);
+    check('featured=1 does not narrow the list', JSON.stringify((r.body?.events ?? []).map((e) => e.title)) === JSON.stringify(plainOrder));
+    check('no event row carries a featured flag', (r.body?.events ?? []).every((e) => !('featured' in e)));
+    check('events.js exports no setFeatured to call', typeof events.setFeatured === 'undefined');
   } finally { srv.close(); }
 }
 
