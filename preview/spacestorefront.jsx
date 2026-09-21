@@ -321,9 +321,19 @@ async function main() {
 
   // --- 6. the street: your shopfronts and the ones you follow --------------
   {
+    // The morning brief withdraws from a fixture with no business yet: a shop
+    // with no space has no figures, and the panel must not print zeroes for one.
+    const noSpacesBrief = {
+      ok: true, day: '2026-09-20', dayLabel: 'Sun, 20 Sept', isToday: false, asOf: '', stored: false,
+      shop: { vendorId: null, name: '', ownerId: 'usr_1' },
+      basis: { in: '', out: '', net: '', views: '' },
+      empty: true, reason: 'no_spaces', money: null, orders: null, spaces: [], quietSpaces: [],
+      people: [], views: null, flags: [], unassigned: null
+    };
     handler = async (url) => {
       if (url.includes('/api/spaces/followed/mine')) return ok({ spaces: [{ id: 'spc_2', name: 'Amina Bakery', type: 'business', goal: 'Bread daily', image: null, activeOfferCount: 3, sampleOffers: [], visibility: 'public', createdAt: '', slug: 'amina-bakery', followers: 9, broadcasts: [{ id: 'b', kind: 'stock', text: 'Bread at 4', createdAt: '', expiresAt: '' }] }], note: 'derived' });
       if (url.endsWith('/api/spaces')) return ok({ spaces: [space()] });
+      if (url.includes('/api/shop-brief')) return ok({ brief: noSpacesBrief });
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
     };
     const { container } = mount(React.createElement(SpacesLanding, { onOpenSpace: () => {}, onOpenPublicSpace: () => {} }));
@@ -336,6 +346,8 @@ async function main() {
     assert.ok(t.includes('Amina Bakery') && t.includes('9 follow'), 'the shops you follow, counted');
     assert.ok(!/Circles/i.test(t), 'no circles on this screen');
     assert.ok(!/Vaults/i.test(t), 'no vaults either');
+    assert.ok(!/morning brief|KES 0/i.test(t),
+      'and the brief is not on this street while the business has no space to read');
   }
   pass('SpacesLanding is shops only — circles and vaults are elsewhere');
 

@@ -52,6 +52,10 @@ export const NOTIFICATION_TYPES = [
   'correction',     // important information on a saved/followed object corrected
   'source_update',  // a followed publisher/source produced new information
   'broadcast',      // a space told its followers something (24h update)
+  'shop_brief',     // the morning read of one business: yesterday's rows, in
+                    // the owner's own words. Sent only to an owner who asked for
+                    // it, at the hour they named, and never for a quiet day.
+                    // See domain/shopBrief.js.
   'errand',         // a posted errand an eligible carrier can pick up, or a
                     // stage change on one they are party to
   // --- legacy kinds (kept for the existing notification rail) ---------------
@@ -79,6 +83,7 @@ export const TYPE_LABELS = {
   source_update: 'News',
   errand: 'Errands',
   broadcast: 'Updates',
+  shop_brief: 'Shop brief',
   confirmed: 'Confirmed',
   saved_changed: 'Saved',
   event_soon: 'Event',
@@ -99,6 +104,7 @@ export const TYPE_TO_CATEGORY = {
   source_update: 'news',
   errand: 'alerts',
   broadcast: 'alerts',
+  shop_brief: 'alerts',
   confirmed: 'saved',
   challenge: 'events',
   saved_changed: 'saved',

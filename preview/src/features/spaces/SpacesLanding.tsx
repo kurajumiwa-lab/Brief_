@@ -3,6 +3,7 @@ import { ArrowRight, Plus, Radio, Users } from 'lucide-react';
 import type { PublicSpace, Space } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { CreateSpaceModal } from './CreateSpaceModal';
+import { ShopBrief } from './ShopBrief';
 import { splitSpaces } from '../home/spaceSignals';
 import { StateDot, dotForMaintenance } from '../../ui/StateDot';
 import { soundEngine } from '../../utils/SoundEngine';
@@ -66,6 +67,12 @@ export function SpacesLanding({
         </h1>
 
       </header>
+
+      {/* The morning read of the WHOLE business, above the list of its parts:
+          yesterday's money, the shelf, who wrote what, and the rows no space
+          claims. It is a read over the owner's rows, so there is nothing here to
+          keep up to date — and nothing to edit either. */}
+      <ShopBrief onOpenSpace={onOpenSpace} />
 
       <section className="space-y-2" aria-label="Your spaces">
         {!mine ? (

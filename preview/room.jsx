@@ -545,7 +545,11 @@ async function main() {
       ['no attribution row', 'the five figures an operator cannot get'],
       ['belong to no space', 'what a space-scoped number leaves out, and says'],
       ['dash, not 0%', 'why an unmeasurable figure is not a zero'],
-      ['never shows', 'the things the product refuses outright']
+      ['never shows', 'the things the product refuses outright'],
+      ['a read, not a report', 'why there is no stored brief row to edit or expire'],
+      ['marked in minus recorded out', 'what the morning brief’s money actually is'],
+      ['nobody is ever reported absent', 'that a rota does not exist, so no absence flag is built'],
+      ['one brief per day at most', 'how the morning notification behaves when it is switched on']
     ]) {
       assert.ok(t.includes(needle), `the audit page still carries ${why}`);
     }

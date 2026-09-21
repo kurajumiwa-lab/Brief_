@@ -55,6 +55,16 @@ global.fetch = async (input) => {
   if (url.includes('/api/orders')) return ok({ orders: [] });
   if (url.includes('/earnings')) return ok({ earnings: { gross: 0, net: 0, payoutAvailable: false } });
   if (url.includes('/public/spaces')) return ok({ spaces: [] });
+  // The morning brief reads the owner's rows. With no space in this fixture the
+  // read answers "no business yet", and the panel withdraws rather than printing
+  // a page of zeroes onto somebody's street.
+  if (url.includes('/api/shop-brief')) return ok({ brief: {
+    ok: true, day: '2026-09-20', dayLabel: 'Sun, 20 Sept', isToday: false, asOf: '', stored: false,
+    shop: { vendorId: null, name: '', ownerId: 'usr_1' },
+    basis: { in: '', out: '', net: '', views: '' },
+    empty: true, reason: 'no_spaces', money: null, orders: null, spaces: [], quietSpaces: [],
+    people: [], views: null, flags: [], unassigned: null
+  } });
   if (url.includes('/pickups/origins')) return ok({ origins: [] });
   if (url.includes('/pickups/riders')) return ok({ riders: [] });
   if (url.includes('/pickups/mine')) return ok({ pickups: [] });

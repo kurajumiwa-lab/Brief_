@@ -2354,3 +2354,113 @@ export interface RedeemInviteResult {
   invite: Invite;
   role: RoleAssignment;
 }
+
+// ---------------------------------------------------------------------------
+// THE MORNING BRIEF — one day of a business, read out of its rows.
+//
+// The shape is the server's (`domain/shopBrief.js`) and every field here exists
+// because a row exists. The three `| null` unions are the important part: they
+// are the figures the store cannot produce, and a client that typed them as
+// `number` would be obliged to invent a 0 for them.
+// ---------------------------------------------------------------------------
+
+export interface ShopBriefMoney {
+  inKes: number;
+  outKes: number;
+  netKes: number;
+  currency: string;
+  /**
+   * Money that settled THROUGH a payment rail. Always null while no rail is
+   * connected — which is why the other figures are captioned "marked".
+   */
+  railSettledKes: number | null;
+}
+
+export interface ShopBriefOrders {
+  placed: number;
+  marked: number;
+  open: number;
+  cancelled: number;
+  disputed: number;
+  /** Marked paid with no timestamp anywhere on the row: counted nowhere. */
+  unstamped: number;
+  /** Placed earlier and still open when the brief was read. */
+  aged: number;
+  movedByStatus: Record<string, number>;
+  statuses: string[];
+}
+
+export interface ShopBriefSpace {
+  id: string;
+  name: string;
+  slug: string | null;
+  mode: string | null;
+  modeLabel: string | null;
+  scope: string;
+  money: { inKes: number; outKes: number; netKes: number };
+  orders: { placed: number; marked: number; open: number };
+  views: number;
+}
+
+export interface ShopBriefPerson {
+  actorId: string | null;
+  /** Only ever a name a user row carries. Null renders as a dash. */
+  name: string | null;
+  isOwner: boolean;
+  actions: number;
+  lastAt: string | null;
+  lastClock: string | null;
+  kinds: string[];
+}
+
+export interface ShopBriefFlag {
+  id: string;
+  kind: 'stock_recount' | 'orders_aged' | 'outflow_unrecorded' | 'money_unattributed';
+  message: string;
+  detail: string;
+  spaceId: string | null;
+  spaceName?: string | null;
+  offerTitle?: string | null;
+  listingId?: string | null;
+  direction?: 'up' | 'down';
+  counts?: { start: number; sold: number; allowed: number; end: number; gap: number };
+  evidenceIds: string[];
+  orderIds?: string[];
+  index: number;
+  action?: { label: string; surface: string };
+}
+
+export interface ShopBrief {
+  day: string;
+  dayLabel: string;
+  isToday: boolean;
+  asOf: string;
+  /** Always false: a brief is a read over rows, never a stored report. */
+  stored: boolean;
+  shop: { vendorId: string | null; name: string; ownerId: string };
+  basis: { in: string; out: string; net: string; views: string };
+  empty: boolean;
+  /** 'no_spaces' | 'quiet_day' | null — which kind of nothing this is. */
+  reason: 'no_spaces' | 'quiet_day' | null;
+  money: ShopBriefMoney | null;
+  orders: ShopBriefOrders | null;
+  spaces: ShopBriefSpace[];
+  quietSpaces: string[];
+  people: ShopBriefPerson[];
+  views: { count: number; ownOpensExcluded: number } | null;
+  flags: ShopBriefFlag[];
+  unassigned: { orders: number; inKes: number; evidenceIds: string[]; note: string } | null;
+}
+
+export interface ShopBriefPrefs {
+  ownerId: string;
+  enabled: boolean;
+  /** Null until the owner saves one. There is no stored default hour. */
+  hour: number | null;
+  hourLabel: string | null;
+  lastBriefDay: string | null;
+  hourNow: number;
+  willSendToday: boolean;
+  note: string;
+  timeZone: string;
+}

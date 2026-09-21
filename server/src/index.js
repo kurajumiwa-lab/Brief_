@@ -25,6 +25,7 @@ import * as telegram from './connectors/telegram.js';
 import * as whatsapp from './connectors/whatsapp.js';
 import * as scheduler from './pipeline/scheduler.js';
 import * as calendar from './domain/calendar.js';
+import * as shopBrief from './domain/shopBrief.js';
 import * as demoSeed from './domain/seed.js';
 import { authStatus } from './identity.js';
 import { recordError } from './routes/helpers.js';
@@ -52,6 +53,7 @@ import { register as triageRoutes } from './routes/triage.js';
 import { register as economicRoutes } from './routes/economic.js';
 import { register as feesRoutes } from './routes/fees.js';
 import { register as shopRoutes } from './routes/shop.js';
+import { register as shopBriefRoutes } from './routes/shopBrief.js';
 import { register as referralsRoutes } from './routes/referrals.js';
 import { register as commerceRoutes } from './routes/commerce.js';
 import { register as commandRoutes } from './routes/command.js';
@@ -243,6 +245,7 @@ triageRoutes(app);
 economicRoutes(app);
 feesRoutes(app);
 shopRoutes(app);
+shopBriefRoutes(app);
 referralsRoutes(app);
 commerceRoutes(app);
 commandRoutes(app);
@@ -430,6 +433,13 @@ if (process.env.NODE_ENV !== 'test') {
   // should replace it with a claimed database job.
   calendar.installSweep({
     intervalMs: Number(process.env.BRIEF_CALENDAR_INTERVAL_MS) || 60 * 1000
+  });
+  // The morning brief: an hourly-by-default look at the owners who ASKED for a
+  // brief, each gated on their own chosen hour and deduped to one per day.
+  // Nothing is sent to anyone who never asked, and nothing at all is sent for a
+  // day whose rows are empty. See domain/shopBrief.js.
+  shopBrief.installSweep({
+    intervalMs: Number(process.env.BRIEF_SHOPBRIEF_INTERVAL_MS) || 15 * 60 * 1000
   });
   // Web/RSS ingestion: poll enabled sources on a cadence so feeds arrive
   // without a manual sync. Idempotent (dedup by source+item), per-source

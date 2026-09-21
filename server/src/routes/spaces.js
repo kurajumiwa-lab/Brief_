@@ -416,7 +416,7 @@ export function register(app) {
   app.post('/api/spaces/:id/offers', requireAuthMw, (req, res) => {
     try {
       const me = callerId(req);
-      const { title, description, price, currency, type, images } = req.body || {};
+      const { title, description, price, currency, type, images, quantityAvailable } = req.body || {};
 
       if (!title || price === undefined) {
         return res.status(400).json({ error: 'title and price are required' });
@@ -429,6 +429,7 @@ export function register(app) {
         currency,
         type,
         images,
+        quantityAvailable,
         callerId: me
       });
 

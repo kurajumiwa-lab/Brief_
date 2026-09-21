@@ -86,6 +86,20 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       ]
     },
     {
+      id: 'brief',
+      title: 'The morning brief',
+      lines: [
+        'The morning brief is a read, not a report. Nothing is stored as a brief: a day is computed from the rows that exist at the moment you open it. That is why a day you correct this afternoon is right in tomorrow’s read, why no brief can be edited or deleted, and why there is nothing to expire after seven days.',
+        '“Marked in” counts orders whose own history row says they became paid or settled on that day — not orders placed that day, and not money through a rail, because no rail is connected. “Recorded out” counts only the expenses you typed with that date. The subtraction is marked in minus recorded out, never net profit: there is no bank feed, no receipt reader and no supplier import.',
+        'A day with no rows is reported as an empty day, not as a page of zeroes. A figure that cannot be computed at all prints as a dash: money settled through a rail, or the count a shelf started the day on when stock tracking began mid-morning, are unmeasurable rather than zero.',
+        'The shelf flag is not a stock system. Brief has no declared-stock field, no “expected remaining” and no waste log — so what it keeps, from the day this screen was built onward, is one append-only row per movement of a count. The flag can therefore say only: 4 sold, the count ended at 10 where the sales leave 6, typed by you at 20:04. A legitimate restock looks exactly identical in these rows, and the flag says that instead of accusing anybody.',
+        'No rota exists, so nobody is ever reported absent. A person is named under “Recorded by” only when a user row carries a name; an actor with no user row prints as “someone with no name on record”, because guessing one from a phone number is how an accusation starts.',
+        'A morning notification is off until you turn it on and name an hour in Nairobi time. Nothing is sent for a day with no rows, and one brief per day at most. There is no stored 6am default anywhere: the app will not write a preference nobody set, and it will not send at an hour it chose for you.',
+        'An order that no space can claim is counted for the business and left out of every space, and the brief says the two are meant to differ. The same rule keeps two spaces of one shop from each reporting the shop’s whole takings — the bug that once produced a “Margin” out of one figure divided by itself.',
+        'What the brief refuses: ranks, tiers, badges, streaks, “top 10% of shops like yours”, sector averages, targets, forecasts and recommendations. It reports yesterday. It does not advise, compare or predict, and it never tells you what to stock.'
+      ]
+    },
+    {
       id: 'defended',
       title: 'Standing, commitments and Defended',
       lines: [

@@ -196,8 +196,9 @@ export function createOrder({ listingId, buyerId, quantity = 1, note = '', idemp
   };
   store.insert('orders', order);
 
-  // A real order consumes real stock.
-  listings.consumeStock(listing.id, quantity);
+  // A real order consumes real stock — and names itself to the shelf log, so
+  // a unit that left the counter can be tied back to the order that took it.
+  listings.consumeStock(listing.id, quantity, { orderId: order.id });
 
   return hydrate(order);
 }

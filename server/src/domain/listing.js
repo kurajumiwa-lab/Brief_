@@ -18,6 +18,7 @@
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
+import * as stockLog from './stockLog.js';
 
 // Reuses the existing Brief object vocabulary rather than inventing a parallel
 // set of commerce categories. A listing classifies as one of the things Brief
@@ -374,6 +375,22 @@ export function updateListing(id, patch, { actorId = null, reason = null } = {})
   clean.updatedAt = new Date().toISOString();
 
   const updated = store.update('listings', id, clean);
+  // A typed stock count is a shelf movement, so it gets a row like a sale
+  // does. It is logged WITHOUT a reason because the contract does not demand
+  // one (a price change does) — which is precisely why anything built on these
+  // rows reports the unexplained delta and never a motive.
+  if (updated && 'quantityAvailable' in clean && !sameValue(clean.quantityAvailable, before.quantityAvailable)
+      && Number.isInteger(updated.quantityAvailable)) {
+    stockLog.recordStockChange({
+      listingId: id,
+      vendorId: before.vendorId,
+      spaceId: before.spaceId ?? null,
+      from: before.quantityAvailable ?? null,
+      to: updated.quantityAvailable ?? null,
+      reason: 'owner_edit',
+      actorId: actorId ?? null
+    });
+  }
   if (updated && wasPublished && touchedMoney.length) {
     const at = new Date().toISOString();
     for (const field of touchedMoney) {
@@ -449,15 +466,39 @@ export function transitionListing(id, next) {
  * vendor having to notice. That is a derived consequence of a real order, not
  * an invented state change.
  */
-export function consumeStock(id, quantity) {
+export function consumeStock(id, quantity, { orderId = null } = {}) {
   const listing = store.find('listings', (l) => l.id === id);
   if (!listing) throw new Error('listing not found');
   if (listing.quantityAvailable === null) return hydrate(listing);
 
-  const remaining = listing.quantityAvailable - quantity;
+  // The pre-image is taken FIRST and copied, because `store.find` and
+  // `store.update` both hand back the live row: read after the write, the
+  // "before" value is the "after" value, and every sale would log itself as a
+  // count that never moved.
+  const countBefore = listing.quantityAvailable;
+  const vendorOfRow = listing.vendorId;
+  const spaceOfRow = listing.spaceId ?? null;
+
+  const remaining = countBefore - quantity;
   if (remaining < 0) throw new Error('not enough available to fill this order');
 
   const patch = { quantityAvailable: remaining, updatedAt: new Date().toISOString() };
   if (remaining === 0 && listing.status === 'active') patch.status = 'sold_out';
-  return hydrate(store.update('listings', id, patch));
+  const updated = store.update('listings', id, patch);
+  // The shelf movement is recorded after the write, off the pre-image we read
+  // at the top of this function. Deliberately not wrapped in a try/catch: an
+  // error swallowed here would be a unit that left the shelf with no row
+  // saying so, which is the exact hole the morning brief exists to close. The
+  // only way this throws is a malformed call, and the arguments above — taken
+  // from the listing row itself — cannot produce one.
+  stockLog.recordStockChange({
+    listingId: id,
+    vendorId: vendorOfRow,
+    spaceId: spaceOfRow,
+    from: countBefore,
+    to: remaining,
+    reason: 'order',
+    orderId
+  });
+  return hydrate(updated);
 }

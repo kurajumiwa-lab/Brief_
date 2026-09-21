@@ -444,6 +444,7 @@ export function createSpaceOffer(spaceId, {
   currency = 'KES',
   type = 'product',
   images = [],
+  quantityAvailable = null,
   callerId
 }) {
   const space = store.find('spaces', (s) => s.id === spaceId);
@@ -467,7 +468,12 @@ export function createSpaceOffer(spaceId, {
     price: numPrice,
     currency,
     type,
-    media: images
+    // Stock, like `images` before it, has to be NAMED for it to land. Left
+    // out, every offer started untracked and the shelf could never be asked a
+    // question — `createListing` is the one that validates it (null means
+    // "not counted", which is not the same claim as 0).
+    media: images,
+    quantityAvailable: quantityAvailable === undefined ? null : quantityAvailable
   });
 
   // Attach space linkage to listing

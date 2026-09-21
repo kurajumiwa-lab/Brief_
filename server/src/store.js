@@ -146,6 +146,16 @@ const EMPTY = {
   // One row per published price/term change, with the seller's own reason. Never
   // edited, never deleted: see domain/listing.js -> updateListing.
   listingRevisions: [],
+  // One row per movement of a stock count — a sale that took units, or a human
+  // who re-typed the number. Append-only, and the only reason a morning brief
+  // can say anything at all about the shelf: a listing stores one count, not a
+  // history, so "4 sold and the count is back at 10" is unanswerable without
+  // these. See domain/stockLog.js.
+  stockChanges: [],
+  // The owner's own choice about the morning brief: whether to be told, and at
+  // which hour in Nairobi. Both start unset/off — the product does not announce a
+  // default it never got asked about. See domain/shopBrief.js.
+  shopBriefPrefs: [],
   // Errands — a posted task someone can carry (a parcel, a queue, a document,
   // a small buy-and-drop). Only registered agents/partners may ACCEPT one;
   // anyone may post. The fee a poster states is a stated amount, NOT money

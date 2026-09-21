@@ -16,7 +16,7 @@
 //      rather than stubbed.
 // ---------------------------------------------------------------------------
 
-import type { ApiResult, Block, ResaleTicket, ResaleListing,  ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingRevision, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceMode, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult } from "./types";
+import type { ApiResult, Block, ResaleTicket, ResaleListing,  ResaleListingRow, TicketOrder, CapabilityUnavailable, Circle, CircleCreate, CircleUpdate, Member, Signal, TargetView, AppConfig, ReleaseStatus, AuthStatus, Campaign, CampaignCreate, CampaignUpdate, PublicCampaign, Registration, RegistrationStatus, ShareChannel, ShareLink, ShareChannels, CampaignShare, CampaignBanner, Venue, MediaUpload, MediaStorageStatus, TriageQueue, Subscription, Subscriber, SubscriptionJoin, PaymentConfirmation, Transaction, TransactionCreate, TransactionStatus, VerificationKind, Wallet, Source, RawItem, VoteTally, MemberEvidence, BriefItPreview, BriefItSaved, Vendor, VendorCreate, VendorUpdate, Listing, ListingRevision, ListingCreate, ListingUpdate, ListingStatus, Order, OrderCreate, Dispute, VendorEarnings, PaymentIntent, PaymentInitiation, Vault, VaultCreate, Footstep, FootstepPage, VaultRequest, VaultSearchResult, ResolutionItem, VaultEntry, Ticket, CheckInResult, CommandCentre, Space, SpaceCreate, SpaceMode, SpaceOfferCreate, SpaceActivity, SpaceConversation, SpaceQuote, SpacePaymentPrompt, SpaceExpense, SpaceCustomerTab, SpaceMoneySummary, SpaceDispatch, SpaceDispatchCreate, SpaceDispatchStatus, SpaceUpdate, PublicSpace, SpaceFieldStatus, SpaceMaintenance, SpaceEditorialItem, SpacePipeline, SpacePublicPageView, SpacePublicFace, GuardianNetwork, SpaceGuardian, RoleAssignment, Invite, IssueInviteInput, RedeemInviteResult, ShopBrief, ShopBriefPrefs, ShopBriefFlag, ShopBriefSpace, ShopBriefPerson } from "./types";
 import { enqueue, replayQueue, queueDepth, type QueuedWrite } from './offlineQueue';
 import { asTarget } from './types';
 import type { SpaceBroadcast, SpaceInsights, SpaceTemplate } from './types';
@@ -5838,4 +5838,36 @@ export function issueInvite(input: IssueInviteInput): Promise<ApiResult<Invite>>
 export function redeemInvite(code: string, attributionContext?: Record<string, string>): Promise<ApiResult<RedeemInviteResult>> {
   return request('/api/invites/redeem', { method: 'POST', body: JSON.stringify({ code, attributionContext: attributionContext ?? {} }) }, (r) =>
     r?.role?.role ? (r as RedeemInviteResult) : undefined);
+}
+
+// ---------------------------------------------------------------------------
+// THE MORNING BRIEF — the owner's own read of a past day.
+//
+// Three calls and no writer except one: the owner's preference. The figures come
+// from /api/shop-brief, which reads the rows on every request, so a "day" here
+// can be any day the rows reach back to — there is nothing to re-run and no
+// report to keep fresh.
+// ---------------------------------------------------------------------------
+
+/** A named day, or yesterday when none is given. */
+export function getShopBrief(day?: string | null): Promise<ApiResult<ShopBrief>> {
+  const q = day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? `?day=${day}` : '';
+  return request<ShopBrief>(`/api/shop-brief${q}`, undefined, (r) =>
+    r && r.brief && typeof r.brief.empty === 'boolean' ? (r.brief as ShopBrief) : undefined);
+}
+
+export function getShopBriefPrefs(): Promise<ApiResult<ShopBriefPrefs>> {
+  return request<ShopBriefPrefs>('/api/shop-brief/prefs', undefined, (r) =>
+    r && r.prefs && typeof r.prefs.enabled === 'boolean' ? (r.prefs as ShopBriefPrefs) : undefined);
+}
+
+/**
+ * Ask to be told, at an hour you name. The server refuses an enabled brief with
+ * no hour, so a screen cannot save the app's own suggestion as somebody's choice.
+ */
+export function setShopBriefPrefs(input: { enabled: boolean; hour?: number | null }): Promise<ApiResult<ShopBriefPrefs>> {
+  return request<ShopBriefPrefs>('/api/shop-brief/prefs', {
+    method: 'PUT',
+    body: JSON.stringify(input)
+  }, (r) => (r && r.prefs ? (r.prefs as ShopBriefPrefs) : undefined));
 }

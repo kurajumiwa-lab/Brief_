@@ -2608,6 +2608,14 @@ export function OverlaysShell(props: OverlaysShellProps) {
               });
               return;
             }
+            if (dest === 'shopbrief') {
+              // The morning brief is printed on the street of the owner's own
+              // shopfronts, which is a real route in the shell — so the tap has
+              // somewhere to go instead of a shrug.
+              setNotificationsOpen(false);
+              window.location.hash = 'spaces';
+              return;
+            }
             if (dest?.startsWith('entity:')) {
               setNotificationsOpen(false);
               setEntityPageId(dest.slice('entity:'.length));
