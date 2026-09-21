@@ -229,6 +229,22 @@ now reserved for it.
 
 ---
 
+**2026-09-21, later the same day — the first product code.** The operator
+delivered the ManualRail as working code and it shipped: `server/src/settlement/`
+(rail, manual, dispatcher, reconciler, routes), two additive collections, the
+wired mounts, and `test/settlement/manual.mjs` in the npm chain — commit
+`3868541`, on this branch. The tree dictated the corrections, as always: the
+generic seam is named distinct from `domain/settlement.js`'s derived-amount
+vendor payouts; the admin gate is the tree's session (no admin role exists —
+named gap, not a fake check); and the escalation test caught a real bug in the
+delivered code — the stuck-sweep's 24-hour window excluded exactly the rows it
+hunts, so the sweep lost its window. The suite prints its true count, **43**,
+not the delivered claim of 37. Verification: 43/0 new; run.js offline 2087/0;
+workOrders 44/0 and twelve sampled suites green; `index.js` boots with the
+mounts. The delivered instruction to open a `feat/manual-settlement-rail`
+branch was not executed — this session commits to `arena/01a0c209-brief`,
+and the commit is the rail.
+
 *The series in one sentence: every prompt arrived certain the tree was
 empty; every record found the tree already arguing with itself in comments
 and suites, and joined the argument. Fifteen times the verdict was the
