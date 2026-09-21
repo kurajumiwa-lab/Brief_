@@ -61,6 +61,21 @@ function mount(el) {
 }
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const tab = (want) => Array.from(document.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes(want));
+/**
+ * The board's only navigation is one entry that opens the taxonomy, so a test
+ * reaches a room the way a person does. Kept as a helper so no suite can quietly
+ * go back to asserting on a tile grid that no longer exists.
+ */
+const openRoom = async (container, want) => {
+  const face = Array.from(container.querySelectorAll('[aria-label="Browse the board"]')).find((b) => b.tagName === 'BUTTON');
+  if (!container.querySelector('[role="dialog"][aria-label="Browse the board"]')) {
+    act(() => face.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
+    await flush();
+  }
+  const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
+  return { face, picker, entry: Array.from(picker.querySelectorAll('button')).find((b) => new RegExp('^\\s*' + want).test(text(b))) };
+};
+const flushSync = () => { };
 const styleOf = (el) => (el && (el.getAttribute('style') || '')) || '';
 const allStyled = (c) => Array.from(c.querySelectorAll('*')).map((el) => ({ el, cls: el.getAttribute('class') || '', style: el.getAttribute('style') || '' }));
 
@@ -226,13 +241,22 @@ async function main() {
       return isCard && stroke && !/border-dashed/.test(cls);
     });
     assert.deepEqual(offenders.map((o) => o.style), [], 'no rounded card on the board is outlined with a 1px stroke');
-    const tiles = Array.from(container.querySelectorAll('button[role="tab"]'));
-    assert.ok(tiles.length >= 8, 'the eight views are still the navigation');
+    // The eight views are still the navigation — the rule was never "eight
+    // buttons on the glass", it was "one set of rooms, lifted by light, never
+    // outlined". They live in the picker now, so the room rules are asserted
+    // there, where the surfaces actually are.
+    const face = Array.from(container.querySelectorAll('[aria-label="Browse the board"]')).find((b) => b.tagName === 'BUTTON');
+    act(() => face.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
+    await flush();
+    const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
+    const tiles = Array.from(picker.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Circles|Errands)/.test(text(b)));
+    assert.equal(tiles.length, 8, 'the eight views are still the navigation');
     const lifted = tiles.filter((t) => /box-shadow|--lift|brief-lift/.test(styleOf(t) + ' ' + (t.getAttribute('class') || '')));
-    assert.equal(lifted.length, tiles.length, 'every tile is lifted by light');
-    const active = tiles.find((t) => t.getAttribute('aria-selected') === 'true');
-    assert.ok(/--lift-signal/.test(styleOf(active)), 'the SELECTED tile glows with the accent — a choice, not a coincidence');
+    assert.equal(lifted.length, tiles.length, 'every entry is lifted by light');
+    const active = tiles.find((t) => t.getAttribute('aria-pressed') === 'true');
+    assert.ok(active, 'the current room is marked in the list');
     assert.ok(!/border:\s*1px/.test(styleOf(active)), 'and it is not wearing a border to say so');
+    assert.ok(/--lift-2|box-shadow/.test(styleOf(face)), 'the board\'s one entry is lifted too, not outlined');
   }
   pass('The board itself: no outlined cards, every tile lifted, the selected one glowing with the accent');
 
@@ -268,7 +292,7 @@ async function main() {
   {
     const { container } = mount(React.createElement(CityFeedView, {}));
     await flush();
-    const direct = tab('Direct');
+    const { entry: direct } = await openRoom(container, 'Direct');
     assert.ok(text(direct).includes('0'), 'an empty flow shows its zero — it is not hidden and not padded');
     // The count numeral is the mono span; the aria-hidden one before it is the
     // same number for a screen reader.
@@ -277,13 +301,13 @@ async function main() {
     assert.ok(/--color-quiet/.test(styleOf(zeroMark)), 'the zero is in the quiet ink, so an empty flow does not read as an error');
     assert.ok(/none here/i.test(text(direct)), 'an empty flow is marked, not narrated');
     assert.ok(/Post one|Tag one/.test(text(direct)), 'with one action, in three words');
-    const bulk = tab('Bulk');
+    const { entry: bulk } = await openRoom(container, 'Bulk');
     const fullMark = Array.from(bulk.querySelectorAll('span')).find((el) => text(el) === '1' && /font-mono/.test(el.getAttribute('class') || ''));
     assert.ok(fullMark && !/--color-quiet/.test(styleOf(fullMark)), 'a non-zero count is NOT quiet — the difference is the number, not decoration');
     assert.ok(/none here/i.test(text(direct)), 'an empty flow is marked, not explained');
     assert.ok(/Post one|Tag one/.test(text(direct)), 'with exactly one action, in three words');
     assert.ok(!/Nothing is published|no offers yet — post one/.test(text(direct)), 'and no sentence doing the dot\'s job');
-    const group = tab('Group');
+    const { entry: group } = await openRoom(container, 'Group');
     assert.ok(text(group).includes('0'), 'same for every other empty view');
     // "hot / trending / buyers waiting / coming soon" is padding. A real sort by
     // counted registrations is not, so only the invented-urgency vocabulary fails.

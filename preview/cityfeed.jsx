@@ -143,13 +143,24 @@ async function main() {
     // The chip row is gone: the tile grid is the navigation now.
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(!nav, 'no chip row survives on this screen');
-    const tiles = Array.from(c.querySelectorAll('button[role="tab"]'));
-    assert.equal(tiles.length, 8, 'four flows, four side views: the tile grid is the navigation');
-    assert.ok(tiles.some((b) => /All/.test(b.textContent)), 'the mixed view is a tile, not a tab strip');
-    assert.ok(tiles.some((b) => b.textContent.includes('Bulk')), 'the flow tiles lead the screen');
-    const selected = tiles.filter((b) => b.getAttribute('aria-selected') === 'true');
+    // The navigation is one entry that opens the taxonomy. The count moved into
+    // the picker with it, because four 32px zeros were the loudest thing on the
+    // main surface — the rule this line protects is "the taxonomy is the nav, and
+    // nothing else duplicates it", not "the nav is a grid".
+    assert.equal(c.querySelectorAll('button[role="tab"]').length, 0, 'no tile wall on the face of the board');
+    const browse = c.querySelector('button[aria-label="Browse the board"]');
+    assert.ok(browse, 'one Browse entry, and it is the navigation');
+    act(() => { browse.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const picker2 = c.querySelector('[role="dialog"][aria-label="Browse the board"]');
+    const tiles = Array.from(picker2.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Circles|Errands)/.test(text(b)));
+    assert.equal(tiles.length, 8, 'four flows, four side views, all reachable from it');
+    assert.ok(tiles.some((b) => /^All/.test(b.textContent.trim())), 'the mixed view is a row, not a tab strip');
+    assert.ok(/^Bulk/.test(tiles[0].textContent.trim()), 'the flows lead the list');
+    const selected = tiles.filter((b) => b.getAttribute('aria-pressed') === 'true');
     assert.equal(selected.length, 1, 'exactly one view is active on open');
-    assert.ok(/All/.test(selected[0].textContent), 'and it is the mixed supply view, with the counter under it');
+    assert.ok(/^All/.test(selected[0].textContent.trim()), 'and it is the mixed supply view');
+    assert.ok(/\d/.test(selected[0].textContent), 'with its count beside it, in the list rather than on the glass');
     // No scoreboard "0 : 0" hero.
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
     assert.ok(!hero, 'no scoreboard hero remains');
@@ -180,7 +191,10 @@ async function main() {
     await flush();
     const t = text(c);
     assert.ok(t.includes('The counter'), 'Discover opens on the supply board, not the gallery');
-    assert.ok(t.includes('The flows'), 'with the flow tiles as its first control');
+    assert.ok(c.querySelector('button[aria-label="Browse the board"]'),
+      'and its first control is the one entry that reaches the flows');
+    assert.ok(!/The flows/.test(t),
+      'the flow list itself is inside that entry: four zeros no longer own the top of the screen');
     // What was taken OUT, and why.
     // The complaint was the orphaned heading clipped mid-word under the
     // gallery, not the sub-tabs themselves: in their own room they are correct.
@@ -189,7 +203,9 @@ async function main() {
     assert.ok(!/Community Circles & Mutual Aid/.test(t), 'circles are not browsed like posters');
     assert.ok(!/Vault & Special Drops/.test(t), 'vaults are not either');
     // and the tiles navigate instead of stacking: the Events room holds no market
-    const evTile = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => b.textContent.includes('Events'));
+    act(() => { c.querySelector('button[aria-label="Browse the board"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const evTile = Array.from(c.querySelectorAll('[role="dialog"][aria-label="Browse the board"] button')).find((b) => /^Events/.test(text(b)));
     act(() => { evTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     assert.ok(!/The counter/.test(text(c)), 'the Events room holds no market furniture');
@@ -206,7 +222,9 @@ async function main() {
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const errandsBtn = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Errands'));
+    act(() => { c.querySelector('button[aria-label="Browse the board"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const errandsBtn = Array.from(c.querySelectorAll('[role="dialog"][aria-label="Browse the board"] button')).find((b) => /^Errands/.test(text(b)));
     act(() => { errandsBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     const t = text(c);
@@ -224,7 +242,9 @@ async function main() {
     // Belonging is exploration: Circles is a Discover room, under its own name.
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const circleTile = Array.from(c.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes('Circles'));
+    act(() => { c.querySelector('button[aria-label="Browse the board"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    await flush();
+    const circleTile = Array.from(c.querySelectorAll('[role="dialog"][aria-label="Browse the board"] button')).find((b) => /^Circles/.test(text(b)));
     assert.ok(circleTile, 'Circles is reachable from the grid');
     act(() => { circleTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();

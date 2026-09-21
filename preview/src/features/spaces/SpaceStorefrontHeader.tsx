@@ -240,7 +240,13 @@ export function SpaceStorefrontHeader({
         <div className="flex items-stretch divide-x mt-4 rounded-2xl border overflow-hidden" style={{ borderColor: 'var(--brief-line)' }}>
           {(isOwner
             ? [
-                { label: 'views · 7d', value: num(insights?.views.count), sub: insights?.views.distinctViewers != null ? `${num(insights.views.distinctViewers)} people` : 'people not counted' },
+                // The views figure is a count of rows: one per opening of the public page.
+// What it is NOT is a headcount, so no sentence about headcounts sits under it.
+// A sub-line saying "people not counted" read as a confession two pixels below a
+// number that is perfectly true, and made the owner distrust the good figure. The
+// explanation belongs on the audit screen, where the rest of them are — so the
+// sub-line is either a real second count or nothing at all.
+{ label: 'views · 7d', value: num(insights?.views.count), sub: insights?.views.distinctViewers != null ? `${num(insights.views.distinctViewers)} people` : null },
                 { label: 'new follows', value: num(insights?.follows.newInWindow), sub: `${num(insights?.follows.total ?? followers)} total` },
                 { label: 'inquiries', value: num(insights?.inquiries.newInWindow), sub: `${num(insights?.inquiries.awaitingYourReply)} awaiting you` },
                 { label: 'orders', value: num(insights?.orders.newInWindow), sub: `${num(insights?.orders.total)} all time` },

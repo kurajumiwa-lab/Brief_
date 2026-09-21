@@ -48,6 +48,22 @@ function mount(el) {
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
 const btn = (want) => Array.from(document.querySelectorAll('button')).find((b) => text(b) === want || text(b).startsWith(want));
 const tab = (want) => Array.from(document.querySelectorAll('button[role="tab"]')).find((b) => text(b).includes(want));
+/**
+ * The board's only navigation is one button that opens a picker, so a test
+ * reaches a room the way a person does: open it, tap the name. Kept as a helper
+ * so no suite can quietly start asserting on a tile grid that no longer exists.
+ */
+const openRoom = async (container, want) => {
+  const trigger = container.querySelector('button[aria-label="Browse the board"]');
+  if (trigger && !container.querySelector('[role="dialog"][aria-label="Browse the board"]')) {
+    click(trigger);
+    await flush();
+  }
+  const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
+  const entry = Array.from(picker.querySelectorAll('button')).find((b) => text(b).startsWith(want));
+  click(entry);
+  await flush();
+};
 const click = (el) => act(() => el.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
 const setVal = (el, v, proto) => act(() => {
   Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, v);
@@ -156,39 +172,60 @@ global.fetch = async (input, init) => {
 };
 
 async function main() {
-  // --- 1. the tiles: four flows + four side views, counts from the server ----
+  // --- 1. one entry on the face of the board, the counts behind it ----------
+  // The four flow tiles used to be the first thing on the main surface, and for
+  // an empty board that meant four 32px zeros and four "none here" lines — the
+  // loudest thing on the screen saying nothing is here. One entry now; the same
+  // truth inside the picker, where a zero can sit beside the step that ends it.
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const tabs = Array.from(container.querySelectorAll('button[role="tab"]'));
-    assert.equal(tabs.length, 8, 'four flows on top, four side views below');
-    const flowNames = tabs.slice(0, 4).map((b) => (text(b).match(/Bulk|Direct|Niche|Group/) || [''])[0]);
-    assert.deepEqual(flowNames, ['Bulk', 'Direct', 'Niche', 'Group'], 'the flows, in the taxonomy order');
-    // counts: bulk has 1 declared listing; direct has none, and says 0 out loud
-    assert.ok(/1/.test(text(tab('Bulk'))), 'the Bulk tile carries the server count');
-    assert.ok(text(tab('Direct')).includes('0'), 'an empty flow reads as zero, not as a hidden tile');
-    assert.ok(!/sits outside every flow|does not filter by your area/.test(text(container)),
-      'the untagged and scope sentences left the flow — they are on the audit page now');
-    assert.ok(/none here/i.test(text(tab('Direct'))), 'and an empty tile marks itself instead of explaining itself');
-    // an empty tile is marked, not narrated: a dot, two words, one action
-    const zeroTiles = Array.from(container.querySelectorAll('button[role="tab"]')).slice(0, 4).map((b) => text(b));
-    assert.ok(zeroTiles.some((x) => /none here/i.test(x)), 'empty tiles read "none here"');
-    assert.ok(zeroTiles.every((x) => x.length < 90), `each tile stays a glance (longest ${Math.max(...zeroTiles.map((x) => x.length))})`);
-    assert.ok(zeroTiles.some((x) => /Post one|Tag one/.test(x)), 'with one action, in two words');
-    // the prose is gone from the board entirely; one action per empty state
-    assert.ok(!/will not infer a supply chain from a title/.test(text(container)), 'the board note left the surface');
-    assert.ok(!/How this is derived/.test(text(container)), 'and there is no footnote control to tap through');
-    assert.ok(!/is not padded|does not read titles/.test(text(container)), 'no method notes on the board');
-    assert.ok(text(container).includes('Asked for, no route says it'), 'the gap board is part of the mixed view');
-    assert.ok(!/40 verified|buyers waiting|trending/i.test(text(container)), "none of the mock's vocabulary survives");
+    const face = text(container);
+    assert.ok(container.querySelector('button[aria-label="Browse the board"]'),
+      'the board opens with one entry');
+    assert.equal(container.querySelectorAll('button[role="tab"]').length, 0,
+      'and no tile-grid navigation on the face of the screen');
+    assert.ok(!/NONE HERE/.test(face), 'a zero is not printed in the reader\'s way');
+    assert.ok(/listing/.test(face), 'the entry does say what is in the room you are in');
+    assert.ok(face.includes('Asked for, no route says it'), 'the gap board is still part of the mixed view');
+    assert.ok(!/40 verified|buyers waiting|trending/i.test(face), "none of the mock's vocabulary survives");
+
+    click(container.querySelector('button[aria-label="Browse the board"]'));
+    await flush();
+    const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
+    assert.ok(picker, 'the entry opens a picker');
+    const pt = text(picker);
+    for (const f of ['Bulk', 'Direct', 'Niche', 'Group']) assert.ok(pt.includes(f), `${f} is still reachable`);
+    for (const r of ['All', 'Events', 'Circles', 'Errands']) assert.ok(pt.includes(r), `and so is ${r}`);
+    assert.ok(/none here/i.test(pt), 'an empty flow says so, in two words');
+    assert.ok(/Post one|Tag one/.test(pt), 'and offers the one step that could change it');
+    // (The digits are set in mono right after the label, so the assertion looks
+    // per entry rather than scanning the whole run of text for a lone 0.)
+    const entries = Array.from(picker.querySelectorAll('button')).filter((b) =>
+      ['Bulk', 'Direct', 'Niche', 'Group', 'All', 'Events', 'Circles', 'Errands'].some((n) => text(b).startsWith(n)));
+    assert.equal(entries.length, 8, 'eight entries: four flows, four rooms');
+    assert.ok(entries.every((b) => /\d/.test(text(b))), 'each one carries a count, so none of them is decoration');
+    const directBtn = entries.find((b) => text(b).startsWith('Direct'));
+    assert.ok(/0/.test(text(directBtn)), 'an empty flow prints its zero — a true count, just not a billboard');
+    assert.ok(!/How this is derived|is not padded|does not read titles|will not infer/.test(pt),
+      'no method notes inside it either — the picker is a list, not an essay');
+    assert.ok(!/none here/.test(text(container).replace(pt, '')),
+      'the emptiness is stated once, in the picker, not on the board as well');
+
+    const direct = directBtn;
+    assert.ok(direct, 'a flow can be chosen by its own name');
+    click(direct);
+    await flush();
+    assert.ok(!container.querySelector('[role="dialog"][aria-label="Browse the board"]'),
+      'choosing a room closes the picker — it is a switch, not a page');
   }
-  pass('Flow tiles are the navigation, and their numbers are the server counts (zeros included)');
+  pass('Discover opens with one entry; the counts and their zeros live in the picker');
 
   // --- 2. a flow room shows routes, and only declared ones ─────────────────
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    click(tab('Bulk'));
+    await openRoom(container, 'Bulk');
     await flush();
     const t = text(container);
     assert.ok(t.includes('Routes on the board'), 'a flow opens on its routes, not a product grid');
@@ -202,7 +239,8 @@ async function main() {
     assert.ok(t.includes('min 5 crate · 3 settled'), 'the card carries min order and the counted take-up, in two words');
 
     // Sub-filter strip: flat, one tap, and it narrows what is on the board.
-    assert.ok(tab('Produce') === undefined, 'sub-filters are chips, not tabs');
+    assert.ok(tab('Produce') === undefined && container.querySelectorAll('button[role="tab"]').length === 0,
+      'sub-filters are chips, not tabs — and nothing on this board pretends to be a tablist');
     const dryGoods = Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Dry goods');
     assert.ok(dryGoods, 'the flow ships a flat sub-filter strip');
     click(dryGoods);
@@ -220,7 +258,7 @@ async function main() {
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    click(tab('Direct'));
+    await openRoom(container, 'Direct');
     await flush();
     const t = text(container);
     assert.ok(t.includes('No Direct routes'), 'empty is stated as empty, in three words');

@@ -19,7 +19,9 @@ export const CreateOfferModal: React.FC<CreateOfferModalProps> = ({
   onOfferCreated
 }) => {
   const [title, setTitle] = useState<string>('');
-  const [price, setPrice] = useState<string>('4500');
+  // No prefilled amount: see CreateFlowModal. A price in the box is a price the
+  // server stores, and 4500 is not the seller's number.
+  const [price, setPrice] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [publishImmediately, setPublishImmediately] = useState<boolean>(true);
   /** Uploaded photos. Held as media ids/urls exactly as the server returns them. */

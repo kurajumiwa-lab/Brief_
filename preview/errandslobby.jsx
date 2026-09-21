@@ -123,17 +123,27 @@ async function main() {
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const tiles = Array.from(container.querySelectorAll('button[role="tab"]')).map((b) => text(b));
-    assert.ok(tiles.some((x) => /Bulk/.test(x)), 'the flows lead the grid');
-    assert.ok(tiles.some((x) => /Events/.test(x)), 'Events is a tile');
-    assert.ok(tiles.some((x) => /Circles/.test(x)), 'Circles is a side view');
-    assert.ok(tiles.some((x) => /Errands/.test(x)), 'Errands is a tile');
-
-    assert.equal(container.querySelector('nav[aria-label="Discover sections"]'), null, 'no chip row survives');
-    const errandsTile = Array.from(container.querySelectorAll('button[role="tab"]')).find((b) => /^\s*Errands/.test(text(b)));
+    // One entry on the face of the board, and every room inside it. This used to
+    // assert an 8-tile grid; four of those tiles were zeros shouting at the
+    // visitor, so the grid became a picker and the rooms are still exactly the
+    // taxonomy's — no room added, none invented.
+    assert.equal(container.querySelectorAll('button[role="tab"]').length, 0,
+      'no tile wall on the face of the board');
+    assert.equal(container.querySelector('nav[aria-label="Discover sections"]'), null, 'no chip row survives either');
+    const trigger = container.querySelector('button[aria-label="Browse the board"]');
+    assert.ok(trigger, 'the board opens with one entry');
+    click(trigger);
+    await flush();
+    const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
+    const tiles = Array.from(picker.querySelectorAll('button')).map((b) => text(b));
+    assert.ok(tiles.some((x) => /^Bulk/.test(x)), 'the flows are reachable');
+    assert.ok(tiles.some((x) => /^Events/.test(x)), 'Events is in there');
+    assert.ok(tiles.some((x) => /^Circles/.test(x)), 'Circles is in there');
+    assert.ok(tiles.some((x) => /^Errands/.test(x)), 'Errands is in there');
+    const errandsTile = tiles.map((_, i) => picker.querySelectorAll('button')[i]).find((b) => /^\s*Errands/.test(text(b)));
     click(errandsTile);
     await flush();
-    assert.ok(text(container).includes('The lobby'), 'the errands room opened from the grid');
+    assert.ok(text(container).includes('The lobby'), 'the errands room opened from the picker');
     assert.ok(document.querySelector('input[aria-label="Pickup destination town"]'), 'the WAIRO card lives here only');
     assert.ok(text(container).includes('Seal a file at City Hall'), 'the real open errand from the rail is on the board');
     assert.ok(!/\d+ riders? (nearby|around)/i.test(text(container)), 'no invented crowd size');

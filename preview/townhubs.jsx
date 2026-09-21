@@ -347,7 +347,15 @@ async function main() {
     root13.render(React.createElement(discoverModule.DiscoverScreen));
   });
 
-  const text13 = host13.textContent.replace(/\s+/g, ' ');
+  // The four flows are still the primary switcher — they are just no longer
+  // four tiles shouting a zero at the top of the board. Open the one entry and
+  // they are there, in taxonomy order, with their counts. The legacy screen
+  // wraps the same component, so it moves with it.
+  const face13 = () => host13.textContent.replace(/\s+/g, ' ');
+  check('the board presents one entry, not a wall of zeros', /Browse/.test(face13()));
+  const trigger13 = host13.querySelector('button[aria-label="Browse the board"]');
+  if (trigger13) await act(async () => { trigger13.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+  const text13 = face13();
   check('renders the four flows as the primary switcher',
     /Bulk/.test(text13) && /Direct/.test(text13) && /Niche/.test(text13) && /Group/.test(text13));
   check('the Create pill leads to a real loop', /Host an event/.test(text13));

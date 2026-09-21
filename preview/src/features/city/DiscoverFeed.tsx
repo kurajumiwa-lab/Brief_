@@ -467,110 +467,159 @@ export function DiscoverFeed({
       : SIDE_ORDER.find((s) => s.key === key)?.unit ?? '';
 
   const gaps = summary?.unmapped ?? [];
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const roomLabel = isFlowRoom(room as any)
+    ? (flows.find((x) => x.key === room)?.label ?? room)
+    : (SIDE_ORDER.find((s) => s.key === room)?.label ?? 'Everything');
 
   return (
     <div className={`space-y-5 ${className}`}>
-      {/* ── the four flows ───────────────────────────────────────────────── */}
-      <section className="space-y-2.5">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-ink)' }}>
-            The flows
-          </h2>
-          <button
-            type="button"
-            onClick={() => void load()}
-            disabled={busy}
-            aria-label={busy ? 'Reading' : 'Re-read the board'}
-            className="w-7 h-7 rounded-lg grid place-items-center cursor-pointer disabled:opacity-40"
-            style={{ background: 'var(--color-well)', color: 'var(--color-text-muted)', border: 'none' }}
+      {/* ── ONE entry: Browse ─────────────────────────────────────────────────
+           This screen used to open with four flow tiles, each shouting a 32px
+           zero, plus a second row of four chips. Four dead tiles and a duplicate
+           nav is not a board, it is a wall — and for someone reading this on a
+           hand-me-down Android with one hand, it is the screen they give up on.
+
+           So the surface is one button. The counts are not gone: they are inside
+           the picker, where a zero can sit next to the one step that changes it.
+           A zero is a TRUE count and stays printed — what goes is the four-tile
+           frame that made "nothing here yet" the biggest thing on the page. */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => { soundEngine.play('tap'); setPickerOpen(true); }}
+          aria-label="Browse the board"
+          aria-expanded={pickerOpen}
+          className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-2xl cursor-pointer text-left"
+          style={{
+            background: 'var(--color-paper)',
+            boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)'
+          }}
+        >
+          <span className="w-8 h-8 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--color-well)', color: 'var(--color-primary)' }}>
+            <Search className="w-4 h-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
+              {roomLabel}
+            </span>
+            <span className="block text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
+              {countFor(room)} {countFor(room) === 1 ? 'listing' : 'listings'} · change
+            </span>
+          </span>
+          <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
+        </button>
+        <button
+          type="button"
+          onClick={() => void load()}
+          disabled={busy}
+          aria-label={busy ? 'Reading' : 'Re-read the board'}
+          className="w-11 h-11 rounded-2xl grid place-items-center shrink-0 cursor-pointer disabled:opacity-40"
+          style={{ background: 'var(--color-well)', color: 'var(--color-text-muted)', border: 'none' }}
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* The picker: the taxonomy with its counts, behind one tap. */}
+      {pickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label="Browse the board">
+          <button type="button" aria-label="Close the picker" onClick={() => setPickerOpen(false)} className="absolute inset-0 bg-black/45" />
+          <div
+            className="relative w-full max-w-lg rounded-t-3xl p-4 space-y-3 max-h-[80vh] overflow-y-auto"
+            style={{ background: 'var(--color-bg)', boxShadow: 'var(--lift-3)' }}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5" role="tablist" aria-label="Discover flows">
-          {FLOW_ORDER.map((f) => {
-            const isActive = room === f.key;
-            const src = flows.find((x) => x.key === f.key);
-            // A zero is a TRUE count, so it is printed. It is printed quietly,
-            // with the one step that could change it — never padded, never
-            // hidden, never dressed up as "coming soon".
-            const empty = countFor(f.key) === 0;
-            return (
+            <div className="flex items-center justify-between">
+              <p className="text-[12px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-ink)' }}>
+                Browse
+              </p>
               <button
-                key={f.key}
                 type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => { soundEngine.play('tap'); onRoomChange?.(f.key); }}
-                className="relative p-4 rounded-3xl cursor-pointer text-left transition-transform active:scale-[0.98]"
-                style={{
-                  background: isActive ? 'var(--color-primary)' : roomSurface(null),
-                  boxShadow: isActive
-                    ? 'var(--lift-signal)'
-                    : 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)',
-                  transition: 'box-shadow var(--motion-normal) var(--ease-standard)'
-                }}
+                onClick={() => setPickerOpen(false)}
+                aria-label="Close the picker"
+                className="w-8 h-8 rounded-full grid place-items-center cursor-pointer"
+                style={{ background: 'var(--color-paper)', color: 'var(--brief-ink)' }}
               >
-                <span className="flex items-center justify-between">
-                  <span className="w-9 h-9 rounded-2xl grid place-items-center" style={{ background: isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)', color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
-                    {ICONS[f.icon]}
-                  </span>
-                  <span className="font-mono text-[32px] font-extrabold leading-none" style={{ color: isActive ? 'var(--accent-ink)' : empty ? 'var(--color-quiet)' : 'var(--brief-ink)' }}>
-                    {countFor(f.key)}
-                  </span>
-                </span>
-                <span className="block mt-2.5 text-[15px] font-extrabold" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--brief-ink)' }}>
-                  {src?.label ?? (f.key.charAt(0).toUpperCase() + f.key.slice(1))}
-                </span>
-                <span className="mt-1 flex items-center gap-1.5">
-                  <StateDot state={empty ? 'unknown' : 'quiet'} label={empty ? 'none here' : src?.sub ?? ''} />
-                </span>
-                {empty && onPostListing && (
-                  <span className="block mt-1.5 text-[11px] font-black" style={{ color: isActive ? 'var(--accent-ink)' : 'var(--color-primary)' }}>
-                    {src?.zeroReason === 'untagged_only' ? 'Tag one' : 'Post one'} →
-                  </span>
-                )}
-                {src && src.openDemand > 0 && (
-                  <span className="absolute -bottom-0.5 right-3 text-[11px] font-mono" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : 'var(--color-quiet)' }}>
-                    {src.openDemand} ask{src.openDemand === 1 ? '' : 's'} name it
-                  </span>
-                )}
+                <X className="w-4 h-4" />
               </button>
-            );
-          })}
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                The flows
+              </p>
+              {FLOW_ORDER.map((f) => {
+                const src = flows.find((x) => x.key === f.key);
+                const empty = countFor(f.key) === 0;
+                const isActive = room === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); onRoomChange?.(f.key); setPickerOpen(false); }}
+                    aria-pressed={isActive}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left cursor-pointer"
+                    style={{
+                      background: isActive ? 'var(--color-primary-subtle)' : 'var(--color-paper)',
+                      boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)'
+                    }}
+                  >
+                    <span className="w-8 h-8 rounded-xl grid place-items-center shrink-0" style={{ background: 'var(--color-well)', color: 'var(--color-primary)' }}>
+                      {ICONS[f.icon]}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
+                        {src?.label ?? (f.key.charAt(0).toUpperCase() + f.key.slice(1))}
+                      </span>
+                      <StateDot state={empty ? 'unknown' : 'quiet'} label={empty ? 'none here' : src?.sub ?? ''} />
+                    </span>
+                    <span className="shrink-0 font-mono text-[15px] font-extrabold" style={{ color: empty ? 'var(--color-quiet)' : 'var(--brief-ink)' }}>
+                      {countFor(f.key)}
+                    </span>
+                    {empty && onPostListing && (
+                      <span className="shrink-0 text-[11px] font-black" style={{ color: 'var(--color-primary)' }}>
+                        {src?.zeroReason === 'untagged_only' ? 'Tag one' : 'Post one'}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                Other views
+              </p>
+              {SIDE_ORDER.map((t) => {
+                const isActive = room === t.key;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => { soundEngine.play('tap'); onRoomChange?.(t.key); setPickerOpen(false); }}
+                    aria-pressed={isActive}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left cursor-pointer"
+                    style={{
+                      background: isActive ? 'var(--color-primary-subtle)' : 'var(--color-paper)',
+                      boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)'
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 text-[14px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
+                      {t.label}
+                      <span className="ml-2 text-[12px] font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                        {unitFor(t.key)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-mono text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>
+                      {countFor(t.key)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
-
-        <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Other views">
-          {SIDE_ORDER.map((t) => {
-            const isActive = room === t.key;
-            return (
-              <button
-                key={t.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => { soundEngine.play('tap'); onRoomChange?.(t.key); }}
-                className="px-2 py-2 rounded-2xl text-center cursor-pointer transition-shadow"
-                style={{
-                  background: isActive ? 'var(--color-primary-subtle)' : 'var(--color-paper)',
-                  color: isActive ? 'var(--color-primary)' : 'var(--brief-muted)',
-                  boxShadow: isActive
-                    ? 'var(--lift-signal)'
-                    : 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)'
-                }}
-              >
-                <span className="block">{t.label}</span>
-                <span className="block text-[11px] font-mono mt-0.5" style={{ color: isActive ? 'var(--color-primary)' : 'var(--color-quiet)' }}>
-                  {countFor(t.key)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-
-      </section>
+      )}
 
       {failed && (
         <p className="text-[13px] font-bold" role="alert" style={{ color: '#E53935' }}>

@@ -316,7 +316,13 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                 <div className="p-4 space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center space-x-2 min-w-0">
-                      <span className="text-base shrink-0">🎂</span>
+                      {/* No emoji. There used to be a cake here, printed on every
+                          offer in the catalog regardless of what it was — which is
+                          how "Meals" turned up wearing a birthday cake on the public
+                          page. A glyph that describes nothing is decoration, and a
+                          decoration that looks like data is what people trust by
+                          mistake. The photo plate above is the only visual an offer
+                          gets, and only when the seller took it. */}
                       <span className="text-xs font-black text-[color:var(--color-text)] leading-tight truncate">
                         {offer.title}
                       </span>

@@ -39,7 +39,8 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       lines: [
         'A figure in Brief is produced by reading rows on the screen you are looking at — contributions recorded, quotes sent, orders settled, hours you last confirmed. Nothing is stored as a score, nothing is rounded up, nothing is seeded to make a screen look used.',
         'A zero is shown when zero is the true count. Where a figure cannot be computed at all, the surface shows a dash or the words “not computed” — never 0, because 0 answers a question that was not asked.',
-        'There is no browse log, no save counter, no view-of-a-view statistic. That is why there is no “N people are looking at this”, no percentage movement on a price, and no trend line: the rows do not exist, and a number without rows is a fabrication about somebody’s business.'
+        'There is no browse log, no save counter, no view-of-a-view statistic. That is why there is no “N people are looking at this”, no percentage movement on a price, and no trend line: the rows do not exist, and a number without rows is a fabrication about somebody’s business.',
+        'A shop’s view figure counts openings of its public page — one row per page read, and only page reads. It is not a headcount: no identity is attached and a person who opens it five times is five rows. That is why the number sits on the strip without a sentence about people beside it, and why no conversion rate here is offered as a benchmark: a real count with an honest denominator is printed, an absent one is printed as a dash, and nothing in between is invented.'
       ]
     },
     {

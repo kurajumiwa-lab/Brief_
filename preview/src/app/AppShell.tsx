@@ -95,15 +95,12 @@ export const AppShell: React.FC<AppShellProps> = ({
    * opened nothing is worse than no nav item.
    */
   const goSheetTarget = (target: SheetTarget) => {
+    // Only three destinations are reachable from here: the band owns the rooms
+    // and the dock owns the five tabs, so a sheet entry duplicating either would
+    // be a third way to do one thing.
     if (target.kind === 'tab') {
       setActiveTab(target.tab);
-      window.location.hash = target.tab === 'pipeline' ? 'pipeline' : target.tab;
-      return;
-    }
-    if (target.kind === 'room') {
-      setDiscoverSubTab(target.room);
-      setActiveTab('city');
-      window.location.hash = 'city';
+      window.location.hash = target.tab;
       return;
     }
     setYouSection(target.section);

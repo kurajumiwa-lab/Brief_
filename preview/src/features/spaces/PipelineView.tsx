@@ -354,7 +354,7 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
                     {/* Single-line token summary */}
                     <div className="flex items-center justify-between text-xs">
                       <p className="font-bold text-[color:var(--color-text)] truncate">
-                        🎂 {conv.offerTitle || 'Custom Order'}
+                        {conv.offerTitle || 'No item named yet'}
                       </p>
                       <span className="font-black text-[color:var(--color-text)] shrink-0 ml-2">
                         KES {price.toLocaleString()}

@@ -121,6 +121,8 @@ async function main() {
     assert.ok(t.includes('Kilimani, Nairobi'), 'the stated place, from the profile row');
     assert.ok(t.includes('Tue, Sat 06:00–18:00') || t.includes('06:00–18:00'), 'the stated hours');
     assert.ok(t.includes('11'), 'views this week is the count of view rows');
+    assert.ok(!/people not counted/.test(t), 'and no sentence under the number argues with it — the count is true, the caveat is on the audit page');
+    assert.ok(/views · 7d/.test(t), 'the count itself stays printed');
     assert.ok(!/own opens are left out|How this is derived/.test(t), 'the view-count caveat left the header with the rest of the prose');
     assert.ok(!/no browse log|no sector average/.test(t), 'and no sentence about what is absent sits on the shopfront');
     assert.ok(t.includes('9.1%'), 'conversion is the ratio of two real counts');

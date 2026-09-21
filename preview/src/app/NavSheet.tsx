@@ -19,12 +19,10 @@
 //     (see `features/home/PlannedWeather`).
 // ---------------------------------------------------------------------------
 import React, { useEffect } from 'react';
-import { X, Coins, CalendarDays, Store, Users, Ticket, Search, ShieldCheck, Wallet, LayoutGrid } from 'lucide-react';
-import type { DiscoverRoom } from '../features/city/taxonomy';
+import { X, Coins, Users, Ticket, Search, ShieldCheck } from 'lucide-react';
 
 export type SheetTarget =
-  | { kind: 'tab'; tab: 'home' | 'pipeline' | 'city' | 'activity' | 'you' | 'requests' | 'supply' | 'partners' }
-  | { kind: 'room'; room: DiscoverRoom }
+  | { kind: 'tab'; tab: 'requests' | 'supply' | 'partners' }
   | { kind: 'you'; section: 'profile' | 'standing' | 'following' | 'subscriptions' | 'earn' | 'orders' | 'selling' | 'archive' | 'tableBanking' | 'network' | 'how' };
 
 export interface SheetItem {
@@ -46,44 +44,47 @@ const icon = (Icon: React.ComponentType<{ className?: string; style?: React.CSSP
  * each group's entries are the ones it claims — a nav list that grows a
  * duplicate in a refactor is how two surfaces end up owning the same feature.
  */
+/**
+ * The sheet, as data. `appbelt.jsx` asserts every `id` is unique, that no
+ * destination appears twice, and — the rule this list exists to honour — that
+ * nothing in here is ALSO reachable from the band or the dock. That is why it is
+ * seven entries and not sixteen: Home, Spaces, Activity and the four rooms the
+ * band already carries were listed here too, which is how one purpose ends up
+ * with three navigations and a first-time reader with eleven choices.
+ *
+ * So: the sheet holds the destinations that exist nowhere else. The band holds
+ * the rooms. The dock holds the five tabs. A thing you can reach from two places
+ * is a thing you will not find in either.
+ *
+ * Six entries. That number is asserted in `appbelt.jsx`, so the list cannot
+ * quietly grow back into the eleven-item wall it replaced.
+ */
 export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[] }> = [
-  {
-    id: 'today',
-    label: 'Today',
-    items: [
-      { id: 'home', label: 'Home', icon: icon(LayoutGrid, 'ink'), target: { kind: 'tab', tab: 'home' } },
-      { id: 'activity', label: 'Activity', icon: icon(CalendarDays), target: { kind: 'tab', tab: 'activity' } }
-    ]
-  },
   {
     id: 'work',
     label: 'Your work',
     items: [
-      { id: 'spaces', label: 'Spaces', icon: icon(Store, 'ink'), target: { kind: 'tab', tab: 'pipeline' } },
       { id: 'requests', label: 'Requests', icon: icon(Ticket), target: { kind: 'tab', tab: 'requests' } },
       { id: 'supply', label: 'Supply', icon: icon(Users), target: { kind: 'tab', tab: 'supply' } },
       { id: 'partners', label: 'Partners', icon: icon(ShieldCheck), target: { kind: 'tab', tab: 'partners' } }
     ]
   },
   {
-    id: 'find',
-    label: 'Find',
-    items: [
-      { id: 'all', label: 'Everything on the board', icon: icon(Search, 'ink'), target: { kind: 'room', room: 'all' } },
-      { id: 'errands', label: 'Errands', icon: icon(Ticket), target: { kind: 'room', room: 'errands' } },
-      { id: 'events', label: 'Events', icon: icon(CalendarDays), target: { kind: 'room', room: 'events' } },
-      { id: 'circles', label: 'Circles', icon: icon(Users), target: { kind: 'room', room: 'circles' } }
-    ]
-  },
-  {
     id: 'you',
     label: 'You, your standing, your money',
     items: [
-      { id: 'profile', label: 'Profile', icon: icon(Users), target: { kind: 'you', section: 'profile' } },
+      // Two, not six. Profile is what You opens ON, so linking it would be a
+      // button that goes where the tab already goes; Table banking and
+      // Subscriptions are reached inside You's own Money group. Every entry here
+      // has to earn its line by being nowhere else — that is the whole rule.
       { id: 'standing', label: 'Standing, commitments, reciprocity', icon: icon(ShieldCheck), target: { kind: 'you', section: 'standing' } },
-      { id: 'earn', label: 'Earn', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } },
-      { id: 'tableBanking', label: 'Table banking', icon: icon(Wallet), target: { kind: 'you', section: 'tableBanking' } },
-      { id: 'subscriptions', label: 'Subscriptions', icon: icon(Wallet), target: { kind: 'you', section: 'subscriptions' } },
+      { id: 'earn', label: 'Earn', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } }
+    ]
+  },
+  {
+    id: 'reading',
+    label: 'When you want it explained',
+    items: [
       { id: 'how', label: 'How Trace works', icon: icon(Search), target: { kind: 'you', section: 'how' } }
     ]
   }

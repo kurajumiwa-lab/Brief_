@@ -28,7 +28,7 @@
 import React, { useEffect, useState } from 'react';
 import { Menu, Search, MapPin, ArrowRight } from 'lucide-react';
 import { TraceMark } from '../components/TraceMark';
-import { FLOW_ORDER, SIDE_ORDER } from '../features/city/taxonomy';
+import { SIDE_ORDER } from '../features/city/taxonomy';
 import type { DiscoverRoom } from '../features/city/taxonomy';
 import * as briefApi from '../api/briefApi';
 import type { CampaignBanner } from '../api/types';
@@ -160,41 +160,34 @@ export const AppBelt: React.FC<AppBeltProps> = ({
         </span>
       </div>
 
-      {/* ── departments rail: flows, then the rooms. Both lists come from the
-             taxonomy module, so the belt cannot invent a category. ── */}
+      {/* ── the rooms, in the band. Four words a person already knows.
+             The four FLOWS are deliberately not here: they need a sentence to
+             mean anything ("bulk — for vendors & shops"), so they live in
+             Discover's picker, beside their counts and their sub-lines. What
+             stays in the band is what needs no explanation, because the band was
+             the second navigation the brief called out: chips up here mirroring
+             a list down there is two ways to do one thing, and on a small screen
+             it reads as noise. Labels still come from the taxonomy module, so
+             this band cannot invent a room. ── */}
       <div className="flex items-center gap-1.5 px-3 pb-2 overflow-x-auto" role="navigation" aria-label="Departments">
-        {FLOW_ORDER.map((f) => (
-          <button
-            key={f.key}
-            type="button"
-            onClick={() => { soundEngine.play('tap'); onOpenRoom(f.key); }}
-            aria-current={activeRoom === f.key ? 'page' : undefined}
-            className="shrink-0 px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer"
-            style={{
-              background: activeRoom === f.key ? 'var(--color-text)' : 'var(--color-bg)',
-              color: activeRoom === f.key ? 'var(--color-primary)' : 'var(--color-text)'
-            }}
-          >
-            {f.key[0].toUpperCase() + f.key.slice(1)}
-          </button>
-        ))}
-        <span aria-hidden="true" className="shrink-0 w-px h-4" style={{ background: 'var(--brief-line)' }} />
-        {SIDE_ORDER.map((s) => (
-          <button
-            key={s.key}
-            type="button"
-            onClick={() => { soundEngine.play('tap'); onOpenRoom(s.key); }}
-            aria-current={activeRoom === s.key ? 'page' : undefined}
-            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer"
-            style={{
-              background: activeRoom === s.key ? 'var(--color-text)' : 'transparent',
-              color: activeRoom === s.key ? 'var(--color-primary)' : 'var(--color-text-muted)'
-            }}
-          >
-            {s.label}
-            {s.key === 'all' && <ArrowRight className="w-3 h-3" />}
-          </button>
-        ))}
+        {SIDE_ORDER.map((s) => {
+          const on = activeRoom === s.key;
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => { soundEngine.play('tap'); onOpenRoom(s.key); }}
+              aria-current={on ? 'page' : undefined}
+              className="shrink-0 px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer"
+              style={{
+                background: on ? 'var(--color-text)' : 'var(--color-bg)',
+                color: on ? 'var(--color-primary)' : 'var(--color-text)'
+              }}
+            >
+              {s.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ── the message slot. Nothing to say, nothing rendered. ── */}

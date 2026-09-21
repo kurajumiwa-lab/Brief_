@@ -32,12 +32,21 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
   // Step 1: Space details
   const [name, setName] = useState('');
   const [type, setType] = useState<SpaceType>('side_hustle');
-  const [goal, setGoal] = useState('Get my first 20 customers');
+  // Blank. This used to open as "Get my first 20 customers", which is a sentence
+// this app prints on the space's own page — so a seller who tabbed past it
+// published somebody else's ambition as their goal.
+const [goal, setGoal] = useState('')
 
   // Step 2: First Offer details
-  const [offerTitle, setOfferTitle] = useState('Birthday Cake');
-  const [offerPrice, setOfferPrice] = useState('4500');
-  const [offerDescription, setOfferDescription] = useState('Custom 2-tier celebration cake, baked fresh');
+  // Blank, on purpose. These fields used to open pre-filled with "Birthday
+  // Cake", "4500" and "Custom 2-tier celebration cake, baked fresh" — and a
+  // seller who typed their own title and tabbed past the rest published the
+  // sample sentence as their description. That is how a real shop's page ended
+  // up advertising cake it does not sell. A hint belongs in `placeholder`, which
+  // never becomes a row.
+  const [offerTitle, setOfferTitle] = useState('');
+  const [offerPrice, setOfferPrice] = useState('');
+  const [offerDescription, setOfferDescription] = useState('');
   const [offerType, setOfferType] = useState<'product' | 'service'>('product');
   /**
    * Photos taken at this step. A first offer used to be born photoless because

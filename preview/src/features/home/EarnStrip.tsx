@@ -49,7 +49,12 @@ export function EarnStrip({
   const [agent, setAgent] = useState<FieldAgentOverview | null>(null);
   const [contracts, setContracts] = useState<LipaMdogoContract[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState({ refs: false, agent: false, contracts: false });
+  const [attempt, setAttempt] = useState(0);
+  // Statuses, not booleans. "There is nobody signed in" and "the reads failed"
+  // are two different absences and the screen must not say the wrong one: a
+  // signed-out visitor gets a sentence about what the rails are, and a member
+  // whose reads failed gets dashes plus a way to try again.
+  const [statuses, setStatuses] = useState<{ refs: number | null; agent: number | null; contracts: number | null } | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -60,18 +65,22 @@ export function EarnStrip({
     ]).then(([r, a, c]) => {
       if (!live) return;
       setLoaded(true);
-      setFailed({ refs: !r.ok, agent: !a.ok, contracts: !c.ok });
+      // `status` exists only on the failure arm of ApiResult, so read it there.
+      setStatuses({
+        refs: r.ok ? 200 : r.status,
+        agent: a.ok ? 200 : a.status,
+        contracts: c.ok ? 200 : c.status
+      });
       setRefs(r.ok ? r.data : null);
       setAgent(a.ok ? a.data : null);
       setContracts(c.ok ? c.data : null);
     });
     return () => { live = false; };
-  }, []);
+  }, [attempt]);
 
-  // A 401 means there is no member, not that they have nothing. The card says
-  // what the rails ARE and lets the sign-in do the rest — it does not print
-  // three zeros, which would read as "you have earned nothing here".
-  const signedOut = loaded && failed.refs && failed.agent && failed.contracts;
+  const allFailed = !!statuses && !refs && !agent && !contracts;
+  const signedOut = !!statuses && statuses.refs === 401;
+  const anyFailed = !refs || !agent || !contracts;
 
   const pending = refs?.conversions.filter((x) => x.status === 'pending').length ?? 0;
   const rails: Rail[] = [
@@ -111,6 +120,23 @@ export function EarnStrip({
     }
   ];
 
+  // Three cards of zeros is not information, it is furniture. When every rail
+  // read successfully AND every rail has nothing in it, the honest screen is the
+  // absence of this section — and the moment one rail has a row, the whole strip
+  // appears with its real numbers. A failed read is NOT treated as zero: it
+  // renders, with dashes, because "we could not read it" and "you have nothing"
+  // are different facts and must not look alike.
+  const nothingAtAll =
+    loaded &&
+    !anyFailed &&
+    (refs?.balance.available ?? 0) === 0 &&
+    refs.events.length === 0 &&
+    refs.conversions.length === 0 &&
+    (agent?.override.claims.length ?? 0) === 0 &&
+    agent.settlements.length === 0 &&
+    (contracts?.length ?? 0) === 0;
+  if (nothingAtAll) return null;
+
   return (
     <section
       className={`rounded-2xl p-3 ${className}`}
@@ -136,9 +162,9 @@ export function EarnStrip({
 
       {signedOut ? (
         <p className="text-[12px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
-          Three rails run through here — points from the referral pool, a territory override on shops
-          you onboard, and the Lipa mdogo contracts you are party to. Sign in and your own figures appear
-          in place of this line.
+          Three rails run through here — points from the referral pool, a territory override on shops you
+          onboard, and the Lipa mdogo contracts you are party to. Sign in and your own figures appear in
+          place of this line.
         </p>
       ) : (
         <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -162,6 +188,20 @@ export function EarnStrip({
       {loaded && !signedOut && pending > 0 && (
         <p className="mt-2 text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
           {pending} conversion{pending === 1 ? '' : 's'} waiting on finance. Not cash yet, and not counted as available.
+        </p>
+      )}
+
+      {allFailed && (
+        <p className="mt-2 flex items-center gap-2 text-[11px]" style={{ color: 'var(--color-text-muted)' }}>
+          The reads behind these figures did not answer, so nothing here is a count of your earnings.
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('tap'); setLoaded(false); setStatuses(null); setAttempt((n) => n + 1); }}
+            className="font-bold underline cursor-pointer"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            Try again
+          </button>
         </p>
       )}
     </section>

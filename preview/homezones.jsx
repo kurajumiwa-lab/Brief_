@@ -272,6 +272,50 @@ async function main() {
   }
   pass('EarnStrip surfaces the real income rails on Home, with the server\'s rate and no projection');
 
+  // --- and nothing at all, when there is nothing at all -------------------
+  // Three cards of zeros is furniture. The strip is the same three reads with an
+  // empty result, and the honest surface is the absence of the section — while a
+  // FAILED read still renders, with dashes, because "could not read" and "you
+  // have nothing" are different facts that must not look identical.
+  {
+    fetchHandler = async (url) => {
+      const u = String(url);
+      if (u.includes('/api/referrals/mine')) {
+        return { ok: true, status: 200, text: async () => JSON.stringify({
+          code: 'ABC', maxDepth: 2, link: '/c/x',
+          balance: { earned: 0, locked: 0, available: 0 }, pool: { balanceKes: 0 },
+          conversion: { ptsToKes: 0.1, minPoints: 500 }, events: [], conversions: []
+        }) };
+      }
+      if (u.includes('/api/me/field-agent')) return { ok: true, status: 200, text: async () => JSON.stringify({ claims: [], settlements: [], override: { agentId: 'u1', rate: 0.75, months: 24, claims: [] } }) };
+      if (u.includes('/api/me/lipa-mdogo')) return { ok: true, status: 200, text: async () => JSON.stringify({ contracts: [] }) };
+      return { ok: true, status: 200, text: async () => JSON.stringify(PULSE) };
+    };
+    const { EarnStrip } = require('./src/features/home/EarnStrip.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(EarnStrip, {})));
+    await flush();
+    assert.equal(text(c), '', 'no rows on any rail, no section on Home');
+    root.unmount(); c.remove();
+  }
+  {
+    fetchHandler = async () => ({ ok: false, status: 500, text: async () => JSON.stringify({ error: 'boom' }) });
+    const { EarnStrip } = require('./src/features/home/EarnStrip.tsx');
+    const c = document.createElement('div');
+    document.body.appendChild(c);
+    const root = createRoot(c);
+    act(() => root.render(React.createElement(EarnStrip, {})));
+    await flush();
+    const t = text(c);
+    assert.ok(t.length > 0, 'but a failed read still shows — silence would look like an empty pocket');
+    assert.ok(t.includes('—'), 'with dashes, not zeros');
+    assert.ok(!/\b0\b/.test(t.replace(/[0-9]{4}/g, '')), 'and no zero is printed for a number nobody read');
+    root.unmount(); c.remove();
+  }
+  pass('EarnStrip disappears when the rails are truly empty, and stays honest when they cannot be read');
+
   // --- SignalBar: a dead read is an error, not an all-clear ----------------
   fetchHandler = async () => ({ ok: false, status: 500, text: async () => JSON.stringify({ error: 'boom' }) });
   {

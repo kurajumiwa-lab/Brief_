@@ -67,10 +67,11 @@ async function mount(el) {
 
 // The rail's expected labels, read from the taxonomy the board uses, so this
 // file cannot quietly agree with a belt that invented a category.
-const RAIL_LABELS = [
-  ...FLOW_ORDER.map((f) => f.key[0].toUpperCase() + f.key.slice(1)),
-  ...SIDE_ORDER.map((s) => s.label)
-];
+// The band carries only the rooms a person needs no explanation for. The four
+// flows live in Discover's picker, where each one can sit next to a count and a
+// sentence; a band of eight jargon chips is how a screen ends up needing a legend.
+const RAIL_LABELS = SIDE_ORDER.map((s) => s.label);
+const FLOW_LABELS = FLOW_ORDER.map((f) => f.key[0].toUpperCase() + f.key.slice(1));
 
 async function main() {
   // --- 1. the band --------------------------------------------------------
@@ -95,9 +96,11 @@ async function main() {
     assert.match(belt.t, /Set your area/, 'an unset area is said as unset');
     assert.ok(!/Delivering to|Nairobi County/i.test(belt.t), 'no inherited or guessed location');
 
-    // Departments: exactly the taxonomy's rooms, in its order, nothing else.
+    // Departments: exactly the taxonomy's rooms, in its order, and nothing else.
     const chips = inEl(belt.host, '[aria-label="Departments"] button').map((b) => text(b));
     assert.deepEqual(chips, RAIL_LABELS, 'the rail IS the taxonomy, not a second list of categories');
+    assert.ok(FLOW_LABELS.every((f) => !chips.includes(f)),
+      'the flows are not in the band — they are in the picker, beside their counts. Two navigations for one purpose is what this cut');
     click(inEl(belt.host, '[aria-label="Departments"] button').find((b) => text(b) === 'Errands'));
     assert.equal(room, 'errands', 'and a chip opens that room');
     const current = inEl(belt.host, '[aria-label="Departments"] button').find((b) => b.getAttribute('aria-current') === 'page');
@@ -173,6 +176,12 @@ async function main() {
   {
     const ids = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     assert.equal(new Set(ids).size, ids.length, 'no destination is listed twice in the sheet');
+    assert.equal(ids.length, 6, 'six entries, not eleven — a long list is a wall for a reader who scans');
+    const sheetLabels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => text(i.label)));
+    assert.ok(RAIL_LABELS.every((r) => !sheetLabels.includes(r)),
+      'nothing in the sheet is also in the band: one purpose, one navigation');
+    assert.ok(!['Home', 'Spaces', 'Activity'].some((d) => sheetLabels.includes(d)),
+      'and the dock tabs are not repeated here either');
     const labels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.label));
     assert.ok(labels.every((l) => l.trim().length > 2), 'every entry is a word a person can read');
     // Nav entries carry no numbers: a count in a nav list is a count that has to
