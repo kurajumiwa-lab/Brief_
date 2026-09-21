@@ -5,10 +5,18 @@
 > `features/spaces/ShopBrief.tsx`, printed on the street of the owner's own
 > shopfronts, plus an opt-in morning notification at the hour the owner names.
 >
-> The "blocker" this brief opens with was fixed three commits earlier, and four
-> of its six build steps describe arithmetic or entities this repo does not have.
-> Read **Corrections** before extending this surface — the parts that were NOT
-> built are the parts that cannot be built honestly from the rows in this store.
+> The prompt as received is now preserved **verbatim** at the bottom of this
+> file — the section *The brief, as received* — so what was refused can be
+> read against what was asked. Read **Corrections first** before extending
+> this surface: the parts that were NOT built are the parts that cannot be
+> built honestly from the rows in this store.
+>
+> All suites named here were re-run green on this branch on 2026-09-21:
+> `shopBrief.mjs` 31/31 · `spaceMoneyScope.mjs` 8/8 · `stockLog.mjs` 11/11 ·
+> client `shopbrief.jsx` 12/12. (This checkout carries a single squashed
+> commit; the hashes cited below are from the working history the surfaces
+> were built in, and the artifacts they name are in the tree and verified by
+> the tests.)
 
 ---
 
@@ -21,7 +29,7 @@
    they were placed against (`spaceBookScope`), an unattached row folds in only
    when the vendor has exactly one space, and otherwise it is counted and
    reported as `unattached`. The two-space test the brief demands exists —
-   `server/test/spaceMoneyScope.mjs` (8). This commit adds the **shop-level**
+   `server/test/spaceMoneyScope.mjs` (8). The build commit adds the **shop-level**
    version of that test, which is where a dashboard would have multiplied the
    error, and the invariant it enforces: `Σ spaces + unassigned = the shop's total`.
 2. **Step 1 (a `Shop` parent entity) — refused.** Two reasons. The operator's own
@@ -73,7 +81,7 @@
 7. **Invented sample numbers are not in the product.** `KES 4,320 in · KES 4,100
    out · KES 220 net`, `3 orders settled · 1 pending`, `Mary: 6 orders fulfilled ·
    last action 18:14`, `18 offers · 42 orders/mo`, `⚠ stock declared as 10` and
-   the "top 10%" comparison class are mockups. They are kept in the brief text
+   the "top 10%" comparison class are mockups. They are kept in the verbatim text
    below as *shape* only; every figure a real screen prints is a scan of rows, and
    a `0` appears only where zero is the count of rows (`KES 0` out on a day with no
    expense rows) while an unmeasurable figure is `—` (money settled *through* a
@@ -92,53 +100,7 @@
 
 ---
 
-## The brief, as received
-
-You are building the Shop Brief: the daily summary an owner reads every morning at
-6am EAT. It tells them what happened in their business yesterday — including the
-things their staff won't tell them.
-
-### The problem it solves
-
-An owner leaves the shop at 6pm and comes back at 8am. In those fourteen hours
-money moved (or didn't), stock sold (or didn't), staff acted (or didn't), orders
-were fulfilled (or missed) — and nothing was recorded. They ask their staff the
-next morning; the staff say "it was fine." The Shop Brief is the answer computed
-from the ledger, the offers, the orders and the signals, where every row is
-timestamped and attributed.
-
-### What it is not
-
-No rating, badge or rank. No comparison with other shops. No forward-looking
-estimate. No targets. No recommendation. No number that is not backed by a row.
-The brief reports; it does not advise, compare or predict.
-
-### Non-negotiables
-
-- Every number traces to a row. If a row doesn't exist, the number is `—`, not `0`.
-- Names appear only if the row carries an actor and a user row carries a name.
-- Money is scoped by join: order → listing → space → shop. An order with no space
-  lands in the shop's unclaimed bucket, never silently in every space.
-- The brief is read-only. The owner cannot edit it or delete the rows.
-- No notification at a time the owner hasn't chosen.
-- The brief is per-shop, per-day. Rolling windows live elsewhere, not on it.
-
-### The notification, as shipped
-
-```
-Testshop · Sun, 20 Sept
-
-KES 5,340 in · KES 0 out · KES 5,340 net
-3 marked in · 1 still open
-KES 340 belongs to no space
-2 flags to read
-```
-
-Every line above is produced by `briefNotificationText(brief)` from the same scan
-the screen reads — the suite asserts the notification body equals the brief's own
-text, so a paraphrase cannot drift into a claim.
-
-### The test requirements, and where they live
+## Where the test requirements live
 
 | Required by the brief | Where it is held |
 | --- | --- |
@@ -150,7 +112,11 @@ text, so a paraphrase cannot drift into a claim.
 | money with no space is reported separately | `shopBrief.mjs` + `shopbrief.jsx` (12, client) |
 | the notification fires at the owner's chosen hour, not always 6am | `shopBrief.mjs` ("the sweep waits for the hour the owner named, then sends once") |
 
-## Built in this commit
+Re-verified green on this branch, 2026-09-21: `shopBrief.mjs` **31 passed / 0
+failed**, `spaceMoneyScope.mjs` **8/0**, `stockLog.mjs` **11/0**,
+`shopbrief.jsx` **12/0**.
+
+## Built in the build commit
 
 **Server.** `domain/stockLog.js` (the append-only shelf log) ·
 `domain/shopBrief.js` (the read, the flags, the prefs, `morningSweep`,
@@ -184,10 +150,332 @@ sentences of it so the explanations cannot be deleted instead of moved ·
 
 ---
 
+## The brief, as received (verbatim)
+
+What follows is the prompt exactly as it was received — unedited, including the
+parts that were refused above. It is kept so the refusals can be checked against
+the ask, and so no future builder has to trust a paraphrase.
+
+````markdown
+# Trace — The Shop Brief (Builder Prompt)
+
+You are building the Shop Brief: the daily summary an owner reads
+every morning at 6am EAT. It tells them what happened in their
+business yesterday — including the things their staff won't tell
+them.
+
+This is the B2B revenue driver. It's what makes an owner open the
+app every day, and it's what they pay for.
+
+## The problem it solves
+
+An owner leaves the shop at 6pm. They come back at 8am. In those
+fourteen hours:
+- Money moved (or didn't)
+- Stock sold (or didn't)
+- Staff acted (or didn't)
+- Orders were fulfilled (or missed)
+- Nothing was recorded
+
+They ask their staff the next morning. The staff say "it was fine."
+The owner has no way to verify. Over a month, the leakage compounds.
+
+The Shop Brief is the answer. Every morning, the owner sees the
+truth computed from real rows. Not from a staff report. Not from
+their memory. From the ledger, the offers, the orders, the
+signals — every row is timestamped and attributed.
+
+## What you are building (and what you are NOT)
+
+You ARE building:
+- A `Shop` parent entity that groups Spaces under one business
+- A daily aggregator that reads yesterday's rows and produces a brief
+- A morning notification (in-app + optional WhatsApp)
+- A shop-level view that scopes money correctly (fixing the
+  current space-scoping bug where every space reports the whole
+  vendor's takings)
+- An unassigned bucket for money that no space claims
+
+You are NOT building:
+- Any rating, badge, or rank
+- Any comparison with other shops ("you're in the top 10% of...")
+- Any forward-looking estimate or forecast
+- Any "targets" or "goals" the owner must hit
+- Any recommendation ("you should stock more X")
+- Any number not backed by a row
+
+The brief reports. It does not advise. It does not compare. It
+does not predict.
+
+## Non-negotiables
+
+- Every number traces to a row. If a row doesn't exist, the
+  number is `—`, not `0`.
+- Staff names appear only if a `teamMemberId` exists on the row.
+  If a shop hasn't added team members, no names show. No guessing
+  from phone numbers.
+- Money is scoped by join: order → listing → space → shop. If an
+  order has no space, it lands in `unassigned` for the shop, not
+  silently counted in every space.
+- The brief is read-only. The owner cannot edit it. They cannot
+  delete rows. The rows are the truth.
+- No push notification at a time the owner hasn't chosen. Default
+  is 6am EAT. They can change it, or turn it off.
+- The brief is per-shop, per-day. No rolling windows, no "last 7
+  days" on the brief screen. Those live on the dashboard, not in
+  the brief.
+
+## The blocker (fix this first)
+
+`server/src/domain/space.js:1224` and `:1404` scope money with
+`o.spaceId === space.id || o.vendorId === space.vendorId`.
+
+No order row has `spaceId` (grep proves it returns 0). So every
+space reports the whole vendor's takings. The dashboard would
+double-count every shilling.
+
+Fix in this order:
+
+1. Join orders → listing → space. The listing carries the space.
+2. If a listing is unattached AND the vendor has exactly one space,
+   count the order for that space.
+3. If a listing is unattached AND the vendor has multiple spaces,
+   count the order as `unassigned` on the shop.
+4. Report unassigned separately. Never spread it across spaces.
+5. Add the two-space test below BEFORE building the brief.
+
+Do not build the brief until that test is green.
+
+## Build steps
+
+### Step 1 — Shop entity
+
+```
+SHOP
+├── id
+├── ownerId
+├── name
+├── category           (food, goods, services, etc.)
+├── location
+├── verifiedAt         (nullable — verification is a separate flow)
+└── createdAt
+```
+
+A shop is a business. It can have 1..N spaces. A space belongs
+to exactly one shop.
+
+Migration: existing spaces get a shop created for them with the
+same owner. One-to-one initially. Owners can then add more
+spaces to the same shop.
+
+### Step 2 — The join and the scoping fix
+
+Every order lookup for money summaries:
+
+```sql
+-- Correct money scoping
+SELECT o.*
+FROM orders o
+LEFT JOIN listings l ON o.listingId = l.id
+LEFT JOIN spaces s ON l.spaceId = s.id
+WHERE
+  (s.shopId = :shopId)                     -- order has a space → shop
+  OR
+  (o.vendorId = :shopOwnerId              -- order has no space
+   AND (SELECT COUNT(*) FROM spaces        -- and this owner has 1 space
+        WHERE shopId = :shopId) = 1)
+```
+
+If the owner has 2+ spaces and an order has no space, the order
+goes into `unassigned` — reported on the shop's dashboard but
+never counted in any individual space.
+
+Test:
+```
+Given owner O with shop S, spaces A and B
+  AND order 1 attached to A (via listing → space)
+  AND order 2 attached to B
+  AND order 3 with no space
+When the daily brief is computed for shop S
+Then:
+  space A shows exactly 1 order
+  space B shows exactly 1 order
+  shop S shows 2 orders + 1 unassigned
+  the total matches the raw order count for O
+```
+
+### Step 3 — The daily aggregator
+
+Reads yesterday's rows for one shop. Produces a structured
+brief. Runs once at 05:30 EAT, writes to `shopBriefs`:
+
+```
+SHOP_BRIEF
+├── shopId
+├── dayStart       (YYYY-MM-DD in EAT)
+├── moneyIn        (sum of settled payments)
+├── moneyOut       (sum of payouts)
+├── net            (moneyIn - moneyOut)
+├── orders
+│   ├── settled
+│   ├── pending
+│   └── unfulfilled
+├── staff          (per member: fulfilled count, last action)
+├── flags          (array of { kind, message, evidenceIds })
+└── createdAt
+```
+
+Every field is derived. Nothing is a separate write. If the shop
+has no rows for a day, the brief is not created — the owner sees
+"no activity yesterday" on the dashboard, not a brief with zeros.
+
+### Step 4 — The flags
+
+Three flag types. Each is a computed condition, not a heuristic:
+
+**Flag: stock mismatch**
+```
+declaredStock(offer) - soldToday(offer) < expectedRemaining(offer)
+```
+
+Example: Meals listed at 10, 4 sold, stock declared 10 again
+after the day. Flag: "Meals stock unchanged after 4 sales."
+
+**Flag: unfulfilled orders**
+```
+orders WHERE status = 'confirmed' AND fulfilledAt IS NULL
+       AND createdAt < startOfToday
+```
+
+Example: "2 orders from yesterday were never marked fulfilled."
+
+**Flag: missing staff activity**
+```
+IF shop has team AND a member was scheduled AND no rows
+   from that member on a day they were scheduled
+```
+
+Example: "Grace was scheduled Monday but no activity logged."
+
+Each flag links to the rows that produced it. The owner taps
+the flag → sees the exact rows → knows whether to act.
+
+### Step 5 — The morning delivery
+
+At 05:30 EAT, a cron job computes briefs for all shops with
+activity in the last 24h.
+
+At 06:00 EAT (or the owner's chosen time), a notification fires:
+
+```
+Testshop · Tuesday 21 Sep
+
+KES 4,320 in · KES 4,100 out · KES 220 net
+3 orders settled · 1 pending
+
+STAFF
+Mary · 6 orders · last 18:14
+John · 3 orders · last 14:22
+
+FLAGS
+⚠ Meals stock unchanged after 4 sales
+⚠ 2 orders from Monday unfulfilled
+
+[Open shop]
+```
+
+Tapping the notification opens the full brief in the app.
+Closing it doesn't delete it — the brief stays available for 7
+days, then archived.
+
+### Step 6 — The dashboard view
+
+The shop dashboard is not the brief. It's the *shape*:
+
+```
+TESTSHOP · Tuesday 21 Sep
+─────────────────────────────────────
+
+TODAY SO FAR
+KES 1,240 in · KES 0 out
+
+YESTERDAY'S BRIEF
+KES 4,320 in · KES 4,100 out · KES 220 net
+3 orders settled · 1 pending
+2 flags
+
+SPACES
+Retail      ● Open   18 offers · 42 orders/mo
+Wholesale   ● Open    6 offers · 12 orders/mo
+Delivery    ● Quiet   0 offers ·  0 orders
+
+UNASSIGNED
+KES 340 (1 order, no space attached)
+[Assign to a space]
+
+[View yesterday's brief] [Settings]
+```
+
+Every number is a link to the rows that produced it.
+
+## What to remove from the current surface
+
+- The "What you can earn here" card block on Home when all
+  values are zero. It's filler.
+- The "people not counted" note under the VIEWS stat. If we
+  can't count them, don't print the number.
+- The 4 empty flow cards (Bulk/Direct/Niche/Group) on Discover.
+  Replace with a single "Browse" entry.
+- The duplicate top chips that mirror the side menu.
+
+These come out in the same commit as the Shop entity, so the
+surface lands clean.
+
+## What to keep
+
+- The grouped You tab (Identity / Business / Money / About).
+- The status pill on public pages.
+- The category plate fallback for photo-less items.
+- The 4 WhatsApp templates for Membley.
+
+## Test requirements
+
+- Two-space-one-owner test above.
+- Brief with zero rows for a day produces no brief row.
+- Brief with rows produces correct sums (verify by hand).
+- Flag for stock mismatch fires when declared = initial after
+  sales.
+- Flag does NOT fire when declared = initial - sold.
+- Money scoped to unassigned when order has no space and owner
+  has 2+ spaces.
+- Notification fires at owner's chosen time, not always 6am.
+
 ## The one rule
 
-If a number isn't backed by a row, don't print it. If a flag isn't derived from
-rows, don't raise it. If a shop has no activity, say so — don't fabricate a
-report.
+If a number isn't backed by a row, don't print it. If a flag
+isn't derived from rows, don't raise it. If a shop has no
+activity, say so — don't fabricate a report.
 
-The brief is the truth. Not the summary. Not the estimate. The truth.
+The brief is the truth. Not the summary. Not the estimate. The
+truth.
+
+## Reference
+
+The Shop Brief is the reason an owner pays. The Spaces are
+what they show the world. The Brief is what tells them the
+truth about their own business. Build the truth first.
+````
+
+---
+
+## Operator's note (received with the prompt, outside it)
+
+> The Shopping Run Stream makes consumers use Trace. The Shop Brief makes
+> owners **depend** on it. Without the Brief, the owner has no reason to open
+> the app every morning. With it, they can't *not* open it — the flag might
+> be there.
+>
+> That dependency is the revenue. Build the Shop Brief next.
+
+Built. The dependency is shipped; what remains open is listed under *Still
+open*, and none of it is a number the rows cannot back.
