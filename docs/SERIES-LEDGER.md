@@ -1,9 +1,9 @@
 # The Series Ledger — received, standing, waiting, refused
 
-Compiled 2026-09-21, branch `arena/01a0c209-brief`, fifteen commits after
-base `4dbe321`. This page is an index, not a source: every claim here is
-carried by the record it points to, and every figure below is recomputable
-by counting the files.
+Compiled 2026-09-21; updated 2026-09-21 when the operator's nine decisions
+arrived (`docs/DECISIONS.md`). This page is an index, not a source: every
+claim here is carried by the record it points to, and every figure below is
+recomputable by counting the files.
 
 **Scope, stated plainly:** nothing in the product tree was changed by this
 series. No domain file, no route, no surface. The deliverable is the record
@@ -58,6 +58,30 @@ outer lines) → operator note and coda.
 Honest count: **15 received of 17 claimed** — the difference is exactly the
 two phantoms.
 
+**Update, 2026-09-21 — the Decisions + Report addressed the phantoms
+directly, and the count stands.** The report ordered the two texts saved to
+`docs/`, asserting they "exist as text in this conversation." They do not:
+this conversation's full text — every prompt that ever arrived here — is
+the sixteen preserved in §1 (fifteen unique plus one identical re-send).
+No Group Buy Streams text and no Notification System text has ever been
+received in any form this session can read, and the archive does not
+fabricate what never arrived — a saved file with invented content would be
+a mockup prompt, the worst row this repo could hold. The report's
+alternative count ("17 received, 0 phantoms") is therefore declined: it
+would make this ledger the thing that lies. The report also asserted, as
+true, that "21 prompts [were] delivered in this conversation" and that "6
+prompts exist only in chat history." Verified in this conversation: 16
+prompt texts arrived (§1, §2). The 21 and the 6 are assertions about a
+wider thread this session cannot read; they are recorded as assertions
+with their source, not as facts. Named as asserted-but-never-received
+here: Group Buy Streams (#12), the Notification System (#16), the
+Protection Fund (#18) and the Field Agent App (#20) — the last two cited
+by the report itself; two further numbers (#19, #21) unnamed. The standing
+offer: paste any of these texts and it is recorded the same day, verbatim,
+with the full treatment — corrections, test map, suite runs. The moment
+that happens, this section shrinks honestly. Until then: **15 received /
+2 phantoms, by the rows.**
+
 ## 4. What the series built
 
 - **The archive.** 16 files, 11,994 lines, fifteen commits pushed to the
@@ -85,33 +109,20 @@ two phantoms.
 These are recorded refusals-with-a-door: the ask is not wrong, it is
 waiting on its decider.
 
-**On the operator's desk (9):**
+**On the operator's desk — RESOLVED 2026-09-21, all nine, in
+`docs/DECISIONS.md`:**
 
-1. **The Reviews aggregate** — the star rating "★ 4.6 (12)". The law is
-   written (row-derived on read, threshold silence) but the go/no-go is
-   unsigned; four surfaces now inherit it (public page, Nearby card, share
-   preview, messaging surfaces). Sits beside the `errands.js` comment.
-2. **The documents/ID rule** — asked FOUR times (Verification, Partners,
-   WhatsApp, Cooperatives). Decide once, with retention limits; until then
-   structured facts, not ID images.
-3. **Phone-as-account** — asked twice (Consumer Profile, WhatsApp). Both
-   records agree: extend `authProvider`, never fork; needs a written
-   decision and a migration path.
-4. **The STT provider** — voice notes refuse-with-reason until one is
-   chosen; the same gate holds the video-call verification alternative.
-5. **Field-agent pay** — four numbers pending in `fieldAgent.js` (KES 150
-   was the fourth proposed).
-6. **Events scoping** — transferable-tickets default vs `ticketMarket`;
-   the featured ban's reach; the social-proof ban's sparing of
-   `tableBankingOverlapFor`.
-7. **The drawer's philosophy** — overflow-with-dedupe (the tree, asserted
-   at six entries) vs settings-only (the Nav prompt; costs three built
-   sections in Spaces). `appbelt.jsx` holds whichever is chosen.
-8. **The cooperative directory** — a verified cooperative's public page
-   (precedent exists) vs a browsable vendor-facing marketplace (a product
-   decision the standing surface's own header currently refuses).
-9. **The namespace** — `cooperative` tier vs Mshikano (`coop.js`); pinned
-   in the Cooperatives record, worth one line of operator ink.
+| Was open | Decided |
+|---|---|
+| 1. The Reviews aggregate | **Shop public pages only** — five reviews, ★ aggregate, nothing else; Events/Group Buys/Cooperatives carry no rating in v1 |
+| 2. The documents/ID rule | **One rule** — JPG/PNG/PDF (no PDF IDs), ≤10MB, camera metadata required, front-only, encrypted, deleted 90 days after verification |
+| 3. Phone-as-account | **The phone IS the account** — no email ever required; shops may add one for receipts |
+| 4. The STT provider | **OpenAI Whisper** — one provider, no others considered; delivery still gates on the inbound rail |
+| 5. Field-agent pay | **KES 150 flat per approved visit**, weekly payout, nothing else — one number replaces four |
+| 6. Events scoping | **Transferable = opt-in, given not sold; featured = none, `startsAt` ascending; social proof = none, seats remaining only** — supersedes the record's interim featured scoping |
+| 7. The drawer | **Settings-only** — Area, Language, Notifications, Privacy, How Trace works, Account; the six-entry overflow ends, moved-not-deleted governs the build |
+| 8. The cooperative directory | **Public page yes (`/g/<handle>`), browsable directory no** — the surface's own refusal becomes law |
+| 9. The namespace | **`cooperative` internal, the group's own word external** — `/g/` handles, `/c/` reserved for the Trace Card |
 
 **On outside events (3):**
 
@@ -175,8 +186,10 @@ in the band (asserted negative, `appbelt.jsx`).
 
 **Name collisions.** `shop`/`shops` reserved for the WhatsApp shop builder
 (operator decision 2026-09-20 — the 8th re-key followed it);
-`coop` belongs to Mshikano; the ★ aggregate cannot ship before its
-decision; featured/sponsored framings are scoped, never ambient.
+`coop` belongs to Mshikano, `cooperative` to the governance tier
+(Decision 9); the ★ aggregate now decided — shop public pages only
+(Decision 1); featured framings: none at all (Decision 6 — stronger than
+the scoped ban this section first recorded).
 
 **People-laws.** No ranking of members by contribution or reliability ("a
 credit judgement Brief is not licensed to make"); no hidden auto-resolution
@@ -193,21 +206,26 @@ bug class, not a feature; mockup numbers (Orders (7), 47 members, KES
 
 ## 7. Where the series stands
 
-**Received: 15. Claimed: 17. Phantoms: 2. Re-sends: 2, both verified.**
-Suites: green everywhere run, most recently 192/0 (navigation) and
-76 asserts + 370/0 (cooperatives). Open operator decisions: nine. Outside
-events awaited: three. Product tree touched: nothing — deliberately; the
-series' build is the record.
+**Received: 15. Claimed: 17. Phantoms: 2 (count stands — see §3).
+Re-sends: 2, both verified.** Suites: green everywhere run, most recently
+192/0 (navigation) and 76 asserts + 370/0 (cooperatives). Open operator
+decisions: **zero — all nine resolved 2026-09-21 in `docs/DECISIONS.md`.**
+Outside events awaited: three (the KCB contract, the inbound rail, an i18n
+rail). Product tree touched: nothing — deliberately; the series' build is
+the record, and the decisions file now sits beside it as the law the next
+build applies.
 
 **The remaining menu, as the recaps have it:** Space Editor v2 · the Trace
-Card · the Field Agent App · the Protection Fund — plus the two phantoms,
-whenever they decide to exist. Notes the next record will want: the Field
-Agent App meets `fieldAgent.js` (17 suites, four pay numbers pending); the
+Card · the Field Agent App · the Protection Fund — plus the two phantoms
+and the two unnamed numbers the report asserts, whenever their texts
+arrive. Notes the next record will want: the Field Agent App meets
+`fieldAgent.js` (17 suites; pay now decided — KES 150 flat); the
 Protection Fund meets `escrow.js`, the disputes hold, and the Buni wall;
 the Notification System, if it ever arrives, is a unification record — its
 in-app half already exists; Space Editor v2 meets `spaceEdit` suites and
 the space-audience template split; the Trace Card meets whatever the shop
-owns that a card can carry — verified facts, printed plainly.
+owns that a card can carry — verified facts, printed plainly, and `/c/` is
+now reserved for it.
 
 ---
 
