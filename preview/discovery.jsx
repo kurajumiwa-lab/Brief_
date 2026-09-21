@@ -166,17 +166,39 @@ async function main() {
   check('Today\'s Brief renders COMING UP from real rows', /COMING UP/.test(briefBody));
   check('Today\'s Brief renders NEAR YOU from real rows', /NEAR YOU/.test(briefBody));
 
-  console.log('\n=== Location chip: districts without a Nairobi assumption ===');
-  const chip = btn('Your area');
-  check('the location chip sits in the Home header', !!chip);
+  console.log('\n=== Location chip: real wards, and no Nairobi assumption ===');
+  // REWRITTEN against the control that actually renders. This section used to
+  // look for a button labelled "Your area" and then for seven districts
+  // (Westlands, Kilimani, CBD, Kasarani, Rongai, Mombasa, Kisumu). None of that
+  // exists any more. `components/LocationChip.tsx` -- which held both the "Your
+  // area" label and that gazetteer -- is still imported by App.tsx but is never
+  // rendered, so the suite was asserting a dead component. The live control is
+  // NearbyScreen's ward chip, "Ward · <name>", which opens the neighbourhood
+  // picker over model/neighborhoods.ts.
+  //
+  // This went unnoticed because discovery.jsx was absent from run-suites.sh's
+  // ALL list: the suite never ran, and since the lookup returned null the seven
+  // district checks below it were SKIPPED rather than failed. A skipped check
+  // inside a suite that is itself skipped is two layers of silence.
+  const byText = (re2) => Array.from(document.querySelectorAll('button'))
+    .find((b) => re2.test(text(b).replace(/\s+/g, ' '))) ?? null;
+  const chip = byText(/^Ward · /);
+  check('the ward chip sits in the Home header', !!chip, chip ? text(chip) : 'no button matches /^Ward · /');
+  check('and it names the active ward, not a placeholder', /Ward · \S/.test(text(chip ?? '')), text(chip ?? ''));
   if (chip) {
     await click(chip);
-    for (const c of ['Westlands', 'Kilimani', 'CBD', 'Kasarani', 'Rongai', 'Mombasa', 'Kisumu'])
-      check(`chip offers ${c}`, !!btn(c));
-    const kilimani = btn('Kilimani');
-    if (kilimani) {
-      await click(kilimani);
-      check('choosing a district relabels the chip', text(btn('Kilimani')) === 'Kilimani' || body().includes('Kilimani'));
+    // model/neighborhoods.ts is the source of truth: four Nairobi wards and one
+    // in Kisii. Asserting the real five is what makes "no Nairobi assumption"
+    // checkable at all -- the old list was seven places the picker never had.
+    for (const w of ['Kilimani', 'South B', 'Westlands', 'Roysambu', 'Nyamataro'])
+      check(`the picker offers ${w}`, !!byText(new RegExp(w)), `no button matches /${w}/`);
+    check('the picker is not a Nairobi-only list', !!byText(/Nyamataro/),
+      'Nyamataro is in Kisii county; a picker with only Nairobi wards would be the assumption this section exists to refuse');
+    const west = byText(/Westlands/);
+    if (west) {
+      await click(west);
+      check('choosing a ward relabels the chip', /Ward ·\s*Westlands/.test(body()) || body().includes('Westlands'),
+        'the chip should read "Ward · Westlands" after the choice');
     }
   }
 

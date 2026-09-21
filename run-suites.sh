@@ -17,7 +17,43 @@ cd preview || exit 1
 export PATH="../node_modules/.bin:$PATH"
 
 ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs spaceloop circlejoin motion partnerdesk yousurface earnsurface progressivedisclosure tablebankingsurface eventcard eventactions eventdetail polish firstrun spacesignals promocarousel spaceshell wairodispatch cityfeed position commitments reciprocity museumgallery homezones spaceoperating spaceedit youposition errandslobby spacestorefront discoverlayout room publicface guardians sellerhardening appbelt shopbrief"
+# discovery.jsx is in ALL because it is a real suite that was silently missing:
+# 216 lines and 25 checks, one of them failing, and it appeared in no total this
+# script ever printed. An unlisted suite never runs, and a suite that never runs
+# cannot fail — the same class of lie as a test that cannot fail.
+ALL="$ALL discovery"
+
+# Files that look like suites but are not, each with the reason it is excluded.
+# Keeping the reasons here is what stops the next reader from "fixing" the list
+# by adding them, and stops a real suite from hiding among them.
+#   dbg        18 lines of scratch, no checks, prints nothing
+#   e2e        does not build (esbuild fails on it)
+#   e2e.final  crashes; a hand-run end-to-end script, not a suite
+#   live       needs a REAL server on a real port ("the REAL typed client
+#              against a REAL running server"), so it cannot run in this runner
+#   dbg.cjs / e2e.cjs   build artifacts written with a .jsx suffix appended
+NOT_SUITES="dbg e2e e2e.final live dbg.cjs e2e.cjs"
+
 SUITES="${*:-$ALL}"
+
+# --- orphan guard -----------------------------------------------------------
+# Fail loudly on a .jsx file that is in neither list. Without this, adding a
+# suite and forgetting to list it produces a green total that never measured it.
+if [ -z "${*:-}" ]; then
+  orphans=""
+  for f in *.jsx; do
+    n="${f%.jsx}"
+    case " $ALL " in *" $n "*) continue ;; esac
+    case " $NOT_SUITES " in *" $n "*) continue ;; esac
+    orphans="$orphans $n"
+  done
+  if [ -n "$orphans" ]; then
+    echo "ORPHANED SUITES:$orphans"
+    echo "  These .jsx files are in neither ALL nor NOT_SUITES, so they never run."
+    echo "  Add the suite to ALL, or name it in NOT_SUITES with a reason."
+    exit 1
+  fi
+fi
 
 tot_p=0; tot_f=0; broken=""
 
