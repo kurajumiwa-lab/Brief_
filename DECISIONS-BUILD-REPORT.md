@@ -59,24 +59,123 @@ were rewritten with the retired routes asserted to 404.
 
 ## Part 3 — verification
 
-- **Server chain** `npm test`: exit **0**, all 70 files, 3505 PASS lines, zero FAILED.
+Numbers as of `3eaa9ff`, after the runner fix in Part 4. The figures this section
+carried before that fix were wrong, and the correction is recorded rather than
+quietly overwritten.
+
+- **Server chain** `npm test`: exit **0**. 70 invocations = `test/run.js` plus **69 `.mjs` files**;
+  every one of the 69 also exits **0** when run individually, so nothing depends on chain order.
+- **Real assertions: 1356** — 738 named `PASS <test>` lines across the `test()`-style files, plus
+  618 `check()`-style checks across the other ten.
 - **Client suites** `./run-suites.sh`: **2095 passed / 0 failed** across 88 suites — `RESULT: GREEN`.
 - **Typecheck** `npm run test:typecheck`: exit **0**.
 - Decision-5 files: `fieldAgent.mjs` 25 PASS, `pickups.mjs` 13 PASS, `position.mjs` 7 PASS.
 
-## Part 4 — a second honesty bug found while working (not fixed everywhere)
+> **Correction to an earlier claim in this file.** It previously reported "3505 PASS lines".
+> That number came from `grep -cE "^PASS|PASS "`, which also matches the word PASS *inside test
+> names and comments* — it counted prose, not assertions. The defensible figure is 1356, counted
+> by excluding each file's `PASS <count>` summary line. It also reported "70 files" where the
+> chain is 69 `.mjs` files plus `run.js`.
 
-`server/src/domain/testRunner.js`'s `test(name, fn)` ignores `fn`'s return value and calls
-`process.exit(0)` right after the loop. **13 test files register async tests without awaiting them**,
-so those assertions are still pending when the process exits — they can never fail, and the file
-still prints PASS and exits 0. That is the same class of bug as the override: something looks
-verified and is not.
+> **The client 2095/0 was never affected by the runner bug.** It is a different mechanism: client
+> suites use `pass(n)` (an explicit marker called *after* the assertions, so there is no callback
+> whose promise can be discarded) and eager `check(n, c, d)`; no client suite registers an async
+> callback with a non-awaiting helper. `run-suites.sh` also decides green by parsing each suite's
+> printed totals *and* detecting a crashed suite, so a suite that dies mid-run cannot score
+> "0 passed / 0 failed". The number stands as a fact, not a claim.
 
-Files with the non-awaiting pattern: `fieldAgent.mjs`, `city.mjs`, `communities.mjs`, `coop.mjs`,
-`coopOperations.mjs`, `guardians.mjs`, `health.mjs`, `index.mjs`, `inbox.mjs`, `nearby.mjs`,
-`notifications.mjs`, `uploads.mjs`, `vendors.mjs`.
+## Part 4 — the runner honesty bug: found, then fixed (`3eaa9ff`)
 
-Fixed here only where I was already editing (`pickups.mjs`, via an `atest` wrapper + top-level await).
-**The right fix is in `testRunner.js` — collect the promises and await them before exiting.** That is
-a one-file change touching 13 suites' real coverage, so it is called out rather than slipped into a
-pay-model commit. Recommend it as the next maintenance move before any further decision work.
+> **This section was originally a warning about work not yet done, and it was wrong in its
+> specifics.** It named `server/src/domain/testRunner.js` — **no such file exists.** Every test
+> file carries its own private helper. It named 13 files, and nine of those (`city.mjs`,
+> `communities.mjs`, `coop.mjs`, `coopOperations.mjs`, `guardians.mjs`, `health.mjs`, `index.mjs`,
+> `inbox.mjs`, `nearby.mjs`, `uploads.mjs`, `vendors.mjs`) **are not in the `npm test` chain at
+> all** — `guardians.mjs` is, and it was already correct. Recorded here because a wrong audit is
+> worse than none: it sends the next reader to files that don't matter.
+
+Two separate bugs, both the same class — a suite that reports green without having checked anything.
+
+### Bug 1 — the helper discarded the callback's promise (16 files)
+
+Each of these carried a private copy of the same three lines:
+
+```js
+let count = 0;
+const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+...
+console.log(`\nPASS ${count}`);
+process.exit(0);
+```
+
+`fn()` was called and its return value thrown away. A test written as
+`test("API: ...", async () => {...})` printed PASS immediately, ran its body only as far as the
+first `await`, and had every remaining assertion killed by `process.exit(0)`. Those assertions
+could not fail. Because `npm test` is an `&&` chain, the whole suite reported green. **Every HTTP
+test in those 16 files was in that state — the routes were asserted by nothing.**
+
+The 16: `tableBankingWelfare`, `tableBankingMinutes`, `tableBankingTemplates`, `tableBankingInvites`,
+`tableBankingArchive`, `tableBankingTreasurer`, `quoteVotes`, `minutesPdf`, `spaceLifecycle`,
+`pickups`, `invites`, `gaps`, `priceSignals`, `position`, `commitments`, `reciprocity`.
+
+Reproduced rather than inferred. A probe carrying a deliberately **false** assertion after an
+`await`, in the old shape:
+
+```
+PASS API: an assertion that is FALSE, after an await
+PASS 1
+exit=0
+```
+
+The same test through the new harness: `FAIL`, `exit=1`.
+
+**The fix** is `server/test/harness.mjs`. `test()` registers; `run()` executes the registered
+entries in order, awaits each, prints the same summary these files always printed, and exits 1 on
+failure. Sequential rather than parallel because these tests share one in-memory store and bind one
+port. `step()` carries ordered setup that asserts nothing, so `position.mjs`'s interleaved match
+fixture keeps its place in the sequence without being counted as a passing test. The output format
+is unchanged, so nothing that reads these logs had to be rewritten; the additions are `FAIL` lines
+and an exit code.
+
+### Bug 2 — `check()` counted failures but never failed the process (9 files)
+
+`discovery`, `feed-experience`, `trust`, `personal`, `entities`, `graph`, `collections`,
+`notifications` and `settlement/manual` all had
+
+```js
+else { fail++; console.log(`  FAIL  ${name}...`); }
+```
+
+with no `process.exitCode`. A failing check printed FAIL and the process still exited 0.
+`spaces.mjs` was the only one wired correctly; that pattern is now in all ten. All 618 of their
+checks pass today, so this closed a hole rather than exposing a live failure — but it was a hole.
+
+All ten also now **refuse a Promise as a condition**: a Promise is truthy whatever it resolves to,
+so `check('x', someAsyncCall())` would have printed PASS no matter what happened.
+
+### What the fix immediately exposed
+
+1. **A real product bug** — `src/routes/tableBanking.js` substituted route-level defaults for
+   omitted fields (`cycleDays ?? 30`, `latePenaltyKes ?? 0`, `welfareContributionAmount ?? 0`).
+   `createTableBanking` resolves `field ?? template.default ?? fallback`, so those values made the
+   client's *silence* look like an explicit *choice* and discarded the template. A group created
+   from `table_banking` over HTTP came out with no late penalty; one created from `welfare_first`
+   came out with **no welfare pot — the single thing that template exists to earmark.** Members got
+   a group that looked created but was not the group they picked. Fixed by passing omitted fields
+   through as `undefined`; both halves are now asserted over the wire (template default survives,
+   explicit field still wins). This bug was invisible for as long as the test that covered it could
+   not fail.
+2. **A test bug** — `minutesPdf.mjs`'s `call()` returned only raw text, so the register step read
+   `.body` off a response that never carried one and threw a TypeError that the discarded promise
+   swallowed.
+3. **A contract question, unresolved** — `GET /api/table-banking/templates` is written as public
+   (`(_req, res)`, no `requireAuth`) but the global gate at `index.js:213` answers first and
+   `PUBLIC_WITHOUT_SESSION` does not list it, so no anonymous caller can reach it. Asserted as 401,
+   pinning what the product actually does, rather than widening the anonymous surface unilaterally.
+   **Operator decision wanted.**
+
+### The standing rule this establishes
+
+> A test that cannot fail is not a test; it is a comfort. **Every decision is enforced by a test
+> that fails if the thing comes back.** A decision recorded in a doc is not enforced. Write the
+> refusal test first, watch it fail, then change the code until it passes.
