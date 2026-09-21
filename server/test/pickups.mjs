@@ -27,13 +27,11 @@ const orders = await import("../src/domain/order.js");
 const fa = await import("../src/domain/fieldAgent.js");
 const pickups = await import("../src/domain/pickups.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
-// The HTTP sections are async. `test` does not await, and this file ends in
-// process.exit(0) — so an async test handed to it prints PASS whether or not
-// its assertions ever ran. These are awaited explicitly instead, which is the
-// only way a PASS here means what it says.
-const atest = async (name, fn) => { await fn(); count++; console.log("PASS " + name); };
+// The HTTP sections are async, so this file uses the shared harness: `test`
+// registers, `run()` executes in order and awaits each one. It previously
+// carried a private `atest` for exactly that reason — one harness now says it
+// once, for every file, instead of sixteen private workarounds.
+const { test, step, run } = await import("./harness.mjs");
 const rejects = (fn, code) => assert.throws(fn, (e) => !code || e.code === code);
 const user = (handle) => auth.createUser({ handle, password: "pickups-pw" });
 
@@ -140,7 +138,7 @@ test("settled orders at an onboarded shop pay the onboarding agent nothing", asy
 // ---------------------------------------------------------------------------
 // HTTP
 // ---------------------------------------------------------------------------
-await atest("API: assign, complete, and read the derived COUNT (no fee is served)", async () => {
+test("API: assign, complete, and read the derived COUNT (no fee is served)", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -189,7 +187,7 @@ test("listOrigins returns only shops with an active claim, joined to their vendo
   assert.ok(!origins.some((o) => o.shopName === "Unclaimed Stall"), "an unclaimed shop is not an origin");
 });
 
-await atest("API: assign defaults the rider to the caller (self-dispatch)", async () => {
+test("API: assign defaults the rider to the caller (self-dispatch)", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -250,7 +248,7 @@ test("listRiders drops ids with no user row (no fabricated people)", () => {
   assert.ok(!riders.some((r) => r.id === 'usr_ghost'), 'orphan riderId is dropped');
 });
 
-await atest("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
+test("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -311,7 +309,7 @@ test("no pickup_origin_fee money can be written, and the history read still work
 // there are no rows to order and no request to refuse. The refusal that
 // replaces them is structural: the functions do not exist, asserted above.)
 
-await atest("API: the pickup-fee writer routes are retired (404), the history read stays", async () => {
+test("API: the pickup-fee writer routes are retired (404), the history read stays", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -337,5 +335,4 @@ await atest("API: the pickup-fee writer routes are retired (404), the history re
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

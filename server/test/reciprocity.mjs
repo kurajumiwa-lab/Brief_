@@ -17,8 +17,8 @@ const { store } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const reciprocity = await import("../src/domain/reciprocity.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 
 const borrower = auth.createUser({ handle: "rcp_borrower", password: "reciprocity-pw" });
 const guarantor = auth.createUser({ handle: "rcp_guarantor", password: "reciprocity-pw" });
@@ -119,5 +119,4 @@ test("API: /api/me/reciprocity is wired and auth-gated", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

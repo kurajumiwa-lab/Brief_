@@ -16,8 +16,8 @@ const auth = await import("../src/domain/auth.js");
 const tableBanking = await import("../src/domain/tableBanking.js");
 const pdf = await import("../src/pdf.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 
 test("the writer emits a valid PDF header/trailer and xref offsets", () => {
   const buf = pdf.minutesPdf({ groupName: "Kiama Circle", minutes: [
@@ -61,7 +61,14 @@ test("API: a member downloads the minutes as application/pdf", async () => {
     const r = await fetch(`http://127.0.0.1:${port}${p}`, { method: m, headers, body: body ? JSON.stringify(body) : undefined });
     const type = r.headers.get("content-type");
     const text = await r.text();
-    return { status: r.status, type, text };
+    // The PDF assertion needs the raw bytes as text; the register/create steps
+    // need parsed JSON. Returning only one of them is how this test came to read
+    // `.body` off a response that never carried one — and because the runner
+    // discarded this test's promise, the resulting TypeError was swallowed for
+    // as long as the file kept exiting 0.
+    let parsed = null;
+    try { parsed = JSON.parse(text); } catch { /* a PDF is not JSON — that is the point */ }
+    return { status: r.status, type, text, body: parsed };
   };
   try {
     const A = (await call("/api/auth/register", "POST", { handle: "pdf_http" + Date.now().toString(36), password: "a good passphrase" })).body;
@@ -77,5 +84,4 @@ test("API: a member downloads the minutes as application/pdf", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

@@ -35,9 +35,16 @@ export function register(app) {
         name: req.body?.name,
         contributionAmount: req.body?.contributionAmount,
         currency: req.body?.currency ?? 'KES',
-        cycleDays: req.body?.cycleDays ?? 30,
-        latePenaltyKes: req.body?.latePenaltyKes ?? 0,
-        welfareContributionAmount: req.body?.welfareContributionAmount ?? 0,
+        // An omitted field must arrive as `undefined`, NOT as a route-level
+        // default. createTableBanking resolves `field ?? template.default ??
+        // fallback`, so substituting 0/30 here made the client's silence look
+        // like an explicit choice and quietly discarded the template — a group
+        // created from `table_banking` came out with no late penalty, and one
+        // created from `welfare_first` came out with no welfare pot, which is
+        // the single thing that template exists to earmark.
+        cycleDays: req.body?.cycleDays,
+        latePenaltyKes: req.body?.latePenaltyKes,
+        welfareContributionAmount: req.body?.welfareContributionAmount,
         template: req.body?.template ?? null
       });
       res.status(201).json({ group: { ...created, summary: tableBanking.summary(created.id) } });

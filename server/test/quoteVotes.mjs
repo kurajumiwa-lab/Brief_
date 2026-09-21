@@ -18,8 +18,8 @@ const auth = await import("../src/domain/auth.js");
 const tableBanking = await import("../src/domain/tableBanking.js");
 const quoteVotes = await import("../src/domain/quoteVotes.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const rejects = (fn, code) => assert.throws(fn, (e) => !code || e.code === code);
 const user = (handle) => auth.createUser({ handle, password: "quotevotes-pw" });
 
@@ -115,5 +115,4 @@ test("API: list group quotes and vote over the wire", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

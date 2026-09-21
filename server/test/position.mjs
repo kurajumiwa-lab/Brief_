@@ -18,8 +18,8 @@ const { store, newId } = await import("../src/store.js");
 const auth = await import("../src/domain/auth.js");
 const position = await import("../src/domain/position.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 
 const me = auth.createUser({ handle: "pos_me", password: "position-pw" });
 const buyer = auth.createUser({ handle: "pos_buyer", password: "position-pw" });
@@ -156,10 +156,14 @@ test("an empty account returns honest zeroes, never fabricated numbers", () => {
 // NEXT MOVE + MISSED VALUE — the two places a number could be invented, so
 // both are pinned to rows.
 // ---------------------------------------------------------------------------
-store.insert("matches", {
-  id: "mtch_1", requestId: "req_open", participantId: "vnd_1", capabilityId: null,
-  status: "suggested", requesterState: "suggested", revision: 1,
-  createdAt: now.toISOString(), updatedAt: now.toISOString(), history: []
+// Ordered setup, not a test: it asserts nothing, but it has to land BETWEEN the
+// two blocks below or the earlier zero-count assertions read the wrong store.
+step("fixture: a real match row puts an open request in front of me", () => {
+  store.insert("matches", {
+    id: "mtch_1", requestId: "req_open", participantId: "vnd_1", capabilityId: null,
+    status: "suggested", requesterState: "suggested", revision: 1,
+    createdAt: now.toISOString(), updatedAt: now.toISOString(), history: []
+  });
 });
 
 test("nextMove is the real open request a match row put in front of me", () => {
@@ -240,5 +244,4 @@ test("API: /api/me/position is wired and auth-gated", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();

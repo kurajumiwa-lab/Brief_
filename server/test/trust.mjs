@@ -28,8 +28,14 @@ store._reset();
 let pass = 0;
 let fail = 0;
 const check = (name, cond, detail = '') => {
+  // A Promise is truthy whatever it resolves to, so an un-awaited condition
+  // would print PASS no matter what happened. Refuse it loudly instead.
+  if (cond && typeof cond.then === 'function') {
+    fail++; console.log(`  FAIL  ${name} -> condition is a Promise; await it before asserting`);
+    process.exitCode = 1; return;
+  }
   if (cond) { pass++; console.log(`  PASS  ${name}`); }
-  else { fail++; console.log(`  FAIL  ${name}${detail ? ` -> ${detail}` : ''}`); }
+  else { fail++; console.log(`  FAIL  ${name}${det}`); process.exitCode = 1; }
 };
 
 const mkSource = (id, name, type = 'manual') => store.insert('sources', {

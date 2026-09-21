@@ -18,8 +18,8 @@ const auth = await import("../src/domain/auth.js");
 const roles = await import("../src/domain/roles.js");
 const invites = await import("../src/domain/invites.js");
 
-let count = 0;
-const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// Shared harness: `test` registers, `run()` executes in order and awaits each.
+const { test, step, run } = await import("./harness.mjs");
 const rejects = (fn, msg) => assert.throws(fn, (e) => !msg || e.message.includes(msg));
 const user = (handle) => auth.createUser({ handle, password: "invites-pw" });
 
@@ -144,5 +144,4 @@ test("API: issue + redeem an invite, and read /api/me/roles", async () => {
   }
 });
 
-console.log(`\nPASS ${count}`);
-process.exit(0);
+await run();
