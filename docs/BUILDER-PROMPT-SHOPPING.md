@@ -4,6 +4,12 @@
 > shipped first (see *Already done below*). Nothing in this file is built yet, and
 > the "Corrections" section is not optional reading — four lines of the original
 > brief describe arithmetic this repo cannot perform.
+>
+> A second, fuller revision of this prompt was later received (entity schema,
+> failure modes, five templates, admin dashboard) and is preserved verbatim in
+> `docs/BUILDER-PROMPT-SHOPPING-RUN.md` beside its own corrections. Where the
+> two differ, this spec's corrections carry; the revision's deltas (deadline,
+> settling semantics, no-show policy) slot into the build order below.
 
 You are building the Shopping Run Stream: a coordination layer for supermarket
 runs. Not a marketplace. Not an e-commerce site. A stream that formalises what
