@@ -324,9 +324,10 @@ async function main() {
   // --- 6. the seller writes the axes; blanks stay absent ──────────────────
   {
     calls = [];
-    const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
-    await flush();
-    click(btn('Post a listing'));
+    // The floating "Post a listing" pill is gone: the create door is the bar's
+    // [+], and its "Post an offer" row reaches this screen as a signal, which
+    // opens the counter's Selling tab — the real create flow, not a copy.
+    const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {}, sellingSignal: 1 }));
     await flush();
     assert.ok(text(container).includes('Start selling') || text(container).includes('New listing'), 'the real create flow is what opens, not a copy');
 

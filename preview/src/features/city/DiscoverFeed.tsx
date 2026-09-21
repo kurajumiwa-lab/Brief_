@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Bike, CalendarDays, Check, ChevronRight, MapPin, MessageCircle, Package, Plus, RefreshCw, Search, Sun,
-  ShoppingBag, Sparkles, Users, X
+  Bike, CalendarDays, Check, ChevronRight, MapPin, MessageCircle, Package, RefreshCw, Search, Sun,
+  Sparkles, Users, X
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
 import type { DiscoverFeedItem, DiscoverFlow, DiscoverRoute, DiscoverSummary } from '../../api/briefApi';
@@ -404,16 +404,20 @@ function FeedSheet({ item, onClose, onOpenFull }: {
 export interface DiscoverFeedProps {
   room?: DiscoverRoom;
   onRoomChange?: (room: DiscoverRoom) => void;
+  /** The board's own contextual "Post one" (empty states, picker) still lands
+      here — the floating pill is gone; the bar's [+] is the create door. */
   onPostListing?: () => void;
-  onHostEvent?: () => void;
   /** Passed to the counter so "Post a listing" lands on the real create form. */
   counterSection?: 'browse' | 'orders' | 'selling';
   counterKey?: number;
+  /** "Start a run" from Home / the bar's [+] — opens the errand composer with
+      the delivery kind chosen, once per nonce. */
+  composerSignal?: { nonce: number; kind: string | null } | null;
   className?: string;
 }
 
 export function DiscoverFeed({
-  room = 'all', onRoomChange, onPostListing, onHostEvent, counterSection = 'browse', counterKey = 0, className = ''
+  room = 'all', onRoomChange, onPostListing, counterSection = 'browse', counterKey = 0, composerSignal = null, className = ''
 }: DiscoverFeedProps) {
   const [summary, setSummary] = useState<DiscoverSummary | null>(null);
   const [open, setOpen] = useState<DiscoverFeedItem | null>(null);
@@ -776,7 +780,7 @@ export function DiscoverFeed({
       {room === 'errands' && (
         <div className="space-y-4">
           <TransportRail />
-          <ErrandsLobby />
+          <ErrandsLobby composerSignal={composerSignal} />
         </div>
       )}
 
@@ -820,32 +824,11 @@ export function DiscoverFeed({
 
 
       {/* ── the Create pill ─────────────────────────────────────────────── */}
-      {room !== 'errands' && (onHostEvent || onPostListing) && (
-        <div className="fixed bottom-24 left-0 right-0 flex justify-center z-40 pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-2">
-            {onHostEvent && (
-              <button
-                type="button"
-                onClick={() => { soundEngine.play('heavyTap'); onHostEvent(); }}
-                className="inline-flex items-center gap-2 pl-4 pr-5 py-3 rounded-full text-[14px] font-black cursor-pointer active:scale-95 transition"
-                style={{ background: 'var(--brief-ink)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-4)' }}
-              >
-                <Plus className="w-5 h-5" /> Host an event
-              </button>
-            )}
-            {onPostListing && (
-              <button
-                type="button"
-                onClick={() => { soundEngine.play('tap'); onPostListing(); }}
-                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-full text-[13px] font-black cursor-pointer active:scale-95 transition"
-                style={{ background: 'var(--color-paper)', color: 'var(--brief-ink)', boxShadow: 'var(--room-light), var(--lift-3), inset 0 0 0 1px var(--brief-line)' }}
-              >
-                <ShoppingBag className="w-4 h-4" /> Post a listing
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {/* The create actions do not float on this screen any more. The bar's
+          [+] is the one create door in the app — a floating "Host an event /
+          Post a listing" pill on every screen was the clutter the reorg
+          deleted. The board's own empty states still carry the one contextual
+          action, beside the zero it could change. */}
 
       {open && <FeedSheet item={open} onClose={() => setOpen(null)} onOpenFull={openFull} />}
     </div>

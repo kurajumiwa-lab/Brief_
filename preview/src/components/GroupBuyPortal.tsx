@@ -31,7 +31,7 @@ const SOURCES: { id: string; label: string }[] = [
 
 const money = (n: number) => `KSh ${n.toLocaleString()}`;
 
-export function GroupBuyPortal() {
+export function GroupBuyPortal({ onClose }: { onClose?: () => void } = {}) {
   const [buys, setBuys] = useState<GroupBuy[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [error, setError] = useState<string | null>(null);
@@ -184,11 +184,24 @@ export function GroupBuyPortal() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Group Buy</h2>
-        <p className="text-[11px] text-[var(--ink-60)]">
-          Circle cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-extrabold text-[var(--brief-ink)]">Group Buy</h2>
+          <p className="text-[11px] text-[var(--ink-60)]">
+            Circle cycles and group orders — contributions, receipts and the pipeline, tracked by the engine.
+          </p>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close group buys"
+            className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer border"
+            style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text-muted)', background: 'var(--color-paper)' }}
+          >
+            Done
+          </button>
+        )}
       </div>
 
       {state === 'loading' && <p className="text-xs text-[var(--ink-60)]">Loading…</p>}

@@ -4,6 +4,9 @@ import * as briefApi from '../api/briefApi';
 import { Navigation, BriefNavigationTab } from './Navigation';
 import { AppBelt, readPlace, PLACE_KEY } from './AppBelt';
 import { NavSheet, type SheetTarget } from './NavSheet';
+import { CreateSheet, type CreateActionId } from './CreateSheet';
+import { HostEventSheet } from '../features/city/HostEventSheet';
+import { GroupBuyPortal } from '../components/GroupBuyPortal';
 import { SearchResults } from '../components/SearchResults';
 import { HomeSurface } from '../features/home/HomeSurface';
 import { SpaceShell } from '../features/spaces/SpaceShell';
@@ -18,11 +21,12 @@ import { PublicOfferModal } from '../features/offers/PublicOfferModal';
 import { JoinRoom } from '../features/city/JoinRoom';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
-import { ActivitySurface } from '../features/activity/ActivitySurface';
 import { PartnerDesk } from '../features/partner/PartnerDesk';
 import { YouSurface } from '../features/you/YouSurface';
 import { EntityDetail } from '../features/you/EntityDetail';
 import { FirstRunChecklist } from '../features/you/FirstRunChecklist';
+import { PulseSurface } from '../features/pulse/PulseSurface';
+import { MineSurface } from '../features/mine/MineSurface';
 import { soundEngine } from '../utils/SoundEngine';
 import { SyncStatusDot } from '../ui/SyncStatusDot';
 
@@ -71,6 +75,16 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [place, setPlace] = useState<string>(readPlace);
   const [firstRunChecked, setFirstRunChecked] = useState<boolean>(false);
+  // The one action in the bar: the create sheet, and the two real loops it
+  // opens (host an event is a sheet of its own; group buys is the portal
+  // overlay). The Selling tab and the errand composer are answered by nonce,
+  // because they are signals to surfaces that already exist, not new screens.
+  const [createOpen, setCreateOpen] = useState<boolean>(false);
+  const [hostSheetOpen, setHostSheetOpen] = useState<boolean>(false);
+  const [groupBuysOpen, setGroupBuysOpen] = useState<boolean>(false);
+  const [sellingNonce, setSellingNonce] = useState<number>(0);
+  const [errandSignal, setErrandSignal] = useState<{ nonce: number; kind: string | null } | null>(null);
+  const [signalCounter, setSignalCounter] = useState<number>(0);
 
   // Modals
   const [createFlowOpen, setCreateFlowOpen] = useState<boolean>(false);
@@ -91,13 +105,21 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   /**
    * Where a sheet entry goes. Every target lands on a surface that already
-   * exists — a tab, a discover room, or a You section — because a nav item that
+   * exists — a tab, a You section, or a sign-out — because a nav item that
    * opened nothing is worse than no nav item.
    */
   const goSheetTarget = (target: SheetTarget) => {
-    // Only three destinations are reachable from here: the band owns the rooms
-    // and the dock owns the five tabs, so a sheet entry duplicating either would
-    // be a third way to do one thing.
+    if (target.kind === 'signout') {
+      void (async () => {
+        await briefApi.logout();
+        setAuthed(false);
+        setYouSection(null);
+        setActiveTab('home');
+        window.location.hash = '';
+        showToast('Signed out. The rows you wrote stay on the server.');
+      })();
+      return;
+    }
     if (target.kind === 'tab') {
       setActiveTab(target.tab);
       window.location.hash = target.tab;
@@ -106,6 +128,29 @@ export const AppShell: React.FC<AppShellProps> = ({
     setYouSection(target.section);
     setActiveTab('you');
     window.location.hash = 'you';
+  };
+
+  /**
+   * The create sheet's four verbs, each landing on the flow that actually
+   * writes the row. The sheet closes on every pick: it is a door, not a room.
+   */
+  const pickCreate = (id: CreateActionId) => {
+    setCreateOpen(false);
+    const nextNonce = signalCounter + 1;
+    setSignalCounter(nextNonce);
+    if (id === 'offer') {
+      setDiscoverSubTab('all');
+      setSellingNonce(nextNonce);
+      setActiveTab('city');
+      window.location.hash = 'city';
+    } else if (id === 'event') {
+      setHostSheetOpen(true);
+    } else if (id === 'run' || id === 'errand') {
+      setDiscoverSubTab('errands');
+      setErrandSignal({ nonce: nextNonce, kind: id === 'run' ? 'delivery' : null });
+      setActiveTab('city');
+      window.location.hash = 'city';
+    }
   };
 
   const showToast = (msg: string) => {
@@ -177,7 +222,10 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === '' || (hash && hash !== 'join')) {
         setJoinCode('');
         setSearchQuery('');
-        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'activity', ledger: 'ledger', partners: 'partners', you: 'you' };
+        // 'activity' is the old bar's fourth door: its surface now lives in the
+        // drawer's check-in, so the legacy hash resolves there. 'mine' and
+        // 'pulse' are the new bar's doors and the drawer's check-in.
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); }
         else if (!hash) setActiveTab(initialTab);
       }
@@ -319,27 +367,23 @@ export const AppShell: React.FC<AppShellProps> = ({
         <SyncStatusDot />
       </div>
 
-      {/* 4-Tab Navigation (Desktop Sidebar / Mobile Bottom Dock) */}
+      {/* Three doors and one action (Desktop Sidebar / Mobile Bottom Bar) */}
       <Navigation
         activeTab={activeTab}
         onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenCreate={() => setCreateOpen(true)}
         spaceName={activeSpace?.name || 'Your Trace'}
-        revenueKes={activeSpace?.metrics?.revenueKes ?? 0}
-        offersCount={activeSpace?.offers?.length ?? 0}
-        pendingInquiriesCount={activeSpace?.recentConversations?.filter((c) => c.status !== 'converted').length ?? 0}
       />
 
       {/* Main Content Viewport */}
       <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-44 md:pb-8 overflow-y-auto min-h-screen">
-        {/* The band: what the sheet is not, in one short row, plus the
-            departments rail and the message slot. It lives inside the scroll
+        {/* The band: a location, a search that resolves, a hamburger that owns
+            the long list, and a message slot. It lives inside the scroll
             column so it behaves the same on a phone and on a desktop. */}
         <AppBelt
           onOpenSheet={() => setSheetOpen(true)}
           onHome={() => { window.location.hash = ''; setActiveTab('home'); }}
-          onOpenRoom={(room) => { setDiscoverSubTab(room); setActiveTab('city'); window.location.hash = 'city'; }}
           onSearch={(term) => { window.location.hash = `search/${encodeURIComponent(term)}`; }}
-          activeRoom={activeTab === 'city' ? discoverSubTab : null}
           className="-mx-4 sm:-mx-6 -mt-6 mb-5"
         />
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
@@ -381,26 +425,39 @@ export const AppShell: React.FC<AppShellProps> = ({
           <HomeSurface
             userName="there"
             onOpenSpace={(id) => {
+              void (async () => {
+                const res = await briefApi.getSpace(id);
+                if (res.ok && res.data?.space) setActiveSpace(res.data.space);
+                else loadSpaces();
+              })();
               setActiveTab('pipeline');
-              loadSpaces();
             }}
-            onExploreDiscover={(sub) => {
+            onExploreDiscover={(sub, startRun) => {
               if (sub) setDiscoverSubTab(sub);
+              if (startRun) {
+                const nextNonce = signalCounter + 1;
+                setSignalCounter(nextNonce);
+                setErrandSignal({ nonce: nextNonce, kind: 'delivery' });
+              }
               setActiveTab('city');
+              window.location.hash = 'city';
             }}
-            onOpenPulse={() => setActiveTab('activity')}
-            onOpenSpaces={() => setActiveTab('pipeline')}
+            onOpenPulse={() => { setActiveTab('pulse'); window.location.hash = 'pulse'; }}
+            onOpenSpaces={() => { setActiveTab('pipeline'); window.location.hash = 'spaces'; }}
+            onOpenGroupBuys={() => setGroupBuysOpen(true)}
             onGetPaid={() => setActiveTab('ledger')}
             onOpenHow={() => { setYouSection('how'); setActiveTab('you'); }}
             onOpenEarn={() => { setYouSection('earn'); setActiveTab('you'); window.location.hash = 'you'; }}
           />
         ) : (
           <div>
-            {/* ── TAB 1: CITY (Full Citizen Experience) ── */}
+            {/* ── CITY (the board: what's happening nearby) ── */}
             {(activeTab === 'city' || activeTab === 'discover') && (
               <CityFeedView
                 key={discoverSubTab}
                 initialSubTab={discoverSubTab}
+                sellingSignal={sellingNonce}
+                errandSignal={errandSignal}
                 onOpenSpace={(id) => setActiveTab('pipeline')}
               />
             )}
@@ -415,9 +472,30 @@ export const AppShell: React.FC<AppShellProps> = ({
               />
             )}
 
-            {/* ── TAB 4: ACTIVITY (the user's own operational inbox) ── */}
-            {activeTab === 'activity' && (
-              <ActivitySurface onOpenRequests={() => requestPath()} />
+            {/* ── PULSE (the drawer's check-in: the world's numbers + your
+                   activity. The old bar's Activity door resolves here.) ── */}
+            {activeTab === 'pulse' && (
+              <PulseSurface onOpenRequests={() => requestPath()} />
+            )}
+
+            {/* ── MINE (the bar's second door: your shops, orders, saved) ── */}
+            {activeTab === 'mine' && (
+              <MineSurface
+                onOpenSpace={(id) => {
+                  void (async () => {
+                    const res = await briefApi.getSpace(id);
+                    if (res.ok && res.data?.space) setActiveSpace(res.data.space);
+                    else loadSpaces();
+                  })();
+                  setActiveTab('pipeline');
+                }}
+                onOpenCreateSpace={() => {
+                  setCreateFlowInitialStep(1);
+                  setCreateFlowOpen(true);
+                }}
+                onOpenEntity={(id) => { setEntityId(id); setActiveTab('you'); window.location.hash = `entity/${id}`; }}
+                onRequireAuth={() => showToast('Sign in to continue.')}
+              />
             )}
 
             {/* ── OPERATOR: PARTNER DESK (distribution partners) ── */}
@@ -623,6 +701,30 @@ export const AppShell: React.FC<AppShellProps> = ({
             onRequireAuth={() => showToast('Sign in or create an account to join a room.')}
             onOpenCircles={() => { setJoinCode(''); window.location.hash = 'city'; setActiveTab('city'); }}
           />
+        </div>
+      )}
+
+      {/* The one action: the create sheet. A verb, not a route — it closes
+          the moment a pick has landed somewhere that writes a row. */}
+      <CreateSheet
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onPick={pickCreate}
+      />
+
+      {/* "Host an event": the real createCampaign → publish loop, owned by the
+          sheet that opened it rather than by the one screen it used to float on. */}
+      <HostEventSheet
+        open={hostSheetOpen}
+        onClose={() => setHostSheetOpen(false)}
+        onPublished={(title) => showToast(`"${title}" is published and on the board.`)}
+      />
+
+      {/* "Group buys": the portal overlay, openable from Home's tile and the
+          drawer, closed from inside. */}
+      {groupBuysOpen && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto p-4 pb-24" style={{ background: 'var(--color-bg)' }} role="dialog" aria-modal="true" aria-label="Group buys">
+          <GroupBuyPortal onClose={() => setGroupBuysOpen(false)} />
         </div>
       )}
 

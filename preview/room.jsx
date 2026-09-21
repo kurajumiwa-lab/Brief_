@@ -312,7 +312,11 @@ async function main() {
     // "hot / trending / buyers waiting / coming soon" is padding. A real sort by
     // counted registrations is not, so only the invented-urgency vocabulary fails.
     assert.ok(!/coming soon|trending|buyers waiting|people viewing|hot/i.test(text(container)), 'no filler language around an empty room');
-    assert.ok(/0 settled/.test(text(container)), 'a zero interest figure is a count and one word');
+    // A zero interest is not printed as a zero: "0 settled" reads as an
+    // indictment of the listing, so the row's actual state — new — is what
+    // the card says, in one phrase.
+    assert.ok(!/0 settled/.test(text(container)), 'a zero interest is not a settled figure');
+    assert.ok(/New listing/.test(text(container)), 'the card says the row is new, in one phrase');
     assert.ok(!/0 settled orders · newest live listing/.test(text(container)), 'the meta-junk line is gone');
   }
   pass('Zeros are honest and quiet: a count of rows, what it means, and the one step that changes it');

@@ -1,11 +1,14 @@
 // ---------------------------------------------------------------------------
 // MUSEUM GALLERY — swiping inventory over REAL events. Pins the museum rules
-// after the home-feed reformation:
+// after the nav reorg:
 //   * one card at a time (snap) with position dots, and the ACTIVE card is the
 //     only one carrying an action;
 //   * no result counter anywhere — "2 shown" was metadata nobody asked for;
-//   * the control line is ONE row, and the deep filters live in a bottom sheet
-//     whose selections drive the REAL /api/events query;
+//   * NO control line at all. The "All exhibits" chip (then "All events") and
+//     its filter sheet were the third navigation for events the board and Home
+//     already point at, so the reorg deleted the whole row: the case is
+//     everything published, soonest first, and a reader who wants a narrower
+//     view goes to the board, where the filters sit beside what they filter;
 //   * "New" is only ever a real diff against what this device already saw, and
 //     "you opened this" is only ever this device's own record — nothing about
 //     other people is claimed;
@@ -117,53 +120,27 @@ async function main() {
       'no title-initial monogram is rendered'
     );
 
-    // One control line, not a six-chip row plus a four-row panel.
-    const chips = Array.from(c.querySelectorAll('button')).filter((b) => (b.getAttribute('class') || '').includes('rounded-full'));
-    assert.ok(chips.length <= 3, `the control line is compact (got ${chips.length} pills)`);
-    assert.ok(t.includes('All exhibits'), 'the control line names the current wing');
+    // The control line is GONE: no "All events" chip, no filter sheet trigger,
+    // no swipe hint. The only control left on the case is the active card's
+    // own action.
+    assert.ok(!/All (exhibits|events)/i.test(t), 'no "All events" filter chip');
+    const filterTriggers = Array.from(c.querySelectorAll('button')).filter((b) => /filter/i.test(b.getAttribute('aria-label') || ''));
+    assert.equal(filterTriggers.length, 0, 'no filter sheet trigger on the case');
   }
-  pass('MuseumGallery: real exhibits, dots, one action, no counter, no monogram, one control line');
+  pass('MuseumGallery: real exhibits, dots, one action, no counter, no monogram, no control line');
 
-  // --- 2. The bottom sheet drives the REAL query ---------------------------
+  // --- 2. The case is everything published — no filter parameters ----------
   {
     const c = mount(React.createElement(MuseumGallery, null));
     await flush();
-    act(() => { btnByText('All exhibits').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(text(document.body).includes('Filter the case'), 'the sheet opens from the control line');
-    // Decision 6: the sheet no longer holds a featured toggle or a popularity
-    // sort, because the server has neither to offer. Both controls were deleted
-    // rather than disabled — a disabled control still advertises a choice the
-    // product does not make.
-    assert.ok(!text(document.body).includes('★ Featured only'), 'no featured toggle in the sheet');
-    assert.ok(!/most people first/i.test(text(document.body)), 'no popularity sort control either');
-
-    // Pick a wing + a place, then apply.
-    act(() => { btnByText('Events').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    const input = document.querySelector('input[aria-label], #museum-loc');
-    act(() => {
-      const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
-      setter.call(input, 'Kisii');
-      input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-    });
-    act(() => { btnByText('Show').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
     const q = new URLSearchParams(lastQuery.replace(/&amp;/g, '&'));
-    assert.equal(q.get('category'), 'event', 'the sheet applies the real category filter');
+    assert.equal(q.get('category'), null, 'the case does not send a category filter');
+    assert.equal(q.get('location'), null, 'and no place filter — the whole case is the shelf');
+    assert.equal(q.get('sort'), null, 'and no sort parameter — the order is the server\'s one order, startsAt ascending (D6)');
     assert.equal(q.get('featured'), null, 'no featured parameter reaches the server (D6)');
-    assert.equal(q.get('sort'), null, 'and no sort parameter either — the order is startsAt ascending (D6)');
-    assert.equal(q.get('location'), 'Kisii', 'the sheet applies the real place filter');
-
-    // The applied state is now named on the control line, with a way out.
-    const t = text(c);
-    assert.ok(t.includes('Events'), 'the control line names the applied wing');
-    assert.ok(t.includes('near Kisii'), 'the control line names the applied place');
-    assert.ok(btnByText('Clear'), 'a clear control exists once a filter is active');
-    act(() => { btnByText('Clear').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(!(new URLSearchParams(lastQuery).get('category')), 'Clear drops the filter for real');
+    assert.ok(text(c).includes('Kilimani Night Market'), 'published events still render in the case');
   }
-  pass('MuseumGallery: one control line + bottom sheet that drives the real query');
+  pass('MuseumGallery: the case is everything published; narrower views live on the board');
 
   // --- 3. "New" is a real diff, and opening writes a local record ----------
   {

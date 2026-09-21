@@ -16,6 +16,7 @@ import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
 import { SessionSignIn } from "../../components/SessionSignIn";
+import { NotificationCenter } from "../../components/NotificationCenter";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -34,6 +35,15 @@ import { SessionSignIn } from "../../components/SessionSignIn";
 // Everything is read from real server rows; a signed-out caller gets the
 // signed-out state, and an empty list is shown as empty, never fabricated.
 // ---------------------------------------------------------------------------
+
+// The same key the belt's area chip writes and PlannedWeather reads. The
+// privacy screen names this store because it is the one place-specific thing
+// this device is allowed to hold.
+const PLACE_KEY = "brief.world.place";
+
+function readPlace(): string {
+  try { return localStorage.getItem(PLACE_KEY) ?? ""; } catch { return ""; }
+}
 
 const KIND_LABELS: Record<string, string> = {
   venue: "Places",
@@ -80,12 +90,26 @@ const YOU_GROUPS: Array<{ id: string; label: string; items: Array<{ id: Section;
     id: "about",
     label: "About",
     items: [{ id: "how", label: "How Trace works" }]
+  },
+  {
+    // The drawer's Settings group lands here: three real, small controls —
+    // the ones the app can actually answer. Language is honest about being
+    // one language; Privacy names what is stored on this device;
+    // Notifications opens the real notification centre.
+    id: "settings",
+    label: "Settings",
+    items: [
+      { id: "language", label: "Language" },
+      { id: "notifications", label: "Notifications" },
+      { id: "privacy", label: "Privacy" }
+    ]
   }
 ];
 
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
-  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how";
+  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how"
+  | "language" | "notifications" | "privacy";
 
 export function YouSurface({
   onOpenEntity,
@@ -107,6 +131,8 @@ export function YouSurface({
   const [plans, setPlans] = useState<Subscription[] | null>(null);
   const [myPlans, setMyPlans] = useState<Subscription[] | null>(null);
   const [notice, setNotice] = useState<string>("");
+  // Read once for the privacy screen's "what this device keeps" line.
+  const [place, setPlace] = useState<string>(readPlace);
   // The position reads. Fetched here, once, and handed to every surface that
   // renders them so the hero and the detail cards can never disagree.
   const [position, setPosition] = useState<MyPosition | null>(null);
@@ -509,6 +535,93 @@ export function YouSurface({
 
       {section === "tableBanking" && (
         <TableBankingSurface onRequireAuth={onRequireAuth} />
+      )}
+
+      {/* ── SETTINGS — the three controls the drawer's Settings group names.
+          Each one answers what it claims; none of them switches nothing. ── */}
+      {section === "language" && (
+        <div className="mt-4 space-y-3">
+          <div className="p-4 rounded-2xl" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>English</p>
+            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+              The app speaks one language. A selector that switched nothing would be a control advertising a
+              choice the product does not make, so there is no selector — there is this line instead. A second
+              language lands here when the translations are maintained, not before.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {section === "notifications" && (
+        <div className="mt-4 space-y-3">
+          <NotificationCenter
+            authed={!signedOut}
+            onClose={() => setSection("profile")}
+            onOpen={() => {}}
+          />
+        </div>
+      )}
+
+      {section === "privacy" && (
+        <div className="mt-4 space-y-3">
+          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+            What this device keeps, and how to take it back. Nothing here is a
+            toggle that pretends: each row is a real store on this browser, and
+            each control acts on it.
+          </p>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Your area</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  Stored only to read the forecast. {place ? `Set to “${place}”.` : "Not set."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  try { localStorage.removeItem(PLACE_KEY); } catch { /* a locked-down browser keeps its secret */ }
+                  setPlace("");
+                  setNotice("The area is cleared from this device.");
+                }}
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer"
+                style={{ background: "var(--color-surface-elevated)", color: "var(--color-text)" }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Offline queue</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  {api.offlineQueueDepth() === 0
+                    ? "Nothing is parked — every write reached the server."
+                    : `${api.offlineQueueDepth()} write${api.offlineQueueDepth() === 1 ? "" : "s"} waiting for signal; they send themselves when it returns.`}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Sign out</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  Ends the session on this device. Rows you wrote stay on the server, where they belong.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { void signOut(); }}
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer"
+                style={{ background: "var(--color-danger, #B3261E)", color: "#fff" }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

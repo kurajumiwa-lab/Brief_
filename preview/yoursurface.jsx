@@ -14,6 +14,7 @@
 //   * Privacy — the device's own stores named: the area, the offline queue,
 //     and sign out.
 // ---------------------------------------------------------------------------
+const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'https://brief.test/', pretendToBeVisual: true });
 global.window = dom.window;
@@ -146,7 +147,7 @@ async function main() {
     /Your account/.test(text(c)));
 
   act(() => { root.unmount(); });
-  console.log('\nPASSED ' + passed + ' / FAILED ' + failed);
+  console.log(`\nPASSED ${passed} / FAILED ${failed}`);
   process.exit(failed === 0 ? 0 : 1);
 }
 

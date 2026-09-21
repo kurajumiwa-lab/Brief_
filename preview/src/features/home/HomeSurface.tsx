@@ -8,11 +8,16 @@ import {
   Archive,
   RotateCcw,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  Store,
+  CalendarDays,
+  Users,
+  Bike,
+  Truck
 } from 'lucide-react';
-import type { Space } from '../../api/types';
+import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import type { MyCommitments, MyPosition, MyReciprocity } from '../../api/briefApi';
+import type { MyCommitments, MyPosition, MyReciprocity, DiscoverFeedItem, EventListing } from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
@@ -25,23 +30,33 @@ import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
 
 // ---------------------------------------------------------------------------
-// HOME — three zones, one glance (§9 of the reformation).
+// HOME — the landing, in the pattern the mock it was copied from uses.
 //
-//   1. What is the world doing?   → SignalBar   (real rows, snapshot-stamped)
-//                              + PlannedWeather (a dated forecast on a PLANNED day, else nothing)
-//   2. What should I do?          → NextMoveCard (one decision, derived)
+//   1. WHO YOU ARE — the greeting, the stakes line, your standing. Real
+//      name from the session, real counts, one derived read.
+//   2. THE MODE TILES — six visual tiles, not chips: Shops, Events, Circles,
+//      Errands, Runs, Group Buys. A tile is a picture with a word under it,
+//      the way that storefront does it — a chip row is for filters, and a
+//      filter row up here would be a second navigation for what the board
+//      already picks.
+//   3. THE HERO — "What's moving today". Real pulse facts only, stamped,
+//      and it HIDEs itself to a single quiet line when the ledger is empty:
+//      a hero that invents a number is the exact thing this product refuses.
+//   4. THREE SHELVES, side-scrolling, each with a title and an "All →":
+//        Open now         — the supply board's top rows
+//        From your groups — the circles you are actually in
+//        Happening today  — the events starting today
+//      Each shelf is the top of a real list; "All →" is the one place that
+//      list is, and an empty shelf is not rendered, because an empty shelf
+//      with a title is the broken-screen tell this app deleted everywhere.
+//   5. THE FOLD — what you should do next, your income rails, the weather
+//      (on a planned day only), and "Run your spaces" collapsed: it is work,
+//      not the thing you came to see.
 //
-// Home used to carry a third zone — "What's out there" — a heading, a
-// "Browse everything" link and the events shelf, all saying the same thing
-// three ways over an empty board. The shelf now lives where browsing happens:
-// Discover → What's on.
-//
-// Everything else sits behind a tap: commerce lives in Discover → Market,
-// space management is collapsed under "Run your spaces", and the position /
-// commitments / reciprocity detail cards carry the full derivation below the
-// fold. The greeting uses the name on the session — never a placeholder name,
-// and never "Position #7 · Sector 4": no row in this store holds a rank, a
-// sector or a queue, so the standing line shows real counts instead.
+// What is NOT here: a "What's out there" section (the shelf already is the
+// browse), a 0-SETTLED-ORDERS hero (a zero is not a number, it is the
+// absence of rows), a featured card nobody picked, or any count that is not a
+// row the server answered with.
 // ---------------------------------------------------------------------------
 
 export interface HomeSurfaceProps {
@@ -50,15 +65,29 @@ export interface HomeSurfaceProps {
   onOpenEarn?: () => void;
   userName?: string;
   onOpenSpace: (spaceId: string) => void;
-  onExploreDiscover?: (subTab?: 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all') => void;
+  onExploreDiscover?: (subTab?: 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all', startRun?: boolean) => void;
   onGetPaid?: () => void;
   onOpenSpaces?: () => void;
-  /** Pulse — the ledger's own numbers — now lives on the Activity tab. */
+  /** Group buys — the shell's one overlay for the portal. */
+  onOpenGroupBuys?: () => void;
+  /** Pulse — the ledger's own numbers — lives in the drawer's check-in. */
   onOpenPulse?: () => void;
   /** Open the one screen that holds the explanations (You → How Brief works). */
   onOpenHow?: () => void;
   className?: string;
 }
+
+const money = (n: number, currency: string) => `${currency} ${Number(n).toLocaleString('en-KE')}`;
+const timeOf = (iso: string | null) => {
+  if (!iso) return null;
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return null;
+  try {
+    return new Date(ms).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return null;
+  }
+};
 
 export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   userName = 'there',
@@ -67,6 +96,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   onOpenHow,
   onGetPaid,
   onOpenSpaces,
+  onOpenGroupBuys,
   onOpenPulse,
   onOpenEarn,
   className = ''
@@ -84,11 +114,16 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   const [position, setPosition] = useState<MyPosition | null>(null);
   const [commitments, setCommitments] = useState<MyCommitments | null>(null);
   const [reciprocity, setReciprocity] = useState<MyReciprocity | null>(null);
-  const [circleCount, setCircleCount] = useState<number | null>(null);
+  const [circles, setCircles] = useState<Circle[]>([]);
   // A visitor with no session has no ledger to read. That is not an error, so
   // the card stays silent instead of shouting "could not be read".
   const [positionDenied, setPositionDenied] = useState<boolean | undefined>(undefined);
   const [sessionName, setSessionName] = useState<string | null>(null);
+
+  // The three shelves. Each is the top of a REAL list; each is hidden when
+  // empty; each "All →" points at the one place the list is.
+  const [feed, setFeed] = useState<DiscoverFeedItem[]>([]);
+  const [todayEvents, setTodayEvents] = useState<EventListing[]>([]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -128,9 +163,26 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       setPositionDenied(!pos.ok && (pos as { status?: number }).status === 401);
       setCommitments(cmts.ok ? cmts.data : null);
       setReciprocity(recip.ok ? recip.data : null);
-      // "My circles" counts only rows the session is actually a member of —
-      // the list is public, so membership is read from the server's viewerRole.
-      setCircleCount(cir.ok ? cir.data.filter((c) => Boolean(c.viewerRole)).length : null);
+      // "From your groups" counts only rows the session is actually a member of
+      // — the list is public, so membership is read from the server's viewerRole.
+      setCircles(cir.ok ? cir.data : []);
+    });
+    return () => { live = false; };
+  }, []);
+
+  // The shelves, read once. "Open now" is the supply board's top; "Happening
+  // today" is the events row from start-of-day to now (an event is in the past
+  // the moment its window passes, so the shelf never shows a "tonight" that is
+  // already yesterday).
+  useEffect(() => {
+    let live = true;
+    void briefApi.getDiscoverSummary().then((res) => {
+      if (live && res.ok) setFeed(res.data.feed.slice(0, 8));
+    });
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    void briefApi.browseEvents({ from: start.toISOString(), to: now.toISOString(), limit: 12 }).then((res) => {
+      if (live && res.ok) setTodayEvents(res.data.events.slice(0, 8));
     });
     return () => { live = false; };
   }, []);
@@ -161,6 +213,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   const upkeepBySpace = new Map(active.map((sp) => [sp.id, sp.editorialOpen ?? 0]));
   const upkeepItems = [...upkeepBySpace.values()].reduce((n, x) => n + x, 0);
   const spacesWithUpkeep = [...upkeepBySpace.values()].filter((n) => n > 0).length;
+  const myCircles = circles.filter((c) => Boolean(c.viewerRole)).slice(0, 8);
 
   const ATTENTION_ICON: Record<string, React.ReactNode> = {
     conversation: <MessageCircle className="w-3 h-3" />,
@@ -168,10 +221,36 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     order: <Package className="w-3 h-3" />
   };
 
+  // ── THE MODE TILES — six doors, pictures with words. The test id is the
+  // contract: `doorways.jsx` asserts exactly these six, in this order, and
+  // that no chip row competes with them.
+  const MODES: Array<{ id: string; label: string; icon: React.ReactNode; act: () => void }> = [
+    { id: 'shops', label: 'Shops', icon: <Store className="w-5 h-5" />, act: () => onOpenSpaces?.() },
+    { id: 'events', label: 'Events', icon: <CalendarDays className="w-5 h-5" />, act: () => onExploreDiscover?.('events') },
+    { id: 'circles', label: 'Circles', icon: <Users className="w-5 h-5" />, act: () => onExploreDiscover?.('circles') },
+    { id: 'errands', label: 'Errands', icon: <Bike className="w-5 h-5" />, act: () => onExploreDiscover?.('errands') },
+    { id: 'runs', label: 'Runs', icon: <Truck className="w-5 h-5" />, act: () => onExploreDiscover?.('errands', true) },
+    { id: 'groupBuys', label: 'Group Buys', icon: <Package className="w-5 h-5" />, act: () => onOpenGroupBuys?.() }
+  ];
+
+  const ShelfHead: React.FC<{ title: string; onAll: () => void }> = ({ title, onAll }) => (
+    <div className="flex items-center justify-between pb-2.5">
+      <h2 className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>{title}</h2>
+      <button
+        type="button"
+        onClick={() => { soundEngine.play('tap'); onAll(); }}
+        className="text-[12px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
+        style={{ color: 'var(--color-primary)' }}
+      >
+        All <ArrowRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+
   return (
     <div className={`space-y-5 max-w-2xl mx-auto ${className}`}>
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -181,10 +260,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
           Hi {sessionName || userName}
         </h1>
-        {/* The hook, loss-framed but only as far as a row will carry it: a lost
-            quote is a real event, an unposted offer is a real absence, and a
-            quiet week is said as a quiet week. No invented "you are losing
-            KES 40,000", and no claim about staff hours Brief cannot see. */}
         <StakesLine
           onOpenHow={onOpenHow}
           position={position}
@@ -197,8 +272,143 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <StandingLine position={position} commitments={commitments} reciprocity={reciprocity} />
       </div>
 
-      {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
-      <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('all'))} />
+      {/* ── THE MODE TILES — the six doors of the board, as pictures. ── */}
+      <section data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-3 gap-2">
+        {MODES.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => { soundEngine.play('tap'); m.act(); }}
+            className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 cursor-pointer transition-all"
+            style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+          >
+            <span
+              className="w-10 h-10 rounded-2xl grid place-items-center"
+              style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+            >
+              {m.icon}
+            </span>
+            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text)' }}>{m.label}</span>
+          </button>
+        ))}
+      </section>
+
+      {/* ── THE HERO — what's moving today. Real pulse facts, stamped, and a
+             link to the whole list. The bar inside rotates one fact; the
+             drawer's check-in is where they all stand. ── */}
+      <section
+        aria-label="What's moving today"
+        className="rounded-3xl p-4 space-y-3"
+        style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
+            What&rsquo;s moving today
+          </h2>
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('tap'); onOpenPulse?.(); }}
+            className="text-[12px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            What&rsquo;s moving <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+        <SignalBar onOpenPulse={() => onOpenPulse?.()} />
+      </section>
+
+      {/* ── OPEN NOW — the board's top, sideways. Hidden when empty. ── */}
+      {feed.length > 0 && (
+        <section aria-label="Open now" className="space-y-0">
+          <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+            {feed.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
+                className="shrink-0 w-44 text-left rounded-2xl overflow-hidden cursor-pointer transition-all"
+                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+              >
+                {f.mediaUrl ? (
+                  <div className="h-24 w-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
+                    <img src={f.mediaUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="h-24 w-full grid place-items-center" style={{ background: 'var(--color-well)' }}>
+                    {f.kind === 'event' ? <CalendarDays className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} /> : <Package className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />}
+                  </div>
+                )}
+                <div className="p-2.5 space-y-0.5">
+                  <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{f.title}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+                    {f.priceLabel || (f.kind === 'event' ? 'Event' : 'Listing')}
+                    {f.location ? ` · ${f.location}` : ''}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── FROM YOUR GROUPS — the circles you are actually in. ── */}
+      {myCircles.length > 0 && (
+        <section aria-label="From your groups" className="space-y-0">
+          <ShelfHead title="From your groups" onAll={() => onExploreDiscover?.('circles')} />
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+            {myCircles.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
+                className="shrink-0 w-52 text-left p-3 rounded-2xl cursor-pointer transition-all"
+                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+              >
+                <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{c.name}</p>
+                {c.goal ? (
+                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{c.goal}</p>
+                ) : null}
+                <p className="text-[11px] font-mono mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                  {c.memberCount} member{c.memberCount === 1 ? '' : 's'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── HAPPENING TODAY — events whose window is today, on the clock. ── */}
+      {todayEvents.length > 0 && (
+        <section aria-label="Happening today" className="space-y-0">
+          <ShelfHead title="Happening today" onAll={() => onExploreDiscover?.('events')} />
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
+            {todayEvents.map((e) => (
+              <a
+                key={e.slug}
+                href={`/c/${e.slug}`}
+                className="shrink-0 w-48 text-left rounded-2xl overflow-hidden transition-all"
+                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+              >
+                {e.coverImageUrl ? (
+                  <div className="h-24 w-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
+                    <img src={e.coverImageUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
+                  </div>
+                ) : null}
+                <div className="p-2.5 space-y-0.5">
+                  <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
+                    {timeOf(e.startsAt) ? `${timeOf(e.startsAt)} · ` : ''}
+                    {e.price > 0 ? money(e.price, e.currency ?? 'KES') : 'Free'}
+                  </p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── THE FOLD ──────────────────────────────────────────────────── */}
 
       {/* Weather, and only where it is useful: a week of forecast for a member
           with nothing planned is what every other app prints, so it is what
@@ -211,13 +421,13 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           the arithmetic. */}
       <EarnStrip onOpenEarn={() => onOpenEarn?.()} />
 
-      {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
+      {/* WHAT YOU SHOULD DO NEXT — one derived decision, nothing else. */}
       <NextMoveCard position={position} denied={positionDenied} />
 
-      {/* ── PERSONAL CONTEXT — you are part of things, not only a browser ── */}
+      {/* PERSONAL CONTEXT — you are part of things, not only a browser */}
       <CirclesStrip
         spaces={active.length}
-        circles={circleCount ?? 0}
+        circles={myCircles.length}
         needsYou={queue.length}
         onView={() => {
           soundEngine.play('tap');
@@ -225,13 +435,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           else onOpenSpaces?.();
         }}
       />
-
-      {/* The full derivation of your standing — position, commitments,
-          reciprocity — lives on ONE screen (You → Standing), and the belt's
-          sheet links it. Home used to repeat all three cards here, which is how
-          a screen fills up with the same numbers wearing different hats. The
-          "Tip" box went the same way: a definition of what a space is belongs on
-          the audit screen (You → How Trace works), not above your own list. */}
 
       {/* ── RUN YOUR SPACES — management, collapsed by default: it is work,
              not the thing you came to see. ── */}
@@ -258,12 +461,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             {isLoading ? (
               <p className="text-xs text-[color:var(--color-text-muted)]">Reading your spaces…</p>
             ) : spaces.length === 0 ? (
-              /* A single create affordance, only when there is genuinely nothing yet. */
               <div className="p-6 rounded-3xl bg-[color:var(--color-paper)] border border-dashed text-center space-y-3" style={{ boxShadow: 'var(--room-light), var(--lift-1)' }}>
                 <p className="text-sm font-bold text-[color:var(--color-text)]">
                   You don&rsquo;t have a space yet.
                 </p>
-
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('heavyTap'); setCreateSpaceOpen(true); }}

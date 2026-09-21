@@ -1,21 +1,28 @@
 // ---------------------------------------------------------------------------
-// THE BELT AND THE SHEET — Amazon's header geometry, none of its psychology.
+// THE BELT AND THE SHEET — a location, a search that resolves, a hamburger
+// that owns the long list. None of the psychology, and (after the nav reorg)
+// none of the rail either.
 //
 // The instruction was to renovate the shell using a mature commerce header as
-// the reference, keeping the parts that reduce crowding. Four rules are pinned
-// here, and each is one that a future "improvement" would break:
+// the reference, keeping the parts that reduce crowding. The nav reorg then
+// applied the same rule to the rail itself: a departments chip row under the
+// band was the THIRD navigation for the rooms (Home's mode tiles, the board's
+// own picker), so it is deleted — which is exactly what this file now pins.
+// Four rules are held here, and each is one that a future "improvement"
+// would break:
 //
-//   1. GEOMETRY. A band with an "All" affordance, a search box that resolves, an
-//      area chip, a departments rail, and a message slot above the content.
-//   2. THE TAXONOMY IS IMPORTED, NEVER TYPED. The rail's labels come from
-//      `features/city/taxonomy` — the same lists the board itself renders. A belt
-//      with its own category list is a second taxonomy, and the second one always
-//      ends up offering a room that does not exist.
-//   3. THE PSYCHOLOGY IS REFUSED. No countdown, no "X people viewed", no
+//   1. GEOMETRY. A band with an "All" affordance, a search box that resolves,
+//      an area chip, and a message slot above the content — and NO rail, no
+//      chip row, no second category list.
+//   2. THE PSYCHOLOGY IS REFUSED. No countdown, no "X people viewed", no
 //      "Sponsored", no cart badge, no invented deal, and a search box that goes
 //      nowhere counts as a bug rather than a mockup. Each of those has an explicit
 //      negative assertion below, because "we would never" is only true for as
 //      long as a test says so.
+//   3. THE SHEET IS THE ONE LONG LIST. Its entries are asserted as data
+//      (SHEET_GROUPS): Pulse leads, the settings group is exactly Language /
+//      Notifications / Privacy, nothing repeats a bar door, and nothing carries
+//      a count.
 //   4. THE DEDUPE. A destination the sheet owns does not also get a shelf on
 //      Home. Home's three duplicated cards were moved to You → Standing with a
 //      link in the sheet; the last section asserts the copy MOVED, not that it
@@ -42,7 +49,7 @@ const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const { AppBelt } = require('./src/app/AppBelt.tsx');
 const { NavSheet, SHEET_GROUPS } = require('./src/app/NavSheet.tsx');
-const { FLOW_ORDER, SIDE_ORDER } = require('./src/features/city/taxonomy');
+const { BOTTOM_BAR_ITEMS } = require('./src/app/Navigation.tsx');
 
 let count = 0;
 const pass = (n) => { count++; console.log('PASS ' + n); };
@@ -65,27 +72,16 @@ async function mount(el) {
   return { host, root, t: text(host) };
 }
 
-// The rail's expected labels, read from the taxonomy the board uses, so this
-// file cannot quietly agree with a belt that invented a category.
-// The band carries only the rooms a person needs no explanation for. The four
-// flows live in Discover's picker, where each one can sit next to a count and a
-// sentence; a band of eight jargon chips is how a screen ends up needing a legend.
-const RAIL_LABELS = SIDE_ORDER.map((s) => s.label);
-const FLOW_LABELS = FLOW_ORDER.map((f) => f.key[0].toUpperCase() + f.key.slice(1));
-
 async function main() {
   // --- 1. the band --------------------------------------------------------
   {
     let opened = 0;
     let searched = null;
-    let room = null;
     global.localStorage.removeItem('brief.world.place');
     const belt = await mount(React.createElement(AppBelt, {
       onOpenSheet: () => { opened++; },
       onHome: () => {},
-      onOpenRoom: (r) => { room = r; },
-      onSearch: (q) => { searched = q; },
-      activeRoom: 'all'
+      onSearch: (q) => { searched = q; }
     }));
     assert.ok(byAria(belt.host, 'Open all sections'), 'the sheet is one tap away, so the band can stay short');
     click(byAria(belt.host, 'Open all sections'));
@@ -96,15 +92,18 @@ async function main() {
     assert.match(belt.t, /Set your area/, 'an unset area is said as unset');
     assert.ok(!/Delivering to|Nairobi County/i.test(belt.t), 'no inherited or guessed location');
 
-    // Departments: exactly the taxonomy's rooms, in its order, and nothing else.
-    const chips = inEl(belt.host, '[aria-label="Departments"] button').map((b) => text(b));
-    assert.deepEqual(chips, RAIL_LABELS, 'the rail IS the taxonomy, not a second list of categories');
-    assert.ok(FLOW_LABELS.every((f) => !chips.includes(f)),
-      'the flows are not in the band — they are in the picker, beside their counts. Two navigations for one purpose is what this cut');
-    click(inEl(belt.host, '[aria-label="Departments"] button').find((b) => text(b) === 'Errands'));
-    assert.equal(room, 'errands', 'and a chip opens that room');
-    const current = inEl(belt.host, '[aria-label="Departments"] button').find((b) => b.getAttribute('aria-current') === 'page');
-    assert.equal(text(current), 'All', 'the room actually in view is marked as such');
+    // NO departments rail. The band used to carry a chip row of the taxonomy's
+    // rooms, and that was the third navigation for them (Home's mode tiles and
+    // the board's picker already are the other two). A chip row up here mirroring
+    // a list down there is two ways to do one thing, and on a small screen it
+    // reads as noise — so the rail is asserted gone, not merely smaller.
+    assert.equal(belt.host.querySelector('[aria-label="Departments"]'), null, 'no departments rail on the band');
+    // A room chip would be a bare labelled button ("All", "Events", …). The
+    // hamburger also reads "All", but it is the sheet trigger and says so by
+    // aria-label — so the exclusion is: no bare room-labelled button.
+    const chips = inEl(belt.host, 'button').filter((b) => !b.getAttribute('aria-label'));
+    assert.ok(!chips.some((b) => /^(All|Events|Circles|Errands)$/.test(text(b))),
+      'no room chip row survives under the brand — the rooms are Home\'s tiles and the board\'s picker');
 
     // The search box resolves, or it does not exist.
     const input = belt.host.querySelector('#belt-search');
@@ -126,7 +125,7 @@ async function main() {
     assert.ok(!/\bPrime\b|Early Deals|cashback|bonus/i.test(belt.t), 'no loyalty theatre');
     belt.root.unmount(); belt.host.remove();
   }
-  pass('The band carries the short list: All, a search that resolves, the stated area, the taxonomy rail');
+  pass('The band is a header: a stated area, a search that resolves, the sheet — and no rail');
 
   // --- 2. the search actually lands somewhere -----------------------------
   {
@@ -141,7 +140,7 @@ async function main() {
   // --- 3. the message slot: nothing when there is nothing ------------------
   {
     fetchHandler = async () => ({ ok: true, status: 200, text: async () => JSON.stringify({ banners: [] }) });
-    const empty = await mount(React.createElement(AppBelt, { onOpenSheet: () => {}, onHome: () => {}, onOpenRoom: () => {}, onSearch: () => {} }));
+    const empty = await mount(React.createElement(AppBelt, { onOpenSheet: () => {}, onHome: () => {}, onSearch: () => {} }));
     assert.ok(!empty.host.querySelector('[aria-label="Announcements"]'),
       'no banners, no frame — an empty promotional slot is still a claim that something is being promoted');
     empty.root.unmount(); empty.host.remove();
@@ -154,7 +153,7 @@ async function main() {
         ]
       })
     });
-    const two = await mount(React.createElement(AppBelt, { onOpenSheet: () => {}, onHome: () => {}, onOpenRoom: () => {}, onSearch: () => {} }));
+    const two = await mount(React.createElement(AppBelt, { onOpenSheet: () => {}, onHome: () => {}, onSearch: () => {} }));
     // The date is asserted through the same call the component uses — the app's
     // convention for a day label — so the test cannot be wrong about a locale and
     // cannot drift into pinning a string nobody chose.
@@ -176,12 +175,28 @@ async function main() {
   {
     const ids = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     assert.equal(new Set(ids).size, ids.length, 'no destination is listed twice in the sheet');
-    assert.equal(ids.length, 6, 'six entries, not eleven — a long list is a wall for a reader who scans');
-    const sheetLabels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => text(i.label)));
-    assert.ok(RAIL_LABELS.every((r) => !sheetLabels.includes(r)),
-      'nothing in the sheet is also in the band: one purpose, one navigation');
-    assert.ok(!['Home', 'Spaces', 'Activity'].some((d) => sheetLabels.includes(d)),
-      'and the dock tabs are not repeated here either');
+    assert.equal(ids.length, 12, 'twelve entries — the check-in, the work, the standing, the settings, the closing');
+    // Pulse leads: the reorg put the check-in at the top of the drawer, because
+    // a list that answers "what happened" should start there.
+    const firstGroup = SHEET_GROUPS[0];
+    assert.equal(firstGroup.items.length, 1, 'the first group is a single entry');
+    assert.equal(firstGroup.items[0].label, 'Pulse', 'and that entry is Pulse');
+    // The settings group is exactly the three controls the app can answer.
+    const settings = SHEET_GROUPS.find((g) => g.label === 'Settings');
+    assert.ok(settings, 'the settings group exists');
+    assert.deepEqual(settings.items.map((i) => i.label), ['Language', 'Notifications', 'Privacy'],
+      'Language · Notifications · Privacy, in that order');
+    // The closing group: the explanation and the exit, no group label.
+    const closing = SHEET_GROUPS.find((g) => g.id === 'closing');
+    assert.deepEqual(closing.items.map((i) => i.label), ['How Trace works', 'Sign out'], 'How Trace works · Sign out, on their own');
+    const sheetLabels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.label));
+    // THE DEDUPE, in its new form: a door the bar owns is not also a row in the
+    // sheet. The bar is three destinations + one action, and the sheet must not
+    // reprint any of them.
+    const doorLabels = BOTTOM_BAR_ITEMS.filter((i) => i.type === 'destination').map((i) => i.label);
+    assert.ok(doorLabels.every((d) => !sheetLabels.includes(d)), 'no bar door is repeated in the sheet');
+    assert.ok(!['Spaces', 'Discover', 'Activity'].some((d) => sheetLabels.includes(d)),
+      'and the old bar\'s doors are not in the sheet either — Activity is Pulse now');
     const labels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.label));
     assert.ok(labels.every((l) => l.trim().length > 2), 'every entry is a word a person can read');
     // Nav entries carry no numbers: a count in a nav list is a count that has to

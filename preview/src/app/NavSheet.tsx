@@ -1,33 +1,48 @@
 // ---------------------------------------------------------------------------
-// THE SHEET — the "All" drawer, and the one place the long list of destinations
-// lives.
+// THE SHEET — the "All" drawer, and the one place the long list of
+// destinations lives.
 //
-// The bottom dock carries five tabs; everything else used to be squeezed onto
-// screens that were already full. This is Amazon's `nav-app-links` pattern
-// borrowed for its one genuinely useful idea: a partial menu that takes the
-// overflow OFF the working surfaces. The belt rule that comes with it is
-// enforced by `appbelt.jsx`: a destination that lives here does not also get a
-// shelf on Home, and a destination that has a shelf of its own is not listed
-// twice in here.
+// The reorg that owns this file: the bottom bar holds exactly three doors
+// (Home · Mine · You) plus one action ([+]). Everything else lives HERE, in
+// groups, or as a section on Home. The rule that keeps the two from growing
+// back into each other: a destination the sheet owns does not also get a door
+// in the bar, and `doorways.jsx` asserts the overlap is zero.
 //
-// Deliberately absent:
-//   * counts. A nav list with numbers is a nav list that has to keep those
-//     numbers true, and every one of them would arrive before the member has
-//     rows to fill it. So each entry is a word and an icon, nothing else;
-//   * badges, "new" tags, unread dots, promotional chips;
-//   * the weather. It is not a destination — it is a line on the day it matters
-//     (see `features/home/PlannedWeather`).
+// The groups, top to bottom:
+//   PULSE — the check-in surface. It used to be a fourth door; a place you
+//           visit to see what happened is a shelf, not a room of its own.
+//   YOUR WORK — Requests, Supply, Partners. Real shelves, kept.
+//   YOU, YOUR STANDING, YOUR MONEY — Standing, Earn, Table Banking.
+//   SETTINGS — Language, Notifications, Privacy.
+//   How Trace works · Sign out.
+//
+// Deliberately absent: counts, badges, "new" tags, unread dots. A nav list
+// with numbers is a nav list that has to keep those numbers true, and every
+// one of them would arrive before the member has rows to fill it.
 // ---------------------------------------------------------------------------
-import React, { useEffect } from 'react';
-import { X, Coins, Users, Ticket, Search, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import {
+  X, Coins, Users, Ticket, Search, ShieldCheck, Activity,
+  Globe, Bell, Lock
+} from 'lucide-react';
 
 export type SheetTarget =
-  | { kind: 'tab'; tab: 'requests' | 'supply' | 'partners' }
-  | { kind: 'you'; section: 'profile' | 'standing' | 'following' | 'subscriptions' | 'earn' | 'orders' | 'selling' | 'archive' | 'tableBanking' | 'network' | 'how' };
+  | { kind: 'tab'; tab: 'requests' | 'supply' | 'partners' | 'pulse' | 'mine' }
+  | {
+      kind: 'you';
+      section:
+        | 'profile' | 'standing' | 'following' | 'subscriptions'
+        | 'earn' | 'orders' | 'selling' | 'archive' | 'tableBanking'
+        | 'network' | 'how' | 'notifications' | 'privacy' | 'language';
+    }
+  | { kind: 'signout' };
 
 export interface SheetItem {
   id: string;
   label: string;
+  /** A second, quieter line under the label — what the shelf holds, in the
+      app's own words. */
+  sub?: string;
   icon: React.ReactNode;
   target: SheetTarget;
 }
@@ -40,26 +55,24 @@ const icon = (Icon: React.ComponentType<{ className?: string; style?: React.CSSP
 );
 
 /**
- * The whole sheet, as data. `appbelt.jsx` asserts every `id` is unique and that
- * each group's entries are the ones it claims — a nav list that grows a
- * duplicate in a refactor is how two surfaces end up owning the same feature.
- */
-/**
- * The sheet, as data. `appbelt.jsx` asserts every `id` is unique, that no
- * destination appears twice, and — the rule this list exists to honour — that
- * nothing in here is ALSO reachable from the band or the dock. That is why it is
- * seven entries and not sixteen: Home, Spaces, Activity and the four rooms the
- * band already carries were listed here too, which is how one purpose ends up
- * with three navigations and a first-time reader with eleven choices.
- *
- * So: the sheet holds the destinations that exist nowhere else. The band holds
- * the rooms. The dock holds the five tabs. A thing you can reach from two places
- * is a thing you will not find in either.
- *
- * Six entries. That number is asserted in `appbelt.jsx`, so the list cannot
- * quietly grow back into the eleven-item wall it replaced.
+ * The sheet, as data. `doorways.jsx` asserts every `id` is unique, that Pulse
+ * is in the first group, that the settings group is Language / Notifications /
+ * Privacy, and that nothing here repeats a label from the bottom bar.
  */
 export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[] }> = [
+  {
+    id: 'pulse',
+    label: 'Pulse',
+    items: [
+      {
+        id: 'pulse',
+        label: 'Pulse',
+        sub: 'What’s moving today',
+        icon: icon(Activity, 'ink'),
+        target: { kind: 'tab', tab: 'pulse' }
+      }
+    ]
+  },
   {
     id: 'work',
     label: 'Your work',
@@ -73,19 +86,28 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'you',
     label: 'You, your standing, your money',
     items: [
-      // Two, not six. Profile is what You opens ON, so linking it would be a
-      // button that goes where the tab already goes; Table banking and
-      // Subscriptions are reached inside You's own Money group. Every entry here
-      // has to earn its line by being nowhere else — that is the whole rule.
       { id: 'standing', label: 'Standing, commitments, reciprocity', icon: icon(ShieldCheck), target: { kind: 'you', section: 'standing' } },
-      { id: 'earn', label: 'Earn', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } }
+      { id: 'earn', label: 'Earn', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } },
+      { id: 'tableBanking', label: 'Table Banking', icon: icon(Coins), target: { kind: 'you', section: 'tableBanking' } }
     ]
   },
   {
-    id: 'reading',
-    label: 'When you want it explained',
+    id: 'settings',
+    label: 'Settings',
     items: [
-      { id: 'how', label: 'How Trace works', icon: icon(Search), target: { kind: 'you', section: 'how' } }
+      { id: 'language', label: 'Language', icon: icon(Globe), target: { kind: 'you', section: 'language' } },
+      { id: 'notifications', label: 'Notifications', icon: icon(Bell), target: { kind: 'you', section: 'notifications' } },
+      { id: 'privacy', label: 'Privacy', icon: icon(Lock), target: { kind: 'you', section: 'privacy' } }
+    ]
+  },
+  {
+    // No group label: these two stand on their own, like the mock it came
+    // from. The renderer skips the header for an empty label.
+    id: 'closing',
+    label: '',
+    items: [
+      { id: 'how', label: 'How Trace works', icon: icon(Search), target: { kind: 'you', section: 'how' } },
+      { id: 'signout', label: 'Sign out', icon: icon(X), target: { kind: 'signout' } }
     ]
   }
 ];
@@ -100,7 +122,7 @@ export interface NavSheetProps {
 }
 
 export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, onSetPlace }) => {
-  const [draft, setDraft] = React.useState(place);
+  const [draft, setDraft] = useState(place);
   useEffect(() => { if (open) setDraft(place); }, [open, place]);
 
   useEffect(() => {
@@ -120,8 +142,14 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
         onClick={onClose}
         className="absolute inset-0 bg-black/45"
       />
+      {/* bottom-14 = the 56px bar. The drawer stops ABOVE the floor it is
+          drawn over: on a phone the two must not share a pixel. On md+ the bar
+          is gone (it is the sidebar rail), so the drawer takes the full
+          height there. `doorways.jsx` asserts the gap class, which is the
+          geometric claim in a test that has no layout engine. */}
       <div
-        className="absolute top-0 bottom-0 left-0 w-[min(86vw,20rem)] overflow-y-auto p-4 space-y-5"
+        data-testid="nav-sheet-panel"
+        className="absolute top-0 bottom-14 md:bottom-0 left-0 w-[min(86vw,20rem)] overflow-y-auto p-4 space-y-5"
         style={{ background: 'var(--color-bg)', boxShadow: 'var(--lift-3)' }}
       >
         <div className="flex items-center justify-between">
@@ -138,6 +166,35 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {SHEET_GROUPS.map((group) => (
+          <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">
+            {group.label ? (
+              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+                {group.label}
+              </p>
+            ) : null}
+            {group.items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => { onGo(item.target); onClose(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left cursor-pointer"
+                style={{ color: 'var(--color-text)' }}
+              >
+                {item.icon}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[13px] font-bold truncate">{item.label}</span>
+                  {item.sub ? (
+                    <span className="block text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                      {item.sub}
+                    </span>
+                  ) : null}
+                </span>
+              </button>
+            ))}
+          </nav>
+        ))}
 
         {/* The area, set once and used by the only weather line this app shows.
             An empty field stays described as unset rather than defaulted to a
@@ -177,26 +234,6 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
             Used to read the forecast. A weather line appears only on a day you have something planned.
           </p>
         </div>
-
-        {SHEET_GROUPS.map((group) => (
-          <nav key={group.id} aria-label={group.label} className="space-y-1">
-            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-              {group.label}
-            </p>
-            {group.items.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => { onGo(item.target); onClose(); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left text-[13px] font-bold cursor-pointer"
-                style={{ color: 'var(--color-text)' }}
-              >
-                {item.icon}
-                <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              </button>
-            ))}
-          </nav>
-        ))}
       </div>
     </div>
   );

@@ -65,7 +65,13 @@ const KIND_ICON: Record<string, React.ComponentType<{ className?: string; 'aria-
   other: Shapes
 };
 
-export function ErrandsLobby({ className = '' }: { className?: string }) {
+export interface ErrandsLobbyComposerSignal {
+  nonce: number;
+  /** The kind the caller chose — the "Runs" tile arrives as 'delivery'. */
+  kind: string | null;
+}
+
+export function ErrandsLobby({ className = '', composerSignal }: { className?: string; composerSignal?: ErrandsLobbyComposerSignal | null }) {
   const [board, setBoard] = useState<ErrandBoard | null>(null);
   const [providers, setProviders] = useState<ErrandProviders | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -96,6 +102,17 @@ export function ErrandsLobby({ className = '' }: { className?: string }) {
     void load();
     void briefApi.getErrandProviders().then((r) => { if (r.ok) setProviders(r.data); });
   }, [load]);
+
+  // A "Start a run" from Home (or the bar's [+]) arrives as a nonce: open the
+  // composer with the kind the caller chose, once per nonce.
+  const [seenSignal, setSeenSignal] = useState<number>(0);
+  useEffect(() => {
+    if (composerSignal && composerSignal.nonce !== seenSignal) {
+      setSeenSignal(composerSignal.nonce);
+      setKind(composerSignal.kind);
+      setPosting(true);
+    }
+  }, [composerSignal, seenSignal]);
 
   // Coming back to the tab re-reads the board. A refresh on return, not a
   // pushed feed — there is no socket here and we do not pretend there is.

@@ -122,7 +122,12 @@ async function runTests() {
   // The three zones the reformation requires, in order.
   check('zone 1: what the world is doing (signal line)', text1.includes("What's moving"));
   check('zone 2: what I should do next (one decision)', text1.includes('Your next step'));
-  check('zone 3: what is out there (the case)', text1.includes('What’s out there'));
+  // Zone 3 became the landing: the mode tiles (Shops, Events, Circles, Errands,
+  // Runs, Group Buys) and the "What's moving today" hero — the "What's out
+  // there" shelf was the browse, and the browse is the board.
+  check('zone 3: the mode tiles are the doors of the board',
+    text1.includes('Shops') && text1.includes('Events') && text1.includes('Circles') && text1.includes('Errands') && text1.includes('Runs') && text1.includes('Group Buys'));
+  check('the hero card is the day, named plainly', text1.includes('What’s moving today'));
   check('standing line reports a real read instead of a rank or sector',
     text1.includes('Nothing pending on your ledger.') || text1.includes('Your standing'));
   check('no invented standing: no position number, sector, tier or queue',
@@ -469,7 +474,7 @@ async function runTests() {
   });
 
   const text12 = host12.textContent;
-  check('renders AppShell Home tab by default', text12.includes('What’s out there') || text12.includes('Hi '));
+  check('renders AppShell Home tab by default', text12.includes('Hi '));
 
   await act(async () => { root12.unmount(); host12.remove(); });
 
