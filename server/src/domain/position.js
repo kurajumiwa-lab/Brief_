@@ -8,8 +8,13 @@
 //
 // The four impulses, mapped to real data only:
 //   decay    — expiring quotes (requestQuotes.offers[].terms.validUntil),
-//              a campaign waitlist position + offer expiry, the field-agent
-//              override's 24-month window, and lipa-mdogo overdue instalments.
+//              a campaign waitlist position + offer expiry, and lipa-mdogo
+//              overdue instalments.
+//              A fourth source used to sit here: the field agent's 24-month
+//              override window. Decision 5 (docs/DECISIONS.md) replaced the
+//              override with a flat KES 150 per approved visit, paid weekly —
+//              so there is no window left to expire and the row is gone rather
+//              than printed as a permanent zero. Nothing else was removed.
 //   missed   — my quotes that were declined BECAUSE another was selected
 //              (the real quote_declined event with reason "Selected another
 //              option", written when a request's quote is accepted).
@@ -22,7 +27,6 @@
 // ---------------------------------------------------------------------------
 
 import { store } from '../store.js';
-import { overrideObligation } from './fieldAgent.js';
 import { listFor as lipaMdogoContracts, contractState } from './lipaMdogo.js';
 import { unmetDemand } from './gaps.js';
 import { categoryClosure, fillStats } from './precedent.js';
@@ -32,7 +36,6 @@ import { offerValue } from './offerValue.js';
 // quote is judged by the same clock everywhere.
 const expiryMs = (value) => (value ? Date.parse(`${value}T23:59:59.999+03:00`) : Infinity);
 const HOUR = 3600000;
-const MONTH = 30.44 * 24 * HOUR;
 
 const CLOSED_QUOTE = new Set(['accepted', 'declined', 'withdrawn']);
 
@@ -184,20 +187,11 @@ export function positionFor(userId) {
     })
     .sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
 
-  // --- DECAY 3: the field-agent override's 24-month window -----------------
-  const obligation = overrideObligation(userId);
-  const activeClaims = obligation.claims.filter((c) => c.expiresAt);
-  let override = null;
-  if (activeClaims.length) {
-    const soonest = activeClaims.sort((a, b) => (a.expiresAt < b.expiresAt ? -1 : 1))[0];
-    override = {
-      claimCount: activeClaims.length,
-      monthsLeft: Math.max(0, Math.round((Date.parse(soonest.expiresAt) - now) / MONTH)),
-      expiresAt: soonest.expiresAt
-    };
-  }
-
-  // --- DECAY 4: lipa-mdogo overdue instalments -----------------------------
+  // --- DECAY 3: lipa-mdogo overdue instalments -----------------------------
+  // (This was DECAY 4. The field-agent override window that stood at 3 no
+  // longer exists — Decision 5 pays a flat fee per approved visit, with no
+  // window to run down — and a decay rail does not carry a row that can never
+  // be non-null.)
   let overdueInstallments = 0;
   for (const contract of lipaMdogoContracts(userId)) {
     overdueInstallments += contractState(contract.id).summary.overdueCount;
@@ -248,7 +242,6 @@ export function positionFor(userId) {
     decay: {
       expiringQuotes,
       waitlist,
-      override,
       overdueInstallments
     },
     missedCapture: {

@@ -1,38 +1,45 @@
 // ---------------------------------------------------------------------------
 // PICKUPS — rider routing to onboarded shops.
 //
-// The missing half of the field-agent loop: an agent ONBOARDS a shop (and
-// earns the 0.75% settled-order override + the menu bounty), but nothing
-// routes OTHER riders to pick up from it. This is that routing.
+// The missing half of the field-agent loop: an agent ONBOARDS a shop, but
+// nothing routes OTHER riders to pick up from it. This is that routing.
 //
 //   * a pickup is a LOCAL delivery task, assigned to a rider, originating from
 //     a shop that has an ACTIVE full_registration claim (an onboarding agent).
-//   * when a pickup is completed, the shop's ONBOARDING AGENT earns a flat
-//     per-pickup origin fee — the "minimal fee" for having brought the shop in,
-//     even when a different rider does the actual delivery.
-//   * the fee is DERIVED (sum of completed pickups from the agent's claimed
-//     shops) and is NOT money until a finance-confirmed settlement — the same
-//     honesty rule the 0.75% override already obeys.
+//   * completing a pickup used to pay the shop's ONBOARDING AGENT a flat
+//     per-pickup origin fee (KES 20), settled through its own finance-gated
+//     rail. Decision 5 (docs/DECISIONS.md) ended that: a field agent is paid
+//     KES 150 for an APPROVED VISIT and nothing else — no bonus, no volume
+//     tier. A per-delivery fee to the agent who brought the shop in is a
+//     volume tier by another name, and it paid for the shop's trade rather
+//     than for the agent's work. So the money is gone and the LOGISTICS stay:
+//     routing, assignment, completion and the dispatchable origins are all
+//     exactly as they were.
+//   * what remains is a COUNT — how many delivered pickups originated at shops
+//     you onboarded. A count is information, not pay, and it is printed as a
+//     count so nobody reads KES into it.
 //
 // Honesty:
 //   * a pickup must originate from a shop someone actually claimed — no claim,
-//     no origin fee, no routing target.
-//   * first-touch-wins is preserved: the origin fee goes to whoever holds the
+//     no routing target.
+//   * first-touch-wins is preserved: attribution follows whoever holds the
 //     ACTIVE claim, not whoever shows up later.
 //   * the rider and the onboarding agent can be the same person; they did two
-//     jobs (delivered + brought the shop in) and earn for both, derived.
+//     jobs (delivered + brought the shop in). The delivery is the rider's work
+//     and the visit is the agent's — only the visit is payable, once, flat.
+//   * `pickupFeeSettlements` rows written before Decision 5 are still readable
+//     as history. Nothing writes a new one, and no week of them can be re-paid.
 // ---------------------------------------------------------------------------
 
 import { store, newId } from '../store.js';
-import { getUser } from './auth.js';
-import { createTransaction, transitionTransaction } from './ledger.js';
 
 export const PICKUP_STATUS = ['assigned', 'picked_up', 'delivered', 'cancelled'];
 
-// The flat, deterministic per-pickup fee the onboarding agent earns when a
-// rider completes a pickup from their shop. Minimal by design; stated here so
-// it is never guessed at runtime.
-export const PICKUP_ORIGIN_FEE_KES = 20;
+// There is deliberately NO fee constant here any more. PICKUP_ORIGIN_FEE_KES
+// was KES 20 per delivered pickup, paid to the onboarding agent; Decision 5
+// replaced field-agent pay with one flat number (KES 150 per approved visit,
+// in domain/fieldAgent.js) and refused every volume tier. A constant left
+// behind "for reference" is a constant somebody eventually re-wires.
 
 function fail(message, status = 400, code = 'validation_error') {
   const e = new Error(message);
@@ -112,11 +119,14 @@ export function listPickups({ riderId = null, status = null } = {}) {
 }
 
 /**
- * The onboarding agent's DERIVED per-pickup origin fee: for every DELIVERED
- * pickup originating from a shop they actively claim, PICKUP_ORIGIN_FEE_KES.
- * Derived on read; not money until a finance-confirmed settlement.
+ * The onboarding agent's DERIVED pickup COUNT: every DELIVERED pickup that
+ * originated from a shop they actively claim. Derived on read.
+ *
+ * This is information, not an obligation — the function no longer owes anyone
+ * anything, which is why it is no longer called one. Pay for bringing the shop
+ * in is the flat approved-visit fee (Decision 5, domain/fieldAgent.js).
  */
-export function pickupOriginObligation(agentId) {
+export function pickupOriginStats(agentId) {
   const claimedVendorIds = new Set(
     store.filter('vendorClaims', (c) =>
       c.agentId === agentId && c.claimType === 'full_registration' && c.status === 'active')
@@ -128,9 +138,9 @@ export function pickupOriginObligation(agentId) {
   return {
     agentId,
     pickupCount: pickups.length,
-    feePerPickupKes: PICKUP_ORIGIN_FEE_KES,
-    originFeeKes: pickups.length * PICKUP_ORIGIN_FEE_KES,
-    note: 'Derived from delivered pickups at shops you onboarded. Not money until a finance-confirmed settlement.'
+    shops: claimedVendorIds.size,
+    currency: null,
+    note: 'Delivered pickups that started at shops you onboarded — a count of real rows. This is not pay: an agent is paid KES 150 per approved visit (Decision 5), and a per-delivery fee was a volume tier.'
   };
 }
 
@@ -198,65 +208,16 @@ export function listRiders({ selfId = null } = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// SETTLEMENT — the only place the derived origin fee becomes money. Mirrors
-// the field-agent override settlement: a finance-gated request writes a real
-// ledger transaction (type pickup_origin_fee); finance confirms or refuses.
+// SETTLEMENT — REMOVED, not hidden. This section used to hold
+// `requestPickupFeeSettlement` and `confirmPickupFeeSettlement`: a
+// finance-gated rail that turned the per-pickup origin fee into a real ledger
+// transaction (type `pickup_origin_fee`). Decision 5 ended the fee, so there is
+// nothing for a settlement to settle and no honest way to keep a writer that
+// would mint money the operator refused. What survives is the READ below, so
+// rows written before the decision remain visible as the history they are.
 // ---------------------------------------------------------------------------
-export function requestPickupFeeSettlement(agentId, { from = null, to = null } = {}) {
-  if (!getUser(agentId)) fail('agent not found', 404, 'not_found');
-  const obl = pickupOriginObligation(agentId);
-  if (obl.originFeeKes <= 0) fail('no delivered pickups to settle against', 409, 'no_activity');
 
-  const periodKey = `${agentId}:${from ?? 'all'}:${to ?? 'all'}`;
-  if (store.find('pickupFeeSettlements', (s) => s.periodKey === periodKey && s.status !== 'refused')) {
-    fail('a settlement for this period already exists', 409, 'duplicate_settlement');
-  }
-
-  const tx = createTransaction({
-    amount: obl.originFeeKes,
-    type: 'pickup_origin_fee',
-    description: `Pickup origin fee — ${obl.pickupCount} delivered pickup(s)`,
-    counterparty: agentId,
-    metadata: { agentId, pickupCount: obl.pickupCount, feePerPickupKes: obl.feePerPickupKes, periodFrom: from, periodTo: to }
-  });
-  transitionTransaction(tx.id, 'pending', 'awaiting finance confirmation of pickup origin fee');
-  const now = new Date().toISOString();
-  return store.insert('pickupFeeSettlements', {
-    id: newId('pfs'),
-    agentId,
-    periodKey,
-    periodFrom: from,
-    periodTo: to,
-    pickupCount: obl.pickupCount,
-    feePerPickupKes: obl.feePerPickupKes,
-    originFeeKes: obl.originFeeKes,
-    ledgerId: tx.id,
-    status: 'pending',
-    confirmedAt: null,
-    refusedReason: null,
-    createdAt: now,
-    updatedAt: now
-  });
-}
-
-export function confirmPickupFeeSettlement(settlementId, { accept = true, note = '' } = {}) {
-  const row = store.find('pickupFeeSettlements', (s) => s.id === settlementId);
-  if (!row) fail('settlement not found', 404, 'not_found');
-  if (row.status !== 'pending') fail(`this settlement is already ${row.status}`, 409, 'invalid_state');
-  const reason = String(note ?? '').trim();
-  if (!accept) {
-    if (reason.length < 4) fail('say why the settlement is refused');
-    transitionTransaction(row.ledgerId, 'failed', reason.slice(0, 200));
-    return store.update('pickupFeeSettlements', row.id, {
-      status: 'refused', refusedReason: reason.slice(0, 300), updatedAt: new Date().toISOString()
-    });
-  }
-  transitionTransaction(row.ledgerId, 'confirmed', 'pickup origin fee confirmed by finance');
-  return store.update('pickupFeeSettlements', row.id, {
-    status: 'confirmed', confirmedAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-  });
-}
-
+/** HISTORY ONLY. Rows written before Decision 5. Nothing adds to this list. */
 export function listPickupFeeSettlements(agentId) {
   return store.filter('pickupFeeSettlements', (s) => s.agentId === agentId)
     .slice().sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));

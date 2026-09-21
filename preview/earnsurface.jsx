@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// EARN SURFACE SUITE — deterministic points + field-agent override + Lipa
+// EARN SURFACE SUITE — deterministic points + field-agent VISITS + Lipa
 // Mdogo contracts, in one honest place (Phase 16 #4).
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
@@ -66,12 +66,20 @@ async function main() {
       }) };
     }
     if (url.includes('/field-agent')) {
+      // Decision 5: KES 150 flat per APPROVED visit, weekly. One approved, one
+      // still waiting — the surface must show the difference honestly.
       return { ok: true, status: 200, text: async () => JSON.stringify({
-        claims: [{ id: 'c1', vendorId: 'v1', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-01T00:00:00Z', expiresAt: '2028-09-01T00:00:00Z', createdAt: '2026-09-01T00:00:00Z' }],
-        override: {
-          agentId: 'a1', rate: 0.0075, months: 24,
-          claims: [{ claimId: 'c1', vendorId: 'v1', vendorName: 'Kiko Bakery', claimedAt: '2026-09-01T00:00:00Z', expiresAt: '2028-09-01T00:00:00Z', settledOrders: 3, grossKes: 30000, overrideKes: 225, contactName: 'Papa Kiko', contactMethod: '0712345678', businessType: 'retailer', location: 'Kilimani' }],
-          grossKes: 30000, overrideKes: 225, currency: 'KES', note: 'not money until settled'
+        claims: [{ id: 'c1', vendorId: 'v1', agentId: 'a1', claimType: 'full_registration', territoryKey: null, status: 'active', claimedAt: '2026-09-01T00:00:00Z', expiresAt: null, createdAt: '2026-09-01T00:00:00Z' }],
+        visits: [{ id: 'fv1', agentId: 'a1', vendorId: 'v1', purpose: 'full_registration', status: 'approved', notes: 'Met the owner at the stall.', submittedAt: '2026-09-08T00:00:00Z', decidedBy: 'op1', decidedAt: '2026-09-09T00:00:00Z', rejectReason: null, createdAt: '2026-09-08T00:00:00Z' }],
+        earnings: {
+          agentId: 'a1', feeKes: 150, currency: 'KES',
+          visits: [
+            { visitId: 'fv1', vendorId: 'v1', vendorName: 'Kiko Bakery', purpose: 'full_registration', status: 'approved', notes: 'Met the owner at the stall and confirmed the bakery opens at six.', submittedAt: '2026-09-08T00:00:00Z', decidedAt: '2026-09-09T00:00:00Z', decidedBy: 'op1', rejectReason: null, week: '2026-W37', feeKes: 150, contactName: 'Papa Kiko', contactMethod: '0712345678', businessType: 'retailer', location: 'Kilimani' },
+            { visitId: 'fv2', vendorId: 'v2', vendorName: 'Mama Njeri Grocers', purpose: 'menu_upload', status: 'pending', notes: 'Photographed the price list at the stall.', submittedAt: '2026-09-10T00:00:00Z', decidedAt: null, decidedBy: null, rejectReason: null, week: null, feeKes: 0, contactName: 'Mama Njeri', contactMethod: '0713000000', businessType: 'retailer', location: 'Gikomba' }
+          ],
+          approved: 1, pending: 1, rejected: 0, approvedKes: 150, unsettledKes: 150,
+          weeks: [{ week: '2026-W37', visits: 1, kes: 150, feeKes: 150, currency: 'KES', settlementId: null, settlementStatus: null }],
+          note: 'KES 150 per approved visit, paid weekly; a rejected or waiting visit pays nothing. Not money until a settlement is confirmed by finance.'
         },
         settlements: []
       }) };
@@ -107,10 +115,15 @@ async function main() {
     assert.ok(t.includes('100 points = KES 10'), 'deterministic ratio stated');
     assert.ok(t.includes('No chance, no spin'), 'anti-gambling contract stated');
 
-    // Field agent override.
-    assert.ok(t.includes('KES 225'), 'derived override shown');
-    assert.ok(t.includes('Kiko Bakery'), 'territory vendor named');
-    assert.ok(t.includes('3 settled orders'), 'settled order count shown');
+    // Field agent visits — Decision 5: one flat number, printed with its arithmetic.
+    assert.ok(t.includes('KES 150'), 'the flat approved-visit fee is shown');
+    assert.ok(t.includes('Kiko Bakery'), 'the visited shop is named');
+    assert.ok(/1 approved/.test(t), 'the approved count is shown');
+    assert.ok(/1 waiting/.test(t), 'and a pending visit is named as waiting, not as money');
+    assert.ok(t.includes('Week 2026-W37'), 'the payout week is printed');
+    assert.ok(t.includes('not settled yet'), 'with its settlement state, not an implied one');
+    assert.ok(t.includes('Met the owner at the stall'), "the agent's own words about the visit are shown");
+    assert.ok(!/0\.75%|24 month|settled order/i.test(t), 'no rate, no window, and no share of the shop\'s trade survives in the copy');
     // The direct contact the agent captured, with Call + WhatsApp affordances.
     assert.ok(t.includes('Papa Kiko'), 'direct contact name shown');
     assert.ok(t.includes('0712345678'), 'direct contact phone shown');
@@ -127,7 +140,7 @@ async function main() {
     assert.ok(t.includes('M-Pesa SACCO'), 'licensed lender named');
     assert.ok(t.includes('1/2 paid'), 'paid count shown');
   }
-  pass('EarnSurface: points ratio, territory override and Lipa Mdogo all render');
+  pass('EarnSurface: points ratio, approved-visit fees and Lipa Mdogo all render');
 
   // Convert action sends the entered points.
   {
@@ -175,7 +188,8 @@ async function main() {
       // No claims yet -> the "Onboard a vendor" action must appear.
       return { ok: true, status: 200, text: async () => JSON.stringify({
         claims: [],
-        override: { agentId: 'a1', rate: 0.0075, months: 24, claims: [], grossKes: 0, overrideKes: 0, currency: 'KES', note: 'derived' },
+        visits: [],
+        earnings: { agentId: 'a1', feeKes: 150, currency: 'KES', visits: [], approved: 0, pending: 0, rejected: 0, approvedKes: 0, unsettledKes: 0, weeks: [], note: 'derived' },
         settlements: []
       }) };
     }
@@ -197,7 +211,8 @@ async function main() {
   {
     const { container } = mount(React.createElement(EarnSurface, { onRequireAuth: () => {} }));
     await flush();
-    assert.ok(text(container).includes('No territory yet'), 'empty territory state');
+    assert.ok(text(container).includes('No visits yet'), 'empty visit state');
+    assert.ok(text(container).includes('KES 150'), 'and even empty, it states the one flat number');
     assert.ok(btn('+ Onboard another shop'), 'onboard action present (no dead end)');
 
     act(() => { btn('+ Onboard another shop').click(); });

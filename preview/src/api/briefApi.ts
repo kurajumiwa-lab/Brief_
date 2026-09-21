@@ -4596,7 +4596,13 @@ export function refusePartnerSettlement(settlementId: string, note = ''): Promis
 }
 
 // ---------------------------------------------------------------------------
-// FIELD AGENT — the member's own territory claims + derived override (#2).
+// FIELD AGENT — the member's own claims, visits and derived earnings.
+//
+// Pay is the operator's Decision 5 (docs/DECISIONS.md): KES 150 flat per
+// APPROVED visit, settled weekly. No rate, no window, no bonus, no multiplier —
+// so none of those appear in these types either. A claim is attribution; a
+// visit is the payable act; only an approved visit earns, and only a
+// finance-confirmed settlement turns it into money.
 // ---------------------------------------------------------------------------
 export interface FieldAgentClaim {
   id: string;
@@ -4609,53 +4615,120 @@ export interface FieldAgentClaim {
   expiresAt: string | null;
   createdAt: string;
 }
-export interface FieldAgentOverride {
+/** The stored visit row. It carries NO fee and NO week — both are derived. */
+export interface FieldAgentVisitRow {
+  id: string;
   agentId: string;
-  rate: number;
-  months: number;
-  claims: Array<{
-    claimId: string;
-    vendorId: string;
-    vendorName: string | null;
-    claimedAt: string;
-    expiresAt: string | null;
-    settledOrders: number;
-    grossKes: number;
-    overrideKes: number;
-    /** The direct contact captured at onboarding: who you reach + their number. */
-    contactName: string | null;
-    contactMethod: string | null;
-    businessType: string | null;
-    location: string | null;
-  }>;
-  grossKes: number;
-  overrideKes: number;
+  vendorId: string;
+  purpose: 'menu_upload' | 'full_registration';
+  status: 'pending' | 'approved' | 'rejected';
+  /** The agent's own account of what they saw — the approver reads this. */
+  notes: string;
+  submittedAt: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  rejectReason: string | null;
+  createdAt: string;
+}
+/** A visit as served on the earnings read: derived fee and week attached. */
+export interface FieldAgentVisit {
+  visitId: string;
+  vendorId: string;
+  vendorName: string | null;
+  purpose: 'menu_upload' | 'full_registration';
+  status: 'pending' | 'approved' | 'rejected';
+  notes: string;
+  submittedAt: string;
+  decidedAt: string | null;
+  decidedBy: string | null;
+  rejectReason: string | null;
+  /** The ISO week the visit was APPROVED in (`YYYY-Www`); null unless approved. */
+  week: string | null;
+  /** KES 150 when approved, 0 otherwise. Derived on read, never stored. */
+  feeKes: number;
+  /** The direct contact captured at onboarding: who you reach + their number. */
+  contactName: string | null;
+  contactMethod: string | null;
+  businessType: string | null;
+  location: string | null;
+}
+/** One payout week: that week's approved visits x the one flat number. */
+export interface FieldAgentWeek {
+  week: string;
+  visits: number;
+  kes: number;
+  feeKes: number;
   currency: string;
+  settlementId: string | null;
+  settlementStatus: 'pending' | 'confirmed' | 'refused' | null;
+}
+export interface FieldAgentEarnings {
+  agentId: string;
+  /** The one number, published so the client never hardcodes it. */
+  feeKes: number;
+  currency: string;
+  visits: FieldAgentVisit[];
+  approved: number;
+  pending: number;
+  rejected: number;
+  /** approved x feeKes. Derived; nothing is stored as a balance. */
+  approvedKes: number;
+  /** Approved money in weeks that have no settlement yet. */
+  unsettledKes: number;
+  weeks: FieldAgentWeek[];
   note: string;
 }
+/** One weekly payout: that week's approved visits, finance-confirmed. */
 export interface FieldAgentSettlement {
   id: string;
   agentId: string;
+  /** The ISO week paid (`YYYY-Www`). */
+  week: string;
   periodKey: string;
-  periodFrom: string | null;
-  periodTo: string | null;
-  grossKes: number;
-  rate: number;
-  overrideKes: number;
+  visits: number;
+  feeKes: number;
+  amountKes: number;
   ledgerId: string;
   status: 'pending' | 'confirmed' | 'refused';
+  confirmedBy: string | null;
   confirmedAt: string | null;
   refusedReason: string | null;
   createdAt: string;
 }
 export interface FieldAgentOverview {
   claims: FieldAgentClaim[];
-  override: FieldAgentOverride;
+  visits: FieldAgentVisitRow[];
+  earnings: FieldAgentEarnings;
   settlements: FieldAgentSettlement[];
 }
 export function getMyFieldAgent(): Promise<ApiResult<FieldAgentOverview>> {
   return request('/api/me/field-agent', undefined, r =>
-    r && Array.isArray(r?.claims) && r?.override ? r : undefined);
+    r && Array.isArray(r?.claims) && r?.earnings ? r : undefined);
+}
+
+/**
+ * Record a visit — the payable act. It arrives PENDING and pays nothing until
+ * an operator approves it; a rejection carries its reason. One visit per shop
+ * per purpose, so the fee cannot be run twice on the same door. `notes` is
+ * required because an approver who cannot read what happened cannot approve it.
+ */
+export function recordFieldVisit(body: {
+  vendorId: string;
+  purpose?: 'menu_upload' | 'full_registration';
+  notes: string;
+}): Promise<ApiResult<FieldAgentVisitRow>> {
+  return request('/api/me/field-agent/visits', {
+    method: 'POST',
+    body: JSON.stringify(body)
+  }, r => r?.visit?.id ? (r.visit as FieldAgentVisitRow) : undefined);
+}
+
+/** Request the weekly settlement for one week of approved visits (finance). */
+export function settleFieldAgentWeek(week: string): Promise<ApiResult<FieldAgentSettlement>> {
+  return request('/api/me/field-agent/settle', {
+    method: 'POST',
+    body: JSON.stringify({ week })
+  }, r => r?.settlement?.id ? (r.settlement as FieldAgentSettlement) : undefined);
 }
 
 /** Who holds this vendor's territory (the active full_registration claim), or null. */
@@ -4665,9 +4738,10 @@ export function getVendorClaim(vendorId: string): Promise<ApiResult<FieldAgentCl
 }
 
 /**
- * Onboard (claim) a vendor as a field agent. `menu_upload` mints a one-off
- * bounty; `full_registration` opens the 24-month territory override. The
- * server refuses self-claims and duplicate claims.
+ * Claim a vendor as a field agent — ATTRIBUTION only, first-touch-wins. A
+ * claim mints no bounty and opens no window (Decision 5 ended both); it records
+ * who brought the shop in. Pay follows an approved visit. The server refuses
+ * self-claims and duplicate claims.
  */
 export function claimVendor(
   vendorId: string,
@@ -4681,9 +4755,10 @@ export function claimVendor(
 }
 
 /**
- * Onboard a NEW vendor: create the shop AND record the territory claim in one
- * step. This is the door-to-door agent's primary act — bring a shop into Brief
- * that has no profile yet (there is no existing vendor to "claim" first).
+ * Onboard a NEW vendor: create the shop, record the territory claim AND the
+ * visit the act is, in one step. This is the door-to-door agent's primary act —
+ * bring a shop into Brief that has no profile yet (there is no existing vendor
+ * to "claim" first). The visit arrives pending and pays KES 150 once approved.
  */
 export function onboardVendor(body: {
   displayName: string;
@@ -4694,7 +4769,10 @@ export function onboardVendor(body: {
   contactName?: string | null;
   description?: string;
   claimType?: 'menu_upload' | 'full_registration';
-}): Promise<ApiResult<{ vendor: Vendor; claim: FieldAgentClaim }>> {
+  /** What you saw at the shop. Optional: the server writes an honest default
+   *  from the name, type and location you captured in person. */
+  notes?: string;
+}): Promise<ApiResult<{ vendor: Vendor; claim: FieldAgentClaim; visit: FieldAgentVisitRow }>> {
   return request('/api/me/field-agent/onboard', {
     method: 'POST',
     body: JSON.stringify(body)
@@ -4702,7 +4780,8 @@ export function onboardVendor(body: {
 }
 
 // ---------------------------------------------------------------------------
-// PICKUPS — rider routing to onboarded shops + the derived origin fee.
+// PICKUPS — rider routing to onboarded shops. The routing is the product; the
+// per-pickup origin fee Decision 5 ended is not, so what is served is a COUNT.
 // ---------------------------------------------------------------------------
 export interface Pickup {
   id: string;
@@ -4717,11 +4796,12 @@ export interface Pickup {
   createdAt: string;
   completedAt: string | null;
 }
-export interface PickupOriginObligation {
+/** A count of real rows, not an amount owed. `currency` is null on purpose. */
+export interface PickupOriginStats {
   agentId: string;
   pickupCount: number;
-  feePerPickupKes: number;
-  originFeeKes: number;
+  shops: number;
+  currency: null;
   note: string;
 }
 export interface PickupOrigin {
@@ -4755,9 +4835,9 @@ export function listMyPickups(): Promise<ApiResult<Pickup[]>> {
   return request('/api/pickups/mine', undefined, r =>
     Array.isArray(r?.pickups) ? (r.pickups as Pickup[]) : undefined);
 }
-export function getMyPickupOriginFee(): Promise<ApiResult<PickupOriginObligation>> {
-  return request('/api/me/pickup-origin-fee', undefined, r =>
-    r?.obligation && typeof r.obligation.originFeeKes === 'number' ? (r.obligation as PickupOriginObligation) : undefined);
+export function getMyPickupOriginStats(): Promise<ApiResult<PickupOriginStats>> {
+  return request('/api/me/pickup-origins', undefined, r =>
+    r?.stats && typeof r.stats.pickupCount === 'number' ? (r.stats as PickupOriginStats) : undefined);
 }
 
 /** A rider a dispatcher can route a pickup to, with the derived reason why. */
@@ -4774,7 +4854,8 @@ export function getPickupRiders(): Promise<ApiResult<Rider[]>> {
     Array.isArray(r?.riders) ? (r.riders as Rider[]) : undefined);
 }
 
-/** A finance-confirmed payout of the derived pickup origin fee. */
+/** HISTORY ONLY: a payout of the origin fee that Decision 5 ended. Readable,
+ *  never written again — the routes that minted these are retired. */
 export interface PickupFeeSettlement {
   id: string;
   agentId: string;
@@ -5403,7 +5484,6 @@ export interface MyPosition {
   decay: {
     expiringQuotes: PositionExpiringQuote[];
     waitlist: PositionWaitlist[];
-    override: { claimCount: number; monthsLeft: number; expiresAt: string } | null;
     overdueInstallments: number;
   };
   missedCapture: {

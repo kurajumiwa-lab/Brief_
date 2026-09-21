@@ -44,13 +44,12 @@ export function PositionCard({
   const missed = pos.missedCapture.count;
   const expiring = pos.decay.expiringQuotes;
   const waitlist = pos.decay.waitlist;
-  const override = pos.decay.override;
   const overdue = pos.decay.overdueInstallments;
   const openTotal = pos.open.total;
 
   const hasAnything =
     missed > 0 || expiring.length > 0 || waitlist.length > 0 ||
-    overdue > 0 || openTotal > 0 || (override && override.monthsLeft < 3);
+    overdue > 0 || openTotal > 0;
 
   if (!hasAnything) return null;
 
@@ -96,7 +95,9 @@ export function PositionCard({
         </div>
       )}
 
-      {/* DECAY — expiring quotes / waitlist / override / overdue */}
+      {/* DECAY — expiring quotes / waitlist / overdue. The field-agent
+          override window used to decay here; Decision 5 replaced it with a
+          flat fee per approved visit, which has no window to run down. */}
       {expiring.length > 0 && (
         <div className="flex items-start gap-2.5">
           <Clock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
@@ -136,15 +137,6 @@ export function PositionCard({
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-danger)' }} />
           <p className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
             {overdue} Lipa Mdogo instalment{overdue === 1 ? '' : 's'} overdue.
-          </p>
-        </div>
-      )}
-
-      {override && override.monthsLeft < 3 && (
-        <div className="flex items-start gap-2.5">
-          <Clock className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-primary)' }} />
-          <p className="text-xs font-bold" style={{ color: 'var(--color-text)' }}>
-            Your territory override on {override.claimCount} shop{override.claimCount === 1 ? '' : 's'} has {override.monthsLeft} month{override.monthsLeft === 1 ? '' : 's'} left.
           </p>
         </div>
       )}

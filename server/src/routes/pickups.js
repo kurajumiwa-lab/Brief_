@@ -45,11 +45,14 @@ export function register(app) {
     res.json({ pickups: pickups.listPickups({ riderId: me }) });
   });
 
-  // The onboarding agent's DERIVED origin fee.
-  app.get('/api/me/pickup-origin-fee', (req, res) => {
+  // The onboarding agent's DERIVED pickup count — information, not pay. The
+  // path used to be /api/me/pickup-origin-fee and used to answer with KES;
+  // Decision 5 (docs/DECISIONS.md) ended the per-pickup fee, and a route named
+  // "fee" that returns no fee is a route that invites somebody to re-add one.
+  app.get('/api/me/pickup-origins', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
-    res.json({ obligation: pickups.pickupOriginObligation(me) });
+    res.json({ stats: pickups.pickupOriginStats(me) });
   });
 
   // The dispatchable origins — every shop with an active onboarding claim.
@@ -67,49 +70,13 @@ export function register(app) {
     res.json({ riders: pickups.listRiders({ selfId: me }) });
   });
 
-  // The onboarding agent's own pickup-fee settlements (finance records).
+  // HISTORY ONLY: pickup-fee settlements written before Decision 5 ended the
+  // per-pickup fee. Readable, never re-payable — the settle/confirm/refuse
+  // routes that used to sit here are gone with the fee they moved.
   app.get('/api/me/pickup-fee/settlements', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;
     res.json({ settlements: pickups.listPickupFeeSettlements(me) });
-  });
-
-  // Request a settlement for the derived origin fee (finance): the only place
-  // the fee becomes money, mirroring the field-agent override exactly.
-  app.post('/api/me/pickup-fee/settle', (req, res) => {
-    const me = requireCap(req, res, 'finance');
-    if (!me) return;
-    try {
-      const settlement = pickups.requestPickupFeeSettlement(me, {
-        from: req.body?.from ?? null,
-        to: req.body?.to ?? null
-      });
-      res.status(201).json({ settlement });
-    } catch (e) {
-      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
-    }
-  });
-
-  // Confirm a pickup-fee settlement (finance): the fee becomes money.
-  app.post('/api/ops/pickup-fee-settlements/:id/confirm', (req, res) => {
-    if (!requireCap(req, res, 'finance')) return;
-    try {
-      const settlement = pickups.confirmPickupFeeSettlement(req.params.id, { accept: true, note: req.body?.note });
-      res.json({ settlement });
-    } catch (e) {
-      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
-    }
-  });
-
-  // Refuse a pickup-fee settlement (finance): reverses the pending ledger entry.
-  app.post('/api/ops/pickup-fee-settlements/:id/refuse', (req, res) => {
-    if (!requireCap(req, res, 'finance')) return;
-    try {
-      const settlement = pickups.confirmPickupFeeSettlement(req.params.id, { accept: false, note: req.body?.note });
-      res.json({ settlement });
-    } catch (e) {
-      res.status(e.status ?? 400).json({ error: String(e.message ?? e), code: e.code ?? null });
-    }
   });
 
   // Operator read of all pickups.

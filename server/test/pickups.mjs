@@ -1,10 +1,14 @@
 // ---------------------------------------------------------------------------
-// PICKUPS — rider routing to onboarded shops, with a DERIVED per-pickup origin
-// fee for the onboarding agent. This pins both halves of the rider loop:
-//   (1) the 0.75% override is the "minimal fee" on settled orders (already
-//       tested in fieldAgent.mjs, re-asserted here end-to-end), and
-//   (3) a different rider completing a pickup from the shop earns the
-//       onboarding agent a flat PICKUP_ORIGIN_FEE_KES.
+// PICKUPS — rider routing to onboarded shops. This pins the logistics half of
+// the rider loop and the pay law that now governs it:
+//   (1) routing, assignment, completion and the dispatchable origins are real
+//       and unchanged;
+//   (2) the per-pickup origin fee Decision 5 ended is GONE — a delivered
+//       pickup is a count, not money, and a shop's settled trade pays the
+//       onboarding agent nothing at all. Pay is KES 150 per approved visit
+//       (tested in fieldAgent.mjs);
+//   (3) the settlement writers that used to turn that fee into ledger money no
+//       longer exist, and the rows they left are readable history.
 // ---------------------------------------------------------------------------
 
 import fs from "node:fs";
@@ -25,6 +29,11 @@ const pickups = await import("../src/domain/pickups.js");
 
 let count = 0;
 const test = (name, fn) => { fn(); count++; console.log("PASS " + name); };
+// The HTTP sections are async. `test` does not await, and this file ends in
+// process.exit(0) — so an async test handed to it prints PASS whether or not
+// its assertions ever ran. These are awaited explicitly instead, which is the
+// only way a PASS here means what it says.
+const atest = async (name, fn) => { await fn(); count++; console.log("PASS " + name); };
 const rejects = (fn, code) => assert.throws(fn, (e) => !code || e.code === code);
 const user = (handle) => auth.createUser({ handle, password: "pickups-pw" });
 
@@ -65,18 +74,25 @@ test("only the rider or assigner can complete a pickup; completion is idempotent
 });
 
 // ---------------------------------------------------------------------------
-// THE ORIGIN FEE — derived per completed pickup, for the ONBOARDING agent.
+// THE COUNT — derived per completed pickup. Information, not pay.
 // ---------------------------------------------------------------------------
-test("the onboarding agent earns a derived per-pickup fee, not the rider", () => {
-  const obl = pickups.pickupOriginObligation(onboarder.id);
-  assert.equal(obl.pickupCount, 1, "one delivered pickup from their shop");
-  assert.equal(obl.originFeeKes, pickups.PICKUP_ORIGIN_FEE_KES);
+test("the origin fee is gone: a delivered pickup is a count, and the writers are gone with it", () => {
+  assert.equal(pickups.PICKUP_ORIGIN_FEE_KES, undefined, "no per-pickup fee constant");
+  assert.equal(pickups.pickupOriginObligation, undefined, "nothing owes an origin fee");
+  assert.equal(pickups.requestPickupFeeSettlement, undefined, "no writer can mint pickup-fee money");
+  assert.equal(pickups.confirmPickupFeeSettlement, undefined, "no writer can confirm pickup-fee money");
 
-  // The delivering rider earns NO origin fee (they are not the onboarding agent).
-  assert.equal(pickups.pickupOriginObligation(rider.id).originFeeKes, 0);
+  const stats = pickups.pickupOriginStats(onboarder.id);
+  assert.equal(stats.pickupCount, 1, "one delivered pickup from their shop — counted");
+  assert.equal(stats.currency, null, "and it carries no currency, because it is not money");
+  assert.equal(stats.originFeeKes, undefined, "no KES figure is served");
+  assert.match(stats.note, /not pay/i, "the note says plainly that this is not pay");
+
+  // The delivering rider is not the onboarding agent, so the count is not theirs.
+  assert.equal(pickups.pickupOriginStats(rider.id).pickupCount, 0);
 });
 
-test("multiple pickups accumulate, and only the active claimant earns", () => {
+test("multiple pickups accumulate as a count, and only the active claimant is credited", () => {
   pickups.assignPickup({
     originVendorId: vendor.id, riderId: rider.id,
     destinationTown: "Kisumu", receiverName: "Buyer Two", receiverPhone: "0713 000000"
@@ -84,15 +100,19 @@ test("multiple pickups accumulate, and only the active claimant earns", () => {
   const p2 = store.filter("pickups", (p) => p.status === "assigned")[0];
   pickups.completePickup(p2.id, rider.id);
 
-  const obl = pickups.pickupOriginObligation(onboarder.id);
-  assert.equal(obl.pickupCount, 2);
-  assert.equal(obl.originFeeKes, 2 * pickups.PICKUP_ORIGIN_FEE_KES);
+  const stats = pickups.pickupOriginStats(onboarder.id);
+  assert.equal(stats.pickupCount, 2, "two delivered pickups, counted");
+  assert.equal(stats.shops, 1, "one shop onboarded");
+  assert.equal(stats.originFeeKes, undefined, "and still no money attached");
 });
 
 // ---------------------------------------------------------------------------
-// (1) THE 0.75% OVERRIDE — the "minimal fee" on settled orders, end-to-end.
+// (2) THE ANTI-THROUGHPUT LAW, end-to-end: a shop's settled trade pays the
+// onboarding agent NOTHING. Under the old economy KES 20,000 settled at this
+// shop minted KES 150 of override for the agent who claimed it. Decision 5
+// ended that: the agent is paid for the visit, once, flat.
 // ---------------------------------------------------------------------------
-test("the 0.75% override is the settled-order fee the onboarding agent earns", async () => {
+test("settled orders at an onboarded shop pay the onboarding agent nothing", async () => {
   const ledger = await import("../src/domain/ledger.js");
   const listing = listings.createListing({ vendorId: vendor.id, title: "Goods", price: 10000, currency: "KES" });
   listings.transitionListing(listing.id, "active");
@@ -107,15 +127,20 @@ test("the 0.75% override is the settled-order fee the onboarding agent earns", a
   orders.transitionOrder(order.id, 'fulfilled');
   orders.transitionOrder(order.id, 'settled');
 
-  const obl = fa.overrideObligation(onboarder.id);
-  assert.equal(obl.grossKes, 20000, "gross is the settled order value");
-  assert.equal(obl.overrideKes, Math.floor(0.0075 * 20000), "override is floor(0.75% x settled)");
+  // The order really did settle — the rows are there to prove the point.
+  assert.equal(store.filter("orders", (o) => o.status === "settled").length >= 1, true, "a real settled order exists");
+  assert.equal(store.filter("ledgerTransactions", (t) => t.type === "order_payment" && t.status === "settled").length >= 1, true);
+
+  // And it pays the onboarding agent nothing: no override economy exists.
+  assert.equal(fa.overrideObligation, undefined, "the derived-percentage obligation is gone");
+  assert.equal(fa.visitEarnings(onboarder.id).approvedKes, 0, "no approved visit, no pay — trade is not pay");
+  assert.equal(store.filter("fieldVisits", (v) => v.agentId === onboarder.id).length, 0, "settling an order does not invent a visit");
 });
 
 // ---------------------------------------------------------------------------
 // HTTP
 // ---------------------------------------------------------------------------
-test("API: assign, complete, and read the derived origin fee", async () => {
+await atest("API: assign, complete, and read the derived COUNT (no fee is served)", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -140,9 +165,14 @@ test("API: assign, complete, and read the derived origin fee", async () => {
     assert.equal(done.status, 200);
     assert.equal(done.body.pickup.status, "delivered");
 
-    const fee = await call("/api/me/pickup-origin-fee", "GET", undefined, A.token);
-    assert.equal(fee.status, 200);
-    assert.equal(typeof fee.body.obligation.originFeeKes, "number");
+    // The count is served at the renamed path, and it is a count.
+    const stats = await call("/api/me/pickup-origins", "GET", undefined, A.token);
+    assert.equal(stats.status, 200);
+    assert.equal(typeof stats.body.stats.pickupCount, "number");
+    assert.equal(stats.body.stats.originFeeKes, undefined, "no KES over HTTP either");
+    // The fee-named route is retired, not left serving a zero.
+    const retired = await call("/api/me/pickup-origin-fee", "GET", undefined, A.token);
+    assert.equal(retired.status, 404, "the origin-fee route is gone");
   } finally {
     srv.close();
   }
@@ -159,7 +189,7 @@ test("listOrigins returns only shops with an active claim, joined to their vendo
   assert.ok(!origins.some((o) => o.shopName === "Unclaimed Stall"), "an unclaimed shop is not an origin");
 });
 
-test("API: assign defaults the rider to the caller (self-dispatch)", async () => {
+await atest("API: assign defaults the rider to the caller (self-dispatch)", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -220,7 +250,7 @@ test("listRiders drops ids with no user row (no fabricated people)", () => {
   assert.ok(!riders.some((r) => r.id === 'usr_ghost'), 'orphan riderId is dropped');
 });
 
-test("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
+await atest("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -255,58 +285,33 @@ test("API: a dispatcher can route to a DIFFERENT rider by id", async () => {
 });
 
 // ---------------------------------------------------------------------------
-// ORIGIN-FEE SETTLEMENT — the only place the derived fee becomes money.
+// ORIGIN-FEE SETTLEMENT — REMOVED WITH THE FEE. Nothing can mint a
+// `pickup_origin_fee` ledger entry any more; the history read stays so rows
+// written before Decision 5 remain visible.
 // ---------------------------------------------------------------------------
-test("requestPickupFeeSettlement writes a pending pickup_origin_fee ledger entry", () => {
-  // Two delivered pickups from the onboarder's shop => 2 x PICKUP_ORIGIN_FEE_KES.
-  const s = pickups.requestPickupFeeSettlement(onboarder.id, {});
-  assert.equal(s.status, "pending");
-  assert.equal(s.originFeeKes, 2 * pickups.PICKUP_ORIGIN_FEE_KES);
-  assert.equal(s.pickupCount, 2);
-  const tx = store.find("ledgerTransactions", (t) => t.id === s.ledgerId);
-  assert.ok(tx, "a ledger transaction was written");
-  assert.equal(tx.type, "pickup_origin_fee");
-  assert.equal(tx.status, "pending");
-  assert.equal(tx.amount, 2 * pickups.PICKUP_ORIGIN_FEE_KES);
+test("no pickup_origin_fee money can be written, and the history read still works", () => {
+  // The deliveries are real and counted — derived from the rows, not hardcoded,
+  // because the HTTP sections above deliver more of them (and did not used to
+  // run at all, which is why this file once asserted a fixed 2).
+  const delivered = store.filter("pickups", (p) => p.originVendorId === vendor.id && p.status === "delivered").length;
+  assert.ok(delivered >= 2, `at least the two domain-test deliveries are real (found ${delivered})`);
+  assert.equal(pickups.pickupOriginStats(onboarder.id).pickupCount, delivered, "the count is exactly the delivered rows at shops the agent claimed");
+  assert.equal(
+    store.filter("ledgerTransactions", (t) => t.type === "pickup_origin_fee").length,
+    0,
+    "not one pickup-fee ledger entry exists"
+  );
+  // The history collection is readable and empty — and stays empty.
+  assert.deepEqual(pickups.listPickupFeeSettlements(onboarder.id), []);
 });
 
-test("a duplicate settlement for the same period is refused", () => {
-  rejects(() => pickups.requestPickupFeeSettlement(onboarder.id, {}), "duplicate_settlement");
-});
+// (Two tests stood here: one asserting the agent's settlement rows came back
+// newest-first, and one asserting a request with no delivered pickups was
+// refused with `no_activity`. Both tested the writers Decision 5 removed —
+// there are no rows to order and no request to refuse. The refusal that
+// replaces them is structural: the functions do not exist, asserted above.)
 
-test("confirmPickupFeeSettlement confirms the ledger; a second confirm is refused", () => {
-  const pending = store.find("pickupFeeSettlements", (s) => s.agentId === onboarder.id && s.status === "pending");
-  const confirmed = pickups.confirmPickupFeeSettlement(pending.id, { accept: true });
-  assert.equal(confirmed.status, "confirmed");
-  assert.ok(confirmed.confirmedAt);
-  assert.equal(store.find("ledgerTransactions", (t) => t.id === pending.ledgerId).status, "confirmed");
-  rejects(() => pickups.confirmPickupFeeSettlement(pending.id, { accept: true }), "invalid_state");
-});
-
-test("a refused settlement writes no money and marks the ledger failed", () => {
-  const s = pickups.requestPickupFeeSettlement(onboarder.id, { from: "2026-01-01" });
-  const refused = pickups.confirmPickupFeeSettlement(s.id, { accept: false, note: "not this quarter" });
-  assert.equal(refused.status, "refused");
-  assert.equal(refused.refusedReason, "not this quarter");
-  assert.equal(store.find("ledgerTransactions", (t) => t.id === s.ledgerId).status, "failed");
-  // A refused period can be re-requested (status !== 'refused' is the guard).
-  const again = pickups.requestPickupFeeSettlement(onboarder.id, { from: "2026-01-01" });
-  assert.equal(again.status, "pending");
-});
-
-test("listPickupFeeSettlements returns the agent's rows, newest first", () => {
-  const rows = pickups.listPickupFeeSettlements(onboarder.id);
-  assert.ok(rows.length >= 2);
-  assert.equal(rows[0].agentId, onboarder.id);
-  // The delivering rider (no claims) has no settlements.
-  assert.equal(pickups.listPickupFeeSettlements(rider.id).length, 0);
-});
-
-test("requestPickupFeeSettlement refuses when there are no delivered pickups", () => {
-  rejects(() => pickups.requestPickupFeeSettlement(rider.id, {}), "no_activity");
-});
-
-test("API: pickup-fee settlement routes are wired; the request is finance-gated", async () => {
+await atest("API: the pickup-fee writer routes are retired (404), the history read stays", async () => {
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -318,13 +323,15 @@ test("API: pickup-fee settlement routes are wired; the request is finance-gated"
   };
   try {
     const P = (await call("/api/auth/register", "POST", { handle: "pk_plainf" + Date.now().toString(36), password: "a good passphrase" })).body;
-    // The read list is plain auth.
+    // The history read is plain auth, and it is history: an array, empty here.
     const list = await call("/api/me/pickup-fee/settlements", "GET", undefined, P.token);
     assert.equal(list.status, 200);
     assert.ok(Array.isArray(list.body.settlements));
-    // The request is finance-gated: a non-finance caller is refused.
-    const denied = await call("/api/me/pickup-fee/settle", "POST", {}, P.token);
-    assert.equal(denied.status, 403);
+    // The writer routes are retired — not gated, gone. A 403 would mean the
+    // rail still exists and is only being withheld; a 404 says it does not.
+    assert.equal((await call("/api/me/pickup-fee/settle", "POST", {}, P.token)).status, 404);
+    assert.equal((await call("/api/ops/pickup-fee-settlements/x/confirm", "POST", {}, P.token)).status, 404);
+    assert.equal((await call("/api/ops/pickup-fee-settlements/x/refuse", "POST", {}, P.token)).status, 404);
   } finally {
     srv.close();
   }

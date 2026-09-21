@@ -13,8 +13,8 @@ import { MotionStatus } from "../../ui/motion/MotionStatus";
 //   1. POINTS — deterministic, non-gambling. The fixed ratio is stated on
 //      screen ("100 points = KES X"), the balance is derived, and conversion
 //      is refused by the server when the pool is empty. No chance, no spin.
-//   2. FIELD AGENT — the territory override on vendors you onboarded (a
-//      derived 0.75% of settled orders, 24 months), plus your claims.
+//   2. FIELD AGENT — KES 150 flat per APPROVED visit to a shop you onboarded,
+//      settled weekly (Decision 5, docs/DECISIONS.md), plus your claims.
 //   3. LIPA MDOGO — the asset-financing contracts you are party to, with
 //      their derived maturity (paying / overdue / matured). Records only:
 //      the licensed lender owns the risk.
@@ -95,8 +95,8 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     setClaimBusy((p) => ({ ...p, [vendor.id]: false }));
     if (res.ok) {
       setNotice(claimType === 'full_registration'
-        ? `Territory claimed on ${vendor.displayName} — 0.75% of their settled orders for 24 months.`
-        : `Menu onboarded for ${vendor.displayName} — bounty credited.`);
+        ? `Territory claimed on ${vendor.displayName} — attribution recorded. Pay follows an approved visit.`
+        : `Menu onboarded for ${vendor.displayName} — attribution recorded. No bonus: pay is the flat visit fee.`);
       setOnboardOpen(false);
       setVendors(null);
       void load();
@@ -134,7 +134,7 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
     });
     setOnboardBusy(false);
     if (res.ok) {
-      setNotice(`Connection made at ${name} — ${onboardContact.trim()} is on file. Territory claimed for 24 months.`);
+      setNotice(`Connection made at ${name} — ${onboardContact.trim()} is on file. Your visit is waiting for approval; KES 150 when it is approved.`);
       setOnboardName(""); setOnboardType(""); setOnboardLocation(""); setOnboardContact(""); setOnboardPhone("");
       setOnboardOpen(false);
       setVendors(null);
@@ -186,7 +186,7 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
         <p className="text-sm mt-1 font-bold" style={{ color: "var(--color-text)" }}>Three honest ways, all derived from real activity.</p>
         <ul className="mt-2 space-y-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
           <li><strong style={{ color: "var(--color-text)" }}>Points</strong> — deterministic, no chance, no spin.</li>
-          <li><strong style={{ color: "var(--color-text)" }}>Territory</strong> — a 0.75% override on vendors you onboard, for 24 months.</li>
+          <li><strong style={{ color: "var(--color-text)" }}>Field visits</strong> — KES 150 flat per approved visit, paid weekly. No rate, no window, no bonus.</li>
           <li><strong style={{ color: "var(--color-text)" }}>Lipa Mdogo</strong> — asset-financing contracts you are party to.</li>
         </ul>
         <button
@@ -240,45 +240,58 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
         )}
       </section>
 
-      {/* --- 2. FIELD AGENT (territory override) --- */}
+      {/* --- 2. FIELD AGENT (approved visits, not a share of anybody's trade) --- */}
       <section id="earn-territory" className="rounded-2xl p-5" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
-        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>Territory</p>
+        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-primary)" }}>Field visits</p>
         {agent === null ? (
-          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading your territory…</p>
+          <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>Reading your visits…</p>
         ) : (
           <>
-            {agent.override.claims.length === 0 ? (
+            {agent.earnings.visits.length === 0 ? (
               <div className="mt-2 rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
-                <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No territory yet</p>
+                <p className="text-xs font-bold" style={{ color: "var(--color-text)" }}>No visits yet</p>
                 <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>
-                  Make your first connection and earn a 0.75% override on their settled orders for 24 months.
+                  Make your first connection. An approved visit pays KES {agent.earnings.feeKes} — flat and weekly, whatever the shop sells.
                 </p>
               </div>
             ) : (
               <>
                 <div className="mt-2 flex items-baseline gap-2">
-                  <span className="text-2xl font-black" style={{ color: "var(--color-text)" }}>KES {agent.override.overrideKes.toLocaleString()}</span>
+                  <span className="text-2xl font-black" style={{ color: "var(--color-text)" }}>KES {agent.earnings.approvedKes.toLocaleString()}</span>
                   <span className="text-xs" style={{ color: "var(--color-text-muted)" }}>
-                    derived at {(agent.override.rate * 100).toFixed(2)}% of settled orders · {agent.override.months} months
+                    {agent.earnings.approved} approved × KES {agent.earnings.feeKes}
+                    {agent.earnings.pending > 0 ? ` · ${agent.earnings.pending} waiting` : ""}
+                    {agent.earnings.rejected > 0 ? ` · ${agent.earnings.rejected} rejected` : ""}
                   </span>
                 </div>
                 <MotionList className="mt-3 space-y-2" stagger={30}>
-                  {agent.override.claims.map((cl) => {
-                    const links = contactLinks(cl.contactMethod);
+                  {agent.earnings.visits.map((v) => {
+                    const links = contactLinks(v.contactMethod);
                     return (
-                      <div key={cl.claimId} className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
+                      <div key={v.visitId} className="rounded-xl p-3" style={{ background: "var(--color-surface-elevated)" }}>
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{cl.vendorName ?? "Vendor"}</p>
-                          <span className="text-sm font-bold shrink-0 ml-2" style={{ color: "var(--color-success)" }}>KES {cl.overrideKes.toLocaleString()}</span>
+                          <p className="text-sm font-bold truncate" style={{ color: "var(--color-text)" }}>{v.vendorName ?? "Vendor"}</p>
+                          <span
+                            className="text-sm font-bold shrink-0 ml-2"
+                            style={{ color: v.status === "approved" ? "var(--color-success)" : v.status === "rejected" ? "var(--color-danger)" : "var(--color-text-muted)" }}
+                          >
+                            {v.status === "approved" ? `KES ${v.feeKes.toLocaleString()}` : v.status === "rejected" ? "Rejected" : "Waiting"}
+                          </span>
                         </div>
                         <p className="text-[11px] mt-0.5" style={{ color: "var(--color-text-muted)" }}>
-                          {[cl.businessType, cl.location].filter(Boolean).join(' · ')} · {cl.settledOrders} settled order{cl.settledOrders === 1 ? "" : "s"}
+                          {[v.businessType, v.location].filter(Boolean).join(' · ')} · {v.purpose === 'menu_upload' ? 'menu uploaded' : 'full registration'}
+                          {v.week ? ` · week ${v.week}` : ''}
                         </p>
+                        {/* The agent's own words about the visit — the same text the approver read. */}
+                        <p className="text-[11px] mt-1" style={{ color: "var(--color-text-muted)" }}>{v.notes}</p>
+                        {v.rejectReason && (
+                          <p className="text-[11px] mt-1 font-bold" style={{ color: "var(--color-danger)" }}>Why it was rejected: {v.rejectReason}</p>
+                        )}
                         {/* The direct contact the agent captured — call or WhatsApp. */}
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <p className="text-[12px] min-w-0 truncate" style={{ color: "var(--color-text-muted)" }}>
-                            <strong style={{ color: "var(--color-text)" }}>{cl.contactName ?? "Contact"}</strong>
-                            {cl.contactMethod ? ` · ${cl.contactMethod}` : ""}
+                            <strong style={{ color: "var(--color-text)" }}>{v.contactName ?? "Contact"}</strong>
+                            {v.contactMethod ? ` · ${v.contactMethod}` : ""}
                           </p>
                           {links.call && (
                             <div className="flex gap-1.5 shrink-0">
@@ -291,7 +304,22 @@ export function EarnSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
                     );
                   })}
                 </MotionList>
-                <p className="text-[11px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.override.note}</p>
+                {/* The payout weeks: each is that week's approved visits x the flat
+                    fee, with its settlement state printed rather than implied. */}
+                {agent.earnings.weeks.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    {agent.earnings.weeks.map((w) => (
+                      <p key={w.week} className="text-[11px] font-bold" style={{ color: "var(--color-text-muted)" }}>
+                        Week {w.week} · {w.visits} visit{w.visits === 1 ? "" : "s"} · KES {w.kes.toLocaleString()} ·{" "}
+                        {w.settlementStatus === "confirmed" ? "settled by finance"
+                          : w.settlementStatus === "pending" ? "settlement pending"
+                          : w.settlementStatus === "refused" ? "settlement refused by finance"
+                          : "not settled yet"}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[11px] mt-2" style={{ color: "var(--color-text-muted)" }}>{agent.earnings.note}</p>
               </>
             )}
 

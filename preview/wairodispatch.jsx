@@ -1,7 +1,9 @@
 // ---------------------------------------------------------------------------
 // WAIRO DISPATCH — rider routing, wired to the REAL pickup API. This pins that
 // the panel renders origins (claimed shops), can assign a pickup (self-
-// dispatch), and shows the derived origin fee — no fabricated bids/fares.
+// dispatch), and shows the COUNT of deliveries from the agent's shops — no
+// fabricated bids/fares, and no KES: Decision 5 ended the per-pickup origin fee
+// (a field agent is paid KES 150 per approved visit, in the Earn surface).
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
@@ -59,8 +61,8 @@ async function main() {
         { id: 'p1', originVendorId: 'v1', riderId: 'r1', assignedBy: 'r1', destinationTown: 'Nakuru', receiverName: 'Buyer', receiverPhone: '0712', notes: '', status: 'assigned', createdAt: '2026-09-10T00:00:00Z', completedAt: null }
       ] }) };
     }
-    if (url.includes('/pickup-origin-fee')) {
-      return { ok: true, status: 200, text: async () => JSON.stringify({ obligation: { agentId: 'a1', pickupCount: 1, feePerPickupKes: 20, originFeeKes: 20, note: 'derived' } }) };
+    if (url.includes('/pickup-origins')) {
+      return { ok: true, status: 200, text: async () => JSON.stringify({ stats: { agentId: 'a1', pickupCount: 1, shops: 1, currency: null, note: 'A count of real rows — not pay.' } }) };
     }
     if (url.includes('/pickup-fee/settlements')) {
       return { ok: true, status: 200, text: async () => JSON.stringify({ settlements: [
@@ -84,10 +86,16 @@ async function main() {
 
   assert.ok(t.includes('Kilimani Grocers'), 'origin (claimed shop) renders');
   assert.ok(t.includes('Assign a pickup'), 'assign form present');
-  assert.ok(t.includes('KES 20'), 'derived origin fee shown');
-  assert.ok(t.includes('settled by finance'), 'a confirmed settlement is shown against the fee');
+  assert.ok(t.includes('1 delivered'), 'the count of delivered pickups is shown');
+  assert.ok(!/Your origin fee/.test(t), 'the fee card itself is gone — there is no fee to show');
+  // The only KES left in this panel is a labelled history row: a settlement
+  // written before Decision 5 ended the per-pickup fee. History is printed as
+  // history, never as current pay, and never as a zero pretending to be a fee.
+  const kesLines = t.split('\n').filter((l) => /KES/.test(l));
+  assert.ok(kesLines.length > 0 && kesLines.every((l) => /History:/.test(l) || /old per-pickup fee/.test(l)),
+    `every KES figure left is labelled history (found: ${JSON.stringify(kesLines)})`);
   assert.ok(!t.includes('auction') && !t.includes('90%'), 'no fabricated bid/payout copy');
-  pass('WairoDispatchPanel renders origins, assign form, fee and settlement state — no fabrication');
+  pass('WairoDispatchPanel renders origins, assign form and a derived COUNT — no fabrication, no fee');
 
   // The rider picker lists other riders but never fabricates a person.
   const riderSelect = Array.from(document.querySelectorAll('select')).find((s) => (s.getAttribute('aria-label') || '') === 'Rider (who delivers)');
