@@ -200,6 +200,24 @@ await test("the horizon is the provider's, and a far plan is left out", async ()
 
 await test("HTTP: the route is caller-scoped and never 5xx on a provider gap", async () => {
   clearCache();
+  // The route cannot be passed `nowMs` — it uses the wall clock. The frozen
+  // Thursday this file is built on (17 Sep 2026) is already in Nairobi's past
+  // once UTC rolls past 21:00, so reusing `member`'s plan would make
+  // `matched[0]` undefined and the identity assertion a TypeError rather than
+  // a failure about identity. Plant a plan on a day that is still ahead in
+  // Nairobi AND in a forecast window the mock answers for.
+  const todayEat = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Nairobi", year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(new Date());
+  const wallDays = [0, 1, 2, 3, 4, 5, 6].map((n) =>
+    new Date(Date.parse(`${todayEat}T12:00:00Z`) + n * 86400000).toISOString().slice(0, 10)
+  );
+  const savedTime = FIXTURE.daily.time;
+  FIXTURE.daily.time = wallDays;
+  const httpUser = auth.createUser({ handle: "pw_http", password: "a good passphrase" });
+  const httpPlan = plan({ title: "HTTP-day market", startsAt: `${wallDays[1]}T08:00:00+03:00` });
+  attend(httpPlan, httpUser.id, httpUser.id);
+
   const { default: app } = await import("../src/index.js");
   const srv = app.listen(0);
   const port = srv.address().port;
@@ -209,25 +227,32 @@ await test("HTTP: the route is caller-scoped and never 5xx on a provider gap", a
     });
     return { status: res.status, body: await res.json().catch(() => ({})) };
   };
-  const anon = await call("/api/planned-weather");
-  // The route is not on the public allow-list, because its payload is a
-  // person's diary. The platform's answer to that is the standing gate, and
-  // the body carries no plans in it either way.
-  assert.equal(anon.status, 401, "an anonymous read is gated, not answered");
-  assert.equal(anon.body.gate, "account_required", "and says what is missing");
-  assert.ok(!("matched" in anon.body), "no diary field at all");
-  const mine = await call("/api/planned-weather", auth.issueSession(member.id).token);
-  assert.equal(mine.status, 200);
-  assert.ok(Array.isArray(mine.body.matched), "the member gets the same shape with their own rows");
-  assert.ok(mine.body.matched.every((m) => m.eventTitle && m.fact?.text), "every line names both the plan and the fact");
-  assert.ok(typeof mine.body.available === "boolean" && typeof mine.body.note === "string", "with the rule stated on the way out");
-  // The link is only ever a slug the campaign actually has: the surface can
-  // point at the plan, and cannot be tempted to invent an address.
-  const one = mine.body.matched[0];
-  assert.ok('slug' in one && 'campaignId' in one, "a match carries its plan's identity");
-  assert.ok(one.slug === null || typeof one.slug === "string", "slug is a real one or absent, never a guess");
-  srv.close();
-  global.fetch = realFetch;
+  try {
+    const anon = await call("/api/planned-weather");
+    // The route is not on the public allow-list, because its payload is a
+    // person's diary. The platform's answer to that is the standing gate, and
+    // the body carries no plans in it either way.
+    assert.equal(anon.status, 401, "an anonymous read is gated, not answered");
+    assert.equal(anon.body.gate, "account_required", "and says what is missing");
+    assert.ok(!("matched" in anon.body), "no diary field at all");
+    const mine = await call("/api/planned-weather", auth.issueSession(httpUser.id).token);
+    assert.equal(mine.status, 200);
+    assert.ok(Array.isArray(mine.body.matched), "the member gets the same shape with their own rows");
+    assert.equal(mine.body.matched.length, 1, "the planted day is the only match");
+    assert.ok(mine.body.matched.every((m) => m.eventTitle && m.fact?.text), "every line names both the plan and the fact");
+    assert.ok(typeof mine.body.available === "boolean" && typeof mine.body.note === "string", "with the rule stated on the way out");
+    // The link is only ever a slug the campaign actually has: the surface can
+    // point at the plan, and cannot be tempted to invent an address.
+    const one = mine.body.matched[0];
+    assert.ok(one, "a match exists to carry identity — the TypeError was the test using a plan that had already happened");
+    assert.ok("slug" in one && "campaignId" in one, "a match carries its plan's identity");
+    assert.ok(one.slug === null || typeof one.slug === "string", "slug is a real one or absent, never a guess");
+    assert.equal(one.campaignId, httpPlan.id, "and it is THIS plan, not somebody else's leftover");
+  } finally {
+    FIXTURE.daily.time = savedTime;
+    srv.close();
+    global.fetch = realFetch;
+  }
 });
 
 console.log(`PASSED ${count} FAILED 0`);
