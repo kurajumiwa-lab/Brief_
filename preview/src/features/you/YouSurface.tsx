@@ -13,6 +13,7 @@ import { MotionStatus } from "../../ui/motion/MotionStatus";
 import { EarnSurface } from "./EarnSurface";
 import { TableBankingSurface } from "./TableBankingSurface";
 import { HowBriefWorks } from "./HowBriefWorks";
+import { hrefForDest } from "../../app/surfaces";
 import { GuardianNetwork } from "./GuardianNetwork";
 import { Marketplace } from "../../components/Marketplace";
 import { PositionHero } from "./PositionHero";
@@ -592,7 +593,13 @@ export function YouSurface({
           <NotificationCenter
             authed={!signedOut}
             onClose={() => setSection("profile")}
-            onOpen={() => {}}
+            /* A tap goes where the notification says. Dests this shell has no
+               surface for open nothing, rather than landing on a screen that
+               looks like the one that was promised. */
+            onOpen={(n: any) => {
+              const href = hrefForDest(n?.dest);
+              if (href && typeof window !== "undefined") window.location.hash = href;
+            }}
           />
         </div>
       )}

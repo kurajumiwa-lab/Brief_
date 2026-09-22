@@ -296,7 +296,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   return (
     <div className="mt-4 space-y-3">
       {notice && <p className="text-xs" role="status" style={{ color: "var(--color-text-muted)" }}>{notice}</p>}
-      {!checklistDismissed && groups.length > 0 && deriveChecklist(groups, { onStartGroup: openCreate, onAddMembers: () => {}, onRecordContribution: () => {}, onSeeLedger: () => {} }).some((s) => !s.done) && (
+      {!checklistDismissed && groups.length > 0 && deriveChecklist(groups, { onStartGroup: openCreate }).some((s) => !s.done) && (
         <FirstRunChecklist
           compact
           groups={groups}

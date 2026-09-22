@@ -20,7 +20,8 @@ export interface DiscoveryHeadProps {
   subtitle?: string;
   segments: DiscoveryHeadSegment[];
   activeSegmentId: string;
-  onSegmentChange: (id: string) => void;
+  /** Absent when there are no segments to change: no handler is invented for a list of zero. */
+  onSegmentChange?: (id: string) => void;
   className?: string;
 }
 
@@ -63,7 +64,7 @@ export function DiscoveryHead({
               key={s.id}
               type="button"
               aria-pressed={active}
-              onClick={() => onSegmentChange(s.id)}
+              onClick={() => onSegmentChange?.(s.id)}
               className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer border ${
                 active
                   ? 'border-transparent brief-lift-signal'

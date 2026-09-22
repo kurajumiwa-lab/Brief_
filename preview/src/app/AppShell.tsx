@@ -4,6 +4,7 @@ import * as briefApi from '../api/briefApi';
 import { Navigation, BriefNavigationTab } from './Navigation';
 import { AppBelt, readPlace, PLACE_KEY } from './AppBelt';
 import { NavSheet, type SheetTarget } from './NavSheet';
+import { TAB_HASH, backLabel, shopHref, shopIdFromHash, surfaceFromHash } from './surfaces';
 import { CreateSheet, type CreateActionId } from './CreateSheet';
 import { HostEventSheet } from '../features/city/HostEventSheet';
 import { GroupBuyPortal } from '../components/GroupBuyPortal';
@@ -100,9 +101,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [manualItemTitle, setManualItemTitle] = useState<string>('');
   const [manualPrice, setManualPrice] = useState<string>('');
 
-  // Citizen Post Dialog on City Tab
-  const [cityPostModalOpen, setCityPostModalOpen] = useState<boolean>(false);
-
   /**
    * Where a sheet entry goes. Every target lands on a surface that already
    * exists — a tab, a You section, or a sign-out — because a nav item that
@@ -158,18 +156,126 @@ export const AppShell: React.FC<AppShellProps> = ({
     setTimeout(() => setToastMsg(null), 3000);
   };
 
+  // ---------------------------------------------------------------------------
+  // THE URL AS THE RECORD OF WHAT IS OPEN
+  //
+  // Two-way on purpose. Opening a surface writes its hash, so the back gesture
+  // on a phone has something to step off; and a hash that names a surface opens
+  // it, so a pasted or reloaded link lands where the person left off. The tab
+  // underneath is remembered so that closing a sheet returns you to it instead
+  // of dumping you on Home — which is what an app does when it clears the URL
+  // to nothing, and what it looks like from a phone: a back button that works
+  // and then throws you somewhere else.
+  // ---------------------------------------------------------------------------
+  const tabHashRef = React.useRef<string>('');
+  const activeSpaceIdRef = React.useRef<string>('');
+  const spaceFromRef = React.useRef<string>('');
+  const spaceLinkRef = React.useRef<string>('');
+  spaceLinkRef.current = spaceLink;
+
+  /** The overlays, most recently actionable first: one of them owns the URL. */
+  const surfaceState = () => {
+    if (manualOrderOpen) return 'manual-order';
+    if (createFlowOpen) return 'new-space';
+    if (hostSheetOpen) return 'host';
+    if (createOpen) return 'create';
+    if (groupBuysOpen) return 'groupbuys';
+    if (sheetOpen) return 'menu';
+    return null;
+  };
+
+  useEffect(() => {
+    const named = surfaceFromHash(window.location.hash);
+    const want = surfaceState();
+    if (want && want !== named) {
+      window.location.hash = want;
+      return;
+    }
+    if (!want && named) {
+      const back = tabHashRef.current;
+      if (back) window.location.hash = back;
+      else window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [createOpen, hostSheetOpen, groupBuysOpen, sheetOpen, createFlowOpen, manualOrderOpen]);
+
+  /** Open one space's workspace, and name it in the URL so back leaves it. */
+  const openSpace = (id: string) => {
+    if (activeSpaceIdRef.current !== id) spaceFromRef.current = tabHashRef.current || 'spaces';
+    activeSpaceIdRef.current = id;
+    setActiveTab('pipeline');
+    void (async () => {
+      const res = await briefApi.getSpace(id);
+      if (res.ok && res.data?.space) setActiveSpace(res.data.space);
+      else { activeSpaceIdRef.current = ''; loadSpaces(); }
+    })();
+    const href = shopHref(id);
+    if (window.location.hash !== href) window.location.hash = href;
+  };
+  const openSpaceRef = React.useRef(openSpace);
+  openSpaceRef.current = openSpace;
+
+  /** Leave the shop back where it was opened from, not at the root. */
+  const closeSpace = () => {
+    const back = spaceFromRef.current || TAB_HASH.pipeline;
+    activeSpaceIdRef.current = '';
+    setActiveSpace(null);
+    if (window.location.hash.replace(/^#/, '') !== back) window.location.hash = back;
+    else setActiveTab('pipeline');
+  };
+
+  /**
+   * The visible way out of a second screen. Offered only when one is open, and
+   * it goes to the tab the screen was opened from — the same place the back
+   * gesture goes, because both are only the URL moving. Nothing is read from the
+   * hash here on purpose: whether the control exists is decided by the same
+   * state that decides what is on screen, so the two can never disagree.
+   */
+  const anySurfaceOpen = createOpen || hostSheetOpen || groupBuysOpen
+    || sheetOpen || createFlowOpen || manualOrderOpen;
+  const backTo = (anySurfaceOpen || Boolean(activeSpace))
+    ? {
+      label: activeSpace && !anySurfaceOpen
+        ? backLabel(spaceFromRef.current || TAB_HASH[activeTab] || '')
+        : backLabel(tabHashRef.current || TAB_HASH[activeTab] || ''),
+      onBack: () => {
+        if (anySurfaceOpen) {
+          const back = tabHashRef.current || TAB_HASH[activeTab] || 'home';
+          if (window.location.hash.replace(/^#/, '') === back) {
+            setCreateOpen(false);
+            setHostSheetOpen(false);
+            setGroupBuysOpen(false);
+            setSheetOpen(false);
+            setCreateFlowOpen(false);
+            setManualOrderOpen(false);
+          } else {
+            window.location.hash = back;
+          }
+          return;
+        }
+        closeSpace();
+      }
+    }
+    : null;
+
   const loadSpaces = async () => {
     setLoading(true);
     setSpaceError('');
     try {
       const res = await briefApi.listMySpaces();
       if (res.ok && res.data?.spaces && res.data.spaces.length > 0) {
-        setActiveSpace(res.data.spaces[0]);
+        // Only auto-open when the URL is not already pointing at a space: a
+        // person who pressed back out of one must not be pulled straight in.
+        if (!shopIdFromHash(window.location.hash) && !activeSpaceIdRef.current) {
+          setActiveSpace(res.data.spaces[0]);
+          activeSpaceIdRef.current = res.data.spaces[0].id;
+        }
       } else {
+        activeSpaceIdRef.current = '';
         setActiveSpace(null);
         setSpaceError(res.ok ? '' : res.error);
       }
     } catch {
+      activeSpaceIdRef.current = '';
       setActiveSpace(null);
       setSpaceError('Could not load your spaces. Please try again.');
     } finally {
@@ -195,6 +301,38 @@ export const AppShell: React.FC<AppShellProps> = ({
 
     const navigate = () => {
       const hash = window.location.hash.slice(1);
+      // An overlay's own hash: exactly the named one is open. This is the branch
+      // the back gesture lands on, and it is the only place an overlay closes.
+      const surface = surfaceFromHash(hash);
+      if (surface) {
+        setCreateOpen(surface === 'create');
+        setHostSheetOpen(surface === 'host');
+        setGroupBuysOpen(surface === 'groupbuys');
+        setSheetOpen(surface === 'menu');
+        setCreateFlowOpen(surface === 'new-space');
+        setManualOrderOpen(surface === 'manual-order');
+        return;
+      }
+      const shopId = shopIdFromHash(hash);
+      if (shopId) {
+        if (activeSpaceIdRef.current !== shopId) void openSpaceRef.current(shopId);
+        return;
+      }
+      // Anything else — a tab, or no hash at all — is a different screen, so
+      // nothing that covers a screen stays open behind it. This is also what
+      // closes a shop when the back gesture steps off `#shop/<id>`: the URL and
+      // the screen are never allowed to disagree about which one is showing.
+      setCreateOpen(false);
+      setHostSheetOpen(false);
+      setGroupBuysOpen(false);
+      setSheetOpen(false);
+      setCreateFlowOpen(false);
+      setManualOrderOpen(false);
+      if (spaceLinkRef.current) setSpaceLink('');
+      if (activeSpaceIdRef.current) {
+        activeSpaceIdRef.current = '';
+        setActiveSpace(null);
+      }
       if (hash === 'supply' || hash.startsWith('supply/')) {
         setActiveTab('supply');
         setSupplyRoute(hash.slice(7) || 'mine');
@@ -226,8 +364,8 @@ export const AppShell: React.FC<AppShellProps> = ({
         // drawer's check-in, so the legacy hash resolves there. 'mine' and
         // 'pulse' are the new bar's doors and the drawer's check-in.
         const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
-        if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); }
-        else if (!hash) setActiveTab(initialTab);
+        if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; }
+        else if (!hash) { setActiveTab(initialTab); tabHashRef.current = ''; }
       }
     };
     navigate();
@@ -339,9 +477,6 @@ export const AppShell: React.FC<AppShellProps> = ({
               setActiveTab('you');
               if (typeof window !== 'undefined') window.location.hash = '#you';
             }}
-            onAddMembers={() => {}}
-            onRecordContribution={() => {}}
-            onSeeLedger={() => {}}
             onDismiss={() => {
               if (typeof window !== 'undefined') window.localStorage.setItem('brief.firstRunDismissed', '1');
               setFirstRun(false);
@@ -381,6 +516,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             the long list, and a message slot. It lives inside the scroll
             column so it behaves the same on a phone and on a desktop. */}
         <AppBelt
+          backTo={backTo}
           onOpenSheet={() => setSheetOpen(true)}
           onHome={() => { window.location.hash = ''; setActiveTab('home'); }}
           onSearch={(term) => { window.location.hash = `search/${encodeURIComponent(term)}`; }}
@@ -392,13 +528,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             and filing are different nouns from operating a business. */}
         {['pipeline', 'spaces'].includes(activeTab) && !activeSpace && (
           <SpacesLanding
-            onOpenSpace={(id) => {
-              void (async () => {
-                const res = await briefApi.getSpace(id);
-                if (res.ok && res.data?.space) setActiveSpace(res.data.space);
-                else loadSpaces();
-              })();
-            }}
+            onOpenSpace={openSpace}
             onOpenPublicSpace={(slug) => { window.location.hash = `space/${encodeURIComponent(slug)}`; }}
           />
         )}
@@ -409,7 +539,12 @@ export const AppShell: React.FC<AppShellProps> = ({
           <div className="fixed inset-0 z-40 bg-[color:var(--color-bg)] overflow-y-auto p-4 pb-24">
             <PublicSpacePage
               slug={spaceLink}
-              onBack={() => { window.location.hash = ''; setSpaceLink(''); }}
+              onBack={() => {
+                setSpaceLink('');
+                const back = tabHashRef.current || 'spaces';
+                if (window.location.hash.replace(/^#/, '') === back) window.location.hash = `${back}`;
+                else window.location.hash = back;
+              }}
               onOpenOffer={(id) => { window.location.hash = `offer/${encodeURIComponent(id)}`; }}
             />
           </div>
@@ -424,14 +559,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         {activeTab === 'home' ? (
           <HomeSurface
             userName="there"
-            onOpenSpace={(id) => {
-              void (async () => {
-                const res = await briefApi.getSpace(id);
-                if (res.ok && res.data?.space) setActiveSpace(res.data.space);
-                else loadSpaces();
-              })();
-              setActiveTab('pipeline');
-            }}
+            onOpenSpace={openSpace}
             onExploreDiscover={(sub, startRun) => {
               if (sub) setDiscoverSubTab(sub);
               if (startRun) {
@@ -466,7 +594,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             {(activeTab === 'pipeline' || activeTab === 'spaces') && activeSpace && (
               <SpaceShell
                 spaceId={activeSpace.id}
-                onBack={() => { setActiveSpace(null); setActiveTab('pipeline'); }}
+                onBack={closeSpace}
                 onShare={() => { /* SpaceShell copies and reports the truth itself */ }}
                 onCreateOrder={() => setManualOrderOpen(true)}
               />
@@ -481,14 +609,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             {/* ── MINE (the bar's second door: your shops, orders, saved) ── */}
             {activeTab === 'mine' && (
               <MineSurface
-                onOpenSpace={(id) => {
-                  void (async () => {
-                    const res = await briefApi.getSpace(id);
-                    if (res.ok && res.data?.space) setActiveSpace(res.data.space);
-                    else loadSpaces();
-                  })();
-                  setActiveTab('pipeline');
-                }}
+                onOpenSpace={openSpace}
                 onOpenCreateSpace={() => {
                   setCreateFlowInitialStep(1);
                   setCreateFlowOpen(true);
@@ -562,56 +683,6 @@ export const AppShell: React.FC<AppShellProps> = ({
         )}
       </main>
 
-      {/* Citizen Post Dialog on City Tab */}
-      {cityPostModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-md bg-[color:var(--color-paper)] rounded-3xl shadow-2xl overflow-hidden p-6 space-y-4 border border-black/5 animate-scaleIn">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
-                  City Feed Post
-                </span>
-                <h3 className="text-base font-black text-[color:var(--color-text)] mt-1">Share with Nairobi</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCityPostModalOpen(false)}
-                className="text-xs text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)]"
-              >
-                Cancel
-              </button>
-            </div>
-
-            <p className="text-xs text-[color:var(--color-text-muted)]">
-              Post an event or a marketplace product drop to the Nairobi public feed.
-            </p>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setCityPostModalOpen(false);
-                  showToast('Opening event creator');
-                }}
-                className="p-3 rounded-2xl bg-[color:var(--color-surface)] hover:bg-[color:var(--color-text)] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
-              >
-                🎟️ Post Event
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCityPostModalOpen(false);
-                  setCreateFlowInitialStep(2);
-                  setCreateFlowOpen(true);
-                }}
-                className="p-3 rounded-2xl bg-[color:var(--color-surface)] hover:bg-[color:var(--color-text)] hover:text-white transition-all text-xs font-bold border border-black/5 text-center"
-              >
-                🛍️ Drop Product
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Manual Order Drawer on Pipeline FAB */}
       {manualOrderOpen && (
@@ -685,9 +756,12 @@ export const AppShell: React.FC<AppShellProps> = ({
           existingSpaceId={activeSpace?.id}
           onClose={() => setCreateFlowOpen(false)}
           onCompleted={(space) => {
-            setActiveSpace(space);
+            // Through openSpace, not just setActiveSpace: the screen you land on
+            // has to be the screen the URL says, or the first back press leaves
+            // you inside a space the address bar has never heard of.
+            openSpace(space.id);
             showToast(`Space "${space.name}" active!`);
-            loadSpaces();
+            void loadSpaces();
           }}
         />
       )}

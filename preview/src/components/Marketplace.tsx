@@ -91,10 +91,12 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
     type: Listing['type']; quantity: string; location: string;
     flow: ListingFlowDraft; commodity: string; originKind: ListingOriginKindDraft; originName: string;
     destinationKind: ListingDestinationKindDraft; destinationName: string; unit: string; minOrder: string;
+    /** Uploaded photos, in the order the seller put them in. */
+    media: string[];
   }>({
     title: '', description: '', price: '', type: 'product', quantity: '', location: '',
     flow: '', commodity: '', originKind: '', originName: '',
-    destinationKind: '', destinationName: '', unit: '', minOrder: ''
+    destinationKind: '', destinationName: '', unit: '', minOrder: '', media: []
   });
 
   // --- loaders -------------------------------------------------------------
@@ -240,7 +242,12 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
           destinationKind: listingDraft.destinationKind || null,
           destinationName: listingDraft.destinationName.trim() || null,
           unitLabel: listingDraft.unit.trim() || null,
-          minOrderQuantity: listingDraft.minOrder.trim() === '' ? null : Number(listingDraft.minOrder)
+          minOrderQuantity: listingDraft.minOrder.trim() === '' ? null : Number(listingDraft.minOrder),
+          // The photos go with the offer at creation. The server normalises them
+          // (`cleanMedia`: strings only, trimmed, de-duplicated, capped), so what
+          // lands is what was really uploaded — and a listing created here is no
+          // longer a name and a price while the same offer, edited later, takes eight.
+          media: listingDraft.media
         }),
       loadSelling
     );
@@ -248,7 +255,7 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
       setListingDraft({
         title: '', description: '', price: '', type: 'product', quantity: '', location: '',
         flow: '', commodity: '', originKind: '', originName: '',
-        destinationKind: '', destinationName: '', unit: '', minOrder: ''
+        destinationKind: '', destinationName: '', unit: '', minOrder: '', media: []
       });
     }
   };

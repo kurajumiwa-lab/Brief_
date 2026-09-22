@@ -22,7 +22,7 @@
 //     would teach the member that nothing here can be trusted.
 // ---------------------------------------------------------------------------
 import React, { useEffect, useState } from 'react';
-import { Menu, Search, MapPin } from 'lucide-react';
+import { ArrowLeft, Menu, Search, MapPin } from 'lucide-react';
 import { TraceMark } from '../components/TraceMark';
 import * as briefApi from '../api/briefApi';
 import type { CampaignBanner } from '../api/types';
@@ -45,6 +45,14 @@ export interface AppBeltProps {
   onOpenSheet: () => void;
   onHome: () => void;
   onSearch: (q: string) => void;
+  /**
+   * The way out, when a second screen is on top of a tab. The back GESTURE works
+   * on its own (every surface is a hash — see `app/surfaces`); this makes the
+   * same exit visible, so a person does not have to know the gesture to leave.
+   * Absent when there is nothing above the tab, rather than greyed out: a
+   * disabled control is a promise the app decided not to keep.
+   */
+  backTo?: { label: string; onBack: () => void } | null;
   className?: string;
 }
 
@@ -52,6 +60,7 @@ export const AppBelt: React.FC<AppBeltProps> = ({
   onOpenSheet,
   onHome,
   onSearch,
+  backTo = null,
   className = ''
 }) => {
   const [q, setQ] = useState('');
@@ -84,6 +93,18 @@ export const AppBelt: React.FC<AppBeltProps> = ({
     >
       {/* ── band ── */}
       <div className="flex items-center gap-2 px-3 py-2">
+        {backTo && (
+          <button
+            type="button"
+            onClick={() => { soundEngine.play('tap'); backTo.onBack(); }}
+            aria-label={`Back to ${backTo.label}`}
+            className="flex items-center gap-1 px-2 py-2 rounded-xl shrink-0 cursor-pointer"
+            style={{ color: 'var(--color-text)' }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-[12px] font-black uppercase tracking-wider">Back</span>
+          </button>
+        )}
         <button
           type="button"
           onClick={() => { soundEngine.play('tap'); onOpenSheet(); }}

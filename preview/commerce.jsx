@@ -238,7 +238,11 @@ async function main() {
   };
   const buttons = () => Array.from(document.querySelectorAll('button'));
   const btn = (t) => buttons().find((b) => text(b) === t || text(b).startsWith(t));
-  const inputs = () => Array.from(document.querySelectorAll('input'));
+  // Text fields only, deliberately: the listing form now carries a file input
+  // for photos, and a suite that reaches for `inputs()[2]` would be typing a
+  // price into a filename — jsdom throws on that, and the test would fail for a
+  // reason that has nothing to do with what it is checking.
+  const inputs = () => Array.from(document.querySelectorAll('input')).filter((i) => i.type !== 'file');
   const setVal = async (el, v) => {
     const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
     await act(async () => {
@@ -372,6 +376,8 @@ async function main() {
     !/\d+ fulfilled order/.test(b), b.slice(0, 300));
 
   // Create a listing.
+  check('the listing form takes a photo at creation', !!document.querySelector('input[type="file"]'),
+    'no file control in the create form');
   await setVal(inputs()[0], 'Printed Hoodie');
   await setVal(inputs()[1], 'Heavyweight cotton');
   await setVal(inputs()[2], '2500');

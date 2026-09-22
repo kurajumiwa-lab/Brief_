@@ -104,7 +104,6 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         subtitle="What people are selling, hosting and needing carried"
         segments={[]}
         activeSegmentId={room}
-        onSegmentChange={() => {}}
       />
 
       <DiscoverFeed

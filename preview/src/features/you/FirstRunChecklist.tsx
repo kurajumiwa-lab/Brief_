@@ -24,9 +24,17 @@ import type { TableBankingGroup } from "../../api/briefApi";
 export interface FirstRunChecklistProps {
   groups: TableBankingGroup[];
   onStartGroup: () => void;
-  onAddMembers: () => void;
-  onRecordContribution: () => void;
-  onSeeLedger: () => void;
+  /**
+   * Optional, and that is the point. The first-run takeover is rendered before a
+   * group exists, and "add members" / "record a contribution" / "see the ledger"
+   * are things a group needs. A host that has nowhere to take them used to pass
+   * `() => {}`, which turned every row into a button that did nothing — the
+   * fastest way to teach a new member that nothing on this app answers a tap.
+   * Pass nothing, and the row says what is missing instead of pretending.
+   */
+  onAddMembers?: () => void;
+  onRecordContribution?: () => void;
+  onSeeLedger?: () => void;
   onDismiss?: () => void;
   /** Compact = a card inside the You tab; full = the first-run takeover. */
   compact?: boolean;
@@ -37,14 +45,15 @@ export interface ChecklistStep {
   label: string;
   hint: string;
   done: boolean;
-  action: () => void;
+  /** Absent when there is nothing to open: the row is then a fact, not a button. */
+  action?: () => void;
   icon: React.ReactNode;
 }
 
 /** Derive the checklist from real rows — the single source of "done". */
 export function deriveChecklist(
   groups: TableBankingGroup[],
-  actions: Pick<FirstRunChecklistProps, "onStartGroup" | "onAddMembers" | "onRecordContribution" | "onSeeLedger">
+  actions: Partial<Pick<FirstRunChecklistProps, "onStartGroup" | "onAddMembers" | "onRecordContribution" | "onSeeLedger">>
 ): ChecklistStep[] {
   const hasGroup = groups.length > 0;
   const hasMembers = groups.some((g) => (g.members?.length ?? 0) > 1);
@@ -56,7 +65,7 @@ export function deriveChecklist(
       label: "Start your group",
       hint: "Give your circle a name and a contribution amount.",
       done: hasGroup,
-      action: actions.onStartGroup,
+      action: typeof actions.onStartGroup === 'function' ? actions.onStartGroup : undefined,
       icon: <Plus className="w-4 h-4" />
     },
     {
@@ -64,7 +73,7 @@ export function deriveChecklist(
       label: "Add members",
       hint: "Invite the people who already sit around the table with you.",
       done: hasMembers,
-      action: actions.onAddMembers,
+      action: typeof actions.onAddMembers === 'function' ? actions.onAddMembers : undefined,
       icon: <Users className="w-4 h-4" />
     },
     {
@@ -72,7 +81,7 @@ export function deriveChecklist(
       label: "Record your first contribution",
       hint: "A receipt-hashed record — Brief holds none of the money.",
       done: hasContribution,
-      action: actions.onRecordContribution,
+      action: typeof actions.onRecordContribution === 'function' ? actions.onRecordContribution : undefined,
       icon: <DollarSign className="w-4 h-4" />
     },
     {
@@ -80,7 +89,7 @@ export function deriveChecklist(
       label: "See your ledger",
       hint: "Every shilling, derived from real rows — the notebook, but better.",
       done: hasContribution,
-      action: actions.onSeeLedger,
+      action: typeof actions.onSeeLedger === 'function' ? actions.onSeeLedger : undefined,
       icon: <BookOpen className="w-4 h-4" />
     }
   ];
@@ -126,9 +135,11 @@ export function FirstRunChecklist({
       <ol className="mt-3 space-y-2">
         {steps.map((s) => (
           <li key={s.id}>
-            <button
-              type="button"
-              onClick={s.action}
+            {(() => {
+              const Row: any = s.action ? "button" : "div";
+              return (
+            <Row
+              {...(s.action ? { type: "button", onClick: s.action } : {})}
               className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors"
               style={{ background: "var(--color-surface-elevated)" }}
             >
@@ -146,9 +157,14 @@ export function FirstRunChecklist({
                 <span className={`block text-xs font-bold ${s.done ? "" : ""}`} style={{ color: s.done ? "var(--color-text-muted)" : "var(--color-text)" }}>
                   {s.label}
                 </span>
-                <span className="block text-[11px]" style={{ color: "var(--color-text-muted)" }}>{s.hint}</span>
+                <span className="block text-[11px]" style={{ color: "var(--color-text-muted)" }}>
+                  {s.hint}
+                  {!s.action && !s.done && <span className="font-bold"> · needs a group that exists first</span>}
+                </span>
               </span>
-            </button>
+            </Row>
+              );
+            })()}
           </li>
         ))}
       </ol>

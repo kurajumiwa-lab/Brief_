@@ -160,19 +160,26 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
       {/* ── ORDERS ── */}
       <section aria-label="Your orders" className="space-y-2.5">
         <SectionHeading icon={<Package className="w-4 h-4" />} title="Orders" sub="What you bought, what you sell" />
-        <div className="rounded-2xl border p-2" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-surface)' }}>
-          <Marketplace initialSection="orders" />
-        </div>
+        {/* No frame here: the order list inside is already a card, and a card
+            around a card is two borders doing one job. The screen's own ground is
+            the canvas; the section heading is the separation. */}
+        <Marketplace initialSection="orders" />
       </section>
 
       {/* ── SAVED ── */}
       <section aria-label="Saved and followed" className="space-y-2.5">
         <SectionHeading icon={<Bookmark className="w-4 h-4" />} title="Saved" sub="Places and people you follow" />
-        <div className="rounded-2xl border p-2" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-surface)' }}>
+        <div>
+          {/* Embedded, not overlaid: this used to mount the full-screen sheet
+              INSIDE a card with an empty close handler, so the scrim covered the
+              app and its Back, its X and its click-away all did nothing — a
+              second screen you could not leave. `variant='embedded'` renders the
+              same list in the page flow and offers no control that is not wired,
+              and with no object surface in this shell the cards stay static
+              rather than begging for a tap that leads nowhere. */}
           <FollowingSurface
+            variant="embedded"
             authed={authed}
-            onClose={() => {}}
-            onOpenObject={() => {}}
             onOpenEntity={(id) => { soundEngine.play('tap'); onOpenEntity(id); }}
             onRequireAuth={onRequireAuth}
           />

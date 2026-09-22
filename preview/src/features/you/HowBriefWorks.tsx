@@ -100,6 +100,16 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       ]
     },
     {
+      id: 'inout',
+      title: 'Getting in and getting out',
+      lines: [
+        'Every secondary screen is a URL: the drawer is #menu, the create sheet is #create, the event sheet is #host, a space you operate is #shop/<id>. That is not for sharing (though a pasted link does open the screen), it is so the back gesture on a phone is a way out. A screen held only in memory has no exit for a gesture, which is what “the back button doesn’t work” actually means.',
+        'Closing a surface puts the URL back on the screen underneath it, not on nothing. Clearing a URL to the root is how an app throws a person to Home and looks, from a phone, like it lost their place.',
+        'Where a control has nowhere to go, it is not rendered. A saved item with no detail screen is a row, not a button; a checklist step with no group behind it says “needs a group that exists first” instead of offering a tap that does nothing. The first-run card once carried three buttons wired to an empty function — three promises, none of them kept.',
+        'An offer’s photographs are the seller’s own files, uploaded from the create form as well as from the catalog, up to the number the store keeps (8). No stock image, no example photo and no placeholder frame is ever put on an offer: a buyer reads whatever appears as the goods, so a picture the seller did not supply is a lie about the shop. Until one is added, the listing says so — “No photo yet. Buyers see the name and the price alone.”'
+      ]
+    },
+    {
       id: 'defended',
       title: 'Standing, commitments and Defended',
       lines: [

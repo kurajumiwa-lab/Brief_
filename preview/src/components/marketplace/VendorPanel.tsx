@@ -4,6 +4,7 @@ import type {
   Listing, ListingDestinationKindDraft, ListingFlowDraft, ListingOriginKindDraft, Order, Vendor, VendorEarnings
 } from '../../api/types';
 import { money } from './ListingCard';
+import { ImageField } from '../ImageField';
 import { OrderStatus } from './OrderStatus';
 
 /**
@@ -18,6 +19,13 @@ import { OrderStatus } from './OrderStatus';
  * Lifecycle actions are offered only where the server would allow them. That
  * is a convenience: the server enforces the transition table regardless.
  */
+
+/**
+ * How many photos one offer carries, mirrored from the server's `MEDIA_CAP`
+ * (`server/src/domain/listing.js`), which the suite compares against the source
+ * so the counter on this form cannot disagree with what will actually be stored.
+ */
+export const MEDIA_CAP = 8;
 
 const STATUS_STYLE: Record<string, string> = {
   draft: 'bg-[var(--brief-line)] text-[var(--ink-60)]',
@@ -54,6 +62,8 @@ export interface VendorPanelProps {
     /** The two axes of a flow. Optional, except where a flow needs them. */
     flow: ListingFlowDraft; commodity: string; originKind: ListingOriginKindDraft; originName: string;
     destinationKind: ListingDestinationKindDraft; destinationName: string; unit: string; minOrder: string;
+    /** The seller's own uploaded files, in the order a buyer sees them. */
+    media?: string[];
   };
   onListingDraftChange: (patch: Partial<VendorPanelProps['listingDraft']>) => void;
   onCreateListing: () => void;
@@ -178,6 +188,56 @@ export function VendorPanel({
           placeholder="Description"
           className="w-full bg-[var(--color-well)] border border-[var(--brief-line)] rounded-xl px-3 py-2 text-xs text-[var(--brief-ink)] outline-none"
         />
+
+        {/* --- photos -------------------------------------------------------
+            This form had no photo control, so an offer created here could only
+            ever be a name and a price — while the same offer, edited afterwards
+            from a space's catalog, takes up to eight. The control is that one
+            (ImageField: a file in, the server sniffs the bytes and its refusal is
+            shown word for word). What is NOT here: a stock image, an "example
+            photo" or a placeholder frame. A buyer reads whatever appears on an
+            offer as the goods, so a picture the seller did not supply is a lie
+            about the shop. */}
+        <div className="space-y-1.5 rounded-xl p-2.5" style={{ background: 'var(--color-well)' }}>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
+              Photos
+            </p>
+            <p className="text-[11px] font-bold tabular-nums" style={{ color: 'var(--color-text-muted)' }}>
+              {(listingDraft.media ?? []).length}/{MEDIA_CAP}
+            </p>
+          </div>
+          {(listingDraft.media ?? []).map((src, i) => (
+            <div key={`${src}-${i}`} className="flex items-center gap-2 rounded-xl bg-[color:var(--color-paper)] px-2 py-1.5">
+              <img src={src} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+              <p className="min-w-0 flex-1 truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{src}</p>
+              <button
+                type="button"
+                aria-label={`Remove photo ${i + 1} from this listing`}
+                onClick={() => onListingDraftChange({ media: (listingDraft.media ?? []).filter((_, j) => j !== i) })}
+                className="shrink-0 text-[11px] font-bold underline cursor-pointer"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {(listingDraft.media ?? []).length === 0 && (
+            <p className="text-[11px] leading-snug" style={{ color: 'var(--color-text-muted)' }}>
+              No photo yet. Buyers see the name and the price alone — and a photo of something else is not a
+              photo of this.
+            </p>
+          )}
+          {(listingDraft.media ?? []).length < MEDIA_CAP && (
+            <ImageField
+              compact
+              multiple
+              label="Add a photo of these goods"
+              hint="The file, not a link. The server decides what the bytes really are."
+              onAdd={(url) => onListingDraftChange({ media: [...(listingDraft.media ?? []), url].slice(0, MEDIA_CAP) })}
+            />
+          )}
+        </div>
         <div className="flex gap-2">
           <input
             value={listingDraft.price}

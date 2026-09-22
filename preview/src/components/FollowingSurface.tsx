@@ -16,11 +16,23 @@ import type { FollowingSection, FollowsGroups } from '../api/briefApi';
 
 interface FollowingSurfaceProps {
   authed: boolean;
-  onClose: () => void;
-  onOpenObject: (object: any) => void;
+  /**
+   * The way out. It is OPTIONAL on purpose: this surface is also embedded inside
+   * Mine, where the page it sits on is the thing you leave and there is nothing
+   * to close. A host that cannot close it gets no Back button, no X and no
+   * click-away — a control that does nothing is how a person learns to distrust
+   * every control on the screen.
+   */
+  onClose?: () => void;
+  /** Same rule: with no object surface in the shell to open, a card is not made
+   *  to look tappable. The list still shows the real row. */
+  onOpenObject?: (object: any) => void;
   onOpenEntity: (entityId: string) => void;
   onRequireAuth: () => void;
   onFollowChanged?: () => void;
+  /** 'sheet' (default) is the full-screen overlay the legacy App opens; 'embedded'
+   *  is the same list, in the page flow, with no scrim and no close affordances. */
+  variant?: 'sheet' | 'embedded';
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -58,7 +70,11 @@ function temporalLine(o: FollowingSection['objects'][number]): string | null {
   return null;
 }
 
-export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, onRequireAuth, onFollowChanged }: FollowingSurfaceProps) {
+export function FollowingSurface({
+  authed, onClose, onOpenObject, onOpenEntity, onRequireAuth, onFollowChanged, variant = 'sheet'
+}: FollowingSurfaceProps) {
+  const embedded = variant === 'embedded';
+  const closable = typeof onClose === 'function' && !embedded;
   const [tab, setTab] = useState<'following' | 'manage'>('following');
   const [feed, setFeed] = useState<FollowingSection[] | null>(null);
   const [follows, setFollows] = useState<FollowsGroups | null>(null);
@@ -101,22 +117,31 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(10, 14, 20, 0.85)] backdrop-blur-md sm:justify-center sm:p-4"
-      onClick={onClose}
+      className={embedded
+        ? 'flex flex-col overflow-hidden rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)]'
+        : 'fixed inset-0 z-50 flex flex-col justify-end overflow-hidden bg-[rgba(10, 14, 20, 0.85)] backdrop-blur-md sm:justify-center sm:p-4'}
+      onClick={embedded ? undefined : onClose}
     >
       <div
-        className="flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl"
-        onClick={(e) => e.stopPropagation()}
+        className={embedded
+          ? 'flex max-h-[70vh] w-full flex-col overflow-hidden'
+          : 'flex h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] shadow-2xl mb-safe sm:h-[88vh] sm:rounded-3xl'}
+        onClick={embedded ? undefined : (e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-2 border-b border-[var(--brief-line)] px-4 py-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
+          {closable ? (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[13px] font-bold text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </button>
+          ) : (
+            /* Nothing that looks like a way out unless it is one. */
+            <span className="text-[13px] font-extrabold uppercase tracking-wider text-[var(--ink-70)]">Following</span>
+          )}
           <div className="flex items-center gap-1 rounded-full border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-1">
             <button
               type="button"
@@ -133,14 +158,16 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
               Manage{follows && follows.total > 0 ? ` (${follows.total})` : ''}
             </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-full p-2 text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {closable && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="rounded-full p-2 text-[var(--brief-ink)] transition-colors hover:bg-[color:var(--color-well)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto pb-safe">
@@ -201,12 +228,13 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                   <div className="grid gap-2 sm:grid-cols-2">
                     {section.objects.map((o) => {
                       const line = temporalLine(o);
+                      const openable = typeof onOpenObject === 'function';
+                      const Tag = openable ? 'button' : 'div';
                       return (
-                        <button
+                        <Tag
                           key={o.id}
-                          type="button"
-                          onClick={() => onOpenObject(o)}
-                          className="group flex items-stretch gap-2.5 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:border-[#0891B2]"
+                          {...(openable ? { type: 'button', onClick: () => onOpenObject?.(o) } : {})}
+                          className={`flex items-stretch gap-2.5 rounded-2xl border border-[var(--brief-line)] bg-[color:var(--color-paper)] p-2 text-left shadow-sm ${openable ? 'group transition-transform hover:-translate-y-0.5 hover:border-[#0891B2] cursor-pointer' : ''}`}
                         >
                           {o.imageUrl ? (
                             <img src={o.imageUrl} alt="" aria-hidden="true" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
@@ -224,7 +252,7 @@ export function FollowingSurface({ authed, onClose, onOpenObject, onOpenEntity, 
                               {o.title}
                             </h4>
                           </div>
-                        </button>
+                        </Tag>
                       );
                     })}
                   </div>
