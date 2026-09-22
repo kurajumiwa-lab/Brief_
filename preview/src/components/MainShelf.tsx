@@ -186,13 +186,13 @@ function ShelfCardView({
         }}
       />
       {locked && service && (
-        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[rgba(10, 14, 20, 0.85)] px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[var(--accent-ink)]">
+        <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[rgba(10, 14, 20, 0.85)] px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--accent-ink)]">
           <Lock className="h-2 w-2" /> {service.unlocksAfter}
         </span>
       )}
       {!locked && card.priority && (
         <span
-          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
+          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.14em] ${
             isDark ? 'bg-[#059669] text-[var(--brief-ink)]' : 'bg-[#2563EB] text-[var(--accent-ink)]'
           }`}
         >
@@ -201,7 +201,7 @@ function ShelfCardView({
       )}
       {!locked && card.featured && (
         <span
-          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] ${
+          className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.14em] ${
             isDark ? 'bg-[#059669] text-[var(--brief-ink)]' : 'bg-[color:var(--color-paper)] text-[var(--brief-ink)]'
           }`}
         >
@@ -209,7 +209,7 @@ function ShelfCardView({
         </span>
       )}
       {card.id === 'play' && playOpenCount === 0 && (
-        <span className="absolute right-2 top-2 rounded-full border border-[rgba(220, 225, 232, 0.35)] bg-[rgba(10, 14, 20, 0.85)] px-1.5 py-0.5 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[var(--accent-ink)]">
+        <span className="absolute right-2 top-2 rounded-full border border-[rgba(220, 225, 232, 0.35)] bg-[rgba(10, 14, 20, 0.85)] px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[var(--accent-ink)]">
           Quiet now
         </span>
       )}
@@ -224,7 +224,7 @@ function ShelfCardView({
       </span>
       <div className={`absolute inset-x-2.5 ${compact ? 'bottom-2' : 'bottom-2.5'}`}>
         <p
-          className={`text-[7.5px] font-extrabold uppercase tracking-[0.16em] ${
+          className={`text-[11px] font-extrabold uppercase tracking-[0.16em] ${
             isDark ? 'text-[#059669]' : 'text-[var(--ink-75)]'
           }`}
         >
@@ -294,7 +294,7 @@ export function MainShelf({
         {isDark && <ShelfPlank className="mt-1" />}
       </div>
       {!compact && (
-        <p className={`px-1 text-[9.5px] leading-snug ${isDark ? 'text-[#5A6472]' : 'text-[var(--ink-60)]'}`}>
+        <p className={`px-1 text-[11px] leading-snug ${isDark ? 'text-[#5A6472]' : 'text-[var(--ink-60)]'}`}>
           The shelf is the shortcut. Use the menu for less frequent tools and region settings.
         </p>
       )}

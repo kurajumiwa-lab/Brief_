@@ -198,7 +198,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
           <div className="grid grid-cols-2 gap-2">
             {standing.map((s) => (
               <div key={s.label} className="rounded-xl bg-[color:var(--color-well)] px-2.5 py-2">
-                <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[var(--ink-70)]">{s.label}</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--ink-70)]">{s.label}</p>
                 <p className="text-[13px] font-extrabold text-[var(--brief-ink)] mt-0.5 truncate">{s.value}</p>
               </div>
             ))}
@@ -228,7 +228,7 @@ function LocalCard({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
               Sign out
             </button>
           )}
-          <p className="text-[9.5px] text-[var(--ink-60)] leading-snug">
+          <p className="text-[11px] text-[var(--ink-60)] leading-snug">
             Standing is derived from what actually happened — settled money, arrivals, views. Nothing here is decorative.
           </p>
         </div>
@@ -265,7 +265,7 @@ function ExploreGrid({ onSelect }: { onSelect: (target: MenuTarget) => void }) {
               <Icon className="h-4 w-4 text-[#2563EB]" />
             </span>
             <p className="mt-2 text-[14px] font-extrabold text-[var(--brief-ink)] leading-tight">{label}</p>
-            <p className="mt-0.5 text-[9.5px] text-[var(--ink-55)] leading-snug">{detail}</p>
+            <p className="mt-0.5 text-[11px] text-[var(--ink-55)] leading-snug">{detail}</p>
           </button>
         ))}
       </div>
@@ -302,7 +302,7 @@ function QuickActions({ onSelect, unread }: { onSelect: (target: MenuTarget) => 
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[12.5px] font-extrabold text-[var(--brief-ink)] leading-tight">{label}</span>
-            <span className="block text-[9.5px] text-[var(--ink-70)] truncate">{detail}</span>
+            <span className="block text-[11px] text-[var(--ink-70)] truncate">{detail}</span>
           </span>
           {rowUnread !== undefined && unread > 0 && (
             <span className="shrink-0 rounded-full bg-[#DC2626] px-1.5 py-0.5 text-[11px] font-extrabold text-white">
@@ -459,13 +459,13 @@ export function MenuSheet({ open, onClose, onSelect, onSelectCity, selectedLocat
             </span>
             <span className="flex-1 min-w-0 text-left">
               <span className="block text-[12.5px] font-extrabold text-[var(--brief-ink)] leading-tight">Operate</span>
-              <span className="block text-[9.5px] text-[var(--ink-70)] truncate">The operator desk — health, queues, commerce, audit</span>
+              <span className="block text-[11px] text-[var(--ink-70)] truncate">The operator desk — health, queues, commerce, audit</span>
             </span>
             <ArrowRight className="h-4 w-4 text-[var(--ink-60)] shrink-0" aria-hidden="true" />
           </button>
         )}
 
-        <p className="flex items-center gap-1.5 px-1 pt-1 text-[9.5px] text-[var(--ink-60)]">
+        <p className="flex items-center gap-1.5 px-1 pt-1 text-[11px] text-[var(--ink-60)]">
           <Lock className="h-3 w-3 shrink-0" aria-hidden="true" />
           Coming later — Courses · Data desk · Premium (regulatory review in progress)
         </p>

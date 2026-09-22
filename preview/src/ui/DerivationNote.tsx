@@ -50,7 +50,7 @@ export function DerivationNote({ summary, detail, label = 'How this is derived',
       </p>
       {open && (
         <p
-          className="text-[10.5px] leading-relaxed rounded-xl px-2.5 py-2"
+          className="text-[11px] leading-relaxed rounded-xl px-2.5 py-2"
           style={{ background: 'var(--color-well)', color: 'var(--brief-muted)', boxShadow: 'inset 0 0 0 1px var(--brief-line)' }}
         >
           {detail}

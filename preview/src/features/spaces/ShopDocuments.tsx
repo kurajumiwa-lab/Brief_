@@ -72,7 +72,7 @@ export const ShopDocuments: React.FC<{
                   {folder.label}
                 </span>
                 <span
-                  className="ml-auto text-[10px] font-semibold uppercase tracking-wide"
+                  className="ml-auto text-[11px] font-semibold uppercase tracking-wide"
                   style={{ color: 'var(--color-text-muted)' }}
                 >
                   {rows.length === 0 ? 'Empty' : `${rows.length} filed`}

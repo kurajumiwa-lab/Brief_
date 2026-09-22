@@ -383,7 +383,7 @@ export function Onboarding({
               {busy === 'guest' ? 'Setting up…' : 'Just look around on this device'}
             </button>
 
-            {error && <p className="text-[10.5px] font-bold text-[#DC2626]">{error}</p>}
+            {error && <p className="text-[11px] font-bold text-[#DC2626]">{error}</p>}
 
             <p className="flex items-start gap-1.5 text-[11px] leading-snug text-[var(--ink-60)]">
               <ShieldCheck className="mt-[1px] h-3 w-3 shrink-0" />
@@ -432,7 +432,7 @@ export function Onboarding({
                 </p>
               )}
             </div>
-            {error && <p className="text-[10.5px] font-bold text-[#DC2626]">{error}</p>}
+            {error && <p className="text-[11px] font-bold text-[#DC2626]">{error}</p>}
           </div>
         )}
 

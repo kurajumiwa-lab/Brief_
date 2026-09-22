@@ -189,7 +189,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           >
             <Plus className="w-5 h-5" />
           </span>
-          <span className="text-[10px] font-bold tracking-tight mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+          <span className="text-[11px] font-bold tracking-tight mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
             {item.label}
           </span>
         </button>
@@ -212,7 +212,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             {DOOR_ICONS[item.id]}
           </span>
           <span
-            className="text-[10px] tracking-tight mt-0.5"
+            className="text-[11px] tracking-tight mt-0.5"
             style={{
               color: activeDoor === item.id ? 'var(--color-text)' : 'var(--color-text-muted)',
               fontWeight: activeDoor === item.id ? 800 : 500
@@ -315,7 +315,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             </button>
           </nav>
         </div>
-        <p className="text-[10px] text-[color:var(--color-text-muted)]">
+        <p className="text-[11px] text-[color:var(--color-text-muted)]">
           Three doors for what you do. One action for what you make.
         </p>
       </aside>

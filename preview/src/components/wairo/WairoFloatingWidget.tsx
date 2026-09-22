@@ -127,7 +127,7 @@ export const WairoFloatingWidget: React.FC<WairoFloatingWidgetProps> = ({
                 Courier & Errands
               </span>
               
-              <div className="flex items-center space-x-1.5 mt-1 text-[9.5px] font-mono text-[var(--ink-55)]">
+              <div className="flex items-center space-x-1.5 mt-1 text-[11px] font-mono text-[var(--ink-55)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                 <span className="truncate max-w-[130px]">
                   Courier & Errands Only • {selectedLocation.name}

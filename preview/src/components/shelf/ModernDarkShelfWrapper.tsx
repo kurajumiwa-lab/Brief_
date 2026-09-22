@@ -182,7 +182,7 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
           </div>
         ) : kicdApproved ? (
           <div
-            className="px-1.5 py-0.5 rounded-[3px] bg-amber-500/20 text-amber-300 flex items-center space-x-0.5 text-[7.5px] font-black uppercase tracking-wider border border-amber-400/30"
+            className="px-1.5 py-0.5 rounded-[3px] bg-amber-500/20 text-amber-300 flex items-center space-x-0.5 text-[11px] font-black uppercase tracking-wider border border-amber-400/30"
           >
             <ShieldCheck className="w-2.5 h-2.5 text-amber-400" />
             <span>KICD ✓</span>
@@ -229,18 +229,18 @@ export const DarkShelfBookCard: React.FC<DarkShelfBookCardProps> = ({
         {/* 3-Token High-Signal Strip (Price / WAIRO / Progress) */}
         {priceKes ? (
           <div className="mt-1.5 flex items-center justify-between pt-1 border-t border-white/10">
-            <span className="text-[10.5px] font-black text-amber-300">
+            <span className="text-[11px] font-black text-amber-300">
               KES {priceKes.toLocaleString()}
             </span>
             {wairoDeliveryToken && (
-              <span className="text-[7.5px] font-mono font-bold text-cyan-300 bg-cyan-950/60 px-1 py-0.2 rounded">
+              <span className="text-[11px] font-mono font-bold text-cyan-300 bg-cyan-950/60 px-1 py-0.2 rounded">
                 {wairoDeliveryToken}
               </span>
             )}
           </div>
         ) : (subtitle || author || unlockText) ? (
           <p
-            className="text-[9.5px] font-medium leading-snug mt-1 line-clamp-1"
+            className="text-[11px] font-medium leading-snug mt-1 line-clamp-1"
             style={{ color: locked ? '#FBBF24' : DARK_SHELF_TOKENS.mutedText }}
           >
             {locked && unlockText ? `Opens: ${unlockText}` : (subtitle || author)}

@@ -205,8 +205,20 @@ async function main() {
     // pill — a corner badge the pattern removes), so 8px and 9px are both
     // banned everywhere, with no file to exempt.
     const allSrc = sweep();
-    assert.ok(!/text-\[8px\]/.test(allSrc), 'no 8px type survives in the app');
-    assert.ok(!/text-\[9px\]/.test(allSrc), 'no 9px type survives — the pill exception is gone with the pill');
+    // The floor is a NUMBER, not a list of strings. This file used to ban
+    // `text-[8px]` and `text-[9px]` by name, which is how `text-[9.5px]`,
+    // `text-[10px]` and `text-[10.5px]` walked straight past it — 34 sites,
+    // including the three words of the bottom bar an operator taps all day. So
+    // every arbitrary size is parsed and compared, and the only value below the
+    // floor is 0px, which belongs to a visually-hidden `sr-only` span.
+    const undersized = [];
+    allSrc.split('\n').forEach((line, i) => {
+      for (const m of line.matchAll(/text-\[([0-9]+(?:\.[0-9]+)?)px\]/g)) {
+        const px = Number(m[1]);
+        if (px !== 0 && px < 11) undersized.push(`${i}: ${m[0]}`);
+      }
+    });
+    assert.deepEqual(undersized, [], `type below the 11px floor:\n${undersized.slice(0, 12).join('\n')}`);
     // The floor has to cover hand-written CSS too: the utility sweep missed two
     // component stylesheets, and a claim of "smallest type is 11px" that only
     // holds for Tailwind classes is not a claim about the app.

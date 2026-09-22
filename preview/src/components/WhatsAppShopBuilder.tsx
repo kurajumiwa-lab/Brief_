@@ -114,7 +114,7 @@ function TheBook({ items, onQueued }: { items: { name: string; priceKes: string 
               className="rounded-lg bg-[#2563EB] px-3 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40 cursor-pointer">Log</button>
           </div>
           {note && <p role="status" className="text-[11px] font-bold text-[#059669]">{note}</p>}
-          <p className="text-[9.5px] text-[var(--ink-60)] leading-snug">{book.note}</p>
+          <p className="text-[11px] text-[var(--ink-60)] leading-snug">{book.note}</p>
         </>
       ) : (
         <p className="text-[12px] text-[var(--ink-55)]">Save the shop and the book opens — today, the week, what is moving, what is low.</p>
@@ -148,7 +148,7 @@ function PoolACard({ items }: { items: { name: string; priceKes: string }[] }) {
         <h3 className="text-[14px] font-extrabold text-[var(--brief-ink)]">Pool a restock</h3>
         <span className="text-[11px] text-[var(--ink-60)]">bulk price, pooled demand</span>
       </div>
-      <p className="text-[10.5px] text-[var(--ink-60)] leading-snug">
+      <p className="text-[11px] text-[var(--ink-60)] leading-snug">
         Pick an item you sell, say the bulk unit cost and a goal. Brief opens a Group Buy — other shops pool in, and everyone buys at the bulk price.
       </p>
       <div className="grid grid-cols-2 gap-1.5">
@@ -163,13 +163,13 @@ function PoolACard({ items }: { items: { name: string; priceKes: string }[] }) {
         <button type="button" onClick={() => void pool()} disabled={busy || !itemName || !unitCost || !goal || !mine}
           className="rounded-lg bg-[#2563EB] px-3 py-1.5 text-[12px] font-extrabold text-[var(--accent-ink)] disabled:opacity-40 cursor-pointer">Open the pool</button>
       </div>
-      {error && <p role="alert" className="text-[10.5px] font-bold text-[#DC2626]">{error}</p>}
+      {error && <p role="alert" className="text-[11px] font-bold text-[#DC2626]">{error}</p>}
       {out && (
         <div className="rounded-xl bg-[#EFF1F4] border border-[var(--brief-line)] p-2.5 space-y-1.5">
-          <p className="text-[10.5px] font-bold text-[var(--brief-ink)]">Pool open — KES {out.total.toLocaleString()} of {out.target.toLocaleString()} pledged.</p>
-          <pre className="whitespace-pre-wrap font-sans text-[10.5px] leading-relaxed text-[var(--brief-ink)] select-all">{out.text}</pre>
+          <p className="text-[11px] font-bold text-[var(--brief-ink)]">Pool open — KES {out.total.toLocaleString()} of {out.target.toLocaleString()} pledged.</p>
+          <pre className="whitespace-pre-wrap font-sans text-[11px] leading-relaxed text-[var(--brief-ink)] select-all">{out.text}</pre>
           <a href={out.waMe} target="_blank" rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 py-1.5 text-[10.5px] font-extrabold text-[var(--accent-ink)] no-underline">
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold text-[var(--accent-ink)] no-underline">
             <Send className="w-3 h-3" /> Call other shops on WhatsApp
           </a>
         </div>
@@ -406,7 +406,7 @@ export function WhatsAppShopBuilder({ onOpenFees }: { onOpenFees: () => void }) 
                 </button>
               </>
             )}
-            <p className="text-[9.5px] text-[var(--ink-70)] leading-snug pt-1 border-t border-[var(--brief-line)]">
+            <p className="text-[11px] text-[var(--ink-70)] leading-snug pt-1 border-t border-[var(--brief-line)]">
               Photos belong in the free WhatsApp Business catalog (500 items, 10 images) — this builder makes the price list people forward.
             </p>
           </div>

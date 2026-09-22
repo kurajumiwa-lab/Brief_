@@ -237,10 +237,10 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
           </p>
           {n.body && <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[var(--ink-55)]">{n.body}</p>}
           {n.sourceName && (
-            <p className="mt-1 text-[9.5px] font-semibold text-[var(--ink-60)]">{n.sourceName}</p>
+            <p className="mt-1 text-[11px] font-semibold text-[var(--ink-60)]">{n.sourceName}</p>
           )}
           {n.context && (
-            <p className="mt-0.5 text-[9.5px] font-semibold text-[#2563EB]/70">{n.context}</p>
+            <p className="mt-0.5 text-[11px] font-semibold text-[#2563EB]/70">{n.context}</p>
           )}
         </div>
       </button>
@@ -329,7 +329,7 @@ export function NotificationCenter({ authed, onClose, onOpen, onChanged }: Notif
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-[9.5px] leading-snug text-[var(--ink-60)]">
+            <p className="mt-2 text-[11px] leading-snug text-[var(--ink-60)]">
               Categories you turn off stop new notifications; everything already here stays until you dismiss it.
             </p>
           </div>
