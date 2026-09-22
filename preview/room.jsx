@@ -577,7 +577,8 @@ async function main() {
       ['a read, not a report', 'why there is no stored brief row to edit or expire'],
       ['marked in minus recorded out', 'what the morning brief’s money actually is'],
       ['nobody is ever reported absent', 'that a rota does not exist, so no absence flag is built'],
-      ['one brief per day at most', 'how the morning notification behaves when it is switched on']
+      ['one brief per day at most', 'how the morning notification behaves when it is switched on'],
+      ['moves no money itself', 'that escrow on Mine is records, not a vault']
     ]) {
       assert.ok(t.includes(needle), `the audit page still carries ${why}`);
     }

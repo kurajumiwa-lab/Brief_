@@ -9,6 +9,7 @@ import { BannerButton } from '../../ui/BannerButton';
 import { Marketplace } from '../../components/Marketplace';
 import { FollowingSurface } from '../../components/FollowingSurface';
 import { soundEngine } from '../../utils/SoundEngine';
+import { EscrowRecords } from './EscrowRecords';
 
 // ---------------------------------------------------------------------------
 // MINE — the second door: your shops, your orders, what you kept.
@@ -63,18 +64,37 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
 }) => {
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shopsFailed, setShopsFailed] = useState(false);
+  const [shopsDenied, setShopsDenied] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [shopsAttempt, setShopsAttempt] = useState(0);
 
   useEffect(() => {
     let live = true;
+    setLoading(true);
+    setShopsFailed(false);
+    setShopsDenied(false);
     void briefApi.listMySpaces().then((res) => {
       if (!live) return;
-      if (res.ok && res.data?.spaces) setSpaces(res.data.spaces);
+      if (res.ok && res.data?.spaces) {
+        setSpaces(res.data.spaces);
+        setShopsFailed(false);
+        setShopsDenied(false);
+      } else {
+        setSpaces([]);
+        setShopsDenied(!res.ok && (res as { status?: number }).status === 401);
+        setShopsFailed(!res.ok && (res as { status?: number }).status !== 401);
+      }
       setLoading(false);
-    }).catch(() => { if (live) setLoading(false); });
+    }).catch(() => {
+      if (!live) return;
+      setSpaces([]);
+      setShopsFailed(true);
+      setLoading(false);
+    });
     void briefApi.whoAmI().then((res) => { if (live) setAuthed(res.ok); });
     return () => { live = false; };
-  }, []);
+  }, [shopsAttempt]);
 
   const { active } = splitSpaces(spaces);
   const queue = attentionQueue(active);
@@ -113,11 +133,39 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
         </section>
       )}
 
+      {/* Held records — omitted when none are locked. Never a vault. */}
+      <EscrowRecords />
+
       {/* ── SHOPS ── */}
       <section aria-label="Your shops" className="space-y-2.5">
         <SectionHeading icon={<Store className="w-4 h-4" />} title="Shops" sub="The shopfronts you operate" />
         {loading ? (
           <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Reading your shops…</p>
+        ) : shopsDenied ? (
+          <p className="text-[13px]" style={{ color: 'var(--color-text-muted)' }}>
+            Sign in to see the shops you operate.
+          </p>
+        ) : shopsFailed ? (
+          <div
+            className="p-4 rounded-2xl space-y-2"
+            style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), inset 0 0 0 1px var(--brief-line)' }}
+            role="status"
+          >
+            <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
+              Your shops could not be read just now.
+            </p>
+            <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
+              Nothing is shown in their place — no empty shop, no invented stall.
+            </p>
+            <button
+              type="button"
+              onClick={() => { soundEngine.play('tap'); setShopsAttempt((n) => n + 1); }}
+              className="inline-flex items-center px-3.5 py-2 rounded-full text-xs font-black cursor-pointer"
+              style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+            >
+              Try again
+            </button>
+          </div>
         ) : active.length === 0 ? (
           <div
             className="p-5 rounded-3xl border border-dashed text-center space-y-3"

@@ -66,6 +66,8 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
   const [detail, setDetail] = React.useState<Listing | null>(null);
   const [vendorView, setVendorView] = React.useState<{ vendor: Vendor; listings: Listing[] } | null>(null);
   const [myOrders, setMyOrders] = React.useState<Order[]>([]);
+  const [ordersStatus, setOrdersStatus] = React.useState<'idle' | 'ready' | 'failed' | 'denied'>('idle');
+  const [ordersAttempt, setOrdersAttempt] = React.useState(0);
   const [myVendor, setMyVendor] = React.useState<Vendor | null>(null);
   const [myListings, setMyListings] = React.useState<Listing[]>([]);
   const [vendorOrders, setVendorOrders] = React.useState<Order[]>([]);
@@ -110,7 +112,13 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
 
   const loadOrders = React.useCallback(async () => {
     const res = await briefApi.getMyOrders();
-    if (res.ok) setMyOrders(res.data);
+    if (res.ok) {
+      setMyOrders(res.data);
+      setOrdersStatus('ready');
+    } else {
+      setMyOrders([]);
+      setOrdersStatus(res.status === 401 ? 'denied' : 'failed');
+    }
     // Disputes I raised: the other half of "report a problem" — the report
     // used to vanish into the server with no way to see it again.
     const d = await briefApi.getDisputes();
@@ -135,7 +143,7 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
     if (section === 'browse') void loadBrowse();
     if (section === 'orders') void loadOrders();
     if (section === 'selling') void loadSelling();
-  }, [section, loadBrowse, loadOrders, loadSelling]);
+  }, [section, loadBrowse, loadOrders, loadSelling, ordersAttempt]);
 
   /**
    * Run a mutation, then REFETCH rather than patching local state. The server
@@ -374,7 +382,26 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
       {section === 'orders' && (
         <div className="space-y-2">
           {notice && <p className="text-[11px] text-[var(--brief-ink)]">{notice}</p>}
-          {myOrders.length === 0 ? (
+          {ordersStatus === 'denied' ? (
+            <p className="text-xs text-[var(--ink-60)]">Sign in to see what you bought.</p>
+          ) : ordersStatus === 'failed' ? (
+            <div className="space-y-2" role="status">
+              <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
+                Your orders could not be read just now.
+              </p>
+              <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
+                Nothing is shown in their place — no empty history, no invented delivery.
+              </p>
+              <button
+                type="button"
+                onClick={() => setOrdersAttempt((n) => n + 1)}
+                className="inline-flex items-center px-3.5 py-2 rounded-full text-xs font-black cursor-pointer"
+                style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+              >
+                Try again
+              </button>
+            </div>
+          ) : myOrders.length === 0 ? (
             <p className="text-xs text-[var(--ink-60)]">You have not ordered anything yet.</p>
           ) : (
             myOrders.map((o) => (

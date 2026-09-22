@@ -258,6 +258,9 @@ async function main() {
         space('spc_n', { name: 'Kipepeo Stalls' })
       ] });
       if (url.includes('/api/auth/me')) return ok({ id: 'me', displayName: 'Test', handle: 'test' });
+      if (url.includes('/api/escrows/mine')) return ok({ rows: [], totals: { heldKes: 0, releasedKes: 0, heldCount: 0 }, note: 'Records of funds held between two sides until delivery — Brief moves no money itself.' });
+      if (url.includes('/api/orders')) return ok({ orders: [] });
+      if (url.includes('/api/listings')) return ok({ listings: [] });
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
     };
     const { host } = await mount(React.createElement(MineSurface, {

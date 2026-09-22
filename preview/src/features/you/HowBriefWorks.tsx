@@ -82,7 +82,8 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
         '“Money out” is only the expenses you typed. There is no bank feed, no import and no receipt reader, so the panel shows the number of rows behind it and never calls the subtraction net profit or take-home: rent, credit not yet paid back and anything you did not record are simply absent.',
         'A margin against nothing sold is a dash, not 0%. “0%” states a fact — sold, kept nothing — and a shop with no settled order has not stated it.',
         'A mixed basket of currencies has no single total. The amount is dropped and the count is kept; nothing is converted at a rate Brief made up.',
-        'A brief is not a bank. Brief holds no money, moves none, stores no card or M-Pesa credentials, and charges nothing. A payment you record is a record you attest to — the ledger’s authority is that you can trace every line back to a row, not that a stranger vouched for it.'
+        'A brief is not a bank. Brief holds no money, moves none, stores no card or M-Pesa credentials, and charges nothing. A payment you record is a record you attest to — the ledger’s authority is that you can trace every line back to a row, not that a stranger vouched for it.',
+        'Escrow on Mine is records of funds held between two sides until delivery — Brief moves no money itself. A held total is the sum of locked group-buy and frozen ticket rows; the section is omitted when none are locked. HudumaLink citizen escrow is phone-keyed and read at the operator desk. There is no vault, no “healthy” badge, and no locked-KES figure without those rows.'
       ]
     },
     {
