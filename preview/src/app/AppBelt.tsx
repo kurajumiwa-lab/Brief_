@@ -1,19 +1,15 @@
 // ---------------------------------------------------------------------------
-// THE BELT — the top band, borrowed for its geometry and nothing else.
+// THE BELT — the top band: a location, a search that resolves, a hamburger
+// that owns the long list, and a message slot above the content.
 //
-// Amazon's header works because of three structural decisions, and those are
-// what this copies:
+// What it no longer is: a departments rail. The band used to carry a chip row
+// (All · Events · Circles · Errands) that duplicated the board's own picker
+// and Home's mode tiles — three chip lists for one taxonomy is the third
+// navigation system the reorg deleted. Now the band is the header the mock it
+// copies has: location + search + hamburger. Categories are Home's tiles and
+// the board's picker, and that is enough.
 //
-//   1. a hamburger owns the LONG list, so the always-visible band can stay short
-//      (see `NavSheet`; the sheet rule that comes with it is that anything the
-//      sheet holds does not also get a shelf on Home);
-//   2. a departments rail of one-word links under the band, so a category is one
-//      tap from anywhere. The words here are imported from the app's own
-//      taxonomy (`features/city/taxonomy`) — a belt that typed its own category
-//      list would be a second taxonomy, and the second one always loses;
-//   3. a site-wide message slot ABOVE the content.
-//
-// Everything else in that header is refused, on purpose:
+// Everything else in the header is refused, on purpose:
 //   * no "Delivering to <city>" that was inferred from an IP. The chip says the
 //     area the member typed, or says it is unset;
 //   * no cart badge, no "X people viewed this", no deal countdown, no "Early
@@ -26,10 +22,8 @@
 //     would teach the member that nothing here can be trusted.
 // ---------------------------------------------------------------------------
 import React, { useEffect, useState } from 'react';
-import { Menu, Search, MapPin, ArrowRight } from 'lucide-react';
+import { Menu, Search, MapPin } from 'lucide-react';
 import { TraceMark } from '../components/TraceMark';
-import { SIDE_ORDER } from '../features/city/taxonomy';
-import type { DiscoverRoom } from '../features/city/taxonomy';
 import * as briefApi from '../api/briefApi';
 import type { CampaignBanner } from '../api/types';
 import { soundEngine } from '../utils/SoundEngine';
@@ -50,18 +44,14 @@ const dayWords = (iso: string | null): string | null => {
 export interface AppBeltProps {
   onOpenSheet: () => void;
   onHome: () => void;
-  onOpenRoom: (room: DiscoverRoom) => void;
   onSearch: (q: string) => void;
-  activeRoom?: DiscoverRoom | null;
   className?: string;
 }
 
 export const AppBelt: React.FC<AppBeltProps> = ({
   onOpenSheet,
   onHome,
-  onOpenRoom,
   onSearch,
-  activeRoom = null,
   className = ''
 }) => {
   const [q, setQ] = useState('');
@@ -158,36 +148,6 @@ export const AppBelt: React.FC<AppBeltProps> = ({
         <span className="text-[11px]" style={{ color: 'var(--color-quiet)' }}>
           {place ? 'A weather line appears on a day you have something planned.' : 'Used for the forecast. Optional.'}
         </span>
-      </div>
-
-      {/* ── the rooms, in the band. Four words a person already knows.
-             The four FLOWS are deliberately not here: they need a sentence to
-             mean anything ("bulk — for vendors & shops"), so they live in
-             Discover's picker, beside their counts and their sub-lines. What
-             stays in the band is what needs no explanation, because the band was
-             the second navigation the brief called out: chips up here mirroring
-             a list down there is two ways to do one thing, and on a small screen
-             it reads as noise. Labels still come from the taxonomy module, so
-             this band cannot invent a room. ── */}
-      <div className="flex items-center gap-1.5 px-3 pb-2 overflow-x-auto" role="navigation" aria-label="Departments">
-        {SIDE_ORDER.map((s) => {
-          const on = activeRoom === s.key;
-          return (
-            <button
-              key={s.key}
-              type="button"
-              onClick={() => { soundEngine.play('tap'); onOpenRoom(s.key); }}
-              aria-current={on ? 'page' : undefined}
-              className="shrink-0 px-2.5 py-1 rounded-full text-[12px] font-bold cursor-pointer"
-              style={{
-                background: on ? 'var(--color-text)' : 'var(--color-bg)',
-                color: on ? 'var(--color-primary)' : 'var(--color-text)'
-              }}
-            >
-              {s.label}
-            </button>
-          );
-        })}
       </div>
 
       {/* ── the message slot. Nothing to say, nothing rendered. ── */}

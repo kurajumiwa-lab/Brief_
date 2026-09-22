@@ -39,13 +39,18 @@ const check = (n, c, d = '') => {
 // --- server state the mock serves ------------------------------------------
 // Mutated by the mock's POST handlers so the UI's refetch-after-action sees
 // genuinely updated data -- the same contract the real server honours.
+// The mock carries the server's derived fields verbatim: isMember / canJoin
+// on every list row, and viewerRole on the detail. The list card now renders
+// ONE action from those fields (Open / Join / View), so a mock without them
+// would be a card with no action at all.
 const CIRCLE = {
   id: 'circ_1', name: 'Kilimani Traders', description: 'Neighbourhood traders.',
   type: 'treasury', status: 'active', visibility: 'invite_only', sourceId: null,
   goal: 'Shared stall fund', targetValue: 10000, deadline: null, completionCriteria: null,
   parentCircleId: null, createdAt: '2026-08-01T00:00:00Z', updatedAt: '2026-08-01T00:00:00Z',
   currentValue: 2500, contributorCount: 1, progressPct: 25, settledCount: 1,
-  blockCount: 4, memberCount: 3
+  blockCount: 4, memberCount: 3,
+  isMember: true, canJoin: false, viewerRole: 'coordinator'
 };
 
 const mkTask = (id, content, task) => ({
@@ -104,7 +109,8 @@ const reset = () => {
         trust: { evidence: [], verifiedCount: 0, facts: [] } }
     ],
     calls: [],
-    refuse: null
+    refuse: null,
+    viewerRole: 'coordinator'
   };
 };
 reset();
@@ -214,7 +220,10 @@ global.fetch = async (url, init) => {
     });
   }
   if (/\/api\/circles\/[^/]+$/.test(u)) {
-    const live = { ...CIRCLE, blockCount: state.blocks.length };
+    // The server answers viewerRole for the eyes that asked; the mock keeps
+    // that contract by serving it from state, so a role scenario changes the
+    // row the way the server would.
+    const live = { ...CIRCLE, viewerRole: state.viewerRole, blockCount: state.blocks.length };
     return ok({ circle: live, blocks: state.blocks, signals: state.signals });
   }
   if (u.includes('/api/circles')) return ok({ circles: [CIRCLE] });
@@ -251,13 +260,17 @@ async function main() {
   };
 
   // =========================================================================
-  console.log('=== Circle list: server-derived target ===');
+  console.log('=== Circle list: one card shape, one action ===');
   await mount();
   let b = body();
   check('circle listed', b.includes('Kilimani Traders'));
-  check('server-derived progress rendered', b.includes('25%'));
-  check('progress cites settled contributions', /from 1 settled contribution/i.test(b));
-  check('no invented progress', !b.includes('100%'));
+  check('card carries the real member figure', b.includes('3 members'));
+  // The target bar left the card with the other special shapes: it lives in
+  // the room's overview now, so the list card is the same card as the board's.
+  check('the list card is a Globys card', document.querySelector('[data-testid^=globys-card-circle-]') != null);
+  check('exactly one action button on the card',
+    document.querySelectorAll('[data-testid^=globys-card-circle-] [data-testid^=card-action]').length === 1);
+  check('the one action is the membership action', !!btn('Open'));
 
   // =========================================================================
   console.log('\n=== Tasks: "you" is never assumed ===');
@@ -283,6 +296,10 @@ async function main() {
   b = body();
   check('circle opened', b.includes('Kilimani Traders'));
   check('role stated plainly', /coordinator/i.test(b));
+  // The target the card used to carry now stands in the room, server-derived.
+  check('server-derived progress rendered', b.includes('25%'));
+  check('progress cites settled contributions', /from 1 settled contribution/i.test(b));
+  check('no invented progress', !b.includes('100%'));
   // THE ROOM RULE: a person is never labelled with a database key.
   check('no raw user id is shown as a label', !/usr_[a-z0-9]+/.test(b.replace(/join\/[a-z0-9]+/g, '')), b.match(/usr_[a-z0-9]+/g)?.[0]);
   check('purpose shown', b.includes('Shared stall fund'));
@@ -419,6 +436,7 @@ async function main() {
   reset();
   state.members = state.members.map((m) =>
     m.userId === 'usr_me' ? { ...m, role: 'observer' } : m);
+  state.viewerRole = 'observer';
   await mount();
   await click(btn('Open'));
   await click(btn('Tasks'));

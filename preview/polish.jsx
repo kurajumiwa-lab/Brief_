@@ -55,16 +55,29 @@ async function main() {
   }
   pass('CardSkeleton shows the shape of content (title/sub/body), not a void');
 
-  // --- Navigation renders a sliding active-tab pill using the canonical easing ---
+  // --- The bar is a floor, not a pill: anchored to the bottom edge, solid,
+  //     with a state marker that never relies on colour alone. The old sliding
+  //     pill dock is gone; the reorg's bar is the surface itself. ---
   {
     const { container } = mount(React.createElement(Navigation, { activeTab: 'home', onSelectTab: () => {} }));
-    const pills = Array.from(container.querySelectorAll('div[aria-hidden="true"]'));
-    const pill = pills.find((d) => (d.style.transition || '').includes('--motion-normal'));
-    assert.ok(pill, 'a sliding pill indicator exists');
-    assert.ok((pill.style.transition || '').includes('--ease-emphasized'), 'uses the emphasized easing');
-    assert.ok((pill.style.background || '').includes('--color-primary-subtle'), 'uses the canonical tint');
+    const bar = container.querySelector('nav[aria-label="Primary"]');
+    assert.ok(bar, 'the mobile bar exists');
+    // jsdom has no layout engine, so the geometry is asserted on the classes
+    // that produce it: fixed + bottom-0 + an explicit 56px inline height.
+    assert.ok(bar.className.includes('fixed'), 'the bar is fixed, not floating');
+    assert.ok(bar.className.includes('bottom-0'), 'the bar is anchored to the bottom edge');
+    assert.equal(bar.style.height, '56px', 'the bar is a 56px floor');
+    // The active door is marked by a bar under the label — a shape, so it
+    // survives a colour-blind reader — not by a sliding pill.
+    const marker = Array.from(bar.querySelectorAll('span[aria-hidden="true"]'))
+      .find((s) => (s.style.background || '').includes('--color-primary'));
+    assert.ok(marker, 'the active door carries a shape marker');
+    // And there is no floating pill anywhere in the bar's subtree.
+    const floating = Array.from(container.querySelectorAll('div[aria-hidden="true"]'))
+      .find((d) => (d.style.transition || '').includes('--motion-normal'));
+    assert.equal(floating, undefined, 'no sliding pill indicator remains');
   }
-  pass('Navigation slides its active-tab pill with the canonical easing (no jump)');
+  pass('The bar is an anchored 56px floor with a shape marker, no floating pill');
 
   // --- EmptyState renders a headline, an honest description and an action ---
   {

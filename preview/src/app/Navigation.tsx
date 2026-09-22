@@ -1,12 +1,14 @@
 import React from 'react';
 import { TraceMark } from '../components/TraceMark';
-import { TrendingUp, Search } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
 export type BriefNavigationTab =
   | 'supply'
   | 'requests'
   | 'home'
+  | 'mine'
+  | 'pulse'
   | 'spaces'
   | 'discover'
   | 'activity'
@@ -20,14 +22,74 @@ export type BriefNavigationTab =
 export interface NavigationProps {
   activeTab: BriefNavigationTab;
   onSelectTab: (tab: BriefNavigationTab) => void;
+  /** The Create action. It opens a sheet, not a route — it is the one thing in
+      the bar that is a verb, not a place. */
+  onOpenCreate?: () => void;
   spaceName?: string;
-  pendingInquiriesCount?: number;
-  revenueKes?: number;
-  offersCount?: number;
   className?: string;
 }
 
-// ── CUSTOM PIXEL-PERFECT ICONS MATCHING SCREENSHOT ──
+// ---------------------------------------------------------------------------
+// THE BOTTOM BAR — three doors for what you do, one action for what you make.
+//
+//   Home · Mine · You · [+]
+//
+// The bar used to be five destinations (Home / Spaces / Discover / Activity /
+// You). Three of those were really two: Spaces, Discover and Activity were all
+// "somewhere else in the app", and a five-door bar plus a chip row plus a
+// ten-item drawer was three navigation systems fighting for the same thumb.
+//
+// The resolution:
+//   * HOME — what's happening nearby (the landing)
+//   * MINE — your shops, orders, saved
+//   * YOU  — identity, standing, money, settings
+//   * [+]  — an action, not a door. It opens a sheet (Post an offer / Host an
+//            event / Start a run / Post an errand). Standard pattern in the
+//            apps this one is measured against (Gojek, Grab, Shopee).
+//
+// Everything else is a shelf in the drawer or a section on Home. That is the
+// whole reorg, and `doorways.jsx` asserts it so the bar cannot grow a fourth
+// door back in.
+// ---------------------------------------------------------------------------
+
+export type BottomBarItemId = 'home' | 'mine' | 'you' | 'create';
+
+export interface BottomBarItem {
+  id: BottomBarItemId;
+  /** 'destination' = a place the bar takes you to. 'action' = a sheet it
+      opens. The distinction is the point of the reorg: three places, one verb. */
+  type: 'destination' | 'action';
+  label: string;
+}
+
+/** The bar, as data. `doorways.jsx` asserts exactly three destinations and
+    one action, that Pulse is not here, and that nothing in the drawer
+    repeats a label from this list. */
+export const BOTTOM_BAR_ITEMS: BottomBarItem[] = [
+  { id: 'home', type: 'destination', label: 'Home' },
+  { id: 'mine', type: 'destination', label: 'Mine' },
+  { id: 'you', type: 'destination', label: 'You' },
+  { id: 'create', type: 'action', label: 'Create' }
+];
+
+// Which door lights up for a given internal tab. Rooms (the board, supply,
+// requests, partners) are not doors — they are reached from Home's tiles or
+// the drawer, so nothing is highlighted while one is open. A bar that
+// highlights Home while you are reading the board is the bug this bar
+// replaces, so the honest answer is "none".
+export const doorFor = (tab: BriefNavigationTab): 'home' | 'mine' | 'you' | null => {
+  switch (tab) {
+    case 'home': return 'home';
+    case 'mine':
+    case 'pipeline':
+    case 'spaces':
+    case 'ledger':
+    case 'catalog':
+      return 'mine';
+    case 'you': return 'you';
+    default: return null;
+  }
+};
 
 // 1. Home Doorway Icon (Open Door)
 const DoorwayIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
@@ -47,8 +109,8 @@ const DoorwayIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }
   </svg>
 );
 
-// 2. Spaces Overlapping Cards Icon with Arrows
-const SpacesIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
+// 2. Mine — the storefront with its awning: what is yours, in one mark.
+const MineIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg
     className={className}
     viewBox="0 0 24 24"
@@ -58,48 +120,14 @@ const SpacesIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' })
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <rect x="3" y="6" width="12" height="12" rx="2.5" />
-    <path d="M9 3h10a2 2 0 0 1 2 2v10" />
-    <path d="M17 7l2-2 2 2" />
-    <path d="M7 17l-2 2-2-2" />
+    <path d="M4 10l1.2-5h13.6L20 10" />
+    <path d="M4 10a2.4 2.4 0 0 0 4.8 0 2.4 2.4 0 0 0 4.8 0 2.4 2.4 0 0 0 4.8 0" />
+    <path d="M5 12v8h14v-8" />
+    <path d="M9.5 20v-5h5v5" />
   </svg>
 );
 
-// 3. Discover Magnifying Glass with Building/City
-const DiscoverIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.9"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="10.5" cy="10.5" r="7.5" />
-    <path d="M21 21l-5.2-5.2" />
-    <path d="M8 12.5h5" />
-    <path d="M10.5 8.5v6" />
-  </svg>
-);
-
-// 4. Activity Trending Chart Line Icon
-const ActivityIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.9"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-    <polyline points="16 7 22 7 22 13" />
-  </svg>
-);
-
-// 5. You Person Icon (profile / account)
+// 3. You Person Icon (profile / account)
 const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
   <svg
     className={className}
@@ -115,171 +143,119 @@ const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) =>
   </svg>
 );
 
+const DOOR_ICONS: Record<string, React.ReactNode> = {
+  home: <DoorwayIcon className="w-5 h-5" />,
+  mine: <MineIcon className="w-5 h-5" />,
+  you: <YouIcon className="w-5 h-5" />
+};
+
 export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
+  onOpenCreate,
   spaceName = 'Your Trace',
-  pendingInquiriesCount = 0,
-  revenueKes = 0,
-  offersCount = 0,
   className = ''
 }) => {
-  // Normalize active tab to one of the primary slots.
-  //
-  // NOTE: the Discover nav button maps to the internal 'city' tab (the City
-  // Feed), NOT 'home'. Mapping 'city' -> 'home' made the nav pill highlight
-  // "Home" while the City Feed was on screen — the Discover tab looked
-  // unselectable and the two screens appeared to "merge". 'city' belongs to
-  // Discover. 'catalog' is the legacy alias for the same slot.
-  const getNormalizedActive = (): 'supply' | 'requests' | 'home' | 'spaces' | 'discover' | 'activity' | 'you' => {
-    if (activeTab === 'supply') return 'supply';
-    if (activeTab === 'requests') return 'requests';
-    if (activeTab === 'home') return 'home';
-    if (activeTab === 'spaces' || activeTab === 'pipeline') return 'spaces';
-    if (activeTab === 'city' || activeTab === 'discover' || activeTab === 'catalog') return 'discover';
-    if (activeTab === 'activity' || activeTab === 'ledger') return 'activity';
-    if (activeTab === 'you') return 'you';
-    return 'home';
-  };
+  const activeDoor = doorFor(activeTab);
 
-  const normalizedActive = getNormalizedActive();
-
-  // The active-tab pill SLIDES between tabs (a shared indicator, not a jump).
-  // Measured from the live DOM and moved with the canonical structural easing.
-  const tabRefs = React.useRef<Record<string, HTMLButtonElement | null>>({});
-  const [pill, setPill] = React.useState<{ left: number; width: number }>({ left: 0, width: 0 });
-  React.useLayoutEffect(() => {
-    const measure = () => {
-      const el = tabRefs.current[normalizedActive];
-      if (!el) return;
-      setPill({ left: el.offsetLeft, width: el.offsetWidth });
-    };
-    measure();
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', measure);
-      return () => window.removeEventListener('resize', measure);
-    }
-  }, [normalizedActive]);
-
-  const handleTabClick = (tabId: 'home' | 'spaces' | 'discover' | 'activity' | 'you') => {
+  const goDoor = (door: 'home' | 'mine' | 'you') => {
     soundEngine.play('tap');
     if (typeof window !== 'undefined') {
-      window.location.hash = `#${tabId}`;
+      window.location.hash = door === 'home' ? '' : `#${door}`;
     }
-    // Map to the appropriate underlying view
-    if (tabId === 'home') onSelectTab('home');
-    else if (tabId === 'spaces') onSelectTab('pipeline');
-    else if (tabId === 'discover') onSelectTab('city');
-    else if (tabId === 'activity') onSelectTab('activity');
-    else onSelectTab(tabId);
+    onSelectTab(door);
   };
 
-  // The Navigation Tabs from the screenshot + You
-  const navItems: Array<{
-    id: 'home' | 'spaces' | 'discover' | 'activity' | 'you';
-    label: string;
-    icon: React.ReactNode;
-  }> = [
-    {
-      id: 'home',
-      label: 'Home',
-      icon: <DoorwayIcon className="w-5 h-5" />
-    },
-    {
-      id: 'spaces',
-      label: 'Spaces',
-      icon: <SpacesIcon className="w-5 h-5" />
-    },
-    {
-      id: 'discover',
-      label: 'Discover',
-      icon: <DiscoverIcon className="w-5 h-5" />
-    },
-    {
-      id: 'activity',
-      label: 'Activity',
-      icon: <ActivityIcon className="w-5 h-5" />
-    },
-    {
-      id: 'you',
-      label: 'You',
-      icon: <YouIcon className="w-5 h-5" />
-    }
-  ];
+  const openCreate = () => {
+    soundEngine.play('tap');
+    onOpenCreate?.();
+  };
+
+  // One button per item, in data order: three doors, then the action.
+  const barButtons = () =>
+    BOTTOM_BAR_ITEMS.map((item) =>
+      item.type === 'action' ? (
+        <button
+          key={item.id}
+          type="button"
+          aria-label={`${item.label} — opens a sheet`}
+          aria-haspopup="dialog"
+          onClick={openCreate}
+          className="relative flex flex-col items-center justify-center cursor-pointer select-none"
+        >
+          <span
+            className="w-9 h-9 rounded-full grid place-items-center -mt-3"
+            style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-2)' }}
+          >
+            <Plus className="w-5 h-5" />
+          </span>
+          <span className="text-[10px] font-bold tracking-tight mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+            {item.label}
+          </span>
+        </button>
+      ) : (
+        <button
+          key={item.id}
+          type="button"
+          role="tab"
+          aria-selected={activeDoor === item.id}
+          aria-current={activeDoor === item.id ? 'page' : undefined}
+          onClick={() => goDoor(item.id as 'home' | 'mine' | 'you')}
+          className="relative flex flex-col items-center justify-center cursor-pointer select-none"
+        >
+          <span
+            style={{
+              color: activeDoor === item.id ? 'var(--color-text)' : 'var(--color-text-muted)',
+              transform: activeDoor === item.id ? 'scale(1.05)' : undefined
+            }}
+          >
+            {DOOR_ICONS[item.id]}
+          </span>
+          <span
+            className="text-[10px] tracking-tight mt-0.5"
+            style={{
+              color: activeDoor === item.id ? 'var(--color-text)' : 'var(--color-text-muted)',
+              fontWeight: activeDoor === item.id ? 800 : 500
+            }}
+          >
+            {item.label}
+          </span>
+          {/* The active marker is a bar under the label, not a colour change:
+              a state that relies on colour alone fails a colour-blind reader. */}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 w-6 h-0.5 rounded-full"
+            style={{ background: activeDoor === item.id ? 'var(--color-primary)' : 'transparent' }}
+          />
+        </button>
+      )
+    );
 
   return (
     <>
-      {/* ── MOBILE BOTTOM FLOATING DOCK (Exact Screenshot Match) ── */}
+      {/* ── MOBILE BAR — solid, anchored, 56px. Not a floating pill: a pill
+          that hovers above the keyboard is a bar that is not part of the
+          screen. This one is the floor. ── */}
       <nav
         role="navigation"
-        aria-label="Mobile Navigation Dock"
-        className={`md:hidden fixed bottom-4 left-4 right-4 max-w-sm sm:max-w-md mx-auto bg-white/95 backdrop-blur-md rounded-full px-5 py-2.5 shadow-[0_10px_35px_rgba(0,0,0,0.12)] border border-black/[0.04] flex items-center justify-between z-50 transition-all ${className}`}
-        style={{ paddingBottom: 'calc(0.625rem + env(safe-area-inset-bottom, 0px))' }}
+        aria-label="Primary"
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[color:var(--color-paper)] border-t border-black/5 flex items-stretch justify-around px-2 ${className}`}
+        style={{ height: '56px', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <div className="relative flex items-center justify-between flex-1 pr-3">
-          {/* Sliding active-tab pill — moves instead of jumping (§4 stateful motion). */}
-          <div
-            aria-hidden="true"
-            className="absolute top-0.5 bottom-0.5 rounded-full pointer-events-none"
-            style={{
-              left: pill.left,
-              width: pill.width,
-              background: 'var(--color-primary-subtle)',
-              zIndex: 0,
-              transition: `left var(--motion-normal) var(--ease-emphasized), width var(--motion-normal) var(--ease-emphasized)`
-            }}
-          />
-          {navItems.map((item) => {
-            const isSelected = normalizedActive === item.id;
-            return (
-              <button
-                key={item.id}
-                ref={(el) => { tabRefs.current[item.id] = el; }}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                aria-current={isSelected ? 'page' : undefined}
-                onClick={() => handleTabClick(item.id)}
-                className="relative z-[1] flex flex-col items-center justify-center cursor-pointer select-none py-0.5 group min-w-[52px]"
-              >
-                <div
-                  className={`transition-all duration-200 ${
-                    isSelected
-                      ? 'text-[color:var(--color-text)] scale-105'
-                      : 'text-[color:var(--color-text-muted)] group-hover:text-[color:var(--color-text)]'
-                  }`}
-                >
-                  {item.icon}
-                </div>
-                <span
-                  className={`text-[11px] tracking-tight mt-1 transition-colors ${
-                    isSelected
-                      ? 'text-[color:var(--color-text)] font-extrabold'
-                      : 'text-[color:var(--color-text-muted)] font-medium group-hover:text-[color:var(--color-text)]'
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {barButtons()}
       </nav>
 
-      {/* ── DESKTOP SIDEBAR RAIL ── */}
+      {/* ── DESKTOP SIDEBAR RAIL — the same three doors and one action, in a
+          column. The rail and the bar are one navigation with two shapes. ── */}
       <aside
         role="navigation"
-        aria-label="Primary Desktop Navigation"
-        className="hidden md:flex flex-col w-60 p-5 space-y-6 border-r border-black/5 bg-[color:var(--color-bg)] shrink-0 min-h-screen justify-between"
+        aria-label="Primary"
+        className="hidden md:flex flex-col w-56 p-5 space-y-6 border-r border-black/5 bg-[color:var(--color-bg)] shrink-0 min-h-screen justify-between"
       >
         <div className="space-y-6">
-          {/* Top Brand & Space Switcher Block */}
+          {/* Brand & active space */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">
-              {/* The brand mark, not a letter in a box: a mark says "this is the
-                  product", an initial says "this is somebody's avatar". The tints
-                  come from the room so a palette change cannot leave a stale logo
-                  behind. */}
               <span
                 className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
                 style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
@@ -291,57 +267,57 @@ export const Navigation: React.FC<NavigationProps> = ({
                 Trace
               </span>
             </div>
-
-            {/* Active Space Selector Pill */}
-            <div className="p-2.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between cursor-pointer hover:border-black/15 transition-all">
+            <div className="p-2.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between">
               <div className="flex items-center space-x-2 min-w-0">
                 <span className="w-2 h-2 rounded-full bg-[color:var(--color-primary)] shrink-0" />
                 <span className="text-xs font-black text-[color:var(--color-text)] truncate">
                   {spaceName}
                 </span>
               </div>
-              <span className="text-[11px] text-[color:var(--color-text-muted)]">▾</span>
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* The doors, in order */}
           <nav className="space-y-1.5">
-            {navItems.map((item) => {
-              const isSelected = normalizedActive === item.id;
+            {BOTTOM_BAR_ITEMS.filter((i) => i.type === 'destination').map((item) => {
+              const selected = activeDoor === item.id;
               return (
                 <button
                   key={item.id}
                   type="button"
                   role="tab"
-                  aria-selected={isSelected}
-                  aria-current={isSelected ? 'page' : undefined}
-                  onClick={() => handleTabClick(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                    isSelected
+                  aria-selected={selected}
+                  aria-current={selected ? 'page' : undefined}
+                  onClick={() => goDoor(item.id as 'home' | 'mine' | 'you')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+                    selected
                       ? 'bg-[color:var(--color-text)] text-[color:var(--color-primary)] shadow-xs'
                       : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </div>
-
-                  {item.id === 'activity' && revenueKes > 0 && (
-                    <span className="text-[11px] font-black text-[color:var(--color-primary)] bg-[color:var(--color-text)] px-2 py-0.5 rounded-full">
-                      KES {(revenueKes / 1000).toFixed(1)}k
-                    </span>
-                  )}
-                  {item.id === 'discover' && (
-                    <span className="text-[11px] font-black bg-black/5 px-2 py-0.5 rounded-full text-[color:var(--color-text)]">
-                      {offersCount}
-                    </span>
-                  )}
+                  {DOOR_ICONS[item.id]}
+                  <span>{item.label}</span>
                 </button>
               );
             })}
+            {/* The action, last: it is a verb, and a verb does not get the
+                destination styling. */}
+            <button
+              type="button"
+              aria-label="Create — opens a sheet"
+              aria-haspopup="dialog"
+              onClick={openCreate}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl text-xs font-black cursor-pointer"
+              style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-1)' }}
+            >
+              <Plus className="w-4 h-4" />
+              Create
+            </button>
           </nav>
         </div>
+        <p className="text-[10px] text-[color:var(--color-text-muted)]">
+          Three doors for what you do. One action for what you make.
+        </p>
       </aside>
     </>
   );

@@ -4903,7 +4903,9 @@ export interface DiscoverFeatured {
   seller?: string | null;
   stock?: number | null;
   group?: string | null;
-  interest: { label: string; count: number };
+  /** Decision 6: an event carries no social proof, so the server sends null for
+      event rows. A UI must treat "no number" as a real state, not a zero. */
+  interest: { label: string; count: number } | null;
   why: string;
 }
 export interface DiscoverFeedItem {
@@ -4931,7 +4933,9 @@ export interface DiscoverFeedItem {
   /** Only ever the contact the SELLER put on their own row. Never defaulted. */
   contact: string | null;
   contactNote: string | null;
-  interest: { label: string; count: number };
+  /** Null for event rows — Decision 6 forbids registration counts and every
+      other crowd number on events. Only listings carry a settled-order count. */
+  interest: { label: string; count: number } | null;
   why: string;
 }
 export interface DiscoverFlow {

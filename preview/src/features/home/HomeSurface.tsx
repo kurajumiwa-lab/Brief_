@@ -8,16 +8,26 @@ import {
   Archive,
   RotateCcw,
   CheckCircle2,
-  ChevronDown
+  ChevronDown,
+  Store,
+  CalendarDays,
+  Users,
+  Bike,
+  Truck,
+  Sun
 } from 'lucide-react';
-import type { Space } from '../../api/types';
+import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import type { MyCommitments, MyPosition, MyReciprocity } from '../../api/briefApi';
+import type { MyCommitments, MyPosition, MyReciprocity, DiscoverFeedItem, EventListing } from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
+import { FLOW_ACCENT, FeedSheet } from '../city/DiscoverFeed';
+import { NoPhotoPlate } from '../city/NoPhotoPlate';
+import { categoryAccent } from '../city/categoryPalette';
+import { listedAgo } from '../city/room';
+import { GlobysCard } from '../../ui/GlobysCard';
+import { BannerButton } from '../../ui/BannerButton';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
-import { MuseumGallery } from '../city/MuseumGallery';
-import { SignalBar } from './SignalBar';
 import { PlannedWeather } from './PlannedWeather';
 import { EarnStrip } from './EarnStrip';
 import { StakesLine } from './StakesLine';
@@ -26,19 +36,37 @@ import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
 
 // ---------------------------------------------------------------------------
-// HOME — three zones, one glance (§9 of the reformation).
+// HOME — the landing, in the pattern the mock it was copied from uses.
 //
-//   1. What is the world doing?   → SignalBar   (real rows, snapshot-stamped)
-//                              + PlannedWeather (a dated forecast on a PLANNED day, else nothing)
-//   2. What should I do?          → NextMoveCard (one decision, derived)
-//   3. What is out there?         → MuseumGallery (real published events)
+//   1. WHO YOU ARE — the greeting, the stakes line, your standing. Real
+//      name from the session, real counts, one derived read.
+//   2. THE MODE TILES — six visual tiles, not chips: Shops, Events, Circles,
+//      Errands, Runs, Group Buys. A tile is a picture with a word under it,
+//      the way that storefront does it — a chip row is for filters, and a
+//      filter row up here would be a second navigation for what the board
+//      already picks.
+//   3. THE BANNER — the one dark-gradient "What's moving today →". The only
+//      loud thing on the screen; a second gradient would be a second shout,
+//      and the card refactor's rule is that nothing else is special.
+//   4. THREE SHELVES of the ONE product card (GlobysCard), each a two-column
+//      grid with a title and an "All →":
+//        Open now         — the supply board's top rows
+//        From your groups — the circles you are actually in
+//        Happening today  — the events starting today
+//      Every card is the same shape: 1:1 photo or waiting plate, title
+//      (two lines), bold price, seller, the real where/when in mono, and
+//      exactly one full-width action. A shelf is the top of a real list;
+//      "All →" is the one place that list is, and an empty shelf is not
+//      rendered, because an empty shelf with a title is the broken-screen
+//      tell this app deleted everywhere.
+//   5. THE FOLD — what you should do next, your income rails, the weather
+//      (on a planned day only), and "Run your spaces" collapsed: it is work,
+//      not the thing you came to see.
 //
-// Everything else sits behind a tap: commerce lives in Discover → Market,
-// space management is collapsed under "Run your spaces", and the position /
-// commitments / reciprocity detail cards carry the full derivation below the
-// fold. The greeting uses the name on the session — never a placeholder name,
-// and never "Position #7 · Sector 4": no row in this store holds a rank, a
-// sector or a queue, so the standing line shows real counts instead.
+// What is NOT here: a "What's out there" section (the shelf already is the
+// browse), a 0-SETTLED-ORDERS hero (a zero is not a number, it is the
+// absence of rows), a featured card nobody picked, or any count that is not a
+// row the server answered with.
 // ---------------------------------------------------------------------------
 
 export interface HomeSurfaceProps {
@@ -47,15 +75,29 @@ export interface HomeSurfaceProps {
   onOpenEarn?: () => void;
   userName?: string;
   onOpenSpace: (spaceId: string) => void;
-  onExploreDiscover?: (subTab?: 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all') => void;
+  onExploreDiscover?: (subTab?: 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all', startRun?: boolean) => void;
   onGetPaid?: () => void;
   onOpenSpaces?: () => void;
-  /** Pulse — the ledger's own numbers — now lives on the Activity tab. */
+  /** Group buys — the shell's one overlay for the portal. */
+  onOpenGroupBuys?: () => void;
+  /** Pulse — the ledger's own numbers — lives in the drawer's check-in. */
   onOpenPulse?: () => void;
   /** Open the one screen that holds the explanations (You → How Brief works). */
   onOpenHow?: () => void;
   className?: string;
 }
+
+const money = (n: number, currency: string) => `${currency} ${Number(n).toLocaleString('en-KE')}`;
+const timeOf = (iso: string | null) => {
+  if (!iso) return null;
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return null;
+  try {
+    return new Date(ms).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return null;
+  }
+};
 
 export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   userName = 'there',
@@ -64,6 +106,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   onOpenHow,
   onGetPaid,
   onOpenSpaces,
+  onOpenGroupBuys,
   onOpenPulse,
   onOpenEarn,
   className = ''
@@ -81,11 +124,19 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   const [position, setPosition] = useState<MyPosition | null>(null);
   const [commitments, setCommitments] = useState<MyCommitments | null>(null);
   const [reciprocity, setReciprocity] = useState<MyReciprocity | null>(null);
-  const [circleCount, setCircleCount] = useState<number | null>(null);
+  const [circles, setCircles] = useState<Circle[]>([]);
   // A visitor with no session has no ledger to read. That is not an error, so
   // the card stays silent instead of shouting "could not be read".
   const [positionDenied, setPositionDenied] = useState<boolean | undefined>(undefined);
   const [sessionName, setSessionName] = useState<string | null>(null);
+
+  // The three shelves. Each is the top of a REAL list; each is hidden when
+  // empty; each "All →" points at the one place the list is.
+  const [feed, setFeed] = useState<DiscoverFeedItem[]>([]);
+  const [todayEvents, setTodayEvents] = useState<EventListing[]>([]);
+  // The one detail sheet this screen shares with the board: a card's body tap
+  // opens it, and the card's single action takes its own real target.
+  const [openItem, setOpenItem] = useState<DiscoverFeedItem | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -125,9 +176,26 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       setPositionDenied(!pos.ok && (pos as { status?: number }).status === 401);
       setCommitments(cmts.ok ? cmts.data : null);
       setReciprocity(recip.ok ? recip.data : null);
-      // "My circles" counts only rows the session is actually a member of —
-      // the list is public, so membership is read from the server's viewerRole.
-      setCircleCount(cir.ok ? cir.data.filter((c) => Boolean(c.viewerRole)).length : null);
+      // "From your groups" counts only rows the session is actually a member of
+      // — the list is public, so membership is read from the server's viewerRole.
+      setCircles(cir.ok ? cir.data : []);
+    });
+    return () => { live = false; };
+  }, []);
+
+  // The shelves, read once. "Open now" is the supply board's top; "Happening
+  // today" is the events row from start-of-day to now (an event is in the past
+  // the moment its window passes, so the shelf never shows a "tonight" that is
+  // already yesterday).
+  useEffect(() => {
+    let live = true;
+    void briefApi.getDiscoverSummary().then((res) => {
+      if (live && res.ok) setFeed(res.data.feed.slice(0, 8));
+    });
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    void briefApi.browseEvents({ from: start.toISOString(), to: now.toISOString(), limit: 12 }).then((res) => {
+      if (live && res.ok) setTodayEvents(res.data.events.slice(0, 8));
     });
     return () => { live = false; };
   }, []);
@@ -136,6 +204,44 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     showToast(`Space "${newSpace.name}" created!`);
     loadSpaces();
     onOpenSpace(newSpace.id);
+  };
+
+  // ── The card helpers. Every shelf below renders the SAME GlobysCard; these
+  //    are the row-to-shape mappings, and each one maps a real row field or
+  //    renders nothing. Nothing here guesses. ─────────────────────────────
+  // The plate mark: the flow the SELLER declared, a calendar on an event. An
+  // untagged row gets the room mark, never a guessed icon.
+  const plateIcon = (flow: string | null | undefined, kind: string): React.ReactNode => {
+    if (kind === 'event') return <CalendarDays className="w-4 h-4" />;
+    switch (flow) {
+      case 'bulk': return <Package className="w-4 h-4" />;
+      case 'direct': return <Bike className="w-4 h-4" />;
+      case 'niche': return <Sun className="w-4 h-4" />;
+      case 'group': return <Users className="w-4 h-4" />;
+      default: return <Package className="w-4 h-4" />;
+    }
+  };
+  // The wa.me target, only from a contact the SELLER put on their own row.
+  // Never defaulted: no digits, no link.
+  const waHref = (item: DiscoverFeedItem): string | null => {
+    const digits = (item.contact ?? '').replace(/\D/g, '');
+    if (digits.length < 9) return null;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi — I saw "${item.title}" on Brief and I would like to ask about it.`)}`;
+  };
+  const openFull = (item: DiscoverFeedItem) => {
+    if (item.kind === 'event') window.open(`/c/${item.id}`, '_self');
+    else window.location.hash = `offer/${encodeURIComponent(item.id)}`;
+  };
+  // Join from the card: the server decides, and a refusal is its own words.
+  const joinCircle = async (c: Circle) => {
+    const res = await briefApi.joinCircle(c.id);
+    if (!res.ok) { showToast(res.error ?? 'Could not join this circle.'); return; }
+    showToast(`Joined ${c.name}.`);
+    onExploreDiscover?.('circles');
+  };
+  const CIRCLE_TYPE_LABEL: Record<string, string> = {
+    gathering: 'Gathering', build: 'Build', study: 'Study',
+    treasury: 'Treasury', match: 'Match', target: 'Target'
   };
 
   const setStatus = async (space: Space, status: 'active' | 'archived') => {
@@ -158,6 +264,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   const upkeepBySpace = new Map(active.map((sp) => [sp.id, sp.editorialOpen ?? 0]));
   const upkeepItems = [...upkeepBySpace.values()].reduce((n, x) => n + x, 0);
   const spacesWithUpkeep = [...upkeepBySpace.values()].filter((n) => n > 0).length;
+  const myCircles = circles.filter((c) => Boolean(c.viewerRole)).slice(0, 8);
 
   const ATTENTION_ICON: Record<string, React.ReactNode> = {
     conversation: <MessageCircle className="w-3 h-3" />,
@@ -165,10 +272,36 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     order: <Package className="w-3 h-3" />
   };
 
+  // ── THE MODE TILES — six doors, pictures with words. The test id is the
+  // contract: `doorways.jsx` asserts exactly these six, in this order, and
+  // that no chip row competes with them.
+  const MODES: Array<{ id: string; label: string; icon: React.ReactNode; act: () => void }> = [
+    { id: 'shops', label: 'Shops', icon: <Store className="w-5 h-5" />, act: () => onOpenSpaces?.() },
+    { id: 'events', label: 'Events', icon: <CalendarDays className="w-5 h-5" />, act: () => onExploreDiscover?.('events') },
+    { id: 'circles', label: 'Circles', icon: <Users className="w-5 h-5" />, act: () => onExploreDiscover?.('circles') },
+    { id: 'errands', label: 'Errands', icon: <Bike className="w-5 h-5" />, act: () => onExploreDiscover?.('errands') },
+    { id: 'runs', label: 'Runs', icon: <Truck className="w-5 h-5" />, act: () => onExploreDiscover?.('errands', true) },
+    { id: 'groupBuys', label: 'Group Buys', icon: <Package className="w-5 h-5" />, act: () => onOpenGroupBuys?.() }
+  ];
+
+  const ShelfHead: React.FC<{ title: string; onAll: () => void }> = ({ title, onAll }) => (
+    <div className="flex items-center justify-between pb-2.5">
+      <h2 className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>{title}</h2>
+      <button
+        type="button"
+        onClick={() => { soundEngine.play('tap'); onAll(); }}
+        className="text-[12px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
+        style={{ color: 'var(--color-primary)' }}
+      >
+        All <ArrowRight className="w-3 h-3" />
+      </button>
+    </div>
+  );
+
   return (
     <div className={`space-y-5 max-w-2xl mx-auto ${className}`}>
       {toastMsg && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
           {toastMsg}
         </div>
       )}
@@ -178,10 +311,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
           Hi {sessionName || userName}
         </h1>
-        {/* The hook, loss-framed but only as far as a row will carry it: a lost
-            quote is a real event, an unposted offer is a real absence, and a
-            quiet week is said as a quiet week. No invented "you are losing
-            KES 40,000", and no claim about staff hours Brief cannot see. */}
         <StakesLine
           onOpenHow={onOpenHow}
           position={position}
@@ -194,8 +323,150 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         <StandingLine position={position} commitments={commitments} reciprocity={reciprocity} />
       </div>
 
-      {/* ── ZONE 1 — WHAT THE WORLD IS DOING ── */}
-      <SignalBar onOpenPulse={() => (onOpenPulse ? onOpenPulse() : onExploreDiscover?.('all'))} />
+      {/* ── THE MODE TILES — the six doors of the board, as pictures. ── */}
+      <section data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-3 gap-2">
+        {MODES.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => { soundEngine.play('tap'); m.act(); }}
+            className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 cursor-pointer transition-all"
+            style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+          >
+            <span
+              className="w-10 h-10 rounded-2xl grid place-items-center"
+              style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+            >
+              {m.icon}
+            </span>
+            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text)' }}>{m.label}</span>
+          </button>
+        ))}
+      </section>
+
+      {/* ── THE BANNER — the one loud thing on the screen: dark gradient,
+             white bold, arrow on the right. Never two. The pulse ledger is
+             where the facts stand; this is the door to it. ── */}
+      <section aria-label="What's moving today">
+        <BannerButton
+          label="What’s moving today"
+          onClick={() => { soundEngine.play('tap'); onOpenPulse?.(); }}
+        />
+      </section>
+
+      {/* ── OPEN NOW — the board's top, as a two-column grid of the one card
+             shape. Hidden when empty. Each card: 1:1 photo or plate, title,
+             bold price, the seller's name, the real where in mono, and the
+             one action the row really supports. ── */}
+      {feed.length > 0 && (
+        <section aria-label="Open now" className="space-y-2.5">
+          <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
+          <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
+            {feed.slice(0, 4).map((f) => {
+              const wa = waHref(f);
+              return (
+                <GlobysCard
+                  key={f.id}
+                  testId={`open-${f.id}`}
+                  image={f.mediaUrl}
+                  imageAlt={f.title}
+                  plate={
+                    <NoPhotoPlate
+                      seller={f.seller}
+                      mark={f.flow ?? f.kind}
+                      icon={plateIcon(f.flow, f.kind)}
+                      stamp={f.kind === 'listing' ? listedAgo(f.listedAt) : null}
+                      accent={(f.flow && FLOW_ACCENT[f.flow]) || null}
+                    />
+                  }
+                  title={f.title}
+                  price={f.priceLabel}
+                  seller={f.seller}
+                  mono={
+                    f.origin && f.destination
+                      ? `${f.origin} → ${f.destination}`
+                      : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))
+                  }
+                  actionLabel={
+                    f.kind === 'event' ? 'View event →'
+                      : wa ? 'Chat on WhatsApp →'
+                        : f.orderable ? 'Order →'
+                          : 'Enquire →'
+                  }
+                  actionHref={f.kind === 'event' ? null : wa}
+                  onAction={() => {
+                    soundEngine.play('tap');
+                    if (f.kind === 'event') openFull(f);
+                    else if (f.orderable && !wa) openFull(f);
+                    else setOpenItem(f);
+                  }}
+                  onOpen={() => { soundEngine.play('tap'); setOpenItem(f); }}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* ── FROM YOUR GROUPS — the circles you are actually in, as the same
+             card shape: the member count is the row's real key figure, the
+             mono line is the type, and the one action is what your
+             membership really allows (the server says). ── */}
+      {myCircles.length > 0 && (
+        <section aria-label="From your groups" className="space-y-2.5">
+          <ShelfHead title="From your groups" onAll={() => onExploreDiscover?.('circles')} />
+          <div className="grid grid-cols-2 gap-2.5" data-testid="groups-grid">
+            {myCircles.slice(0, 4).map((c) => (
+              <GlobysCard
+                key={c.id}
+                testId={`group-${c.id}`}
+                plate={<NoPhotoPlate mark={CIRCLE_TYPE_LABEL[c.type] ?? c.type} icon={<Users className="w-4 h-4" />} />}
+                title={c.name}
+                price={`${c.memberCount} ${c.memberCount === 1 ? 'member' : 'members'}`}
+                seller={null}
+                mono={[CIRCLE_TYPE_LABEL[c.type] ?? null, c.viewerRole ? `you are ${c.viewerRole}` : null].filter(Boolean).join(' · ')}
+                actionLabel={c.isMember ? 'Open →' : c.canJoin ? 'Join →' : 'Invite only'}
+                disabled={!c.isMember && !c.canJoin}
+                onAction={() => {
+                  soundEngine.play('tap');
+                  if (c.isMember) onExploreDiscover?.('circles');
+                  else if (c.canJoin) void joinCircle(c);
+                }}
+                onOpen={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── HAPPENING TODAY — events whose window is today, on the clock, as
+             the same card shape: the real price (or Free), the real where
+             and when in mono, the one action. ── */}
+      {todayEvents.length > 0 && (
+        <section aria-label="Happening today" className="space-y-2.5">
+          <ShelfHead title="Happening today" onAll={() => onExploreDiscover?.('events')} />
+          <div className="grid grid-cols-2 gap-2.5" data-testid="today-grid">
+            {todayEvents.slice(0, 4).map((e) => (
+              <GlobysCard
+                key={e.slug}
+                testId={`event-${e.slug}`}
+                image={e.coverImageUrl}
+                imageAlt={e.title}
+                plate={<NoPhotoPlate mark={e.categoryLabel ?? null} icon={<CalendarDays className="w-4 h-4" />} accent={categoryAccent(e.category)} />}
+                title={e.title}
+                price={e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : money(e.price, e.currency ?? 'KES'))}
+                seller={null}
+                mono={[timeOf(e.startsAt), e.location].filter(Boolean).join(' · ')}
+                actionLabel="View event →"
+                onAction={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
+                onOpen={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ── THE FOLD ──────────────────────────────────────────────────── */}
 
       {/* Weather, and only where it is useful: a week of forecast for a member
           with nothing planned is what every other app prints, so it is what
@@ -208,31 +479,13 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           the arithmetic. */}
       <EarnStrip onOpenEarn={() => onOpenEarn?.()} />
 
-      {/* ── ZONE 2 — WHAT YOU SHOULD DO NEXT ── */}
+      {/* WHAT YOU SHOULD DO NEXT — one derived decision, nothing else. */}
       <NextMoveCard position={position} denied={positionDenied} />
 
-      {/* ── ZONE 3 — WHAT IS OUT THERE (inventory, not a feed) ── */}
-      <section className="space-y-1.5" aria-label="What's out there">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-black uppercase tracking-wider text-[color:var(--color-text)]">
-            What&rsquo;s out there
-          </h2>
-          <button
-            type="button"
-            onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
-            className="inline-flex items-center gap-1 text-[12px] font-bold text-[color:var(--color-primary)] hover:underline cursor-pointer"
-          >
-            Browse everything
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <MuseumGallery />
-      </section>
-
-      {/* ── PERSONAL CONTEXT — you are part of things, not only a browser ── */}
+      {/* PERSONAL CONTEXT — you are part of things, not only a browser */}
       <CirclesStrip
         spaces={active.length}
-        circles={circleCount ?? 0}
+        circles={myCircles.length}
         needsYou={queue.length}
         onView={() => {
           soundEngine.play('tap');
@@ -240,13 +493,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           else onOpenSpaces?.();
         }}
       />
-
-      {/* The full derivation of your standing — position, commitments,
-          reciprocity — lives on ONE screen (You → Standing), and the belt's
-          sheet links it. Home used to repeat all three cards here, which is how
-          a screen fills up with the same numbers wearing different hats. The
-          "Tip" box went the same way: a definition of what a space is belongs on
-          the audit screen (You → How Trace works), not above your own list. */}
 
       {/* ── RUN YOUR SPACES — management, collapsed by default: it is work,
              not the thing you came to see. ── */}
@@ -273,12 +519,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             {isLoading ? (
               <p className="text-xs text-[color:var(--color-text-muted)]">Reading your spaces…</p>
             ) : spaces.length === 0 ? (
-              /* A single create affordance, only when there is genuinely nothing yet. */
               <div className="p-6 rounded-3xl bg-[color:var(--color-paper)] border border-dashed text-center space-y-3" style={{ boxShadow: 'var(--room-light), var(--lift-1)' }}>
                 <p className="text-sm font-bold text-[color:var(--color-text)]">
                   You don&rsquo;t have a space yet.
                 </p>
-
                 <button
                   type="button"
                   onClick={() => { soundEngine.play('heavyTap'); setCreateSpaceOpen(true); }}
@@ -457,6 +701,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           </div>
         )}
       </section>
+
+      {/* The card's detail — the same sheet the board opens, so a row reads
+          the same way no matter which shelf you met it on. */}
+      {openItem && (
+        <FeedSheet item={openItem} onClose={() => setOpenItem(null)} onOpenFull={openFull} />
+      )}
 
       {/* Create Space Modal */}
       {createSpaceOpen && (

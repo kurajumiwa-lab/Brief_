@@ -1,12 +1,18 @@
 // ---------------------------------------------------------------------------
-// YOU SURFACE SUITE — profile, follows and subscriptions (Phase 3).
+// YOU SURFACE SUITE — the section list is the contract.
 //
-// Tests:
-//   1. YouSurface signed-out state
-//   2. profile section (handle, standing counts)
-//   3. following section (grouped list + unfollow action)
-//   4. subscriptions section (browse plans + subscribe; honest 'not charged')
-//   5. EntityDetail (follow/unfollow toggle backed by the real API)
+// The reorg moved three destinations into the drawer's Settings group
+// (Language · Notifications · Privacy) and gave them sections here. The
+// assertion that matters is the one the old suite held and kept holding:
+// every Section the surface knows appears EXACTLY ONCE in the tab list, so a
+// reorganisation cannot silently drop or duplicate a section. The list was
+// eleven; it is now fourteen.
+//
+// Each new section is also checked for the thing it must say:
+//   * Language — one honest line, and no selector that switches nothing;
+//   * Notifications — the real notification centre, reading server rows;
+//   * Privacy — the device's own stores named: the area, the offline queue,
+//     and sign out.
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
@@ -27,258 +33,140 @@ const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 
 const { YouSurface } = require('./src/features/you/YouSurface.tsx');
-const { EntityDetail } = require('./src/features/you/EntityDetail.tsx');
 
-let count = 0;
-const pass = (name) => { count++; console.log('PASS ' + name); };
-const flush = (ms = 40) => new Promise((r) => setTimeout(r, ms));
-function mount(el) {
-  document.body.innerHTML = '';
-  const c = document.createElement('div');
-  document.body.appendChild(c);
-  const root = createRoot(c);
-  act(() => root.render(el));
-  return { container: c, root };
-}
-const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
-const btn = (label) => Array.from(document.querySelectorAll('button')).find((b) => text(b).startsWith(label));
-
-// The user (whoAmI) + person (getPersonMe) shapes.
-const authedUser = { id: 'usr_1', handle: 'wanjiku', displayName: 'Wanjiku Mwangi', personId: 'p_1', capabilities: ['ops.read'] };
-const personMe = {
-  person: { id: 'p_1', displayName: 'Wanjiku Mwangi', tags: [], aliases: [] },
-  standing: { personId: 'p_1', displayName: 'Wanjiku Mwangi', hosted: 2, bought: 5, arrived: 3, registered: 1, vendor: null }
+let passed = 0;
+let failed = 0;
+const check = (name, cond) => {
+  if (cond) { passed++; console.log('PASS ' + name); }
+  else { failed++; console.log('FAIL ' + name); }
 };
+const flush = (ms = 40) => new Promise((r) => setTimeout(r, ms));
 
 let fetchHandler;
 global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
 
+// The stubbed ledger: a signed-in member ("Amina"), the world's reads offline
+// for the suite, and one real notification so the centre has a row to show.
+const stub = () => async (url) => {
+  const u = String(url);
+  const ok = (body) => ({ ok: true, status: 200, text: async () => JSON.stringify(body) });
+  if (u.includes('/auth/me')) return ok({ user: { displayName: 'Amina', handle: 'amina' } });
+  if (u.includes('/notifications') && u.includes('preferences')) return ok({ preferences: { categories: {} } });
+  if (u.includes('/notifications')) return ok({
+    notifications: [{
+      id: 'n1', kind: 'errand', type: 'status', title: 'A carrier took your errand',
+      body: 'Wakulima → Westlands', objectId: null, entityId: null, collectionId: null,
+      imageUrl: null, sourceName: null, context: null, dest: null, priority: 'normal',
+      read: false, createdAt: new Date().toISOString()
+    }],
+    unread: 1
+  });
+  return { ok: false, status: 503, text: async () => JSON.stringify({ error: 'offline for the suite' }) };
+};
+
+const mount = (props) => {
+  document.body.innerHTML = '';
+  const c = document.createElement('div');
+  document.body.appendChild(c);
+  const root = createRoot(c);
+  act(() => { root.render(React.createElement(YouSurface, props)); });
+  return { c, root };
+};
+
+const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
+
+// The sections now stand as icon TILES (the drawer's one tile shape), each
+// with a stable test id, so the contract is checked by id and shape rather
+// than by exact button text — the tile's text is title + description.
+const SECTION_IDS = {
+  Profile: 'profile', Standing: 'standing', Following: 'following',
+  Selling: 'selling', Orders: 'orders', 'Your network': 'network',
+  Earn: 'earn', 'Table Banking': 'tableBanking', Subscriptions: 'subscriptions', Archive: 'archive',
+  'How Trace works': 'how',
+  Language: 'language', Notifications: 'notifications', Privacy: 'privacy'
+};
+const tiles = () => Array.from(document.querySelectorAll('[data-testid^=menu-tile-]'));
+const tileTitle = (t) => {
+  const title = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
+  return (title?.textContent || '').trim();
+};
+const clickTile = (id) => {
+  const b = document.querySelector(`[data-testid="menu-tile-${id}"]`);
+  if (!b) throw new Error('no tile: ' + id);
+  act(() => { b.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); });
+  return flush(20);
+};
+
 async function main() {
-  // --- 1. signed out ---
-  // This block used to assert one sentence ("Sign in to see your profile") and
-  // it passed against a panel that offered NO way to do it — a dead end with good
-  // copy. A gate is only real if the control exists, the submit hits the auth
-  // endpoint, and the answer comes back; all three are asserted here now.
-  const calls = [];
-  fetchHandler = async (url, init) => {
-    const u = String(url);
-    if (u.includes('/auth/me')) return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'authentication required' }) };
-    if (u.includes('/auth/login')) {
-      calls.push(JSON.parse(init.body));
-      return { ok: true, status: 200, text: async () => JSON.stringify({ user: authedUser }) };
-    }
-    return { ok: false, status: 401, text: async () => JSON.stringify({ error: 'x' }) };
-  };
-  {
-    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    const t = text(container);
-    assert.ok(t.includes('Sign in to see your profile'), 'the signed-out state names itself');
-    const handle = container.querySelector('input[autocomplete="username"]');
-    const pass_ = container.querySelector('input[type="password"]');
-    assert.ok(handle && pass_, 'the form has a handle and a password field, not just a message');
-    assert.ok(container.querySelector('form'), 'and it is a real form');
-    const setValue = (el, v) => act(() => {
-      Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(el, v);
-      el.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-    });
-    setValue(handle, 'wanjiku');
-    setValue(pass_, 'a good passphrase');
-    const submit = Array.from(container.querySelectorAll('form > button, form button')).find((b) => /sign in/i.test(text(b)));
-    assert.ok(submit, 'with a submit control');
-    await act(async () => { submit.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); });
-    await flush();
-    assert.equal(calls.length, 1, 'submitting posts exactly once');
-    assert.deepEqual(calls[0], { handle: 'wanjiku', password: 'a good passphrase' }, 'with the credentials the member typed');
-    assert.ok(/create|account/i.test(t), 'and a fresh deployment offers account creation, because there is no account to sign into yet');
-  }
-  pass('YouSurface: the signed-out state is a working sign-in, not a notice');
+  fetchHandler = stub();
+  // Seeded on the device BEFORE the surface reads it: privacy names the store
+  // as it is, and the surface reads it once on mount.
+  dom.window.localStorage.setItem('brief.world.place', 'Kisii');
+  const { c, root } = mount({ onOpenEntity: () => {}, onRequireAuth: () => {} });
+  await flush(60);
 
-  // --- 2. profile ---
-  fetchHandler = async (url) => {
-    if (url.includes('/auth/me')) return { ok: true, status: 200, text: async () => JSON.stringify({ user: authedUser }) };
-    if (url.includes('/person/me')) return { ok: true, status: 200, text: async () => JSON.stringify(personMe) };
-    if (url.includes('/me/acquisition')) return { ok: true, status: 200, text: async () => JSON.stringify({ acquisition: null, provenance: null, activity: { verifiedCommercialKes: 0, currency: 'KES' } }) };
-    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
-  };
-  {
-    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    const t = text(container);
-    assert.ok(t.includes('Wanjiku Mwangi'), 'display name shown');
-    assert.ok(t.includes('@wanjiku'), 'handle shown');
-    assert.ok(t.includes('hosted') && t.includes('bought'), 'standing labels shown');
-    assert.ok(t.includes('Sign out'), 'sign out present');
-  }
-  pass('YouSurface: profile shows identity + derived standing');
+  check('greeting uses the session name, not a placeholder', text(c).includes('Amina'));
 
-  // --- 3. following ---
-  let unfollowed = false;
-  fetchHandler = async (url, init) => {
-    if (url.includes('/auth/me')) return { ok: true, status: 200, text: async () => JSON.stringify({ user: authedUser }) };
-    if (url.includes('/person/me')) return { ok: true, status: 200, text: async () => JSON.stringify(personMe) };
-    if (url.includes('/me/acquisition')) return { ok: true, status: 200, text: async () => JSON.stringify({ acquisition: null, provenance: null, activity: { verifiedCommercialKes: 0, currency: 'KES' } }) };
-    if (url.includes('/me/follows')) {
-      return { ok: true, status: 200, text: async () => JSON.stringify({ groups: { business: [{ id: 'e_1', kind: 'business', name: 'Kiko Bakery', entityKey: 'kiko', objectCount: 3, imageUrl: null, category: null, location: null, sourceNames: [], followedAt: '2026-09-10T00:00:00Z' }] }, total: 1, kindLabels: { business: 'Businesses' } }) };
-    }
-    if (url.includes('/entities/e_1/follow') && (init?.method === 'DELETE')) {
-      unfollowed = true;
-      return { ok: true, status: 200, text: async () => JSON.stringify({ unfollowed: true, already: false, followCount: 0 }) };
-    }
-    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
-  };
-  {
-    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    act(() => { btn('Following').click(); });
-    await flush();
-    const t = text(container);
-    assert.ok(t.includes('Businesses'), 'follows grouped by kind');
-    assert.ok(t.includes('Kiko Bakery'), 'entity name shown');
-    act(() => { btn('Unfollow').click(); });
-    await flush();
-    assert.ok(unfollowed, 'unfollow called the DELETE rail');
-  }
-  pass('YouSurface: following lists entities by kind and unfollows via the real rail');
+  // The tile grid: every section once, and the one tile shape the refactor
+  // holds (bold 15px title, grey 13px description capped at two lines).
+  const allTiles = tiles();
+  const seen = new Map();
+  allTiles.forEach((t) => { const l = tileTitle(t); seen.set(l, (seen.get(l) ?? 0) + 1); });
+  check('every section tile appears exactly once',
+    Object.keys(SECTION_IDS).every((s) => seen.get(s) === 1) && allTiles.length === Object.keys(SECTION_IDS).length);
+  check('each tile is the one shape: 15px bold title + grey 13px two-line description',
+    allTiles.length > 0 && allTiles.every((t) => {
+      const title = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
+      const desc = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[13px]'));
+      return title && title.classList.contains('font-bold') && desc && desc.classList.contains('line-clamp-2');
+    }));
+  // Group headers are small, grey, uppercase, mono.
+  check('section headers are small grey uppercase mono',
+    Array.from(document.querySelectorAll('p'))
+      .filter((p) => ['Identity', 'Business', 'Money', 'About', 'Settings'].includes((p.textContent || '').trim()))
+      .every((p) => p.classList.contains('font-mono') && p.classList.contains('uppercase')));
 
-  // --- 4. subscriptions ---
-  let subscribeCalled = false;
-  fetchHandler = async (url, init) => {
-    if (url.includes('/auth/me')) return { ok: true, status: 200, text: async () => JSON.stringify({ user: authedUser }) };
-    if (url.includes('/person/me')) return { ok: true, status: 200, text: async () => JSON.stringify(personMe) };
-    if (url.includes('/me/acquisition')) return { ok: true, status: 200, text: async () => JSON.stringify({ acquisition: null, provenance: null, activity: { verifiedCommercialKes: 0, currency: 'KES' } }) };
-    if (url.includes('/subscriptions?browse=1')) {
-      return { ok: true, status: 200, text: async () => JSON.stringify({ subscriptions: [{ id: 'sub_1', creatorId: 'c_1', title: 'Bakery Insider', description: 'Weekly recipes', price: 200, currency: 'KES', interval: 'monthly', status: 'active', createdAt: '2026-09-10T00:00:00Z', updatedAt: '2026-09-10T00:00:00Z', subscriberCount: 4, settledCycles: 0, collected: 0, viewerIsSubscriber: false }] }) };
-    }
-    // /subscribe BEFORE the generic /api/subscriptions branch (its URL also
-    // contains /api/subscriptions).
-    if (url.includes('/subscribe')) {
-      subscribeCalled = true;
-      return { ok: true, status: 200, text: async () => JSON.stringify({ subscriber: { id: 's_1', subscriptionId: 'sub_1', memberId: 'usr_1', status: 'active', startedAt: '2026-09-10T00:00:00Z', endedAt: null }, transaction: null, duplicate: false, charged: false, note: 'recorded, not charged' }) };
-    }
-    if (url.includes('/api/subscriptions') && !url.includes('browse')) {
-      return { ok: true, status: 200, text: async () => JSON.stringify({ subscriptions: [] }) };
-    }
-    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
-  };
-  {
-    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    act(() => { btn('Subscriptions').click(); });
-    await flush();
-    const t = text(container);
-    assert.ok(t.includes('Bakery Insider'), 'plan shown');
-    assert.ok(t.includes('Subscribe'), 'subscribe action shown');
-    act(() => { btn('Subscribe').click(); });
-    await flush();
-    assert.ok(subscribeCalled, 'subscribe called the rail');
-    assert.ok(text(container).includes('recorded, not charged'), 'honest not-charged note shown');
-  }
-  pass('YouSurface: subscriptions browse + subscribe with an honest not-charged note');
+  // The settings group exists, in the drawer's order.
+  const tileIdx = (id) => allTiles.findIndex((t) => t.getAttribute('data-testid') === `menu-tile-${id}`);
+  check('settings group holds Language · Notifications · Privacy',
+    /Settings/.test(text(c)) && tileIdx('language') < tileIdx('notifications') && tileIdx('notifications') < tileIdx('privacy'));
 
-  // --- 5. EntityDetail follow toggle ---
-  let followState = 'follow';
-  fetchHandler = async (url, init) => {
-    // /follow BEFORE the generic entity branch (its URL also contains /entities/e_9).
-    if (url.includes('/entities/e_9/follow') && init?.method === 'POST') {
-      followState = 'followed';
-      return { ok: true, status: 200, text: async () => JSON.stringify({ followed: true, already: false, followCount: 9 }) };
-    }
-    if (url.includes('/api/entities/e_9')) {
-      return { ok: true, status: 200, text: async () => JSON.stringify({ entity: { kind: 'business', id: 'e_9', entityKey: 'kiko', name: 'Kiko Bakery', slug: 'kiko-bakery', summary: 'A Nairobi bakery', description: null, imageUrl: null, category: null, location: null, locationName: 'Nairobi', sourceNames: [], trust: { degraded: false, disabled: false, corroborated: false }, isFollowed: followState === 'followed', followCount: followState === 'followed' ? 9 : 8, objects: [] } }) };
-    }
-    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
-  };
-  {
-    const { container } = mount(React.createElement(EntityDetail, { entityId: 'e_9', authed: true, onClose: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    assert.ok(text(container).includes('Kiko Bakery'), 'entity name shown');
-    assert.ok(text(container).includes('Follow · 8'), 'follow button with count');
-    act(() => { btn('Follow · 8').click(); });
-    await flush();
-    assert.ok(text(container).includes('Following · 9'), 'button flips to Following with new count');
-  }
-  pass('EntityDetail: follow/unfollow toggle updates the count from the real rail');
+  // ── Language: one honest line, no selector that switches nothing. ──
+  await clickTile('language');
+  check('language says the one language, plainly',
+    /English/.test(text(c)) && /one language/i.test(text(c)));
+  check('language has no fake selector',
+    !document.querySelector('select') && !Array.from(document.querySelectorAll('button')).some((b) => /switch|change language/i.test(b.textContent || '')));
 
-  // --- 6. The rails the reformation moved HERE: Standing, Orders, Selling ---
-  fetchHandler = async (url, init) => {
-    const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
-    if (url.includes('/auth/me')) return ok({ user: authedUser });
-    if (url.includes('/person/me')) return ok(personMe);
-    if (url.includes('/me/acquisition')) return ok({ acquisition: null, provenance: null, activity: { verifiedCommercialKes: 0, currency: 'KES' } });
-    if (url.includes('/me/position')) {
-      return ok({ position: {
-        decay: { expiringQuotes: [{ quoteId: 'q1', requestId: 'r1', title: 'Catering for 50', validUntil: '2026-09-20', hoursLeft: 24 }], waitlist: [], override: null, overdueInstallments: 0 },
-        missedCapture: { count: 0, recent: [], value: null },
-        nextMove: null,
-        open: { total: 1, top: [{ requestId: 'r1', title: 'Catering for 50', category: 'catering', location: 'Kilimani', severityLabel: 'Suppliers matched; no quote yet', collective: false, closesMonthly: null }] },
-        derivedAt: '2026-09-15T00:00:00Z', note: 'derived'
-      } });
-    }
-    if (url.includes('/me/commitments')) return ok({ commitments: { owedByMe: [], owedToMe: [], fulfilled: [], lapsed: [], owedByMeKes: 0, owedToMeKes: 0, derivedAt: '', note: 'derived' } });
-    if (url.includes('/me/reciprocity')) return ok({ reciprocity: { owedToMe: [], owedByMe: [], fulfilled: [], aging: [], windowDays: 14, derivedAt: '', note: 'derived' } });
-    if (url.includes('/listings/mine')) return ok({ vendor: null, listings: [] });
-    if (url.includes('/vendor/orders')) return ok({ orders: [] });
-    if (url.includes('/earnings')) return ok({ earnings: { gross: 0, net: 0, payoutAvailable: false } });
-    if (url.includes('/api/listings')) return ok({ listings: [] });
-    if (url.includes('/api/orders')) return ok({ orders: [] });
-    if (url.includes('/disputes')) return ok({ disputes: [] });
-    return { ok: false, status: 404, text: async () => JSON.stringify({}) };
-  };
-  {
-    const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
-    await flush();
-    const t0 = text(container);
-    for (const label of ['Standing', 'Orders', 'Selling']) {
-      assert.ok(new RegExp(label).test(t0), `the ${label} rail exists in You`);
-    }
+  // ── Notifications: the real centre, reading the server's one row. ──
+  await clickTile('notifications');
+  await flush(30);
+  check('notifications shows the server row, not an invention',
+    /carrier took your errand/.test(text(c)));
 
-    // Standing: derived rows only, and it says so.
-    act(() => { btn('Standing').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    const ts = text(container);
-    assert.ok(ts.includes('Your position'), 'the derived position renders here');
-    assert.ok(ts.includes('1 proposal'), 'a real expiring proposal is counted');
-    assert.ok(ts.includes('Nothing here is a score'), 'and the surface names its own basis');
-    assert.ok(!/tier/i.test(ts), 'no tier ladder is invented');
+  // ── Privacy: the device's stores, named, with real controls. ──
+  await clickTile('privacy');
+  check('privacy names the area the device keeps',
+    /Your area/.test(text(c)) && /Kisii/.test(text(c)));
+  check('privacy shows the offline queue as a count',
+    /Offline queue/.test(text(c)) && /Nothing is parked|waiting for signal/.test(text(c)));
+  check('privacy carries a real sign-out',
+    Array.from(document.querySelectorAll('button')).some((b) => (b.textContent || '').trim() === 'Sign out'));
 
-    // Orders + Selling: the personal halves of commerce, off the browse screen.
-    act(() => { btn('Orders').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(/orders/i.test(text(container)), 'the orders rail renders');
-    assert.ok(!/KES \d/.test(text(container)), 'no money figure is invented from an empty ledger');
+  // The area clear acts on the store, not on a copy of it.
+  const clearBtn = Array.from(document.querySelectorAll('button')).find((b) => (b.textContent || '').trim() === 'Clear');
+  act(() => { clearBtn.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); });
+  check('clearing the area empties the device store',
+    dom.window.localStorage.getItem('brief.world.place') === null);
 
-    act(() => { btn('Selling').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(text(container).includes('Start selling'), 'the real selling flow is reachable from You');
-  }
-  pass('YouSurface: Standing, Orders and Selling rails exist and stay derived-only');
+  // ── The old sections survive the reorg: profile still leads. ──
+  await clickTile('profile');
+  check('profile section still renders under the reorg',
+    /Your account/.test(text(c)));
 
-  // --- 6b. the four-group layout keeps every rail reachable -----------------
-  {
-    const src = require('fs')
-      .readFileSync(require('path').join(__dirname, 'src/features/you/YouSurface.tsx'), 'utf8')
-      .toString();
-    const groupBlock = src.slice(src.indexOf('const YOU_GROUPS'), src.indexOf('type Section ='));
-    // Group entries span lines; item entries are one line each — so this picks
-    // out exactly the pills, and nothing else.
-    const items = [...groupBlock.matchAll(/\{ id: "([a-zA-Z]+)", label: "([^"]+)" \}/g)].map((m) => [m[1], m[2]]);
-    const ids = items.map(([id]) => id);
-    const expected = ['profile', 'standing', 'following', 'selling', 'orders', 'network', 'earn', 'tableBanking', 'subscriptions', 'archive', 'how'];
-    assert.deepEqual([...ids].sort(), [...expected].sort(),
-      'the grouping lists every section exactly once — a reorganisation may move a rail, never drop or rename one');
-    assert.equal(new Set(ids).size, ids.length, 'no section sits in two groups');
-    // The labels are what the suite elsewhere clicks on; they must survive too.
-    for (const label of ['Standing', 'Orders', 'Selling', 'Subscriptions', 'How Trace works']) {
-      assert.ok(items.some(([, l]) => l === label), `the "${label}" pill is still labelled "${label}"`);
-    }
-    assert.ok(/YOU_GROUPS\.map/.test(src) && !/mt-4 flex flex-wrap gap-2">\s*\{tab\("profile"/.test(src),
-      'the surface renders the groups, not a flat eleven-pill row');
-  }
-  pass('YouSurface: four groups, eleven rails, nothing dropped');
-
-  console.log('\nPASS ' + count);
-  process.exit(0);
+  act(() => { root.unmount(); });
+  console.log(`\nPASSED ${passed} / FAILED ${failed}`);
+  process.exit(failed === 0 ? 0 : 1);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

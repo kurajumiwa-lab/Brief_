@@ -16,7 +16,7 @@ cd "$(dirname "$0")"
 cd preview || exit 1
 export PATH="../node_modules/.bin:$PATH"
 
-ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs spaceloop circlejoin motion partnerdesk yousurface earnsurface progressivedisclosure tablebankingsurface eventcard eventactions eventdetail polish firstrun spacesignals promocarousel spaceshell wairodispatch cityfeed position commitments reciprocity museumgallery homezones spaceoperating spaceedit youposition errandslobby spacestorefront discoverlayout room publicface guardians sellerhardening appbelt shopbrief"
+ALL="access admin alerts moneyband utf8 apic menusheet shopbuilder dukabook trust personal entities membersdesk fees rewards gate mshikano batch1 camp circleops capture collections commerce chain darkshelf dest econ engine feedcards group groupui inbox ing joins loops media nav news notifications onboard orchestration parse person pmatch pure pursuit quests resale routes session stories sys townhubs spaceloop circlejoin motion partnerdesk yousurface earnsurface progressivedisclosure tablebankingsurface eventcard eventactions eventdetail polish firstrun spacesignals promocarousel spaceshell wairodispatch cityfeed position commitments reciprocity museumgallery homezones spaceoperating spaceedit youposition errandslobby spacestorefront discoverlayout room publicface guardians sellerhardening appbelt shopbrief doorways cards"
 # discovery.jsx is in ALL because it is a real suite that was silently missing:
 # 216 lines and 25 checks, one of them failing, and it appeared in no total this
 # script ever printed. An unlisted suite never runs, and a suite that never runs
@@ -43,8 +43,8 @@ if [ -z "${*:-}" ]; then
   orphans=""
   for f in *.jsx; do
     n="${f%.jsx}"
-    case " $ALL " in *" $n "*) continue ;; esac
-    case " $NOT_SUITES " in *" $n "*) continue ;; esac
+    case " $ALL " in *"$n "*) continue ;; esac
+    case " $NOT_SUITES " in *"$n "*) continue ;; esac
     orphans="$orphans $n"
   done
   if [ -n "$orphans" ]; then

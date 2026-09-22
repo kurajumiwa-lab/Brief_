@@ -119,26 +119,37 @@ global.fetch = async (input) => {
 };
 
 async function main() {
-  // --- 1. Navigation: 'city' normalises to DISCOVER, never Home ------------
+  // --- 1. The bar: a room is not a door ------------------------------------
+  // The old rule was "'city' highlights Discover, never Home". The reorg made
+  // the stronger claim: the rooms are NOT doors at all. Home / Mine / You are
+  // the only destinations in the bar, plus one action; while the board is open
+  // nothing in the bar is selected, because a lit door is a lie about where you
+  // are.
   {
     const c = mount(React.createElement(Navigation, { activeTab: 'city', onSelectTab: () => {} }));
     const tabs = Array.from(c.querySelectorAll('button[role="tab"]'));
-    const discover = tabs.find((b) => text(b).includes('Discover'));
-    const home = tabs.find((b) => text(b).includes('Home'));
-    assert.ok(discover && home, 'both Home and Discover tabs render');
-    assert.equal(discover.getAttribute('aria-selected'), 'true', 'Discover is selected when the City feed is active');
-    assert.equal(home.getAttribute('aria-selected'), 'false', 'Home is NOT selected when the City feed is active');
+    const labels = tabs.map((b) => text(b).replace(/\s+/g, ' ').trim());
+    assert.ok(labels.includes('Home') && labels.includes('Mine') && labels.includes('You'), 'the three doors render');
+    assert.equal(tabs.filter((b) => b.getAttribute('aria-selected') === 'true').length, 0, 'no door lights while a room is open');
+    // The old five doors are gone as labels.
+    assert.ok(!labels.some((l) => /^(Spaces|Discover|Activity)$/.test(l)), 'the old doors do not render as destinations');
   }
-  pass('Navigation highlights Discover (not Home) when the City feed is active');
+  pass('A room is not a door: nothing in the bar lights while the board is open');
 
-  // --- 2. City feed exposes post affordances --------------------------------
+  // --- 2. The board has no floating create pill -----------------------------
   {
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    assert.ok(btn('Host'), 'a Host-an-event affordance exists');
-    assert.ok(btn('Post a listing'), 'a Post-a-listing affordance exists');
+    const body = text(document.body);
+    assert.ok(!/Host an event/.test(body), 'no floating "Host an event" pill on the board');
+    assert.ok(!/Post a listing/.test(body), 'no floating "Post a listing" pill on the board');
+    // The one create door in the app is the bar's action.
+    const nav = mount(React.createElement(Navigation, { activeTab: 'city', onSelectTab: () => {}, onOpenCreate: () => {} }));
+    const createBtn = nav.querySelector('button[aria-label^="Create — opens a sheet"]');
+    assert.ok(createBtn, 'the bar carries the create action');
+    assert.equal(createBtn.getAttribute('aria-haspopup'), 'dialog', 'and it opens a sheet, not a route');
   }
-  pass('CityFeedView exposes event + marketplace input surfaces');
+  pass('The create pill is gone from the board; the bar’s [+] is the one create door');
 
   // --- 2b. The head card is a clean, premium light header ------------------
   {
@@ -177,23 +188,26 @@ async function main() {
   }
   pass('DiscoveryHead is a clean premium light header (no scoreboard, no dark card)');
 
-  // --- 3. Host opens a real event form; Post-a-listing opens Selling -------
+  // --- 3. The create sheet's two loops still land on the rows they write ---
+  // "Host an event" is now the shell's sheet (it used to be a modal on this
+  // screen); "Post an offer" is a signal to this screen, which opens the
+  // counter's Selling tab — the counter is where a listing is really written.
   {
-    mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
+    const { HostEventSheet } = require('./src/features/city/HostEventSheet.tsx');
+    const c = mount(React.createElement(HostEventSheet, { open: true, onClose: () => {} }));
     await flush();
-    act(() => { btn('Host').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(text(document.body).includes('Put your event on the board'), 'the host-event form opens');
-    assert.ok(document.querySelector('input[aria-label="Event title"]'), 'the form has a title input');
-    // close it
-    act(() => { Array.from(document.querySelectorAll('button')).find((b) => text(b) === 'Cancel').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-
-    act(() => { btn('Post a listing').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(text(document.body).includes('Start selling'), 'Post a listing deep-links to the marketplace Selling flow');
+    assert.ok(text(c).includes('Put your event on the board'), 'the host-event form opens');
+    assert.ok(c.querySelector('input[aria-label="Event title"]'), 'the form has a title input');
+    assert.ok(text(c).includes('Publish event'), 'and it publishes, not drafts');
   }
-  pass('Host opens the event form; Post-a-listing opens the Selling flow');
+  pass('Host an event is a real createCampaign form, opened from the sheet');
+
+  {
+    const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {}, sellingSignal: 1 }));
+    await flush();
+    assert.ok(text(document.body).includes('Start selling'), 'the Selling signal lands on the marketplace Selling flow');
+  }
+  pass('Post an offer deep-links to the Selling flow via the signal, not a second form');
 
   // --- 4. The events room is inventory alone ------------------------------
   {

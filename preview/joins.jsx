@@ -282,8 +282,12 @@ async function main() {
   state.refuse = null;
 
   console.log('\n=== 4. LEAVING ===');
+  // The card keeps exactly one action (Open / Join / View), so the way out
+  // lives in the room, which is where a membership is a fact, not a button.
   reset();
   await mount(Circles);
+  await click(btn('Open'));
+  await settle(); await settle();
   state.calls = [];
   await click(btn('Leave'));
   b = body();

@@ -1,14 +1,21 @@
 // ---------------------------------------------------------------------------
-// MUSEUM GALLERY — swiping inventory over REAL events. Pins the museum rules
-// after the home-feed reformation:
-//   * one card at a time (snap) with position dots, and the ACTIVE card is the
-//     only one carrying an action;
-//   * no result counter anywhere — "2 shown" was metadata nobody asked for;
-//   * the control line is ONE row, and the deep filters live in a bottom sheet
-//     whose selections drive the REAL /api/events query;
-//   * "New" is only ever a real diff against what this device already saw, and
-//     "you opened this" is only ever this device's own record — nothing about
-//     other people is claimed;
+// MUSEUM GALLERY — the events, as a two-column grid of the ONE card shape.
+// Pins the museum rules after the card-pattern refactor:
+//   * every exhibit is the SAME GlobysCard as the board, Home and Mine:
+//     1:1 cover or waiting plate, title, the real price, the where/when in
+//     mono, and exactly ONE action ("View event →") on EVERY card — the old
+//     swipe case gave a button only to "the active card", which was two
+//     shapes pretending to be one;
+//   * no corner badges. "New" was a chip in the corner computed from this
+//     device's own memory of last visit — decoration, not a fact — so it is
+//     gone, and a row this device had never seen is NOT marked any different;
+//   * no position dots (the swipe case is gone), no result counter
+//     ("if you can see them, you can count them");
+//   * NO control line at all. The "All exhibits" chip (then "All events") and
+//     its filter sheet were the third navigation for events the board and Home
+//     already point at, so the reorg deleted the whole row: the case is
+//     everything published, soonest first, and a reader who wants a narrower
+//     view goes to the board, where the filters sit beside what they filter;
 //   * an empty case says so plainly.
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
@@ -24,8 +31,9 @@ global.MouseEvent = dom.window.MouseEvent;
 global.getComputedStyle = dom.window.getComputedStyle;
 global.IS_REACT_ACT_ENVIRONMENT = true;
 global.localStorage = dom.window.localStorage;
-// jsdom has no navigation: the handler's job here is the local record it writes.
-dom.window.open = () => ({ closed: false, focus() {}, close() {} });
+// jsdom has no navigation: the stub records where the action tried to go.
+let openedUrl = null;
+dom.window.open = (u) => { openedUrl = u; return { closed: false, focus() {}, close() {} }; };
 
 const React = require('react');
 const { createRoot } = require('react-dom/client');
@@ -44,17 +52,11 @@ function mount(el) {
   return c;
 }
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
-const btnByText = (want) =>
-  Array.from(document.querySelectorAll('button')).find((b) => text(b) === want || text(b).startsWith(want));
 
 let fetchHandler;
 global.fetch = async (input, init) => fetchHandler(String(input?.url ?? input ?? ''), init);
 
-// `_popularity` and `_overlap` are still accepted positionally so the call
-// sites below read unchanged, but neither field is emitted, and neither is
-// `featured`: Decision 6 removed all three from the server's listing
-// projection, so a fixture carrying them would test a contract that is gone.
-const ev = (slug, title, _popularity, _overlap, extra = {}) => ({
+const ev = (slug, title, extra = {}) => ({
   slug, title, description: null, coverImageUrl: null,
   category: 'event', categoryLabel: 'Events',
   location: 'Kilimani', startsAt: '2026-09-20T06:00:00Z', endsAt: null,
@@ -81,11 +83,11 @@ async function main() {
     return { ok: false, status: 404, text: async () => JSON.stringify({}) };
   };
 
-  // --- 1. Real exhibits, dots, one action, and NO result counter -----------
+  // --- 1. Real exhibits as the one card shape: two columns, one action each
   localStorage.clear();
   fetchHandler = serve([
-    ev('night-market', 'Kilimani Night Market', 12, [{ tableBankingId: 'tb1', tableBankingName: 'Kejani', memberCount: 1 }]),
-    ev('cake-drop', 'Birthday Cake Drop', 0, null)
+    ev('night-market', 'Kilimani Night Market', { price: 300 }),
+    ev('cake-drop', 'Birthday Cake Drop')
   ]);
   {
     const c = mount(React.createElement(MuseumGallery, null));
@@ -93,102 +95,78 @@ async function main() {
     const t = text(c);
     assert.ok(t.includes('Kilimani Night Market'), 'first exhibit renders');
     assert.ok(t.includes('Birthday Cake Drop'), 'second exhibit renders');
-    // Decision 6: no "X going", no attendee names, no view count — so the
-    // gallery renders the exhibit's title, date, place and price and nothing
-    // that pressures the reader with a crowd.
-    assert.ok(!/going/i.test(t), 'no "going" count is rendered');
-    assert.ok(!/from Kejani/i.test(t), 'and no circle-overlap line either');
 
+    // Every card is a GlobysCard, in a two-column grid.
+    const grid = c.querySelector('.grid-cols-2');
+    assert.ok(grid, 'the case is a two-column grid');
+    const cards = Array.from(grid.querySelectorAll('article[data-testid^=globys-card-]'));
+    assert.equal(cards.length, 2, 'both exhibits render as product cards');
+
+    // Each card: title, the real price (300 KES / Free), the mono where/when,
+    // and EXACTLY ONE action button.
+    for (const card of cards) {
+      const actions = Array.from(card.querySelectorAll('[data-testid^=card-action]'));
+      assert.equal(actions.length, 1, 'every card has exactly one action');
+      assert.ok(actions[0].textContent.includes('View event'), 'the action is "View event"');
+      assert.ok(Array.from(card.querySelectorAll('p')).some((p) => p.classList.contains('font-mono')), 'the card carries the mono where/when line');
+    }
+    assert.ok(text(cards[0]).includes('KES 300'), 'the priced card shows its real price');
+    assert.ok(text(cards[1]).includes('Free'), 'the free card says Free, not a guessed zero');
+
+    // Decision 6: no "X going", no attendee names, no view count, no crowd.
+    assert.ok(!/going/i.test(t), 'no "going" count is rendered');
     // The counter is gone by design ("if you can see them, you can count them").
     assert.ok(!/shown/i.test(t), 'no "N shown" metadata');
-    assert.ok(!t.includes('Swipe to browse'), 'no numeric browse hint');
 
-    // Dots: one per exhibit.
+    // The swipe case is gone: no position dots, no active-only scaling.
     const dots = Array.from(c.querySelectorAll('div')).filter((d) => (d.getAttribute('class') || '').includes('h-1.5 rounded-full'));
-    assert.equal(dots.length, 2, 'one dot per exhibit');
+    assert.equal(dots.length, 0, 'no position dots — the swipe case is gone');
 
-    // Rule: only the active card carries an action.
-    assert.equal(Array.from(c.querySelectorAll('article button')).length, 1, 'only the active card has an action');
-
-    // Monogram killed: no oversized letter box on a cover-less exhibit.
-    assert.equal(
-      Array.from(c.querySelectorAll('article span')).find((s) => /^[A-Z]$/.test(text(s))),
-      undefined,
-      'no title-initial monogram is rendered'
-    );
-
-    // One control line, not a six-chip row plus a four-row panel.
-    const chips = Array.from(c.querySelectorAll('button')).filter((b) => (b.getAttribute('class') || '').includes('rounded-full'));
-    assert.ok(chips.length <= 3, `the control line is compact (got ${chips.length} pills)`);
-    assert.ok(t.includes('All exhibits'), 'the control line names the current wing');
+    // The control line is GONE: no "All exhibits"/"All events" chip, no filter
+    // sheet trigger. The case is everything published, soonest first.
+    assert.ok(!/All (exhibits|events)/i.test(t), 'no "All events" filter chip');
+    const filterTriggers = Array.from(c.querySelectorAll('button')).filter((b) => /filter/i.test(b.getAttribute('aria-label') || ''));
+    assert.equal(filterTriggers.length, 0, 'no filter sheet trigger on the case');
   }
-  pass('MuseumGallery: real exhibits, dots, one action, no counter, no monogram, one control line');
+  pass('MuseumGallery: real exhibits as the one card shape, one action each, no dots, no counter, no control line');
 
-  // --- 2. The bottom sheet drives the REAL query ---------------------------
+  // --- 2. The case is everything published — no filter parameters ----------
   {
     const c = mount(React.createElement(MuseumGallery, null));
     await flush();
-    act(() => { btnByText('All exhibits').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(text(document.body).includes('Filter the case'), 'the sheet opens from the control line');
-    // Decision 6: the sheet no longer holds a featured toggle or a popularity
-    // sort, because the server has neither to offer. Both controls were deleted
-    // rather than disabled — a disabled control still advertises a choice the
-    // product does not make.
-    assert.ok(!text(document.body).includes('★ Featured only'), 'no featured toggle in the sheet');
-    assert.ok(!/most people first/i.test(text(document.body)), 'no popularity sort control either');
-
-    // Pick a wing + a place, then apply.
-    act(() => { btnByText('Events').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    const input = document.querySelector('input[aria-label], #museum-loc');
-    act(() => {
-      const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
-      setter.call(input, 'Kisii');
-      input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-    });
-    act(() => { btnByText('Show').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
     const q = new URLSearchParams(lastQuery.replace(/&amp;/g, '&'));
-    assert.equal(q.get('category'), 'event', 'the sheet applies the real category filter');
+    assert.equal(q.get('category'), null, 'the case does not send a category filter');
+    assert.equal(q.get('location'), null, 'and no place filter — the whole case is the shelf');
+    assert.equal(q.get('sort'), null, 'and no sort parameter — the order is the server\'s one order, startsAt ascending (D6)');
     assert.equal(q.get('featured'), null, 'no featured parameter reaches the server (D6)');
-    assert.equal(q.get('sort'), null, 'and no sort parameter either — the order is startsAt ascending (D6)');
-    assert.equal(q.get('location'), 'Kisii', 'the sheet applies the real place filter');
-
-    // The applied state is now named on the control line, with a way out.
-    const t = text(c);
-    assert.ok(t.includes('Events'), 'the control line names the applied wing');
-    assert.ok(t.includes('near Kisii'), 'the control line names the applied place');
-    assert.ok(btnByText('Clear'), 'a clear control exists once a filter is active');
-    act(() => { btnByText('Clear').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    await flush();
-    assert.ok(!(new URLSearchParams(lastQuery).get('category')), 'Clear drops the filter for real');
+    assert.ok(text(c).includes('Kilimani Night Market'), 'published events still render in the case');
   }
-  pass('MuseumGallery: one control line + bottom sheet that drives the real query');
+  pass('MuseumGallery: the case is everything published; narrower views live on the board');
 
-  // --- 3. "New" is a real diff, and opening writes a local record ----------
+  // --- 3. No corner badges: a never-seen row is not marked any different ----
   {
-    // This device has already seen 'night-market'...
+    // This device has already seen 'night-market' — the old case would have
+    // stamped "New" on the other card. The corner badge is gone, so neither
+    // card differs.
     localStorage.setItem('brief.eventSeen.v1', JSON.stringify({ at: new Date().toISOString(), slugs: ['night-market'] }));
-    localStorage.removeItem('brief.eventOpens.v1');
     fetchHandler = serve([
-      ev('night-market', 'Kilimani Night Market', 12, null),
-      ev('cake-drop', 'Birthday Cake Drop', 0, null)
+      ev('night-market', 'Kilimani Night Market'),
+      ev('cake-drop', 'Birthday Cake Drop')
     ]);
     const c = mount(React.createElement(MuseumGallery, null));
     await flush();
     const cards = Array.from(c.querySelectorAll('article'));
     assert.equal(cards.length, 2, 'both exhibits rendered');
-    assert.ok(text(cards[1]).includes('New'), 'the row this device had not seen is marked New');
-    assert.ok(!text(cards[0]).includes('New'), 'a row already seen is not marked New');
-    assert.ok(!text(c).includes('opened'), 'no viewing history is claimed before this device opened anything');
+    assert.ok(!Array.from(c.querySelectorAll('article')).some((card) => /new/i.test(text(card))),
+      'no "New" corner badge on any card, seen or unseen');
 
-    // Opening the active card records a real local fact.
-    const action = Array.from(cards[0].querySelectorAll('button')).find((b) => text(b).includes('View event'));
+    // The one action still does its real job: open the event page.
+    openedUrl = null;
+    const action = cards[0].querySelector('[data-testid^=card-action]');
     act(() => { action.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-    const opens = JSON.parse(localStorage.getItem('brief.eventOpens.v1') || '{}');
-    assert.ok(opens['night-market'], 'opening an exhibit writes this device\'s own record');
+    assert.ok(openedUrl && openedUrl.includes('/c/night-market'), 'the action opens the exhibit\'s page');
   }
-  pass('MuseumGallery: "New" is a real diff and "opened" is a real local record');
+  pass('MuseumGallery: no "New" corner badge; the one action opens the exhibit');
 
   // --- 4. Empty case is honest --------------------------------------------
   fetchHandler = serve([]);
@@ -197,7 +175,7 @@ async function main() {
     await flush();
     const t = text(c);
     assert.ok(t.includes('Nothing is published yet'), 'empty case says so plainly');
-    assert.ok(!t.includes('New'), 'no fabricated marks on an empty case');
+    assert.ok(!/new/i.test(t), 'no fabricated marks on an empty case');
   }
   pass('MuseumGallery renders an honest empty state (no fabricated exhibits)');
 

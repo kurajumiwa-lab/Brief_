@@ -57,7 +57,7 @@ export function roomSurface(tint: string | null = ROOM_TINT): string {
     about 11%. A wash, never a fill — so two categories never look like two
     different products, and the plate still reads as the same material as the
     page. Single layer by design: a plate component paints the plaster beneath
-    it as its own element (see NoPhotoPlate / MuseumCard / EventCard). */
+    it as its own element (see NoPhotoPlate / GlobysCard). */
 export function plateGlow(accent: string | null): string {
   return `radial-gradient(125% 95% at 106% 4%, ${accent ? accent + '1f' : ROOM_TINT_SECONDARY} 0%, transparent 62%)`;
 }

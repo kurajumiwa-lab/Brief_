@@ -358,7 +358,10 @@ async function main() {
   const text13 = face13();
   check('renders the four flows as the primary switcher',
     /Bulk/.test(text13) && /Direct/.test(text13) && /Niche/.test(text13) && /Group/.test(text13));
-  check('the Create pill leads to a real loop', /Host an event/.test(text13));
+  // The floating Create pill is gone from the board: the one create door in
+  // the app is the bar's [+], and it opens a sheet. The board keeps only its
+  // own contextual action beside a zero it could change.
+  check('no floating create pill on the board (the bar’s [+] is the create door)', !/Host an event/.test(text13) && !/Post a listing/.test(text13));
   check('no invented vendor crowd, no borrowed photography, no fake contact',
     !/40 verified/.test(text13) && !/unsplash/i.test(host13.innerHTML) && !/\+254712345678/.test(host13.innerHTML));
   check('an unreadable board says so instead of showing the demo',

@@ -236,23 +236,27 @@ async function main() {
     assert.ok(t.includes('6 crate asked for'), 'quantities come from what buyers typed');
     assert.ok(t.includes('Tomatoes, 20 crates'), 'the listing itself is on show');
     assert.ok(t.includes('no photo from Mwangi Wholesale'), 'no photo on the row, so no photo on the card');
-    assert.ok(t.includes('min 5 crate · 3 settled'), 'the card carries min order and the counted take-up, in two words');
 
-    // Sub-filter strip: flat, one tap, and it narrows what is on the board.
-    assert.ok(tab('Produce') === undefined && container.querySelectorAll('button[role="tab"]').length === 0,
-      'sub-filters are chips, not tabs — and nothing on this board pretends to be a tablist');
-    const dryGoods = Array.from(container.querySelectorAll('button')).find((b) => text(b) === 'Dry goods');
-    assert.ok(dryGoods, 'the flow ships a flat sub-filter strip');
-    click(dryGoods);
-    await flush();
-    const filtered = text(container);
-    assert.ok(filtered.includes('Nothing matches that filter'), 'a chip that matches nothing says so instead of faking a shelf');
-    assert.ok(filtered.includes('Clear the filters'), 'and offers the way back');
-    click(btn('Clear the filters'));
-    await flush();
-    assert.ok(text(container).includes('Tomatoes, 20 crates'), 'clearing returns the board');
+    // The card is the ONE Globys shape: title, the seller's name, the real
+    // route in the mono line, and exactly one action. Min order and take-up
+    // moved to the sheet that opens on the body — the card says the offer,
+    // the sheet carries the record.
+    const card = container.querySelector('article[data-testid^=globys-card-feed-]');
+    assert.ok(card, 'the listing is a product card');
+    assert.equal(card.querySelectorAll('[data-testid^=card-action]').length, 1, 'exactly one action on the card');
+    assert.ok(Array.from(card.querySelectorAll('p')).some((p) => p.classList.contains('font-mono') && p.textContent.includes('Wakulima Market → Kilimani shops')),
+      'the mono line carries the route the seller declared');
+    assert.ok(Array.from(card.querySelectorAll('p')).some((p) => p.textContent.includes('Mwangi Wholesale')), 'the seller stands by name, not a badge');
+
+    // The top chip row is GONE: no sub-filter strip, no tablist, no chips.
+    // The routes remain the only filter — a list you browse, not a row of
+    // chips you squint at.
+    assert.ok(!Array.from(container.querySelectorAll('button')).some((b) => ['Everything on this flow', 'Produce', 'Dry goods', 'Packaging'].includes(text(b))),
+      'no sub-filter chip row on the board');
+    assert.equal(container.querySelectorAll('button[role="tab"], [role="tablist"]').length, 0,
+      'nothing on this board pretends to be a tablist');
   }
-  pass('A flow shows its declared routes with counted demand; the sub-filter strip is flat');
+  pass('A flow shows its declared routes with counted demand; the chip row is gone, the card is the one shape');
 
   // --- 3. an undeclared flow says there is nothing honest to show ──────────
   {
@@ -297,7 +301,9 @@ async function main() {
   {
     const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
-    const withContact = Array.from(container.querySelectorAll('button[aria-label="Open Tomatoes, 20 crates"]'))[0];
+    // The card is an article whose body tap opens the sheet.
+    const cardFor = (title) => Array.from(container.querySelectorAll('article[data-testid^=globys-card-feed-]')).find((a) => text(a).includes(title));
+    const withContact = cardFor('Tomatoes, 20 crates');
     click(withContact);
     await flush();
     let t = text(container);
@@ -310,12 +316,14 @@ async function main() {
     click(container.querySelector('button[aria-label="Close details"]'));
     await flush();
 
-    const noContact = Array.from(container.querySelectorAll('button[aria-label="Open Hand-poured candles, set of 3"]'))[0];
+    const noContact = cardFor('Hand-poured candles, set of 3');
     click(noContact);
     await flush();
     t = text(container);
     assert.ok(t.includes('No contact number on this listing'), 'and when there is none, none is invented');
-    assert.ok(!container.querySelector('a[href^="https://wa.me/"]'), 'no dead WhatsApp button either');
+    // Scoped to the SHEET: the board's other cards may carry their own real
+    // wa.me action, but this row's sheet must not invent one.
+    assert.ok(!container.querySelector('[role=dialog] a[href^="https://wa.me/"]'), 'no dead WhatsApp button in the sheet either');
     assert.ok(t.includes('commodity: not declared') === false, 'the candle row did declare its commodity, so it is not shown as blank');
     assert.ok(t.includes('candles'), 'the declared commodity renders');
   }
@@ -324,9 +332,10 @@ async function main() {
   // --- 6. the seller writes the axes; blanks stay absent ──────────────────
   {
     calls = [];
-    const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
-    await flush();
-    click(btn('Post a listing'));
+    // The floating "Post a listing" pill is gone: the create door is the bar's
+    // [+], and its "Post an offer" row reaches this screen as a signal, which
+    // opens the counter's Selling tab — the real create flow, not a copy.
+    const { container } = mount(React.createElement(CityFeedView, { onOpenSpace: () => {}, sellingSignal: 1 }));
     await flush();
     assert.ok(text(container).includes('Start selling') || text(container).includes('New listing'), 'the real create flow is what opens, not a copy');
 

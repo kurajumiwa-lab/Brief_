@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from "react";
+import {
+  User, ShieldCheck, Heart, Store, Package, Users, Coins, Landmark,
+  CreditCard, Archive, BookOpen, Globe, Bell, Lock
+} from "lucide-react";
+import { MenuTile, SectionHeader } from "../../ui/MenuTile";
 import * as api from "../../api/briefApi";
 import type { AuthedUser, PersonMe, FollowsGroups, MyCommitments, MyPosition, MyReciprocity, Precedent } from "../../api/briefApi";
 import type { Space } from "../../api/types";
@@ -16,6 +21,7 @@ import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
 import { SessionSignIn } from "../../components/SessionSignIn";
+import { NotificationCenter } from "../../components/NotificationCenter";
 
 // ---------------------------------------------------------------------------
 // YOU — the member's own profile, follows and subscriptions (Phase 3).
@@ -34,6 +40,15 @@ import { SessionSignIn } from "../../components/SessionSignIn";
 // Everything is read from real server rows; a signed-out caller gets the
 // signed-out state, and an empty list is shown as empty, never fabricated.
 // ---------------------------------------------------------------------------
+
+// The same key the belt's area chip writes and PlannedWeather reads. The
+// privacy screen names this store because it is the one place-specific thing
+// this device is allowed to hold.
+const PLACE_KEY = "brief.world.place";
+
+function readPlace(): string {
+  try { return localStorage.getItem(PLACE_KEY) ?? ""; } catch { return ""; }
+}
 
 const KIND_LABELS: Record<string, string> = {
   venue: "Places",
@@ -80,12 +95,64 @@ const YOU_GROUPS: Array<{ id: string; label: string; items: Array<{ id: Section;
     id: "about",
     label: "About",
     items: [{ id: "how", label: "How Trace works" }]
+  },
+  {
+    // The drawer's Settings group lands here: three real, small controls —
+    // the ones the app can actually answer. Language is honest about being
+    // one language; Privacy names what is stored on this device;
+    // Notifications opens the real notification centre.
+    id: "settings",
+    label: "Settings",
+    items: [
+      { id: "language", label: "Language" },
+      { id: "notifications", label: "Notifications" },
+      { id: "privacy", label: "Privacy" }
+    ]
   }
 ];
 
 type Section =
   | "profile" | "standing" | "following" | "subscriptions"
-  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how";
+  | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how"
+  | "language" | "notifications" | "privacy";
+
+// The one tile shape across the You tab: a thin-line icon in a 12px tinted
+// square, a bold 15px title, a grey 13px description in the app's own words.
+// A pill row had a title and nothing else; a tile says what the section holds
+// before you go into it.
+const SECTION_ICONS: Record<Section, React.ReactNode> = {
+  profile: <User className="w-5 h-5" />,
+  standing: <ShieldCheck className="w-5 h-5" />,
+  following: <Heart className="w-5 h-5" />,
+  selling: <Store className="w-5 h-5" />,
+  orders: <Package className="w-5 h-5" />,
+  network: <Users className="w-5 h-5" />,
+  earn: <Coins className="w-5 h-5" />,
+  tableBanking: <Landmark className="w-5 h-5" />,
+  subscriptions: <CreditCard className="w-5 h-5" />,
+  archive: <Archive className="w-5 h-5" />,
+  how: <BookOpen className="w-5 h-5" />,
+  language: <Globe className="w-5 h-5" />,
+  notifications: <Bell className="w-5 h-5" />,
+  privacy: <Lock className="w-5 h-5" />
+};
+
+const SECTION_SUBS: Record<Section, string> = {
+  profile: "Who you are on this device",
+  standing: "What you owe, what is owed you",
+  following: "Places and people you follow",
+  selling: "Your offers, quotes and shop",
+  orders: "What you bought, what you sold",
+  network: "Guardians and programs around you",
+  earn: "Your money, the real way",
+  tableBanking: "Shared pots, kept in the open",
+  subscriptions: "Paid plans you have joined",
+  archive: "Records you keep for yourself",
+  how: "How a row becomes trust",
+  language: "One language, said plainly",
+  notifications: "The real bell for this device",
+  privacy: "What this device keeps, and how to clear it"
+};
 
 export function YouSurface({
   onOpenEntity,
@@ -107,6 +174,8 @@ export function YouSurface({
   const [plans, setPlans] = useState<Subscription[] | null>(null);
   const [myPlans, setMyPlans] = useState<Subscription[] | null>(null);
   const [notice, setNotice] = useState<string>("");
+  // Read once for the privacy screen's "what this device keeps" line.
+  const [place, setPlace] = useState<string>(readPlace);
   // The position reads. Fetched here, once, and handed to every surface that
   // renders them so the hero and the detail cards can never disagree.
   const [position, setPosition] = useState<MyPosition | null>(null);
@@ -217,19 +286,6 @@ export function YouSurface({
     setSignedOut(true);
   };
 
-  const tab = (id: Section, label: string) => (
-    <button
-      type="button"
-      onClick={() => { setSection(id); setNotice(""); }}
-      className="rounded-full px-4 py-2 text-xs font-bold"
-      style={{
-        background: section === id ? "var(--color-primary)" : "var(--color-surface-elevated)",
-        color: section === id ? "var(--accent-ink)" : "var(--color-text)"
-      }}
-    >
-      {label}
-    </button>
-  );
 
   if (loading) {
     return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your profile…</p>;
@@ -263,23 +319,28 @@ export function YouSurface({
         {me?.handle && <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>@{me.handle}</p>}
       </div>
 
-      {/* Four labelled groups, eleven pills in, eleven pills out.
-          The borrow here is only the geometry: a person scanning this screen
-          learns where to look in about a second. Nothing was deleted on the way
-          and nothing was renamed — Subscriptions stays because those rows are
-          real paid plans, and "Archive" stays because a member must be able to
-          find what they closed. Grouping is the whole change. */}
+      {/* Four labelled groups, the same tile in every one of them.
+          Nothing was deleted on the way and nothing was renamed — Subscriptions
+          stays because those rows are real paid plans, and "Archive" stays
+          because a member must be able to find what they closed. The pills
+          became tiles: a title plus the one grey line that says what the
+          section holds, under a small grey uppercase mono header. */}
       <div className="mt-4 space-y-3">
         {YOU_GROUPS.map((group) => (
           <div key={group.id}>
-            <p
-              className="text-[11px] font-mono uppercase tracking-wider"
-              style={{ color: "var(--brief-faint)" }}
-            >
-              {group.label}
-            </p>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              {group.items.map((item) => tab(item.id, item.label))}
+            <SectionHeader>{group.label}</SectionHeader>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {group.items.map((item) => (
+                <MenuTile
+                  key={item.id}
+                  icon={SECTION_ICONS[item.id]}
+                  title={item.label}
+                  description={SECTION_SUBS[item.id]}
+                  active={section === item.id}
+                  testId={item.id}
+                  onClick={() => { setSection(item.id); setNotice(""); }}
+                />
+              ))}
             </div>
           </div>
         ))}
@@ -509,6 +570,93 @@ export function YouSurface({
 
       {section === "tableBanking" && (
         <TableBankingSurface onRequireAuth={onRequireAuth} />
+      )}
+
+      {/* ── SETTINGS — the three controls the drawer's Settings group names.
+          Each one answers what it claims; none of them switches nothing. ── */}
+      {section === "language" && (
+        <div className="mt-4 space-y-3">
+          <div className="p-4 rounded-2xl" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>English</p>
+            <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+              The app speaks one language. A selector that switched nothing would be a control advertising a
+              choice the product does not make, so there is no selector — there is this line instead. A second
+              language lands here when the translations are maintained, not before.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {section === "notifications" && (
+        <div className="mt-4 space-y-3">
+          <NotificationCenter
+            authed={!signedOut}
+            onClose={() => setSection("profile")}
+            onOpen={() => {}}
+          />
+        </div>
+      )}
+
+      {section === "privacy" && (
+        <div className="mt-4 space-y-3">
+          <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
+            What this device keeps, and how to take it back. Nothing here is a
+            toggle that pretends: each row is a real store on this browser, and
+            each control acts on it.
+          </p>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Your area</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  Stored only to read the forecast. {place ? `Set to “${place}”.` : "Not set."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  try { localStorage.removeItem(PLACE_KEY); } catch { /* a locked-down browser keeps its secret */ }
+                  setPlace("");
+                  setNotice("The area is cleared from this device.");
+                }}
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer"
+                style={{ background: "var(--color-surface-elevated)", color: "var(--color-text)" }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Offline queue</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  {api.offlineQueueDepth() === 0
+                    ? "Nothing is parked — every write reached the server."
+                    : `${api.offlineQueueDepth()} write${api.offlineQueueDepth() === 1 ? "" : "s"} waiting for signal; they send themselves when it returns.`}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 rounded-2xl space-y-2" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>Sign out</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
+                  Ends the session on this device. Rows you wrote stay on the server, where they belong.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { void signOut(); }}
+                className="shrink-0 px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer"
+                style={{ background: "var(--color-danger, #B3261E)", color: "#fff" }}
+              >
+                Sign out
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

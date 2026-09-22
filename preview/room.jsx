@@ -201,8 +201,12 @@ async function main() {
     const themeCode = themeCss.replace(/\/\*[\s\S]*?\*\//g, '');
     assert.ok(!/#4F46E5|#06B6D4/.test(themeCode), 'the indigo/bright-cyan pair is gone from the theme, not aliased');
     // The type floor: fine print is what made the last revision read as a form.
+    // The card pattern deleted the one sanctioned 9px exception (the status
+    // pill — a corner badge the pattern removes), so 8px and 9px are both
+    // banned everywhere, with no file to exempt.
     const allSrc = sweep();
-    assert.ok(!/text-\[(8|9)px\]/.test(allSrc), 'no 8px or 9px type survives in the app');
+    assert.ok(!/text-\[8px\]/.test(allSrc), 'no 8px type survives in the app');
+    assert.ok(!/text-\[9px\]/.test(allSrc), 'no 9px type survives — the pill exception is gone with the pill');
     // The floor has to cover hand-written CSS too: the utility sweep missed two
     // component stylesheets, and a claim of "smallest type is 11px" that only
     // holds for Tailwind classes is not a claim about the app.
@@ -283,10 +287,13 @@ async function main() {
     assert.ok(/radial-gradient/.test(plateGlow('#2563EB')), 'the accent lands on a plate as a corner of light');
     assert.ok(!/linear-gradient\(135deg, #4F46E5|#4F46E5|#06B6D4/.test(roomSurface() + roomTs),
       'the old indigo/cyan pair is gone from the room module, not aliased back in');
+    // The card's photo is a clean 1:1 product slot — no text over it, so no
+    // scrim; the sheet that opens on the card is where the photo gets the
+    // room's ink. Either way it is the row's OWN photo, never a stock shot.
     const imgs = Array.from(container.querySelectorAll('img'));
-    assert.ok(imgs.length === 1 && /saturate/.test(styleOf(imgs[0])), 'the one real photo present is filtered; no stock image was substituted for the missing one');
+    assert.equal(imgs.length, 1, 'the one real photo present; no stock image was substituted for the missing one');
   }
-  pass('4. pictures belong to the room: a real photo gets the ink scrim and a light grade, a missing one gets a lit plate, never a stock shot');
+  pass('4. pictures belong to the room: the card shows the row\'s own 1:1 photo, a missing one gets a lit plate, never a stock shot');
 
   // --- 5. a zero is a true count, printed quietly, with a next step -------
   {
@@ -312,7 +319,13 @@ async function main() {
     // "hot / trending / buyers waiting / coming soon" is padding. A real sort by
     // counted registrations is not, so only the invented-urgency vocabulary fails.
     assert.ok(!/coming soon|trending|buyers waiting|people viewing|hot/i.test(text(container)), 'no filler language around an empty room');
-    assert.ok(/0 settled/.test(text(container)), 'a zero interest figure is a count and one word');
+    // A zero interest is not printed as a zero: "0 settled" reads as an
+    // indictment of the listing. The card pattern went further — the take-up
+    // count stands in the sheet that opens on the card, so the card carries
+    // no interest figure of any kind, and a zero says nothing at all.
+    assert.ok(!/0 settled/.test(text(container)), 'a zero interest is not a settled figure');
+    const cardTexts = Array.from(container.querySelectorAll('article[data-testid^=globys-card]')).map((c) => text(c)).join(' ');
+    assert.ok(!/settled|new listing/i.test(cardTexts), 'the card carries no interest count; the sheet does');
     assert.ok(!/0 settled orders · newest live listing/.test(text(container)), 'the meta-junk line is gone');
   }
   pass('Zeros are honest and quiet: a count of rows, what it means, and the one step that changes it');
