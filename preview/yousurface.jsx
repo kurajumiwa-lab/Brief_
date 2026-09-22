@@ -14,6 +14,7 @@
 //   * Privacy — the device's own stores named: the area, the offline queue,
 //     and sign out.
 // ---------------------------------------------------------------------------
+const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', { url: 'https://brief.test/', pretendToBeVisual: true });
 global.window = dom.window;
@@ -73,22 +74,28 @@ const mount = (props) => {
 };
 
 const text = (el) => (el.textContent || '').replace(/\s+/g, ' ').trim();
-const clickTab = (label) => {
-  const b = Array.from(document.querySelectorAll('button')).find((x) => (x.textContent || '').trim() === label);
-  if (!b) throw new Error('no tab: ' + label);
+
+// The sections now stand as icon TILES (the drawer's one tile shape), each
+// with a stable test id, so the contract is checked by id and shape rather
+// than by exact button text — the tile's text is title + description.
+const SECTION_IDS = {
+  Profile: 'profile', Standing: 'standing', Following: 'following',
+  Selling: 'selling', Orders: 'orders', 'Your network': 'network',
+  Earn: 'earn', 'Table Banking': 'tableBanking', Subscriptions: 'subscriptions', Archive: 'archive',
+  'How Trace works': 'how',
+  Language: 'language', Notifications: 'notifications', Privacy: 'privacy'
+};
+const tiles = () => Array.from(document.querySelectorAll('[data-testid^=menu-tile-]'));
+const tileTitle = (t) => {
+  const title = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
+  return (title?.textContent || '').trim();
+};
+const clickTile = (id) => {
+  const b = document.querySelector(`[data-testid="menu-tile-${id}"]`);
+  if (!b) throw new Error('no tile: ' + id);
   act(() => { b.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true, cancelable: true })); });
   return flush(20);
 };
-
-// The section contract. Every id the surface knows, exactly once — and the
-// group headers that organise them.
-const EXPECTED_SECTIONS = [
-  'Profile', 'Standing', 'Following',
-  'Selling', 'Orders', 'Your network',
-  'Earn', 'Table Banking', 'Subscriptions', 'Archive',
-  'How Trace works',
-  'Language', 'Notifications', 'Privacy'
-];
 
 async function main() {
   fetchHandler = stub();
@@ -100,33 +107,45 @@ async function main() {
 
   check('greeting uses the session name, not a placeholder', text(c).includes('Amina'));
 
-  const tabLabels = Array.from(document.querySelectorAll('button'))
-    .map((b) => (b.textContent || '').trim())
-    .filter((t) => EXPECTED_SECTIONS.includes(t));
+  // The tile grid: every section once, and the one tile shape the refactor
+  // holds (bold 15px title, grey 13px description capped at two lines).
+  const allTiles = tiles();
   const seen = new Map();
-  tabLabels.forEach((t) => seen.set(t, (seen.get(t) ?? 0) + 1));
-  check('every section tab appears exactly once',
-    EXPECTED_SECTIONS.every((s) => seen.get(s) === 1) && tabLabels.length === EXPECTED_SECTIONS.length);
+  allTiles.forEach((t) => { const l = tileTitle(t); seen.set(l, (seen.get(l) ?? 0) + 1); });
+  check('every section tile appears exactly once',
+    Object.keys(SECTION_IDS).every((s) => seen.get(s) === 1) && allTiles.length === Object.keys(SECTION_IDS).length);
+  check('each tile is the one shape: 15px bold title + grey 13px two-line description',
+    allTiles.length > 0 && allTiles.every((t) => {
+      const title = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
+      const desc = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[13px]'));
+      return title && title.classList.contains('font-bold') && desc && desc.classList.contains('line-clamp-2');
+    }));
+  // Group headers are small, grey, uppercase, mono.
+  check('section headers are small grey uppercase mono',
+    Array.from(document.querySelectorAll('p'))
+      .filter((p) => ['Identity', 'Business', 'Money', 'About', 'Settings'].includes((p.textContent || '').trim()))
+      .every((p) => p.classList.contains('font-mono') && p.classList.contains('uppercase')));
 
   // The settings group exists, in the drawer's order.
+  const tileIdx = (id) => allTiles.findIndex((t) => t.getAttribute('data-testid') === `menu-tile-${id}`);
   check('settings group holds Language · Notifications · Privacy',
-    /Settings/.test(text(c)) && tabLabels.indexOf('Language') < tabLabels.indexOf('Notifications') && tabLabels.indexOf('Notifications') < tabLabels.indexOf('Privacy'));
+    /Settings/.test(text(c)) && tileIdx('language') < tileIdx('notifications') && tileIdx('notifications') < tileIdx('privacy'));
 
   // ── Language: one honest line, no selector that switches nothing. ──
-  await clickTab('Language');
+  await clickTile('language');
   check('language says the one language, plainly',
     /English/.test(text(c)) && /one language/i.test(text(c)));
   check('language has no fake selector',
     !document.querySelector('select') && !Array.from(document.querySelectorAll('button')).some((b) => /switch|change language/i.test(b.textContent || '')));
 
   // ── Notifications: the real centre, reading the server's one row. ──
-  await clickTab('Notifications');
+  await clickTile('notifications');
   await flush(30);
   check('notifications shows the server row, not an invention',
     /carrier took your errand/.test(text(c)));
 
   // ── Privacy: the device's stores, named, with real controls. ──
-  await clickTab('Privacy');
+  await clickTile('privacy');
   check('privacy names the area the device keeps',
     /Your area/.test(text(c)) && /Kisii/.test(text(c)));
   check('privacy shows the offline queue as a count',
@@ -141,12 +160,12 @@ async function main() {
     dom.window.localStorage.getItem('brief.world.place') === null);
 
   // ── The old sections survive the reorg: profile still leads. ──
-  await clickTab('Profile');
+  await clickTile('profile');
   check('profile section still renders under the reorg',
     /Your account/.test(text(c)));
 
   act(() => { root.unmount(); });
-  console.log('\nPASSED ' + passed + ' / FAILED ' + failed);
+  console.log(`\nPASSED ${passed} / FAILED ${failed}`);
   process.exit(failed === 0 ? 0 : 1);
 }
 

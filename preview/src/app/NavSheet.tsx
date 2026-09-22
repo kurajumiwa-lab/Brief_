@@ -25,6 +25,7 @@ import {
   X, Coins, Users, Ticket, Search, ShieldCheck, Activity,
   Globe, Bell, Lock
 } from 'lucide-react';
+import { MenuTile, SectionHeader } from '../ui/MenuTile';
 
 export type SheetTarget =
   | { kind: 'tab'; tab: 'requests' | 'supply' | 'partners' | 'pulse' | 'mine' }
@@ -77,27 +78,27 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'work',
     label: 'Your work',
     items: [
-      { id: 'requests', label: 'Requests', icon: icon(Ticket), target: { kind: 'tab', tab: 'requests' } },
-      { id: 'supply', label: 'Supply', icon: icon(Users), target: { kind: 'tab', tab: 'supply' } },
-      { id: 'partners', label: 'Partners', icon: icon(ShieldCheck), target: { kind: 'tab', tab: 'partners' } }
+      { id: 'requests', label: 'Requests', sub: 'Asks on the board that need a seller', icon: icon(Ticket), target: { kind: 'tab', tab: 'requests' } },
+      { id: 'supply', label: 'Supply', sub: 'Sellers and what they move', icon: icon(Users), target: { kind: 'tab', tab: 'supply' } },
+      { id: 'partners', label: 'Partners', sub: 'Programs and networks behind the rows', icon: icon(ShieldCheck), target: { kind: 'tab', tab: 'partners' } }
     ]
   },
   {
     id: 'you',
     label: 'You, your standing, your money',
     items: [
-      { id: 'standing', label: 'Standing, commitments, reciprocity', icon: icon(ShieldCheck), target: { kind: 'you', section: 'standing' } },
-      { id: 'earn', label: 'Earn', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } },
-      { id: 'tableBanking', label: 'Table Banking', icon: icon(Coins), target: { kind: 'you', section: 'tableBanking' } }
+      { id: 'standing', label: 'Standing', sub: 'What you owe, what is owed you', icon: icon(ShieldCheck), target: { kind: 'you', section: 'standing' } },
+      { id: 'earn', label: 'Earn', sub: 'Your money, the real way', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } },
+      { id: 'tableBanking', label: 'Table Banking', sub: 'Shared pots, kept in the open', icon: icon(Coins), target: { kind: 'you', section: 'tableBanking' } }
     ]
   },
   {
     id: 'settings',
     label: 'Settings',
     items: [
-      { id: 'language', label: 'Language', icon: icon(Globe), target: { kind: 'you', section: 'language' } },
-      { id: 'notifications', label: 'Notifications', icon: icon(Bell), target: { kind: 'you', section: 'notifications' } },
-      { id: 'privacy', label: 'Privacy', icon: icon(Lock), target: { kind: 'you', section: 'privacy' } }
+      { id: 'language', label: 'Language', sub: 'One language, said plainly', icon: icon(Globe), target: { kind: 'you', section: 'language' } },
+      { id: 'notifications', label: 'Notifications', sub: 'The real bell for this device', icon: icon(Bell), target: { kind: 'you', section: 'notifications' } },
+      { id: 'privacy', label: 'Privacy', sub: 'What this device keeps, and how to clear it', icon: icon(Lock), target: { kind: 'you', section: 'privacy' } }
     ]
   },
   {
@@ -106,8 +107,8 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'closing',
     label: '',
     items: [
-      { id: 'how', label: 'How Trace works', icon: icon(Search), target: { kind: 'you', section: 'how' } },
-      { id: 'signout', label: 'Sign out', icon: icon(X), target: { kind: 'signout' } }
+      { id: 'how', label: 'How Trace works', sub: 'How a row becomes trust', icon: icon(Search), target: { kind: 'you', section: 'how' } },
+      { id: 'signout', label: 'Sign out', sub: 'End the session on this device', icon: icon(X), target: { kind: 'signout' } }
     ]
   }
 ];
@@ -168,30 +169,19 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
         </div>
 
         {SHEET_GROUPS.map((group) => (
-          <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">
-            {group.label ? (
-              <p className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
-                {group.label}
-              </p>
-            ) : null}
+          <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1.5 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">
+            {group.label ? <SectionHeader>{group.label}</SectionHeader> : null}
+            {/* The ONE tile shape: 12px-radius tinted square, thin icon,
+                bold 15px title, grey 13px description. */}
             {group.items.map((item) => (
-              <button
+              <MenuTile
                 key={item.id}
-                type="button"
+                icon={item.icon}
+                title={item.label}
+                description={item.sub}
+                testId={item.id}
                 onClick={() => { onGo(item.target); onClose(); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left cursor-pointer"
-                style={{ color: 'var(--color-text)' }}
-              >
-                {item.icon}
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[13px] font-bold truncate">{item.label}</span>
-                  {item.sub ? (
-                    <span className="block text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                      {item.sub}
-                    </span>
-                  ) : null}
-                </span>
-              </button>
+              />
             ))}
           </nav>
         ))}

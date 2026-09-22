@@ -1,9 +1,12 @@
 import React from 'react';
+import { Users } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
 import type { Block, Circle, Member, MemberEvidence, Signal } from '../api/types';
 import { CircleTarget } from './circle/CircleTarget';
 import { CircleTasks } from './circle/CircleTasks';
 import { CopyId } from '../ui/CopyId';
+import { GlobysCard } from '../ui/GlobysCard';
+import { NoPhotoPlate } from '../features/city/NoPhotoPlate';
 import { roomSurface } from '../features/city/room';
 import { CircleVotes } from './circle/CircleVotes';
 import { CircleActivity } from './circle/CircleActivity';
@@ -418,74 +421,49 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
   const joinable = circles.filter((c) => c.isMember !== true && c.canJoin === true);
   const closed = circles.filter((c) => c.isMember !== true && c.canJoin !== true);
 
-  /** One circle card. The action depends on the membership the server reports. */
-  const card = (circle: Circle, mode: 'mine' | 'joinable' | 'closed') => (
-    <div
-      key={circle.id}
-      className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-extrabold text-[var(--brief-ink)]">{circle.name}</p>
-          <p className="text-[11px] text-[var(--ink-60)] mt-0.5">
-            {TYPE_LABEL[circle.type] ?? circle.type} &middot; {circle.status}
-            {circle.viewerRole ? ` \u00b7 you are ${circle.viewerRole}` : ''}
-          </p>
-        </div>
-        <div className="shrink-0 flex items-center gap-1.5">
-          {mode === 'joinable' && (
-            <button
-              onClick={() => void handleJoin(circle.id)}
-              disabled={busyId === circle.id}
-              className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
-            >
-              {busyId === circle.id ? 'Joining…' : 'Join'}
-            </button>
-          )}
-          {mode === 'mine' && (
-            <button
-              onClick={() => void handleLeave(circle.id)}
-              disabled={busyId === circle.id}
-              className="px-3 py-1.5 rounded-xl border border-[var(--brief-line)] text-[11px] font-bold text-[var(--ink-60)] cursor-pointer disabled:opacity-50"
-            >
-              {busyId === circle.id ? 'Leaving…' : 'Leave'}
-            </button>
-          )}
-          <button
-            onClick={() => {
-              setOpenId(circle.id);
-              setSection('overview');
-              setNotice(null);
-            }}
-            className="px-3 py-1.5 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
-          >
-            Open
-          </button>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-x-4 gap-y-1">
-        <span className="text-[11px] text-[var(--ink-60)]">
-          {circle.memberCount} {circle.memberCount === 1 ? 'member' : 'members'}
-        </span>
-        <span className="text-[11px] text-[var(--ink-60)]">
-          {circle.blockCount} {circle.blockCount === 1 ? 'block' : 'blocks'}
-        </span>
-        {circle.contributorCount > 0 && (
-          <span className="text-[11px] text-[var(--ink-60)]">
-            {circle.contributorCount} contributing
-          </span>
-        )}
-        {mode === 'closed' && (
-          <span className="text-[11px] text-[var(--ink-60)]">
-            Invite only — a coordinator has to add you
-          </span>
-        )}
-      </div>
-
-      <CircleTarget circle={circle} compact />
-    </div>
-  );
+  /**
+   * One circle card — the SAME shape as every other card in the app.
+   *
+   * The old card carried two or three buttons (Join + Leave + Open) and a
+   * target bar, which made it a different animal from the product cards. The
+   * rule now is one card shape with ONE action, so each mode keeps its single
+   * primary move and the rest lives in the room itself (which already has
+   * Leave / Join / list controls):
+   *   mine      → Open   (leave is in the room)
+   *   joinable  → Join   (the server decides; a refusal is its own words)
+   *   closed    → View   (invite only — a coordinator has to add you)
+   * The body tap opens the room either way, which is navigation, not a button.
+   */
+  const card = (circle: Circle, mode: 'mine' | 'joinable' | 'closed') => {
+    const mono = [
+      TYPE_LABEL[circle.type] ?? circle.type,
+      circle.status,
+      mode === 'closed' ? 'invite only' : null,
+      circle.viewerRole ? `you are ${circle.viewerRole}` : null
+    ].filter(Boolean).join(' · ');
+    const openRoom = () => {
+      setOpenId(circle.id);
+      setSection('overview');
+      setNotice(null);
+    };
+    return (
+      <GlobysCard
+        testId={`circle-${circle.id}`}
+        plate={<NoPhotoPlate mark={TYPE_LABEL[circle.type] ?? circle.type} icon={<Users className="w-4 h-4" />} />}
+        title={circle.name}
+        price={`${circle.memberCount} ${circle.memberCount === 1 ? 'member' : 'members'}`}
+        seller={null}
+        mono={mono}
+        actionLabel={mode === 'mine' ? 'Open →' : mode === 'joinable' ? 'Join →' : 'View →'}
+        disabled={mode === 'joinable' && busyId === circle.id}
+        onAction={() => {
+          if (mode === 'joinable') void handleJoin(circle.id);
+          else openRoom();
+        }}
+        onOpen={openRoom}
+      />
+    );
+  };
 
   if (!openId) {
     return (
@@ -575,11 +553,15 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         )}
 
         {mine.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+          <div>
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] mb-2">
               Circles you are in ({mine.length})
             </h3>
-            {mine.map((circle) => card(circle, 'mine'))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {mine.map((circle) => (
+                <div key={circle.id} className="contents">{card(circle, 'mine')}</div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -595,20 +577,28 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         )}
 
         {joinable.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+          <div>
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] mb-2">
               Open to join ({joinable.length})
             </h3>
-            {joinable.map((circle) => card(circle, 'joinable'))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {joinable.map((circle) => (
+                <div key={circle.id} className="contents">{card(circle, 'joinable')}</div>
+              ))}
+            </div>
           </div>
         )}
 
         {closed.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)]">
+          <div>
+            <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] mb-2">
               Invite only ({closed.length})
             </h3>
-            {closed.map((circle) => card(circle, 'closed'))}
+            <div className="grid grid-cols-2 gap-2.5">
+              {closed.map((circle) => (
+                <div key={circle.id} className="contents">{card(circle, 'closed')}</div>
+              ))}
+            </div>
           </div>
         )}
       </section>

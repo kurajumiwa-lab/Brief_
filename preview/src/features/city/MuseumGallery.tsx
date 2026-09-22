@@ -1,9 +1,10 @@
 // ---------------------------------------------------------------------------
-// MUSEUM GALLERY — swiping inventory, not a feed. A horizontal snap-scroll of
-// real published events: one card at a time, the next peeking, every swipe
-// landing cleanly. The dots say how many there are, so browsing is finite.
+// MUSEUM GALLERY — the events, as a two-column grid of the ONE card shape.
 //
-// Rules held here:
+// The swipe case is gone: one card at a time with position dots and a
+// "New" chip in the corner was a special shape among equal rows, and the
+// card pattern's rule is one card shape with no corner badges. What the
+// case keeps:
 //   * every event is a REAL published campaign row from /api/events — nothing
 //     is seeded to fill the case;
 //   * no control row. This shelf used to carry a filter chip ("All exhibits",
@@ -15,31 +16,38 @@
 //     toggle and the popularity sort for the same reason: a control the server
 //     no longer has would visibly do nothing;
 //   * no result counter — if you can see the exhibits, you can count them;
-//   * the active card is the only one with an action;
-//   * the case refreshes when the tab comes back to the foreground, and a card
-//     is only marked "New" when the row genuinely appeared since you last
-//     looked. No "LIVE" claim: this is a snapshot on read, not a stream;
+//   * every card carries the same lines — cover or waiting plate, title, the
+//     real price, the where/when in mono, and the one action ("View event →")
+//     on EVERY card, because a card that only gets a button when it is "the
+//     active one" is two shapes pretending to be one;
+//   * the case refreshes when the tab comes back to the foreground. No "New"
+//     mark at all: a corner badge the device computes from its own memory of
+//     last visit is decoration, not a fact, so it is gone rather than moved;
 //   * an empty case says so plainly.
 // ---------------------------------------------------------------------------
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import * as briefApi from "../../api/briefApi";
 import type { EventListing } from "../../api/briefApi";
-import { MuseumCard } from "./MuseumCard";
-import {
-  daysSince,
-  lastSeenSlugs,
-  noteOpened,
-  openedAt,
-  rememberSeenSlugs
-} from "./viewMemory";
+import { NoPhotoPlate } from "./NoPhotoPlate";
+import { categoryAccent } from "./categoryPalette";
+import { GlobysCard } from "../../ui/GlobysCard";
+import { CalendarDays } from "lucide-react";
+
+function timeOf(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function money(amount: number, currency: string): string {
+  return `${currency} ${Number(amount).toLocaleString('en-KE')}`;
+}
 
 export function MuseumGallery({ className = "" }: { className?: string }) {
   const [events, setEvents] = useState<EventListing[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [newSlugs, setNewSlugs] = useState<string[]>([]);
-  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setError(null);
@@ -53,15 +61,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
       }
       return;
     }
-    const rows = res.data.events;
-    // "New" is only ever a real diff: a row this device had not seen before.
-    const seen = lastSeenSlugs();
-    if (seen.length > 0) {
-      const fresh = rows.map((r) => r.slug).filter((s) => !seen.includes(s));
-      if (fresh.length > 0) setNewSlugs((prev) => [...new Set([...prev, ...fresh])]);
-    }
-    rememberSeenSlugs(rows.map((r) => r.slug));
-    setEvents(rows);
+    setEvents(res.data.events);
     setError(null);
   }, []);
 
@@ -83,24 +83,7 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
     };
   }, [load]);
 
-  // Which card is centred -> drives the dots and the active scaling.
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const cards = el.querySelectorAll("article");
-      const first = cards[0];
-      if (!first) return;
-      const step = first.clientWidth + 12; // gap-3 = 12px
-      const index = Math.round(el.scrollLeft / step);
-      setActiveIndex(Math.max(0, Math.min(index, cards.length - 1)));
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [events]);
-
   const open = (slug: string) => {
-    noteOpened(slug); // a real local record: this device opened this
     if (typeof window !== "undefined") window.open(`/c/${slug}`, "_self");
   };
 
@@ -124,34 +107,29 @@ export function MuseumGallery({ className = "" }: { className?: string }) {
       )}
 
       {rows.length > 0 && (
-        <div className="relative">
-          <div
-            ref={scrollerRef}
-            className="flex gap-3 overflow-x-auto snap-x snap-mandatory no-scrollbar px-[22.5vw] pb-4"
-            style={{ scrollPaddingLeft: "22.5vw", scrollPaddingRight: "22.5vw" }}
-          >
-            {rows.map((e, i) => (
-              <MuseumCard
-                key={e.slug}
-                event={e}
-                isActive={i === activeIndex}
-                onOpen={open}
-                isNew={newSlugs.includes(e.slug)}
-                openedAgoDays={daysSince(openedAt(e.slug))}
-              />
-            ))}
-          </div>
-
-          {/* Position dots — the finite case, so it reads as inventory */}
-          <div className="flex justify-center gap-1.5 mt-1">
-            {rows.map((_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === activeIndex ? "w-6" : "w-1.5"}`}
-                style={{ background: i === activeIndex ? "var(--color-primary)" : "var(--brief-line)" }}
-              />
-            ))}
-          </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          {rows.map((e) => (
+            <GlobysCard
+              key={e.slug}
+              testId={`exhibit-${e.slug}`}
+              image={e.coverImageUrl}
+              imageAlt={e.title}
+              plate={
+                <NoPhotoPlate
+                  mark={e.categoryLabel ?? null}
+                  icon={<CalendarDays className="w-4 h-4" />}
+                  accent={categoryAccent(e.category)}
+                />
+              }
+              title={e.title}
+              price={e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : money(e.price, e.currency))}
+              seller={null}
+              mono={[timeOf(e.startsAt), e.location].filter(Boolean).join(' · ')}
+              actionLabel="View event →"
+              onAction={() => open(e.slug)}
+              onOpen={() => open(e.slug)}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from "react";
+import {
+  User, ShieldCheck, Heart, Store, Package, Users, Coins, Landmark,
+  CreditCard, Archive, BookOpen, Globe, Bell, Lock
+} from "lucide-react";
+import { MenuTile, SectionHeader } from "../../ui/MenuTile";
 import * as api from "../../api/briefApi";
 import type { AuthedUser, PersonMe, FollowsGroups, MyCommitments, MyPosition, MyReciprocity, Precedent } from "../../api/briefApi";
 import type { Space } from "../../api/types";
@@ -110,6 +115,44 @@ type Section =
   | "profile" | "standing" | "following" | "subscriptions"
   | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how"
   | "language" | "notifications" | "privacy";
+
+// The one tile shape across the You tab: a thin-line icon in a 12px tinted
+// square, a bold 15px title, a grey 13px description in the app's own words.
+// A pill row had a title and nothing else; a tile says what the section holds
+// before you go into it.
+const SECTION_ICONS: Record<Section, React.ReactNode> = {
+  profile: <User className="w-5 h-5" />,
+  standing: <ShieldCheck className="w-5 h-5" />,
+  following: <Heart className="w-5 h-5" />,
+  selling: <Store className="w-5 h-5" />,
+  orders: <Package className="w-5 h-5" />,
+  network: <Users className="w-5 h-5" />,
+  earn: <Coins className="w-5 h-5" />,
+  tableBanking: <Landmark className="w-5 h-5" />,
+  subscriptions: <CreditCard className="w-5 h-5" />,
+  archive: <Archive className="w-5 h-5" />,
+  how: <BookOpen className="w-5 h-5" />,
+  language: <Globe className="w-5 h-5" />,
+  notifications: <Bell className="w-5 h-5" />,
+  privacy: <Lock className="w-5 h-5" />
+};
+
+const SECTION_SUBS: Record<Section, string> = {
+  profile: "Who you are on this device",
+  standing: "What you owe, what is owed you",
+  following: "Places and people you follow",
+  selling: "Your offers, quotes and shop",
+  orders: "What you bought, what you sold",
+  network: "Guardians and programs around you",
+  earn: "Your money, the real way",
+  tableBanking: "Shared pots, kept in the open",
+  subscriptions: "Paid plans you have joined",
+  archive: "Records you keep for yourself",
+  how: "How a row becomes trust",
+  language: "One language, said plainly",
+  notifications: "The real bell for this device",
+  privacy: "What this device keeps, and how to clear it"
+};
 
 export function YouSurface({
   onOpenEntity,
@@ -243,19 +286,6 @@ export function YouSurface({
     setSignedOut(true);
   };
 
-  const tab = (id: Section, label: string) => (
-    <button
-      type="button"
-      onClick={() => { setSection(id); setNotice(""); }}
-      className="rounded-full px-4 py-2 text-xs font-bold"
-      style={{
-        background: section === id ? "var(--color-primary)" : "var(--color-surface-elevated)",
-        color: section === id ? "var(--accent-ink)" : "var(--color-text)"
-      }}
-    >
-      {label}
-    </button>
-  );
 
   if (loading) {
     return <p className="text-sm" style={{ color: "var(--color-text-muted)" }}>Reading your profile…</p>;
@@ -289,23 +319,28 @@ export function YouSurface({
         {me?.handle && <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>@{me.handle}</p>}
       </div>
 
-      {/* Four labelled groups, eleven pills in, eleven pills out.
-          The borrow here is only the geometry: a person scanning this screen
-          learns where to look in about a second. Nothing was deleted on the way
-          and nothing was renamed — Subscriptions stays because those rows are
-          real paid plans, and "Archive" stays because a member must be able to
-          find what they closed. Grouping is the whole change. */}
+      {/* Four labelled groups, the same tile in every one of them.
+          Nothing was deleted on the way and nothing was renamed — Subscriptions
+          stays because those rows are real paid plans, and "Archive" stays
+          because a member must be able to find what they closed. The pills
+          became tiles: a title plus the one grey line that says what the
+          section holds, under a small grey uppercase mono header. */}
       <div className="mt-4 space-y-3">
         {YOU_GROUPS.map((group) => (
           <div key={group.id}>
-            <p
-              className="text-[11px] font-mono uppercase tracking-wider"
-              style={{ color: "var(--brief-faint)" }}
-            >
-              {group.label}
-            </p>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              {group.items.map((item) => tab(item.id, item.label))}
+            <SectionHeader>{group.label}</SectionHeader>
+            <div className="mt-1.5 grid grid-cols-2 gap-2">
+              {group.items.map((item) => (
+                <MenuTile
+                  key={item.id}
+                  icon={SECTION_ICONS[item.id]}
+                  title={item.label}
+                  description={SECTION_SUBS[item.id]}
+                  active={section === item.id}
+                  testId={item.id}
+                  onClick={() => { setSection(item.id); setNotice(""); }}
+                />
+              ))}
             </div>
           </div>
         ))}

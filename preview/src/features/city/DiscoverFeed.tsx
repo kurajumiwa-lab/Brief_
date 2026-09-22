@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Bike, CalendarDays, Check, ChevronRight, MapPin, MessageCircle, Package, RefreshCw, Search, Sun,
+  Bike, CalendarDays, Check, ChevronRight, MessageCircle, Package, RefreshCw, Search, Sun,
   Sparkles, Users, X
 } from 'lucide-react';
 import * as briefApi from '../../api/briefApi';
@@ -13,7 +13,8 @@ import { ErrandsLobby } from './ErrandsLobby';
 import { TransportRail } from './TransportRail';
 import { FLOW_ORDER, SIDE_ORDER, isFlowRoom, type DiscoverRoom } from './taxonomy';
 import { NoPhotoPlate } from './NoPhotoPlate';
-import { PHOTO_FILTER, PHOTO_SCRIM, PLASTER, roomSurface, roomPlate, listedAgo } from './room';
+import { PHOTO_FILTER, PLASTER, roomSurface, roomPlate, listedAgo } from './room';
+import { GlobysCard } from '../../ui/GlobysCard';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
@@ -98,112 +99,12 @@ function plateIcon(item: DiscoverFeedItem): React.ReactNode {
   return (item.flow && ICONS[BOARD_ICONS[item.flow]]) || <Package className="w-4 h-4" />;
 }
 
-/**
- * The one honest reading of an interest count. The server sends a counted row
- * (settled orders on a listing, registrations on an event); a zero is a real
- * zero, and it is written as a sentence instead of a dashboard tile.
- */
-// A count and one word. The sentence it replaces ("no settled orders through
-// Brief yet — this starts at your first settled order") was fifteen words for 0.
-// Null for event rows: Decision 6 gives an event no number at all, and a UI
-// that prints "0" for an absent number is inventing data.
-function interestLine(item: DiscoverFeedItem): string | null {
-  if (!item.interest) return null;
-  // A zero is not a headline. "0 settled" reads as an indictment of the
-  // listing; the row's actual state is that it is new, so say that.
-  if (item.interest.count === 0 && item.interest.label === 'settled orders') return 'New listing';
-  const label = item.interest.label === 'settled orders' ? 'settled' : item.interest.label;
-  return `${item.interest.count} ${label}`;
-}
-
-function FeedCard({ item, onOpen }: { item: DiscoverFeedItem; onOpen: (item: DiscoverFeedItem) => void }) {
-  const dateLabel = item.kind === 'event' ? shortDate(item.dateLabel ?? undefined) ?? item.dateLabel : item.dateLabel;
-  const stamp = item.kind === 'listing' ? listedAgo(item.listedAt) : null;
-  const interest = interestLine(item);
-  // The photoless plate already carries the row's timestamp ("listed 1d ago"),
-  // so printing it again in this line is how a card came to say
-  // "listed 1d ago · listed 1d ago". One stamp per card, period. Photo cards
-  // have no plate, so the stamp lives here for them.
-  const metaLine = [
-    item.minOrder ? `min ${item.minOrder}${item.unit ? ` ${item.unit}` : ''}` : null,
-    interest,
-    item.mediaUrl && stamp ? stamp : null
-  ].filter(Boolean).join(' · ') || null;
-  return (
-    <button
-      type="button"
-      onClick={() => { soundEngine.play('tap'); onOpen(item); }}
-      className="w-full text-left relative aspect-[16/10] rounded-3xl overflow-hidden cursor-pointer transition-transform active:scale-[0.99] group brief-lift-2"
-      style={{ background: 'var(--color-paper)' }}
-      aria-label={`Open ${item.title}`}
-    >
-      {item.mediaUrl ? (
-        <img
-          src={item.mediaUrl}
-          alt={item.title}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ background: PLASTER, filter: PHOTO_FILTER }}
-        />
-      ) : (
-        <NoPhotoPlate
-          seller={item.seller}
-          mark={item.flow ?? 'listing'}
-          icon={plateIcon(item)}
-          stamp={stamp}
-          accent={(item.flow && FLOW_ACCENT[item.flow]) || null}
-        />
-      )}
-      <span className="absolute inset-0" style={{ background: PHOTO_SCRIM }} />
-
-      {item.priceLabel && (
-        <span
-          className="absolute top-3 right-3 px-3 py-1.5 rounded-full font-mono text-[12px] font-black"
-          style={{ background: 'rgba(255,255,255,0.95)', color: 'var(--brief-ink)' }}
-        >
-          {item.priceLabel}
-          {item.unit ? ` / ${item.unit}` : ''}
-        </span>
-      )}
-      {dateLabel && (
-        <span
-          className={`absolute ${item.priceLabel ? 'top-12' : 'top-3'} right-3 px-2.5 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1`}
-          style={{ background: 'rgba(24,19,12,0.6)', color: 'var(--accent-ink)' }}
-        >
-          <CalendarDays className="w-3 h-3" /> {dateLabel}
-        </span>
-      )}
-
-      {/* No number hero. This used to print the interest count at 30px — a
-          photoless listing with no sales yet led with a giant "0 SETTLED
-          ORDERS", an indictment where the offer itself should be. The card
-          now leads with what the offer IS: its title below, its price chip
-          top-right. The count stays in the metadata line, as one of several
-          facts, never as the headline. */}
-
-      <span className="absolute left-3 right-3 bottom-3 block text-white">
-        <span className="flex items-center gap-2 flex-wrap">
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-mono uppercase font-black" style={{ background: 'rgba(255,255,255,0.22)' }}>
-            {item.flow ?? item.kind}
-          </span>
-          {item.origin && item.destination && (
-            <span className="text-[12px] font-mono truncate">
-              {item.origin} → {item.destination}
-            </span>
-          )}
-          {!item.origin && item.location && (
-            <span className="text-[12px] inline-flex items-center gap-1 truncate">
-              <MapPin className="w-3 h-3" /> {item.location}
-            </span>
-          )}
-        </span>
-        <span className="block text-[16px] font-extrabold leading-snug mt-1 line-clamp-2">{item.title}</span>
-        {metaLine && (
-          <span className="block text-[12px] opacity-90 mt-0.5 truncate">{metaLine}</span>
-        )}
-      </span>
-    </button>
-  );
+/** The wa.me target, only from a contact the SELLER put on their own row.
+    Never defaulted: no digits, no link. */
+function waHrefFor(item: DiscoverFeedItem): string | null {
+  const digits = (item.contact ?? '').replace(/\D/g, '');
+  if (digits.length < 9) return null;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi — I saw "${item.title}" on Brief and I would like to ask about it.`)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -285,7 +186,9 @@ function RouteCard({
 // ---------------------------------------------------------------------------
 // the detail sheet, with the contact rule
 // ---------------------------------------------------------------------------
-function FeedSheet({ item, onClose, onOpenFull }: {
+/** Exported so Home's cards open the SAME sheet as the board's — one detail
+    surface for a row, not two. */
+export function FeedSheet({ item, onClose, onOpenFull }: {
   item: DiscoverFeedItem;
   onClose: () => void;
   onOpenFull: (item: DiscoverFeedItem) => void;
@@ -426,7 +329,9 @@ export function DiscoverFeed({
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
   const [routeFilter, setRouteFilter] = useState<string | null>(null);
-  const [subFilter, setSubFilter] = useState<string | null>(null);
+  // No sub-filter chip row: the card pattern's rule deletes the top chip row
+  // from the board. The routes are the only filter left, and they are a list
+  // you browse, not a row of chips you squint at.
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -446,7 +351,7 @@ export function DiscoverFeed({
   }, [load]);
 
   // A room change resets both filters, so a stale route never hides a new room.
-  useEffect(() => { setRouteFilter(null); setSubFilter(null); }, [room]);
+  useEffect(() => { setRouteFilter(null); }, [room]);
 
   const flows = summary?.flows ?? [];
   const flow = isFlowRoom(room) ? flows.find((f) => f.key === room) ?? null : null;
@@ -460,13 +365,12 @@ export function DiscoverFeed({
     if (isFlowRoom(room)) rows = rows.filter((i) => i.flow === room);
     if (room === 'events') rows = rows.filter((i) => i.kind === 'event');
     if (room === 'all') rows = rows;
-    if (subFilter) rows = rows.filter((i) => `${i.commodity ?? ''} ${i.title}`.toLowerCase().includes(subFilter.toLowerCase()));
     if (routeFilter) {
       const ids = (summary?.routes ?? []).find((r) => `${r.origin}→${r.destination}` === routeFilter)?.listingIds ?? [];
       rows = rows.filter((i) => ids.includes(i.id));
     }
     return rows;
-  }, [summary, room, subFilter, routeFilter]);
+  }, [summary, room, routeFilter]);
 
   const openFull = (item: DiscoverFeedItem) => {
     if (typeof window === 'undefined') return;
@@ -648,46 +552,6 @@ export function DiscoverFeed({
         </p>
       )}
 
-      {/* ── the sub-filter strip: one tap, flat, no tree ─────────────────── */}
-      {flow && flow.subFilters.length > 0 && (
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" role="tablist" aria-label={`${flow.label} sub-filters`}>
-          <button
-            type="button"
-            onClick={() => setSubFilter(null)}
-            aria-pressed={!subFilter}
-            className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-shadow"
-            style={{
-              background: subFilter ? 'var(--color-paper)' : 'var(--color-well)',
-              color: 'var(--brief-ink)',
-              boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)'
-            }}
-          >
-            Everything on this flow
-          </button>
-          {flow.subFilters.map((sf) => {
-            const on = subFilter === sf;
-            return (
-              <button
-                key={sf}
-                type="button"
-                onClick={() => { soundEngine.play('tap'); setSubFilter(on ? null : sf); }}
-                aria-pressed={on}
-                className="shrink-0 px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer transition-shadow"
-                style={{
-                  background: on ? 'var(--color-primary)' : 'var(--color-paper)',
-                  color: on ? 'var(--accent-ink)' : 'var(--brief-muted)',
-                  boxShadow: on
-                    ? 'var(--lift-signal)'
-                    : 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)'
-                }}
-              >
-                {sf}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* ── routes, for a flow ──────────────────────────────────────────── */}
       {isFlowRoom(room) && (
         <section className="space-y-2">
@@ -732,7 +596,7 @@ export function DiscoverFeed({
             <div className="p-6 rounded-3xl border border-dashed text-center space-y-2" style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}>
               <Package className="w-7 h-7 mx-auto" style={{ color: 'var(--color-quiet)' }} />
               <p className="text-[15px] font-extrabold pt-1.5" style={{ color: 'var(--brief-ink)' }}>
-                {subFilter || routeFilter ? 'Nothing matches that filter' : 'Nothing here yet'}
+                {routeFilter ? 'Nothing matches that route' : 'Nothing here yet'}
               </p>
               <div className="flex flex-wrap gap-2 justify-center pt-1">
                 {/* Exactly one action per empty state. */}
@@ -740,19 +604,63 @@ export function DiscoverFeed({
                   type="button"
                   onClick={() => {
                     soundEngine.play('tap');
-                    if (subFilter || routeFilter) { setSubFilter(null); setRouteFilter(null); }
+                    if (routeFilter) setRouteFilter(null);
                     else onRoomChange?.('all');
                   }}
                   className="px-4 py-2 rounded-full text-[13px] font-black cursor-pointer transition-shadow"
                   style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', boxShadow: 'var(--lift-signal)' }}
                 >
-                  {subFilter || routeFilter ? 'Clear the filters' : 'See everything'}
+                  {routeFilter ? 'Clear the filter' : 'See everything'}
                 </button>
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {feed.map((item) => <FeedCard key={`${item.kind}-${item.id}`} item={item} onOpen={setOpen} />)}
+            // The board's top, as a two-column grid of the ONE card shape.
+            // Same card as Home: 1:1 photo or waiting plate, title, bold
+            // price, the seller's name, the real where in mono, one action.
+            <div className="grid grid-cols-2 gap-2.5">
+              {feed.map((item) => {
+                const wa = waHrefFor(item);
+                return (
+                  <GlobysCard
+                    key={`${item.kind}-${item.id}`}
+                    testId={`feed-${item.id}`}
+                    image={item.mediaUrl}
+                    imageAlt={item.title}
+                    plate={
+                      <NoPhotoPlate
+                        seller={item.seller}
+                        mark={item.flow ?? item.kind}
+                        icon={plateIcon(item)}
+                        stamp={item.kind === 'listing' ? listedAgo(item.listedAt) : null}
+                        accent={(item.flow && FLOW_ACCENT[item.flow]) || null}
+                      />
+                    }
+                    title={item.title}
+                    price={item.priceLabel}
+                    seller={item.seller}
+                    mono={
+                      item.origin && item.destination
+                        ? `${item.origin} → ${item.destination}`
+                        : (item.location ?? (item.kind === 'event' ? item.dateLabel ?? null : null))
+                    }
+                    actionLabel={
+                      item.kind === 'event' ? 'View event →'
+                        : wa ? 'Chat on WhatsApp →'
+                          : item.orderable ? 'Order →'
+                            : 'Enquire →'
+                    }
+                    actionHref={item.kind === 'event' ? null : wa}
+                    onAction={() => {
+                      soundEngine.play('tap');
+                      if (item.kind === 'event') openFull(item);
+                      else if (item.orderable && !wa) openFull(item);
+                      else setOpen(item);
+                    }}
+                    onOpen={() => { soundEngine.play('tap'); setOpen(item); }}
+                  />
+                );
+              })}
             </div>
           )}
         </section>

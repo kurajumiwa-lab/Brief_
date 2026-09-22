@@ -120,7 +120,8 @@ async function runTests() {
   // Zone 0: the greeting uses the name the caller has (no invented "Jane").
   check('renders greeting with user name', text1.includes('Hi Amina'));
   // The three zones the reformation requires, in order.
-  check('zone 1: what the world is doing (signal line)', text1.includes("What's moving"));
+  // Zone 1 is the banner: one dark-gradient line naming the check-in.
+  check('zone 1: what the world is doing (the banner)', text1.includes('What’s moving'));
   check('zone 2: what I should do next (one decision)', text1.includes('Your next step'));
   // Zone 3 became the landing: the mode tiles (Shops, Events, Circles, Errands,
   // Runs, Group Buys) and the "What's moving today" hero — the "What's out

@@ -4,10 +4,10 @@
 // Home answers three questions in three zones, and every figure in them has to
 // trace to a row. These tests hold that line:
 //
-//   SignalBar     renders the facts /api/pulse composed; stamps them with the
-//                 newest real row time; NEVER prints a percentage movement
-//                 (no price history exists in this store); renders an honest
-//                 error rather than a silent "all quiet".
+//   BannerButton  the hero is ONE dark-gradient banner ("What's moving
+//                 today →") — the only loud thing on Home, and the door into
+//                 the pulse ledger. The rotating fact bar it replaced is
+//                 gone with the SignalBar: the facts stand in the drawer.
 //   NextMoveCard  renders the derived move and nothing more: a countdown only
 //                 when the request row really holds `requiredBy`; a price only
 //                 when it is the viewer's own offer or a real accepted offer;
@@ -32,7 +32,7 @@ global.localStorage = dom.window.localStorage;
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
-const { SignalBar } = require('./src/features/home/SignalBar.tsx');
+const { BannerButton } = require('./src/ui/BannerButton.tsx');
 const { NextMoveCard } = require('./src/features/home/NextMoveCard.tsx');
 const { StandingLine } = require('./src/features/home/StandingLine.tsx');
 const { CirclesStrip } = require('./src/features/home/CirclesStrip.tsx');
@@ -97,31 +97,33 @@ let fetchHandler;
 global.fetch = async (input) => fetchHandler(String(input?.url ?? input ?? ''));
 
 async function main() {
-  // --- SignalBar: real facts, snapshot stamp, no invented trend ------------
+  // --- BannerButton: the one dark-gradient thing on the screen -------------
   fetchHandler = async () => ({ ok: true, status: 200, text: async () => JSON.stringify(PULSE) });
   {
     const c = document.createElement('div');
     document.body.appendChild(c);
     const root = createRoot(c);
-    act(() => root.render(React.createElement(SignalBar, {})));
+    let opened = false;
+    act(() => root.render(React.createElement(BannerButton, {
+      label: "What's moving today",
+      onClick: () => { opened = true; }
+    })));
     await flush();
-    const t = text(c);
-    assert.ok(t.includes("What's moving"), 'the bar names itself');
-    assert.ok(t.includes('3 requests open with no accepted quote'), 'a real derived fact renders');
-    assert.ok(/newest row \d/.test(t), 'stamped with the newest real row, labelled as such');
-    assert.ok(/newest row [^·]* · \d\d:\d\d/.test(t), 'the stamp carries a DATE as well as a clock time, so a three-day-old snapshot cannot read as now');
-    assert.ok(!/live/i.test(t), 'no live-stream claim');
-    assert.ok(!t.includes('%'), 'no percentage movement is printed (no price history exists)');
-    assert.ok(t.includes('3 signals'), 'the signal count is available');
-    act(() => { btnByText('3 signals').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+    const banner = c.querySelector('[data-testid=gradient-banner]');
+    assert.ok(banner, 'the hero is the gradient banner');
+    assert.ok(text(c).includes("What's moving today"), 'the banner names itself');
+    const style = banner.getAttribute('style') || '';
+    assert.ok(/linear-gradient/i.test(style), 'a dark gradient background, not a flat chip');
+    assert.ok(banner.querySelector('svg'), 'the arrow sits on the right');
+    // White bold label, dark background: loud by design, and only once.
+    const label = Array.from(banner.querySelectorAll('span')).find((s) => (s.className || '').includes('text-white'));
+    assert.ok(label && (label.className || '').includes('font-bold'), 'the label is white and bold on the dark gradient');
+    act(() => { banner.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    const d = text(c);
-    assert.ok(d.includes('4 requests closed in the last 30 days'), 'details list every real fact');
-    assert.ok(d.includes('2 orders settled for KES 12,400'), 'money moved is real money from rows');
-    assert.ok(d.includes('no market price index'), 'the bar states what it is not');
+    assert.ok(opened, 'the banner opens the pulse ledger');
     root.unmount(); c.remove();
   }
-  pass('SignalBar renders only derived facts, stamped as a snapshot, with no fake trend');
+  pass('Home hero is the one dark-gradient banner: label, white bold, arrow, one action');
 
   // --- StakesLine: numbers, a dot, one action; loss only where a row holds it --
   const { StakesLine } = require('./src/features/home/StakesLine.tsx');
@@ -324,21 +326,9 @@ async function main() {
   }
   pass('EarnStrip disappears when the rails are truly empty, and stays honest when they cannot be read');
 
-  // --- SignalBar: a dead read is an error, not an all-clear ----------------
-  fetchHandler = async () => ({ ok: false, status: 500, text: async () => JSON.stringify({ error: 'boom' }) });
-  {
-    const c = document.createElement('div');
-    document.body.appendChild(c);
-    const root = createRoot(c);
-    act(() => root.render(React.createElement(SignalBar, {})));
-    await flush();
-    const t = text(c);
-    assert.ok(t.includes('Signals unavailable'), 'a failed read says so');
-    assert.ok(!t.includes('Nothing has moved'), 'a failure never masquerades as an empty ledger');
-    assert.ok(btnByText('Retry'), 'a retry exists');
-    root.unmount(); c.remove();
-  }
-  pass('SignalBar renders an honest error with a retry instead of a fake "all quiet"');
+  // (The old SignalBar error check lived with the component: a dead
+  // /api/pulse read now says so in the pulse drawer itself, which owns the
+  // ledger the banner points at.)
 
   // --- NextMoveCard: the one decision, and nothing invented on top ---------
   {

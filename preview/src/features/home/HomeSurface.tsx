@@ -13,16 +13,21 @@ import {
   CalendarDays,
   Users,
   Bike,
-  Truck
+  Truck,
+  Sun
 } from 'lucide-react';
 import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import type { MyCommitments, MyPosition, MyReciprocity, DiscoverFeedItem, EventListing } from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
-import { FLOW_ACCENT } from '../city/DiscoverFeed';
+import { FLOW_ACCENT, FeedSheet } from '../city/DiscoverFeed';
+import { NoPhotoPlate } from '../city/NoPhotoPlate';
+import { categoryAccent } from '../city/categoryPalette';
+import { listedAgo } from '../city/room';
+import { GlobysCard } from '../../ui/GlobysCard';
+import { BannerButton } from '../../ui/BannerButton';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
-import { SignalBar } from './SignalBar';
 import { PlannedWeather } from './PlannedWeather';
 import { EarnStrip } from './EarnStrip';
 import { StakesLine } from './StakesLine';
@@ -40,16 +45,20 @@ import { CirclesStrip } from './CirclesStrip';
 //      the way that storefront does it — a chip row is for filters, and a
 //      filter row up here would be a second navigation for what the board
 //      already picks.
-//   3. THE HERO — "What's moving today". Real pulse facts only, stamped,
-//      and it HIDEs itself to a single quiet line when the ledger is empty:
-//      a hero that invents a number is the exact thing this product refuses.
-//   4. THREE SHELVES, side-scrolling, each with a title and an "All →":
+//   3. THE BANNER — the one dark-gradient "What's moving today →". The only
+//      loud thing on the screen; a second gradient would be a second shout,
+//      and the card refactor's rule is that nothing else is special.
+//   4. THREE SHELVES of the ONE product card (GlobysCard), each a two-column
+//      grid with a title and an "All →":
 //        Open now         — the supply board's top rows
 //        From your groups — the circles you are actually in
 //        Happening today  — the events starting today
-//      Each shelf is the top of a real list; "All →" is the one place that
-//      list is, and an empty shelf is not rendered, because an empty shelf
-//      with a title is the broken-screen tell this app deleted everywhere.
+//      Every card is the same shape: 1:1 photo or waiting plate, title
+//      (two lines), bold price, seller, the real where/when in mono, and
+//      exactly one full-width action. A shelf is the top of a real list;
+//      "All →" is the one place that list is, and an empty shelf is not
+//      rendered, because an empty shelf with a title is the broken-screen
+//      tell this app deleted everywhere.
 //   5. THE FOLD — what you should do next, your income rails, the weather
 //      (on a planned day only), and "Run your spaces" collapsed: it is work,
 //      not the thing you came to see.
@@ -125,6 +134,9 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   // empty; each "All →" points at the one place the list is.
   const [feed, setFeed] = useState<DiscoverFeedItem[]>([]);
   const [todayEvents, setTodayEvents] = useState<EventListing[]>([]);
+  // The one detail sheet this screen shares with the board: a card's body tap
+  // opens it, and the card's single action takes its own real target.
+  const [openItem, setOpenItem] = useState<DiscoverFeedItem | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -192,6 +204,44 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     showToast(`Space "${newSpace.name}" created!`);
     loadSpaces();
     onOpenSpace(newSpace.id);
+  };
+
+  // ── The card helpers. Every shelf below renders the SAME GlobysCard; these
+  //    are the row-to-shape mappings, and each one maps a real row field or
+  //    renders nothing. Nothing here guesses. ─────────────────────────────
+  // The plate mark: the flow the SELLER declared, a calendar on an event. An
+  // untagged row gets the room mark, never a guessed icon.
+  const plateIcon = (flow: string | null | undefined, kind: string): React.ReactNode => {
+    if (kind === 'event') return <CalendarDays className="w-4 h-4" />;
+    switch (flow) {
+      case 'bulk': return <Package className="w-4 h-4" />;
+      case 'direct': return <Bike className="w-4 h-4" />;
+      case 'niche': return <Sun className="w-4 h-4" />;
+      case 'group': return <Users className="w-4 h-4" />;
+      default: return <Package className="w-4 h-4" />;
+    }
+  };
+  // The wa.me target, only from a contact the SELLER put on their own row.
+  // Never defaulted: no digits, no link.
+  const waHref = (item: DiscoverFeedItem): string | null => {
+    const digits = (item.contact ?? '').replace(/\D/g, '');
+    if (digits.length < 9) return null;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(`Hi — I saw "${item.title}" on Brief and I would like to ask about it.`)}`;
+  };
+  const openFull = (item: DiscoverFeedItem) => {
+    if (item.kind === 'event') window.open(`/c/${item.id}`, '_self');
+    else window.location.hash = `offer/${encodeURIComponent(item.id)}`;
+  };
+  // Join from the card: the server decides, and a refusal is its own words.
+  const joinCircle = async (c: Circle) => {
+    const res = await briefApi.joinCircle(c.id);
+    if (!res.ok) { showToast(res.error ?? 'Could not join this circle.'); return; }
+    showToast(`Joined ${c.name}.`);
+    onExploreDiscover?.('circles');
+  };
+  const CIRCLE_TYPE_LABEL: Record<string, string> = {
+    gathering: 'Gathering', build: 'Build', study: 'Study',
+    treasury: 'Treasury', match: 'Match', target: 'Target'
   };
 
   const setStatus = async (space: Space, status: 'active' | 'archived') => {
@@ -294,132 +344,123 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         ))}
       </section>
 
-      {/* ── THE HERO — what's moving today. Real pulse facts, stamped, and a
-             link to the whole list. The bar inside rotates one fact; the
-             drawer's check-in is where they all stand. ── */}
-      <section
-        aria-label="What's moving today"
-        className="rounded-3xl p-4 space-y-3"
-        style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>
-            What&rsquo;s moving today
-          </h2>
-          <button
-            type="button"
-            onClick={() => { soundEngine.play('tap'); onOpenPulse?.(); }}
-            className="text-[12px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
-            style={{ color: 'var(--color-primary)' }}
-          >
-            What&rsquo;s moving <ArrowRight className="w-3 h-3" />
-          </button>
-        </div>
-        <SignalBar onOpenPulse={() => onOpenPulse?.()} />
+      {/* ── THE BANNER — the one loud thing on the screen: dark gradient,
+             white bold, arrow on the right. Never two. The pulse ledger is
+             where the facts stand; this is the door to it. ── */}
+      <section aria-label="What's moving today">
+        <BannerButton
+          label="What’s moving today"
+          onClick={() => { soundEngine.play('tap'); onOpenPulse?.(); }}
+        />
       </section>
 
-      {/* ── OPEN NOW — the board's top, sideways. Hidden when empty. ── */}
+      {/* ── OPEN NOW — the board's top, as a two-column grid of the one card
+             shape. Hidden when empty. Each card: 1:1 photo or plate, title,
+             bold price, the seller's name, the real where in mono, and the
+             one action the row really supports. ── */}
       {feed.length > 0 && (
-        <section aria-label="Open now" className="space-y-0">
+        <section aria-label="Open now" className="space-y-2.5">
           <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" data-testid="open-now-tiles">
-            {feed.map((f) => {
-              // The tile is tinted by the row's real flow — the same four
-              // accents the feed uses, so a bulk row is blue on both shelves.
-              // A row with a real photo always beats a tint; a row with no
-              // flow gets the neutral slate, never a guessed colour.
-              const tint = (f.flow && FLOW_ACCENT[f.flow]) || '#64748B';
+          <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
+            {feed.slice(0, 4).map((f) => {
+              const wa = waHref(f);
               return (
-                <button
+                <GlobysCard
                   key={f.id}
-                  type="button"
-                  onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
-                  aria-label={`Open ${f.title}`}
-                  data-testid={`open-now-tile-${f.id}`}
-                  className="relative shrink-0 w-44 h-44 text-left rounded-2xl overflow-hidden cursor-pointer transition-all active:scale-[0.98]"
-                  style={{ background: tint, boxShadow: 'var(--lift-1)' }}
-                >
-                  {f.mediaUrl ? (
-                    <>
-                      <img src={f.mediaUrl} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                      <span
-                        aria-hidden
-                        className="absolute inset-0"
-                        style={{ background: 'linear-gradient(180deg, rgba(15,23,42,0) 30%, rgba(15,23,42,0.72) 100%)' }}
-                      />
-                    </>
-                  ) : (
-                    <span aria-hidden className="absolute right-3 top-3 opacity-70">
-                      {f.kind === 'event' ? <CalendarDays className="w-5 h-5 text-white" /> : <Package className="w-5 h-5 text-white" />}
-                    </span>
-                  )}
-                  <span className="absolute inset-x-0 bottom-0 p-3 block">
-                    <span className="block text-[13px] font-bold text-white leading-tight truncate">{f.title}</span>
-                    <span className="block text-[11px] font-semibold text-white/90 truncate mt-0.5">
-                      {f.priceLabel || (f.kind === 'event' ? 'Event' : 'Listing')}
-                    </span>
-                    {f.location && (
-                      <span className="block text-[10px] text-white/70 truncate mt-0.5">{f.location}</span>
-                    )}
-                  </span>
-                </button>
+                  testId={`open-${f.id}`}
+                  image={f.mediaUrl}
+                  imageAlt={f.title}
+                  plate={
+                    <NoPhotoPlate
+                      seller={f.seller}
+                      mark={f.flow ?? f.kind}
+                      icon={plateIcon(f.flow, f.kind)}
+                      stamp={f.kind === 'listing' ? listedAgo(f.listedAt) : null}
+                      accent={(f.flow && FLOW_ACCENT[f.flow]) || null}
+                    />
+                  }
+                  title={f.title}
+                  price={f.priceLabel}
+                  seller={f.seller}
+                  mono={
+                    f.origin && f.destination
+                      ? `${f.origin} → ${f.destination}`
+                      : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))
+                  }
+                  actionLabel={
+                    f.kind === 'event' ? 'View event →'
+                      : wa ? 'Chat on WhatsApp →'
+                        : f.orderable ? 'Order →'
+                          : 'Enquire →'
+                  }
+                  actionHref={f.kind === 'event' ? null : wa}
+                  onAction={() => {
+                    soundEngine.play('tap');
+                    if (f.kind === 'event') openFull(f);
+                    else if (f.orderable && !wa) openFull(f);
+                    else setOpenItem(f);
+                  }}
+                  onOpen={() => { soundEngine.play('tap'); setOpenItem(f); }}
+                />
               );
             })}
           </div>
         </section>
       )}
 
-      {/* ── FROM YOUR GROUPS — the circles you are actually in. ── */}
+      {/* ── FROM YOUR GROUPS — the circles you are actually in, as the same
+             card shape: the member count is the row's real key figure, the
+             mono line is the type, and the one action is what your
+             membership really allows (the server says). ── */}
       {myCircles.length > 0 && (
-        <section aria-label="From your groups" className="space-y-0">
+        <section aria-label="From your groups" className="space-y-2.5">
           <ShelfHead title="From your groups" onAll={() => onExploreDiscover?.('circles')} />
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-            {myCircles.map((c) => (
-              <button
+          <div className="grid grid-cols-2 gap-2.5" data-testid="groups-grid">
+            {myCircles.slice(0, 4).map((c) => (
+              <GlobysCard
                 key={c.id}
-                type="button"
-                onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
-                className="shrink-0 w-52 text-left p-3 rounded-2xl cursor-pointer transition-all"
-                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
-              >
-                <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{c.name}</p>
-                {c.goal ? (
-                  <p className="text-[11px] mt-0.5 truncate" style={{ color: 'var(--color-text-muted)' }}>{c.goal}</p>
-                ) : null}
-                <p className="text-[11px] font-mono mt-1.5" style={{ color: 'var(--color-text-muted)' }}>
-                  {c.memberCount} member{c.memberCount === 1 ? '' : 's'}
-                </p>
-              </button>
+                testId={`group-${c.id}`}
+                plate={<NoPhotoPlate mark={CIRCLE_TYPE_LABEL[c.type] ?? c.type} icon={<Users className="w-4 h-4" />} />}
+                title={c.name}
+                price={`${c.memberCount} ${c.memberCount === 1 ? 'member' : 'members'}`}
+                seller={null}
+                mono={[CIRCLE_TYPE_LABEL[c.type] ?? null, c.viewerRole ? `you are ${c.viewerRole}` : null].filter(Boolean).join(' · ')}
+                actionLabel={c.isMember ? 'Open →' : c.canJoin ? 'Join →' : 'Invite only'}
+                disabled={!c.isMember && !c.canJoin}
+                onAction={() => {
+                  soundEngine.play('tap');
+                  if (c.isMember) onExploreDiscover?.('circles');
+                  else if (c.canJoin) void joinCircle(c);
+                }}
+                onOpen={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
+              />
             ))}
           </div>
         </section>
       )}
 
-      {/* ── HAPPENING TODAY — events whose window is today, on the clock. ── */}
+      {/* ── HAPPENING TODAY — events whose window is today, on the clock, as
+             the same card shape: the real price (or Free), the real where
+             and when in mono, the one action. ── */}
       {todayEvents.length > 0 && (
-        <section aria-label="Happening today" className="space-y-0">
+        <section aria-label="Happening today" className="space-y-2.5">
           <ShelfHead title="Happening today" onAll={() => onExploreDiscover?.('events')} />
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-            {todayEvents.map((e) => (
-              <a
+          <div className="grid grid-cols-2 gap-2.5" data-testid="today-grid">
+            {todayEvents.slice(0, 4).map((e) => (
+              <GlobysCard
                 key={e.slug}
-                href={`/c/${e.slug}`}
-                className="shrink-0 w-48 text-left rounded-2xl overflow-hidden transition-all"
-                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
-              >
-                {e.coverImageUrl ? (
-                  <div className="h-24 w-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
-                    <img src={e.coverImageUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
-                  </div>
-                ) : null}
-                <div className="p-2.5 space-y-0.5">
-                  <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{e.title}</p>
-                  <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                    {timeOf(e.startsAt) ? `${timeOf(e.startsAt)} · ` : ''}
-                    {e.price > 0 ? money(e.price, e.currency ?? 'KES') : 'Free'}
-                  </p>
-                </div>
-              </a>
+                testId={`event-${e.slug}`}
+                image={e.coverImageUrl}
+                imageAlt={e.title}
+                plate={<NoPhotoPlate mark={e.categoryLabel ?? null} icon={<CalendarDays className="w-4 h-4" />} accent={categoryAccent(e.category)} />}
+                title={e.title}
+                price={e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : money(e.price, e.currency ?? 'KES'))}
+                seller={null}
+                mono={[timeOf(e.startsAt), e.location].filter(Boolean).join(' · ')}
+                actionLabel="View event →"
+                onAction={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
+                onOpen={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
+              />
             ))}
           </div>
         </section>
@@ -660,6 +701,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           </div>
         )}
       </section>
+
+      {/* The card's detail — the same sheet the board opens, so a row reads
+          the same way no matter which shelf you met it on. */}
+      {openItem && (
+        <FeedSheet item={openItem} onClose={() => setOpenItem(null)} onOpenFull={openFull} />
+      )}
 
       {/* Create Space Modal */}
       {createSpaceOpen && (

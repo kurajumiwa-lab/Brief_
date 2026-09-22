@@ -30,13 +30,18 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
     summary:'12 vendors, entry KES 300.',locationName:'Maji Mazuri Grounds',publication:'public',
     verificationStatus:'verified',lastVerifiedAt:new Date().toISOString(),validityWindowDays:30,
     createdAt:new Date().toISOString(),provenance:[{sourceId:'s1',platform:'telegram'}],relationships:[]}];
+  // The suite's one circle, with the server's derived fields a real
+  // deployment carries. No viewer facts here, so the card reads as an
+  // invite-only circle — the card shape the pattern holds.
+  const CIRC={id:'c1',name:'Kilimani Traders',description:'Traders circle',type:'treasury',status:'active',visibility:'private',sourceId:null,goal:'Shared stall fund',targetValue:50000,deadline:null,completionCriteria:null,parentCircleId:null,createdAt:'2026-08-01T00:00:00Z',updatedAt:'2026-08-01T00:00:00Z',currentValue:12500,contributorCount:4,progressPct:25,settledCount:4,blockCount:2,memberCount:6};
   global.fetch=async(url)=>{
     const u=String(url);
     const j=(b)=>({ok:true,status:200,text:async()=>JSON.stringify(b),json:async()=>b});
     if(u.includes('/api/objects')) return j({objects:OBJS});
+    if(u.includes('/api/circles/c1')) return j({circle:CIRC,blocks:[],signals:[]});
     if(u.includes('/api/economic/wallet')) return j({balance:4500,pending:1200,currency:'KES',transactionCount:3,provider:{configured:false,provider:null,reason:'No payment provider is connected.'}});
     if(u.includes('/api/transactions')) return j({transactions:[{id:'t1',amount:4500,currency:'KES',type:'ticket',status:'settled',description:'Ticket sale',counterparty:null,circleId:null,objectId:null,metadata:{},history:[],createdAt:'2026-08-16T10:00:00Z',updatedAt:'2026-08-16T10:00:00Z'}],provider:{configured:false,provider:null,reason:'x'}});
-    if(u.includes('/api/circles')) return j({circles:[{id:'c1',name:'Kilimani Traders',description:'Traders circle',type:'treasury',status:'active',visibility:'private',sourceId:null,goal:'Shared stall fund',targetValue:50000,deadline:null,completionCriteria:null,parentCircleId:null,createdAt:'2026-08-01T00:00:00Z',updatedAt:'2026-08-01T00:00:00Z',currentValue:12500,contributorCount:4,progressPct:25,settledCount:4,blockCount:2,memberCount:6}]});
+    if(u.includes('/api/circles')) return j({circles:[CIRC]});
     if(u.includes('/api/sources')) return j({sources:[]});
     if(u.includes('/api/campaigns')) return j({campaigns:[]});
     if(u.includes('/api/config')) return j({publicOrigin:null});
@@ -83,6 +88,12 @@ const check=(n,c,d='')=>{if(c){pass++;console.log('  PASS  '+n);}else{fail++;con
   await act(async()=>{await new Promise(r=>setTimeout(r,10));});
   b=body();
   check('circle listed', b.includes('Kilimani Traders'));
+  check('the card carries the member figure, not a target bar', b.includes('6 members'));
+  // The target the card used to carry stands in the room, server-derived.
+  await click(btn('View'));
+  await act(async()=>{await new Promise(r=>setTimeout(r,10));});
+  await act(async()=>{await new Promise(r=>setTimeout(r,10));});
+  b=body();
   check('server-derived progress rendered', b.includes('25%'));
   check('progress cites settled contributions', /from 4 settled contributions/i.test(b));
 

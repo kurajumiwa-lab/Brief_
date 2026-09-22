@@ -215,7 +215,23 @@ async function main() {
     assert.ok(sheet.host.querySelector('[role="dialog"]'), 'it is a dialog, so the screen behind it is not left half-reachable');
     assert.match(sheet.t, /Your area/, 'the area is set here, once, and read by the band and the forecast');
     assert.ok(sheet.host.querySelector('#belt-place'), 'in a real input, not a display of a city we guessed');
-    click(inEl(sheet.host, 'button').find((b) => text(b) === 'Earn'));
+    // The entry is the ONE menu-tile shape: a 12px-radius tinted square with a
+    // thin-line icon, a bold 15px title, a grey 13px description capped at two
+    // lines; group headers small, grey, uppercase, mono.
+    const tiles = inEl(sheet.host, '[data-testid^=menu-tile-]');
+    assert.equal(tiles.length, 12, 'every entry is a menu tile');
+    const earnTile = sheet.host.querySelector('[data-testid="menu-tile-earn"]');
+    assert.ok(earnTile, 'Earn is one of them');
+    const tileIcon = earnTile.querySelector('span.rounded-xl');
+    assert.ok(tileIcon, 'the icon sits in a 12px-radius (rounded-xl) square');
+    const earnTitle = Array.from(earnTile.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
+    const earnDesc = Array.from(earnTile.querySelectorAll('span')).find((s) => s.classList.contains('text-[13px]'));
+    assert.ok(earnTitle && earnTitle.classList.contains('font-bold'), 'the tile title is 15px and bold');
+    assert.ok(earnDesc && earnDesc.classList.contains('line-clamp-2'), 'the tile description is 13px, capped at two lines');
+    const settingsHeader = inEl(sheet.host, 'p').find((p) => text(p) === 'Settings');
+    assert.ok(settingsHeader && settingsHeader.classList.contains('font-mono') && settingsHeader.classList.contains('uppercase'),
+      'section headers are small grey uppercase mono');
+    click(earnTile);
     assert.deepEqual(went, { kind: 'you', section: 'earn' }, 'an entry goes to a real section');
     assert.equal(closed, 1, 'and choosing it closes the sheet');
     assert.equal(inEl(sheet.host, 'button[aria-label="Close the menu"]').length, 2,

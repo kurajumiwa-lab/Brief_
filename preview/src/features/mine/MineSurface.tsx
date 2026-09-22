@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Store, Package, Bookmark, Star, Plus } from 'lucide-react';
 import type { Space } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import { splitSpaces, needsAttention } from '../home/spaceSignals';
-import { StatusPill, spacePillState } from '../../ui/StatusPill';
-import { modeTint } from '../spaces/modeTint';
+import { splitSpaces, attentionQueue } from '../home/spaceSignals';
+import { NoPhotoPlate } from '../city/NoPhotoPlate';
+import { GlobysCard } from '../../ui/GlobysCard';
+import { BannerButton } from '../../ui/BannerButton';
 import { Marketplace } from '../../components/Marketplace';
 import { FollowingSurface } from '../../components/FollowingSurface';
 import { soundEngine } from '../../utils/SoundEngine';
@@ -17,10 +18,11 @@ import { soundEngine } from '../../utils/SoundEngine';
 // and "somewhere in the world's stuff". Mine is the whole first half in one
 // door:
 //
-//   SHOPS    the shopfronts you operate, as a two-column tile grid: the
-//            vendor-portal pattern — a tile tinted by the shop's mode, the
-//            name in white, the mode in white/70, and a status pill in the
-//            corner saying the state the rows actually hold
+//   BANNER   when the member owns a shop, the one dark-gradient banner
+//            ("Your shop overview →") — the only loud thing on the screen
+//   SHOPS    the shopfronts you operate, as a two-column grid of the ONE
+//            product card: 1:1 cover or waiting plate, name, the lowest
+//            real offer price, the place in mono, one action
 //   ORDERS   the marketplace's personal rails — what you bought, what you sell
 //   SAVED    the places and people you follow
 //   REVIEWS  said as what it is: recorded, not yet a surface
@@ -75,6 +77,18 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
   }, []);
 
   const { active } = splitSpaces(spaces);
+  const queue = attentionQueue(active);
+  // The lowest real ACTIVE offer price — the row the card's price line reads.
+  // No active offer with a price: no line, not a zero.
+  const lowestOffer = (s: Space): string | null => {
+    const prices = (s.offers ?? [])
+      .filter((o) => o.status === 'active' && typeof o.price === 'number' && o.price > 0)
+      .map((o) => o.price);
+    if (prices.length === 0) return null;
+    const min = Math.min(...prices);
+    const cur = (s.offers ?? []).find((o) => o.price === min)?.currency ?? 'KES';
+    return `from ${cur} ${min.toLocaleString('en-KE')}`;
+  };
 
   return (
     <div className={`space-y-6 max-w-2xl mx-auto ${className}`}>
@@ -86,6 +100,18 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
           Your shops, your orders, what you kept.
         </p>
       </header>
+
+      {/* ── THE BANNER — only when the member owns a shop: the one loud
+             thing on this screen, and the door into the shop itself. ── */}
+      {active.length > 0 && (
+        <section aria-label="Your shop overview">
+          <BannerButton
+            label="Your shop overview"
+            sub={queue.length > 0 ? `${queue.length} ${queue.length === 1 ? 'shop' : 'shops'} need you` : null}
+            onClick={() => { soundEngine.play('tap'); onOpenSpace(queue[0]?.space.id ?? active[0].id); }}
+          />
+        </section>
+      )}
 
       {/* ── SHOPS ── */}
       <section aria-label="Your shops" className="space-y-2.5">
@@ -110,39 +136,23 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5" data-testid="mine-shop-tiles">
-            {active.map((s) => {
-              const attention = needsAttention(s);
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
-                  aria-label={`Open ${s.name}`}
-                  data-testid={`mine-shop-tile-${s.id}`}
-                  className="relative rounded-2xl p-3.5 text-left min-h-[96px] cursor-pointer transition-all active:scale-[0.98]"
-                  style={{ background: modeTint(s.mode), boxShadow: 'var(--lift-1)' }}
-                >
-                  <span className="absolute right-2.5 top-2.5">
-                    <StatusPill state={spacePillState(s)} onTint />
-                  </span>
-                  <span className="block text-[13px] font-bold text-white leading-snug pr-12">
-                    {s.name}
-                  </span>
-                  <span className="block text-[11px] font-medium text-white/70 mt-0.5">
-                    {s.modeLabel ?? 'Mode not stated'}
-                  </span>
-                  {attention.length > 0 && (
-                    <span
-                      className="block text-[10px] font-semibold text-white/90 mt-1.5 truncate"
-                      title={attention.map((a) => a.label).join(' · ')}
-                    >
-                      {attention.map((a) => a.label).join(' · ')}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-2 gap-2.5" data-testid="mine-shop-grid">
+            {active.map((s) => (
+              <GlobysCard
+                key={s.id}
+                testId={`shop-${s.id}`}
+                image={s.image}
+                imageAlt={s.name}
+                plate={<NoPhotoPlate mark={s.modeLabel ?? 'shop'} icon={<Store className="w-4 h-4" />} />}
+                title={s.name}
+                price={lowestOffer(s)}
+                seller="You"
+                mono={s.profileLabels?.where ?? null}
+                actionLabel="View shop →"
+                onAction={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
+                onOpen={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
+              />
+            ))}
           </div>
         )}
       </section>
