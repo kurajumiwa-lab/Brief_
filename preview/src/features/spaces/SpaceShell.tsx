@@ -16,6 +16,13 @@ import { CatalogView } from './CatalogView';
 import { CreateFlowModal } from './CreateFlowModal';
 import { soundEngine } from '../../utils/SoundEngine';
 import { needsAttention } from '../home/spaceSignals';
+import { ShopDocuments, type ShopDocument } from './ShopDocuments';
+
+// The document store does not exist yet, so the list this section reads from
+// is empty by design: the folder pattern is in place, and the moment the
+// server files its first document this is the one place the rows come from,
+// with their real names and real dates.
+const SHOP_DOCUMENTS: ShopDocument[] = [];
 
 export interface SpaceShellProps {
   spaceId: string;
@@ -668,9 +675,14 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </div>
       )}
 
-      {/* ── SURFACE 5: THE SPACE FILE — schema, editorial queue, pipeline ── */}
+      {/* ── SURFACE 5: THE SPACE FILE — documents, schema, queue, pipeline.
+              The documents folder sits atop the file: the paper a shopfront
+              stands on, in the folder pattern. Brief has no document store
+              yet, so every folder is the honest empty state — the pattern is
+              in place, nothing pretends a row exists. ── */}
       {currentTab === 'operating' && (
-        <div className="animate-fadeIn">
+        <div className="animate-fadeIn space-y-4">
+          <ShopDocuments documents={SHOP_DOCUMENTS} />
           <SpaceOperatingPanel
             spaceId={space.id}
             maintenance={space.maintenance ?? null}

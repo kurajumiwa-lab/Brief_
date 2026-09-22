@@ -64,7 +64,9 @@ const BOARD_ICONS: Record<string, string> = { bulk: 'box', direct: 'bike', niche
     tints: the same flow is always the same colour, so the colour teaches the
     taxonomy. It is never hashed from a title, and an untagged listing gets the
     room's default rather than a guessed hue. */
-const FLOW_ACCENT: Record<string, string> = { bulk: '#2563EB', direct: '#0E7C86', niche: '#8A5A2B', group: '#059669' };
+/** One accent per real flow — the same four the tiles on Home wear, so a
+ *  bulk row is blue on both shelves. */
+export const FLOW_ACCENT: Record<string, string> = { bulk: '#2563EB', direct: '#0E7C86', niche: '#8A5A2B', group: '#059669' };
 
 const ICONS: Record<string, React.ReactNode> = {
   box: <Package className="w-6 h-6" />,

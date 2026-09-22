@@ -19,6 +19,7 @@ import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import type { MyCommitments, MyPosition, MyReciprocity, DiscoverFeedItem, EventListing } from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
+import { FLOW_ACCENT } from '../city/DiscoverFeed';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { SignalBar } from './SignalBar';
@@ -321,33 +322,49 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {feed.length > 0 && (
         <section aria-label="Open now" className="space-y-0">
           <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-            {feed.map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
-                className="shrink-0 w-44 text-left rounded-2xl overflow-hidden cursor-pointer transition-all"
-                style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
-              >
-                {f.mediaUrl ? (
-                  <div className="h-24 w-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
-                    <img src={f.mediaUrl} alt="" loading="lazy" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="h-24 w-full grid place-items-center" style={{ background: 'var(--color-well)' }}>
-                    {f.kind === 'event' ? <CalendarDays className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} /> : <Package className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />}
-                  </div>
-                )}
-                <div className="p-2.5 space-y-0.5">
-                  <p className="text-[12px] font-bold leading-tight truncate" style={{ color: 'var(--color-text)' }}>{f.title}</p>
-                  <p className="text-[11px] truncate" style={{ color: 'var(--color-text-muted)' }}>
-                    {f.priceLabel || (f.kind === 'event' ? 'Event' : 'Listing')}
-                    {f.location ? ` · ${f.location}` : ''}
-                  </p>
-                </div>
-              </button>
-            ))}
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1" data-testid="open-now-tiles">
+            {feed.map((f) => {
+              // The tile is tinted by the row's real flow — the same four
+              // accents the feed uses, so a bulk row is blue on both shelves.
+              // A row with a real photo always beats a tint; a row with no
+              // flow gets the neutral slate, never a guessed colour.
+              const tint = (f.flow && FLOW_ACCENT[f.flow]) || '#64748B';
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('all'); }}
+                  aria-label={`Open ${f.title}`}
+                  data-testid={`open-now-tile-${f.id}`}
+                  className="relative shrink-0 w-44 h-44 text-left rounded-2xl overflow-hidden cursor-pointer transition-all active:scale-[0.98]"
+                  style={{ background: tint, boxShadow: 'var(--lift-1)' }}
+                >
+                  {f.mediaUrl ? (
+                    <>
+                      <img src={f.mediaUrl} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      <span
+                        aria-hidden
+                        className="absolute inset-0"
+                        style={{ background: 'linear-gradient(180deg, rgba(15,23,42,0) 30%, rgba(15,23,42,0.72) 100%)' }}
+                      />
+                    </>
+                  ) : (
+                    <span aria-hidden className="absolute right-3 top-3 opacity-70">
+                      {f.kind === 'event' ? <CalendarDays className="w-5 h-5 text-white" /> : <Package className="w-5 h-5 text-white" />}
+                    </span>
+                  )}
+                  <span className="absolute inset-x-0 bottom-0 p-3 block">
+                    <span className="block text-[13px] font-bold text-white leading-tight truncate">{f.title}</span>
+                    <span className="block text-[11px] font-semibold text-white/90 truncate mt-0.5">
+                      {f.priceLabel || (f.kind === 'event' ? 'Event' : 'Listing')}
+                    </span>
+                    {f.location && (
+                      <span className="block text-[10px] text-white/70 truncate mt-0.5">{f.location}</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
       )}

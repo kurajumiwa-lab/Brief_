@@ -201,8 +201,15 @@ async function main() {
     const themeCode = themeCss.replace(/\/\*[\s\S]*?\*\//g, '');
     assert.ok(!/#4F46E5|#06B6D4/.test(themeCode), 'the indigo/bright-cyan pair is gone from the theme, not aliased');
     // The type floor: fine print is what made the last revision read as a form.
+    // One sanctioned exception, adopted from the vendor-portal pattern: the
+    // status pill (Active/Quiet/Expired/Flagged) is 9px uppercase by design.
+    // So 8px stays banned everywhere, and 9px may appear ONLY in the pill.
     const allSrc = sweep();
-    assert.ok(!/text-\[(8|9)px\]/.test(allSrc), 'no 8px or 9px type survives in the app');
+    const pillSrc = fs.readFileSync(path.join(__dirname, 'src/ui/StatusPill.tsx'), 'utf8');
+    const rest = allSrc.replace(pillSrc, '');
+    assert.ok(!/text-\[8px\]/.test(rest), 'no 8px type survives in the app');
+    assert.ok(!/text-\[9px\]/.test(rest), '9px type survives only in the status pill, the sanctioned exception');
+    assert.ok(/text-\[9px\]/.test(pillSrc), 'the pill is 9px, as the vendor pattern specifies');
     // The floor has to cover hand-written CSS too: the utility sweep missed two
     // component stylesheets, and a claim of "smallest type is 11px" that only
     // holds for Tailwind classes is not a claim about the app.

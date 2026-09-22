@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Store, Package, Bookmark, Star, Plus, ArrowRight } from 'lucide-react';
+import { Store, Package, Bookmark, Star, Plus } from 'lucide-react';
 import type { Space } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { splitSpaces, needsAttention } from '../home/spaceSignals';
+import { StatusPill, spacePillState } from '../../ui/StatusPill';
+import { modeTint } from '../spaces/modeTint';
 import { Marketplace } from '../../components/Marketplace';
 import { FollowingSurface } from '../../components/FollowingSurface';
 import { soundEngine } from '../../utils/SoundEngine';
@@ -15,7 +17,10 @@ import { soundEngine } from '../../utils/SoundEngine';
 // and "somewhere in the world's stuff". Mine is the whole first half in one
 // door:
 //
-//   SHOPS    the shopfronts you operate, with the attention each one owes
+//   SHOPS    the shopfronts you operate, as a two-column tile grid: the
+//            vendor-portal pattern — a tile tinted by the shop's mode, the
+//            name in white, the mode in white/70, and a status pill in the
+//            corner saying the state the rows actually hold
 //   ORDERS   the marketplace's personal rails — what you bought, what you sell
 //   SAVED    the places and people you follow
 //   REVIEWS  said as what it is: recorded, not yet a surface
@@ -105,7 +110,7 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
             </button>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 gap-2.5" data-testid="mine-shop-tiles">
             {active.map((s) => {
               const attention = needsAttention(s);
               return (
@@ -113,28 +118,28 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
                   key={s.id}
                   type="button"
                   onClick={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
-                  className="w-full text-left p-3.5 rounded-2xl flex items-center justify-between gap-2 cursor-pointer transition-all"
-                  style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+                  aria-label={`Open ${s.name}`}
+                  data-testid={`mine-shop-tile-${s.id}`}
+                  className="relative rounded-2xl p-3.5 text-left min-h-[96px] cursor-pointer transition-all active:scale-[0.98]"
+                  style={{ background: modeTint(s.mode), boxShadow: 'var(--lift-1)' }}
                 >
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-bold truncate" style={{ color: 'var(--color-text)' }}>
-                      {s.name}
-                    </span>
-                    <span className="block text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
-                      {attention.length === 0
-                        ? 'All caught up'
-                        : attention.map((a) => a.label).join(' · ')}
-                    </span>
+                  <span className="absolute right-2.5 top-2.5">
+                    <StatusPill state={spacePillState(s)} onTint />
+                  </span>
+                  <span className="block text-[13px] font-bold text-white leading-snug pr-12">
+                    {s.name}
+                  </span>
+                  <span className="block text-[11px] font-medium text-white/70 mt-0.5">
+                    {s.modeLabel ?? 'Mode not stated'}
                   </span>
                   {attention.length > 0 && (
                     <span
-                      className="shrink-0 px-2 py-0.5 rounded-full text-[11px] font-black"
-                      style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
+                      className="block text-[10px] font-semibold text-white/90 mt-1.5 truncate"
+                      title={attention.map((a) => a.label).join(' · ')}
                     >
-                      {attention.length}
+                      {attention.map((a) => a.label).join(' · ')}
                     </span>
                   )}
-                  <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--color-text-muted)' }} />
                 </button>
               );
             })}
