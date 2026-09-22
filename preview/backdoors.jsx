@@ -88,6 +88,13 @@ global.fetch = async (input, init) => {
   if (url.includes('/api/table-banking/mine') || url.includes('/api/tablebanking/mine')) return ok([]);
   if (url.includes('/api/planned-weather')) return ok({ available: false, matched: [], plannedDays: [], reason: 'nothing_planned' });
   if (url.includes('/api/banners')) return ok({ banners: [] });
+  if (url.includes('/api/discover')) return ok({ tiles: [], featured: null, feed: [], events: [], circles: [] });
+  if (url.includes('/api/me/position') || url.includes('/api/position')) return ok({ position: { standing: null, commitmentsOpen: 0 } });
+  if (url.includes('/api/me/commitments')) return ok({ commitments: { open: 0, defended: null } });
+  if (url.includes('/api/me/reciprocity')) return ok({ reciprocity: { owed: 0, owing: 0 } });
+  if (url.includes('/api/circles')) return ok({ circles: [] });
+  if (url.includes('/api/events')) return ok({ events: [], total: 0 });
+  if (url.includes('/api/pulse')) return ok({ asOf: null, facts: [], empty: true, sections: { demand: { open: 0, bySeverity: {}, collective: 0 }, closure: { windowDays: 30, closed: 0, topCategory: null }, fill: { windowDays: 30, closed: 0, avgHoursToFill: null, hoursSampleCount: 0, avgValue: null }, money: {}, listings: { active: 0, snapshot: [] }, events: { open: 0, newLast24h: {} } } });
   return miss;
 };
 
@@ -321,6 +328,36 @@ async function main() {
     assert.match(shell, /onOpenSpace=\{openSpace\}/, 'every opener goes through the one that names the URL');
   }
   pass('the unreachable create dialog is deleted, not decorated');
+
+  // --- 10. Home is Home. Discover is a door you chose. ---------------------
+  // The bug: initialTab was 'city', the Home door wrote hash '', and navigate()
+  // mapped an empty hash back to initialTab — so tapping Home opened Discover,
+  // and a cold load painted Discover first. Two surfaces, the wrong one on top.
+  {
+    const { AppShell } = require('./src/app/AppShell.tsx');
+    window.location.hash = '';
+    const { host } = await mount(React.createElement(AppShell, {}));
+    await flush(); await flush();
+    const t = text(host);
+    assert.ok(host.querySelector('[data-testid="mode-tiles"]'),
+      'a cold load with no hash is Home — the six doors, not the board');
+    assert.ok(!/What's happening nearby/.test(t) && !/What.s happening nearby/.test(t),
+      `Discover's heading is not on Home: ${t.slice(0, 180)}`);
+
+    window.location.hash = 'city';
+    await flush(); await flush();
+    assert.ok(/happening nearby/i.test(text(host)), 'the board is still a real screen, when asked for');
+    assert.ok(!host.querySelector('[data-testid="mode-tiles"]'), 'and Home is not sitting under it');
+
+    const homeDoor = Array.from(document.querySelectorAll('button')).find((b) => /^Home$/.test(text(b)));
+    assert.ok(homeDoor, 'the bar still has a Home door');
+    await click(homeDoor);
+    await flush(); await flush();
+    assert.equal(window.location.hash, '#home', 'Home writes #home, not an empty hash that used to mean Discover');
+    assert.ok(document.querySelector('[data-testid="mode-tiles"]'), 'and the tiles are what you land on');
+    assert.ok(!/happening nearby/i.test(text(document.body)), 'Discover did not come along');
+  }
+  pass('tapping Home opens Home, not a phantom Discover');
 
   console.log('\nPASS ' + count);
   process.exit(0);

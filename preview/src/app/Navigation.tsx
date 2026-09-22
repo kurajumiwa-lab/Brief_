@@ -161,7 +161,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   const goDoor = (door: 'home' | 'mine' | 'you') => {
     soundEngine.play('tap');
     if (typeof window !== 'undefined') {
-      window.location.hash = door === 'home' ? '' : `#${door}`;
+      window.location.hash = door;
     }
     onSelectTab(door);
   };

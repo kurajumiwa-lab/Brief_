@@ -39,7 +39,7 @@ export interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
-  initialTab = 'city',
+  initialTab = 'home',
   initialSpaceId = null,
   onNavigateLegacyTab,
   className = ''
@@ -365,7 +365,14 @@ export const AppShell: React.FC<AppShellProps> = ({
         // 'pulse' are the new bar's doors and the drawer's check-in.
         const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; }
-        else if (!hash) { setActiveTab(initialTab); tabHashRef.current = ''; }
+        else if (!hash) {
+          // Empty hash IS home. Mapping it to `initialTab` (once 'city') made
+          // the Home door — which writes hash '' — open Discover. A person
+          // tapping Home then saw the board, and the board painted first on
+          // a cold load. Home is the door labelled Home.
+          setActiveTab('home');
+          tabHashRef.current = 'home';
+        }
       }
     };
     navigate();
@@ -518,7 +525,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <AppBelt
           backTo={backTo}
           onOpenSheet={() => setSheetOpen(true)}
-          onHome={() => { window.location.hash = ''; setActiveTab('home'); }}
+          onHome={() => { window.location.hash = 'home'; setActiveTab('home'); }}
           onSearch={(term) => { window.location.hash = `search/${encodeURIComponent(term)}`; }}
           className="-mx-4 sm:-mx-6 -mt-6 mb-5"
         />
