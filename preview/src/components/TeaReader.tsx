@@ -86,7 +86,7 @@ export function TeaReader({ slug, onClose }: { slug: string; onClose: () => void
                   <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {gallery.map((url) => (
                       <a key={url} href={url} target="_blank" rel="noreferrer" className="overflow-hidden rounded-xl border border-[var(--brief-line)]">
-                        <img src={url} alt="" loading="lazy" className="h-32 w-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
+                        <img src={briefApi.mediaFileUrl(url)} alt="" loading="lazy" className="h-32 w-full object-cover transition-transform duration-300 hover:scale-[1.03]" />
                       </a>
                     ))}
                   </div>

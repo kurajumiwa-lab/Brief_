@@ -95,9 +95,12 @@ export function ImageField({
           setError(res.error);
           continue;
         }
-        const url = briefApi.mediaFileUrl(res.data.upload.url);
-        if (onAdd) onAdd(url);
-        else onChange?.(url);
+        // Persist the server's own URL (`/api/media/file/<id>`), not the
+        // `/ingest`-prefixed display URL. A stored ingest path is how a photo
+        // that uploaded fine then 404s on every card.
+        const stored = res.data.upload.url;
+        if (onAdd) onAdd(stored);
+        else onChange?.(stored);
         if (!multiple) break;
       }
     } finally {
@@ -129,7 +132,7 @@ export function ImageField({
         <p className="text-[12px] font-bold text-[var(--brief-ink)]">{label}</p>
         <div className="mt-1 flex items-center gap-2">
           <img
-            src={value}
+            src={briefApi.mediaFileUrl(value)}
             alt=""
             className="h-14 w-20 shrink-0 rounded-lg border border-[var(--brief-line)] object-cover"
           />

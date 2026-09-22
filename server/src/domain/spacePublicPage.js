@@ -50,6 +50,7 @@ import { store } from '../store.js';
 import { getRawSpace, publicSpaceView, publicOffers } from './space.js';
 import { formatAnswer } from './spaceProfile.js';
 import { getUpload } from './upload.js';
+import { canonicalMediaUrl } from './listing.js';
 
 const DAY = 86400000;
 
@@ -136,9 +137,9 @@ export function openState(space, { nowMs = Date.now() } = {}) {
  * evidence. An owner who pasted some other id in gets a plate, not a leak.
  */
 export function publicImage(space) {
-  const ref = space?.image ?? null;
+  const ref = canonicalMediaUrl(space?.image ?? null);
   if (!ref) return null;
-  const match = /^\/api\/media\/file\/([\w.-]+)$/.exec(String(ref));
+  const match = /^\/api\/media\/file\/([\w.-]+)$/.exec(ref);
   if (!match) return null;
   const row = getUpload(match[1]);
   if (!row) return null;
@@ -244,7 +245,10 @@ function offersFor(space, { limit = PAGE_OFFER_LIMIT } = {}) {
     minimum: Number.isFinite(Number(l.minOrderQuantity)) && Number(l.minOrderQuantity) > 0 ? Number(l.minOrderQuantity) : null,
     // null means "not stock-tracked", which is NOT the same claim as 0 left.
     stock: Number.isInteger(l.quantityAvailable) ? Number(l.quantityAvailable) : null,
-    featured: (space.featured ?? []).includes(l.id)
+    featured: (space.featured ?? []).includes(l.id),
+    // Canonical /api/media/file/<id>, or null. The page is served by Express,
+    // so this path loads without the SPA's /ingest prefix.
+    image: canonicalMediaUrl((l.media ?? [])[0] ?? null)
   }));
 }
 
@@ -352,6 +356,7 @@ section+section{border-top:1px solid var(--line)}
 .fact dd{margin:2px 0 0;font-size:15px}
 .empty{background:var(--well);border-radius:16px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
 .foot{margin-top:16px;text-align:center;font-size:12px;color:var(--faint)}
+.offer img{width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0}
 .foot a{font-size:12px}
 form{margin-top:10px}
 textarea{width:100%;min-height:56px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;padding:8px}
@@ -364,7 +369,7 @@ export function renderPage(view) {
     ? view.offers
         .map(
           (o) => `      <div class="offer">
-${o.featured ? '        <p class="pin">Pinned by the shop</p>\n' : ''}        <p class="t">${esc(o.title)}</p>
+${o.image ? `        <img src="${esc(o.image)}" alt="" />\n` : ''}${o.featured ? '        <p class="pin">Pinned by the shop</p>\n' : ''}        <p class="t">${esc(o.title)}</p>
         <p class="p">${esc(o.priceLabel ?? 'Price not listed')}${o.unit ? ` / ${esc(o.unit)}` : ''}${o.minimum ? ` · min ${o.minimum}` : ''}</p>
 ${o.stock !== null ? `        <p class="n">${o.stock > 0 ? `${o.stock} in hand, by their own count` : 'Sold out for now, by their own count'}</p>\n` : ''}      </div>`
         )

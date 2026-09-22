@@ -5,6 +5,7 @@ import type {
 } from '../../api/types';
 import { money } from './ListingCard';
 import { ImageField } from '../ImageField';
+import * as briefApi from '../../api/briefApi';
 import { OrderStatus } from './OrderStatus';
 
 /**
@@ -209,7 +210,7 @@ export function VendorPanel({
           </div>
           {(listingDraft.media ?? []).map((src, i) => (
             <div key={`${src}-${i}`} className="flex items-center gap-2 rounded-xl bg-[color:var(--color-paper)] px-2 py-1.5">
-              <img src={src} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+              <img src={briefApi.mediaFileUrl(src)} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
               <p className="min-w-0 flex-1 truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{src}</p>
               <button
                 type="button"
@@ -393,6 +394,9 @@ export function VendorPanel({
           listings.map((l) => (
             <div key={l.id} className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-2">
               <div className="flex items-start justify-between gap-3">
+                {(l.media ?? [])[0] ? (
+                  <img src={briefApi.mediaFileUrl((l.media ?? [])[0])} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                ) : null}
                 <div className="min-w-0">
                   <p className="text-xs font-extrabold text-[var(--brief-ink)]">{l.title}</p>
                   <p className="text-[11px] text-[var(--ink-60)]">

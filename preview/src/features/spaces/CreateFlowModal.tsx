@@ -291,7 +291,7 @@ const [goal, setGoal] = useState('')
                   <div className="flex flex-wrap gap-1.5">
                     {offerImages.map((src, i) => (
                       <div key={`${src}-${i}`} className="relative">
-                        <img src={src} alt="" className="h-14 w-20 rounded-xl object-cover border border-black/10" />
+                        <img src={briefApi.mediaFileUrl(src)} alt="" className="h-14 w-20 rounded-xl object-cover border border-black/10" />
                         <button
                           type="button"
                           aria-label={`Remove photo ${i + 1}`}

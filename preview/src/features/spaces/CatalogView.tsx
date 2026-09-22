@@ -5,6 +5,7 @@ import { soundEngine } from '../../utils/SoundEngine';
 import { MicroBadge } from '../../ui/MicroBadge';
 import { ContextMenu } from '../../ui/ContextMenu';
 import { ImageField } from '../../components/ImageField';
+import * as briefApi from '../../api/briefApi';
 import { PLASTER, plateGlow } from '../city/room';
 
 // ---------------------------------------------------------------------------
@@ -267,11 +268,8 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             const isPaused = currentStat === 'paused';
             const isArchived = currentStat === 'archived';
             const pinned = (featured ?? []).includes(offer.id);
-            const mediaUrl = (offer.media ?? [])[0]
-              ? (/^https?:|^\/api\//.test((offer.media as string[])[0])
-                  ? (offer.media as string[])[0]
-                  : `/api/media/file/${(offer.media as string[])[0]}`)
-              : ((offer as { image?: string | null }).image ?? null);
+            const raw = (offer.media ?? [])[0] ?? (offer as { image?: string | null }).image ?? null;
+            const mediaUrl = raw ? briefApi.mediaFileUrl(raw) : null;
             // An action with nowhere to go is a lie with an icon, so lifecycle
             // moves are offered only when the host wired the real transition.
             const moves = onOfferStatus ? (NEXT_MOVES[currentStat] ?? []) : [];
@@ -469,7 +467,7 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
                       </p>
                       {(draft.media ?? []).map((src, i) => (
                         <div key={`${src}-${i}`} className="flex items-center gap-2 rounded-xl px-2 py-1.5" style={{ background: 'var(--color-well)' }}>
-                          <img src={src} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+                          <img src={briefApi.mediaFileUrl(src)} alt="" loading="lazy" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
                           <p className="min-w-0 flex-1 truncate text-[11px]" style={{ color: 'var(--color-text-muted)' }}>{src}</p>
                           <button
                             type="button"

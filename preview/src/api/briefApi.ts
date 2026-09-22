@@ -3020,10 +3020,27 @@ export function getEngineTicketBar(): Promise<ApiResult<EngineTicketBar>> {
  * through the ingestion proxy; an absolute http(s) link passes straight
  * through. Deciding this here keeps the proxy detail out of every component.
  */
+/**
+ * The path the store keeps: `/api/media/file/<id>`. Strips the SPA's `/ingest`
+ * proxy prefix so a URL that leaked into a row still resolves, and wraps a
+ * bare upload id. Display goes through `mediaFileUrl`, which puts `/ingest`
+ * back on for the browser.
+ */
+export function canonicalMediaUrl(ref: string | null | undefined): string | null {
+  if (ref == null) return null;
+  let s = String(ref).trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith('/ingest/')) s = s.slice('/ingest'.length) || '/';
+  if (s.startsWith('/api/')) return s;
+  return `/api/media/file/${s}`;
+}
+
 export function mediaFileUrl(url: string): string {
-  if (!url) return url;
-  if (/^https?:\/\//i.test(url)) return url;
-  return url.startsWith('/') ? `${INGEST_API}${url}` : url;
+  const canonical = canonicalMediaUrl(url);
+  if (!canonical) return url;
+  if (/^https?:\/\//i.test(canonical)) return canonical;
+  return canonical.startsWith('/') ? `${INGEST_API}${canonical}` : canonical;
 }
 
 /**

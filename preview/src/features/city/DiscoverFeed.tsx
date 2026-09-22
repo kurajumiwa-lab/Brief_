@@ -212,7 +212,7 @@ export function FeedSheet({ item, onClose, onOpenFull }: {
         </div>
         <div className="relative aspect-video" style={{ background: roomPlate(null) }}>
           {item.mediaUrl ? (
-            <img src={item.mediaUrl} alt={item.title} className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
+            <img src={briefApi.mediaFileUrl(item.mediaUrl)} alt={item.title} className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
           ) : (
             <NoPhotoPlate seller={item.seller} mark={item.flow ?? 'listing'} icon={plateIcon(item)} stamp={item.kind === 'listing' ? listedAgo(item.listedAt) : null} />
           )}
@@ -625,7 +625,7 @@ export function DiscoverFeed({
                   <GlobysCard
                     key={`${item.kind}-${item.id}`}
                     testId={`feed-${item.id}`}
-                    image={item.mediaUrl}
+                    image={item.mediaUrl ? briefApi.mediaFileUrl(item.mediaUrl) : null}
                     imageAlt={item.title}
                     plate={
                       <NoPhotoPlate

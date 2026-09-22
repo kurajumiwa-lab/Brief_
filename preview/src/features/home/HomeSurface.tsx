@@ -368,7 +368,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
                 <GlobysCard
                   key={f.id}
                   testId={`open-${f.id}`}
-                  image={f.mediaUrl}
+                  image={f.mediaUrl ? briefApi.mediaFileUrl(f.mediaUrl) : null}
                   imageAlt={f.title}
                   plate={
                     <NoPhotoPlate

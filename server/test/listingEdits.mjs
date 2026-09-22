@@ -99,6 +99,18 @@ await test("photos are normalised on both doors, so junk cannot sit in a publish
 
   const cleared = listings.updateListing(l.id, { media: [] });
   assert.deepEqual(cleared.media, [], "removing every photo is a real edit, not an ignored field");
+
+  // The SPA talks to the API under /ingest. Persisting that prefix made every
+  // card build `/api/media/file//ingest/api/media/file/<id>` and 404 — while a
+  // test that grepped `includes('api/media/file/')` stayed green.
+  const leaked = listings.createListing({
+    vendorId: vendor.id, title: "Tomatoes", price: 200,
+    media: ["/ingest/api/media/file/upl_cake", "/api/media/file/upl_cake", "upl_flour"]
+  });
+  assert.deepEqual(leaked.media, ["/api/media/file/upl_cake", "/api/media/file/upl_flour"],
+    "the proxy prefix is stripped, duplicates collapse, a bare id is wrapped");
+  assert.equal(listings.canonicalMediaUrl("/ingest/api/media/file/upl_x"), "/api/media/file/upl_x");
+  assert.equal(listings.canonicalMediaUrl("https://cdn.example/a.jpg"), "https://cdn.example/a.jpg");
 });
 
 await test("a published price change demands a reason and states it", () => {

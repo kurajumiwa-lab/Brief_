@@ -181,9 +181,8 @@ async function main() {
     assert.ok(upload, 'the file is POSTed to the upload endpoint, not stored as a name');
     assert.equal(upload.method, 'POST');
     assert.ok(patches.length >= 1, 'and the draft is patched once with the result');
-    const expected = briefApi.mediaFileUrl(UPLOAD.url);
-    assert.deepEqual(patches[patches.length - 1].media, [expected],
-      'the url the server gave, through the same helper every other surface uses');
+    assert.deepEqual(patches[patches.length - 1].media, [UPLOAD.url],
+      'the draft stores the server path; display prefixes /ingest at the <img>, not in the row');
   }
   pass('a chosen file is uploaded and its real url joins the listing');
 
@@ -219,7 +218,8 @@ async function main() {
     });
     assert.ok(t.includes(`3/${MEDIA_CAP}`), 'the counter counts the rows');
     const imgs = Array.from(host.querySelectorAll('img')).map((i) => i.getAttribute('src'));
-    assert.deepEqual(imgs, three, 'one picture per attached file, in the seller’s order');
+    assert.deepEqual(imgs, three.map((u) => briefApi.mediaFileUrl(u)),
+      'the <img> src is the display URL (/ingest/…); the draft still holds /api/…');
     const removeSecond = host.querySelector('[aria-label="Remove photo 2 from this listing"]');
     assert.ok(removeSecond, 'each thumbnail can be removed on its own');
     await click(removeSecond);
@@ -270,7 +270,7 @@ async function main() {
     assert.ok(post, 'the create is a POST to the listings endpoint');
     const sent = JSON.parse(post.body);
     assert.equal(sent.title, 'Maize flour 2kg');
-    assert.deepEqual(sent.media, [briefApi.mediaFileUrl(UPLOAD.url)],
+    assert.deepEqual(sent.media, [UPLOAD.url],
       'the photo travels with the offer at creation — not "add it later in the catalog"');
   }
   pass('the counter posts the listing with its photos attached');

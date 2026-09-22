@@ -154,7 +154,7 @@ async function main() {
       check('the file went to the upload endpoint', uploadCalls.length === 1 && /\/api\/media\/upload$/.test(uploadCalls[0].path), JSON.stringify(uploadCalls[0]));
       check('it was sent as multipart with the file attached', uploadCalls[0]?.hasFile === true && uploadCalls[0]?.name === 'market.png');
       check('the client did NOT set its own content-type', !uploadCalls[0]?.contentType, String(uploadCalls[0]?.contentType));
-      check('the saved value is the URL the server returned', value === '/ingest/api/media/file/upl_1', String(value));
+      check('the saved value is the URL the server returned', value === '/api/media/file/upl_1', String(value));
       check('the saved image is rendered', Boolean(document.querySelector('img[src="/ingest/api/media/file/upl_1"]')));
       check('replace and remove are offered once a photo is set', Boolean(btn('Replace')) && Boolean(btn('Remove')));
     }

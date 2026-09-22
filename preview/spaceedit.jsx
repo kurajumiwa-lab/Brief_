@@ -339,7 +339,7 @@ async function main() {
     const mediaPatch = calls.filter((c) => c.method === 'PATCH' && c.url.includes('/api/listings/lst_1')).pop();
     assert.ok(mediaPatch, 'the photo save goes to the listing rail');
     const mediaBody = JSON.parse(mediaPatch.body);
-    assert.deepEqual(mediaBody.media, ['/ingest/api/media/file/upl_photo'], 'the media list is what was uploaded');
+    assert.deepEqual(mediaBody.media, ['/api/media/file/upl_photo'], 'the media list is the server path, not the SPA proxy prefix');
     assert.equal(mediaBody.reason, undefined, 'and no reason is demanded for a picture');
 
     // Remove it again: an empty gallery is a real edit, not an ignored field.

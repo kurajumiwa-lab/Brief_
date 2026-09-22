@@ -133,7 +133,7 @@ export function PublicSpacePage({
     <div className={`max-w-2xl mx-auto space-y-4 ${className}`} data-public-mirror="true">
       <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
         <div className="relative h-[152px]" style={{ background: roomSurface() }}>
-          {s.image ? <img src={s.image} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : (
+          {s.image ? <img src={briefApi.mediaFileUrl(s.image)} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : (
             <NoPhotoPlate quiet />
           )}
         </div>
@@ -262,8 +262,12 @@ export function PublicSpacePage({
                 type="button"
                 onClick={() => o.id && onOpenOffer?.(o.id)}
                 disabled={!o.id}
-                className="text-left p-3 rounded-2xl bg-[color:var(--color-paper)] cursor-pointer disabled:cursor-default brief-lift-1"
+                className="text-left rounded-2xl bg-[color:var(--color-paper)] cursor-pointer disabled:cursor-default brief-lift-1 overflow-hidden"
               >
+                {o.image ? (
+                  <img src={briefApi.mediaFileUrl(o.image)} alt="" className="w-full h-24 object-cover" />
+                ) : null}
+                <div className="p-3">
                 {o.featured && (
                   <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
                     Pinned
@@ -287,6 +291,7 @@ export function PublicSpacePage({
                 {o.id && <p className="text-[11px] mt-1 inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
                   <MessageCircle className="w-3 h-3" /> ask about this
                 </p>}
+                </div>
               </button>
             ))}
           </div>

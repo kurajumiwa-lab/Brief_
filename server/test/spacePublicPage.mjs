@@ -136,6 +136,9 @@ await test("a cover only renders when the upload exists and is public", () => {
 
   spaces.updateSpace(sp.id, { image: "https://evil.example/x.png" }, { callerId: owner.id });
   assert.equal(page.publicImage(store.find("spaces", (s) => s.id === sp.id)), null, "a foreign URL is not a Brief image");
+  spaces.updateSpace(sp.id, { image: "/ingest/api/media/file/upl_public" }, { callerId: owner.id });
+  assert.equal(page.publicImage(store.find("spaces", (s) => s.id === sp.id)), "/api/media/file/upl_public",
+    "the SPA proxy prefix is stripped so a cover that uploaded still renders");
 });
 
 await test("a contact channel is an act: no answer, no button, no number", () => {

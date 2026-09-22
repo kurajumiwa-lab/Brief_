@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Listing } from '../../api/types';
+import * as briefApi from '../../api/briefApi';
 
 /**
  * One listing in a browse grid.
@@ -38,7 +39,10 @@ export function ListingCard({ listing, onOpen }: ListingCardProps) {
       className="w-full text-left bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-3 space-y-1.5 cursor-pointer hover:border-[var(--brief-line)] transition"
     >
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-extrabold text-[var(--brief-ink)] min-w-0">{listing.title}</p>
+        {(listing.media ?? [])[0] ? (
+          <img src={briefApi.mediaFileUrl((listing.media ?? [])[0]!)} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+        ) : null}
+        <p className="text-xs font-extrabold text-[var(--brief-ink)] min-w-0 flex-1">{listing.title}</p>
         <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-[var(--brief-line)] text-[var(--ink-60)]">
           {TYPE_LABEL[listing.type] ?? listing.type}
         </span>

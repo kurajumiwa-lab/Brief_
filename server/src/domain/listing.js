@@ -103,14 +103,34 @@ const UNORDERABLE_REASON = {
  * cap. An offer with eight pictures has said what it has to say.
  */
 export const MEDIA_CAP = 8;
+
+/**
+ * The one path the store keeps for an uploaded file: `/api/media/file/<id>`.
+ *
+ * The SPA talks to the API under `/ingest` (Vite proxies it; production Express
+ * strips it). ImageField used to persist that prefix. Every reader then asked
+ * "does this start with /api/?" — it does not — and built
+ * `/api/media/file//ingest/api/media/file/<id>`, which 404s. A test that grepped
+ * `includes('api/media/file/')` stayed green. So: persist the server's own URL,
+ * and strip `/ingest` off anything that already leaked in.
+ */
+export function canonicalMediaUrl(ref) {
+  if (typeof ref !== 'string') return null;
+  let s = ref.trim();
+  if (!s) return null;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith('/ingest/')) s = s.slice('/ingest'.length) || '/';
+  if (s.startsWith('/api/')) return s;
+  return `/api/media/file/${s}`;
+}
+
 export function cleanMedia(media) {
   if (!Array.isArray(media)) return [];
   const out = [];
   for (const m of media) {
     // A number, an object, a nested array: not a photo, and coercing it would
     // store "42" as a path that 404s in front of a buyer. Drop it.
-    if (typeof m !== 'string') continue;
-    const s = m.trim();
+    const s = canonicalMediaUrl(typeof m === 'string' ? m : null);
     if (s && !out.includes(s)) out.push(s);
     if (out.length >= MEDIA_CAP) break;
   }
@@ -225,6 +245,10 @@ function hydrate(listing) {
   const check = orderableReason(listing);
   return {
     ...listing,
+    // Re-canonicalised on every read so a row that was saved with the /ingest
+    // prefix (the SPA's proxy path) still produces a URL a browser can load,
+    // without a migration and without waiting for the owner to re-save.
+    media: cleanMedia(listing.media),
     vendor: vendor
       ? {
           id: vendor.id,

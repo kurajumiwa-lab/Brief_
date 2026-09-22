@@ -2094,6 +2094,8 @@ export interface SpacePublicPageOffer {
   /** null means the offer is not stock-tracked, which is not the same as 0. */
   stock: number | null;
   featured: boolean;
+  /** Canonical `/api/media/file/<id>`, or null when the offer has no photo. */
+  image?: string | null;
 }
 
 /** The server-rendered mirror of a Space. Every field here is a row read back. */

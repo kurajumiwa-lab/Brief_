@@ -311,7 +311,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
                   {images.map((url) => (
                     <div key={url} className="group relative overflow-hidden rounded-lg border border-[var(--brief-line)]">
-                      <img src={url} alt="" className="h-16 w-full object-cover" />
+                      <img src={briefApi.mediaFileUrl(url)} alt="" className="h-16 w-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center gap-1 bg-[#2563EB]/0 opacity-0 transition-all group-hover:bg-[#2563EB]/45 group-hover:opacity-100">
                         <button
                           type="button"
@@ -359,7 +359,7 @@ export function StoryEditor({ article, onClose, onSaved }: StoryEditorProps) {
                 </p>
                 <div className="mt-1 grid grid-cols-4 gap-1.5">
                   {images.map((url) => (
-                    <img key={url} src={url} alt="" className="h-12 w-full rounded-md border border-[var(--brief-line)] object-cover" />
+                    <img key={url} src={briefApi.mediaFileUrl(url)} alt="" className="h-12 w-full rounded-md border border-[var(--brief-line)] object-cover" />
                   ))}
                 </div>
               </div>

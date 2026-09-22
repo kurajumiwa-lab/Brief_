@@ -28,7 +28,7 @@
 // ---------------------------------------------------------------------------
 
 import { store } from '../store.js';
-import { listListings } from './listing.js';
+import { listListings, canonicalMediaUrl } from './listing.js';
 import { browseEvents } from './events.js';
 import { flowSummary, routesFor, unmappedDemand } from './flows.js';
 import { listCircles } from './circle.js';
@@ -37,11 +37,7 @@ const HOUR = 3600000;
 
 /** A listing's own photo, resolved the way the media rail serves them. */
 function mediaUrl(listing) {
-  const first = (listing.media ?? [])[0] ?? listing.image ?? null;
-  if (!first) return null;
-  return /^https?:\/\//.test(first) || String(first).startsWith('/api/')
-    ? String(first)
-    : `/api/media/file/${first}`;
+  return canonicalMediaUrl((listing.media ?? [])[0] ?? listing.image ?? null);
 }
 
 /** A short, unambiguous date stamp for a card: "Sat 20 Sep", never a bare ISO. */
