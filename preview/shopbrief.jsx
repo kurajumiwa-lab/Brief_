@@ -10,7 +10,7 @@
 //
 // Checked:
 //   * figures are `toLocaleString('en-KE')` of the payload's numbers, no more;
-//   * the three basis sentences are printed verbatim from the read;
+//   * the three money figures print; the basis sentences live on How Trace works;
 //   * a quiet day prints no money at all, and a business with no space prints
 //     nothing (the street below already says what is missing);
 //   * a failed read is a dash with a way to retry, never a zero;
@@ -157,13 +157,13 @@ async function main() {
   {
     const { t } = await mount(React.createElement(ShopBrief, {}));
     for (const sentence of [BASIS.in, BASIS.out, BASIS.net]) {
-      assert.ok(t.includes(sentence), `the basis line comes through unchanged: ${sentence}`);
+      assert.ok(!t.includes(sentence), `the basis line is not on the panel: ${sentence}`);
     }
     assert.ok(t.includes('Marked in') && t.includes('Recorded out') && t.includes('Marked in − recorded out'),
       'three labels, none of them the word profit');
     assert.ok(!/net profit|take-home|\bmargin%/i.test(t), 'and no friendlier word is substituted');
   }
-  pass('no screen writes its own caption: the basis sentences travel from the server');
+  pass('the panel keeps the figures and the labels; the basis sentences live on How Trace works');
 
   // --- 3. a quiet day is a sentence, not four zeroes ------------------------
   {

@@ -104,7 +104,10 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       id: 'inout',
       title: 'Getting in and getting out',
       lines: [
-        'Home does not greet and does not reprint the ledger. “Hi …”, offers live, waiting on you, and “Nothing pending on your ledger” live on You → your position, derived from the same rows. Home is the board: tiles, the one banner, shelves of real rows.',
+        'Home does not greet and does not reprint the ledger. “Hi …”, offers live, waiting on you, and “Nothing pending on your ledger” live on You → Standing, derived from the same rows. Home is the board: tiles, the one banner, shelves of real rows.',
+        "The board does not reprint What's happening nearby or Discover. Those named the door, and the bar already has one. Browse the board is the entry; what people are selling, hosting and needing carried is what the rooms hold, not a subtitle.",
+        'You is a list of titles. The notes under Profile, Standing, Following and the rest live here, because each of those now opens as its own screen. Your account is not a page title.',
+        'Mine is one shelf. “Your shop overview” was a second storefront on the same door; shops you operate are the grid, and creating a space sits on that heading. A tap on Shops and a tap on Mine are the same place.',
         'Every secondary screen is a URL: the drawer is #menu, the create sheet is #create, the event sheet is #host, a space you operate is #shop/<id>. That is not for sharing (though a pasted link does open the screen), it is so the back gesture on a phone is a way out. A screen held only in memory has no exit for a gesture, which is what “the back button doesn’t work” actually means.',
         'Closing a surface puts the URL back on the screen underneath it, not on nothing. Clearing a URL to the root is how an app throws a person to Home and looks, from a phone, like it lost their place.',
         'Where a control has nowhere to go, it is not rendered. A saved item with no detail screen is a row, not a button; a checklist step with no group behind it says “needs a group that exists first” instead of offering a tap that does nothing. The first-run card once carried three buttons wired to an empty function — three promises, none of them kept.',
@@ -145,7 +148,8 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       lines: [
         'A group’s pool is derived from recorded contributions, payouts, loans and repayments every time it is read. Brief holds none of that money. Payouts need a maker and a checker, and a payout is not complete until both exist.',
         'The operator read shows what the group itself did: the requests it placed and what they became, the money that settled through Brief, and — to the group owner only — each member’s public shopfront: that it exists, how many live offers, how current its answers are.',
-        'What it will not produce: a member’s turnover outside the group, the share of a member’s sales “brought by the group” (there is no attribution row), staff hours or attendance, a ranking of members by contribution or reliability, and any cross-group benchmark. Each is listed on the payload as an absent figure with the reason, so the gap is a decision rather than an oversight.'
+        'What it will not produce: a member’s turnover outside the group, the share of a member’s sales “brought by the group” (there is no attribution row), staff hours or attendance, a ranking of members by contribution or reliability, and any cross-group benchmark. Each is listed on the payload as an absent figure with the reason, so the gap is a decision rather than an oversight.',
+        'There is no Hubs tab. A lounge is a Circle; a pool is a group buy; a boda or errand is a Run. Counts of “14 hubs” or a Circle 001 with a pledged total are not printed because those rows do not exist.'
       ]
     },
     {

@@ -67,13 +67,12 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </p>
 );
 
-const Figure: React.FC<{ caption: string; value: string; note: string }> = ({ caption, value, note }) => (
+const Figure: React.FC<{ caption: string; value: string }> = ({ caption, value }) => (
   <div className="min-w-0">
     <Label>{caption}</Label>
     <p className="text-[17px] font-extrabold tabular-nums leading-tight" style={{ color: 'var(--brief-ink)' }}>
       {value}
     </p>
-    <p className="text-[12px] leading-snug mt-0.5" style={{ color: 'var(--brief-faint)' }}>{note}</p>
   </div>
 );
 
@@ -366,9 +365,9 @@ export function ShopBrief({
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3">
-              <Figure caption="Marked in" value={kes(brief.money?.inKes)} note={brief.basis.in} />
-              <Figure caption="Recorded out" value={kes(brief.money?.outKes)} note={brief.basis.out} />
-              <Figure caption="Marked in − recorded out" value={kes(brief.money?.netKes)} note={brief.basis.net} />
+              <Figure caption="Marked in" value={kes(brief.money?.inKes)} />
+              <Figure caption="Recorded out" value={kes(brief.money?.outKes)} />
+              <Figure caption="Marked in − recorded out" value={kes(brief.money?.netKes)} />
             </div>
 
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] tabular-nums" style={{ color: 'var(--brief-ink)' }}>

@@ -47,14 +47,18 @@ type View =
 export interface MarketplaceProps {
   /** Which section to open on mount. 'selling' deep-links to the post-a-listing flow. */
   initialSection?: Section;
+  /** Mine is yours. The board is the browse. Hiding it here is how Mine
+      stops being a third public shelf of the same listings. */
+  hideBrowse?: boolean;
 }
 
 // No `currentUserId` prop, on purpose: it was declared with a default of
 // 'usr_me' and never read — a fake identity parked in the bundle, in a component
 // whose ownership already comes from the server (`/api/listings/mine`). A name
 // that means nothing is a bug waiting for someone to trust it.
-export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}) {
-  const [section, setSection] = React.useState<Section>(initialSection);
+export function Marketplace({ initialSection = 'browse', hideBrowse = false }: MarketplaceProps = {}) {
+  const start: Section = hideBrowse && initialSection === 'browse' ? 'orders' : initialSection;
+  const [section, setSection] = React.useState<Section>(start);
   const [view, setView] = React.useState<View>({ kind: 'list' });
 
   const [listings, setListings] = React.useState<{
@@ -303,7 +307,7 @@ export function Marketplace({ initialSection = 'browse' }: MarketplaceProps = {}
 
   const tabs = (
     <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar mb-4">
-      {SECTIONS.map((s) => (
+      {(hideBrowse ? SECTIONS.filter((s) => s.id !== 'browse') : SECTIONS).map((s) => (
         <button
           key={s.id}
           onClick={() => {

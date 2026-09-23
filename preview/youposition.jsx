@@ -227,7 +227,7 @@ async function main() {
   }
   pass('CopyId never claims a copy it could not make');
 
-  // --- 5. You really opens on the position, not the bio --------------------
+  // --- 5. You is titles; Standing is the overlay that holds position --------
   {
     const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
     global.fetch = async (input) => {
@@ -244,13 +244,22 @@ async function main() {
     };
     const { container } = mount(React.createElement(YouSurface, { onOpenEntity: () => {}, onRequireAuth: () => {} }));
     await flush();
-    const t = text(container);
-    assert.ok(t.includes('Your position'), 'the You screen leads with position');
-    assert.ok(t.indexOf('Your position') < t.indexOf('hosted'), 'before the bio-style counts');
-    assert.ok(/stale/i.test(t), 'with the real space states');
-    assert.ok(t.includes('Amina O.'), 'and the name on the session');
+    let t = text(container);
+    assert.ok(!t.includes('Your position'), 'You is a list of titles, not a position hero');
+    const standing = document.querySelector('[data-testid="menu-tile-standing"]');
+    assert.ok(standing, 'Standing is a tile');
+    click(standing);
+    await flush();
+    t = text(container);
+    assert.ok(document.querySelector('[role="dialog"]'), 'Standing opens as an overlay');
+    assert.ok(t.includes('Your position'), 'and the position cards live there');
+    const profile = document.querySelector('[data-testid="menu-tile-profile"]');
+    click(profile);
+    await flush();
+    t = text(container);
+    assert.ok(t.includes('Amina O.'), 'the session name is on Profile');
   }
-  pass('YouSurface leads with the position hero, ahead of the profile counts');
+  pass('YouSurface is titles; Standing is the overlay that holds position');
 
   console.log('\nPASS ' + count);
   process.exit(0);

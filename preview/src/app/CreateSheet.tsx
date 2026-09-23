@@ -12,8 +12,8 @@ import { soundEngine } from '../utils/SoundEngine';
 // create action gets it from the bar, not from its own corner.
 //
 // Each row lands on the flow that actually writes the row:
-//   Post an offer  → the marketplace Selling counter, where a listing and the
-//                    shop it belongs to are really written
+//   Post an offer  → Mine’s Selling tab, where a listing (and the shop it
+//                    belongs to) is really written — not a fourth browse shelf
 //   Host an event  → the createCampaign → publish loop (it is public the
 //                    moment it is written)
 //   Start a run    → the errand board with the delivery kind chosen and the

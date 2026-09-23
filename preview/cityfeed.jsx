@@ -159,8 +159,9 @@ async function main() {
     const card = c.querySelector('.bg-gradient-to-b');
     assert.ok(!card, 'no dark gradient card remains');
     const t = text(c);
-    assert.ok(t.includes("What's happening nearby"), 'the shop-window title is present');
-    assert.ok(t.includes('Discover'), 'an eyebrow label is present');
+    assert.ok(!t.includes("What's happening nearby"), 'no Discover heading reprints the door');
+    assert.ok(!/\bDiscover\b/.test(t), 'no Discover eyebrow on the board');
+    assert.ok(c.querySelector('button[aria-label="Browse the board"]'), 'Browse the board is the entry');
     // The chip row is gone: the tile grid is the navigation now.
     const nav = c.querySelector('nav[aria-label="Discover sections"]');
     assert.ok(!nav, 'no chip row survives on this screen');
@@ -186,7 +187,7 @@ async function main() {
     const hero = Array.from(c.querySelectorAll('div')).find((d) => (d.getAttribute('class') || '').includes('text-3xl'));
     assert.ok(!hero, 'no scoreboard hero remains');
   }
-  pass('DiscoveryHead is a clean premium light header (no scoreboard, no dark card)');
+  pass('the board has no Discover heading (no scoreboard, no dark card)');
 
   // --- 3. The create sheet's two loops still land on the rows they write ---
   // "Host an event" is now the shell's sheet (it used to be a modal on this

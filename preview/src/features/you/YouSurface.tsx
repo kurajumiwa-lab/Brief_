@@ -16,8 +16,8 @@ import { HowBriefWorks } from "./HowBriefWorks";
 import { hrefForDest } from "../../app/surfaces";
 import { GuardianNetwork } from "./GuardianNetwork";
 import { Marketplace } from "../../components/Marketplace";
-import { PositionHero } from "./PositionHero";
 import { Vault } from "../../components/vault/Vault";
+import { OverlayScreen } from "../../ui/OverlayScreen";
 import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
@@ -112,10 +112,14 @@ const YOU_GROUPS: Array<{ id: string; label: string; items: Array<{ id: Section;
   }
 ];
 
-type Section =
+export type YouSection =
   | "profile" | "standing" | "following" | "subscriptions"
   | "earn" | "orders" | "selling" | "archive" | "tableBanking" | "network" | "how"
   | "language" | "notifications" | "privacy";
+
+type Section = YouSection;
+
+export const YOU_SECTION_IDS: YouSection[] = YOU_GROUPS.flatMap((g) => g.items.map((i) => i.id));
 
 // The one tile shape across the You tab: a thin-line icon in a 12px tinted
 // square, a bold 15px title, a grey 13px description in the app's own words.
@@ -138,34 +142,44 @@ const SECTION_ICONS: Record<Section, React.ReactNode> = {
   privacy: <Lock className="w-5 h-5" />
 };
 
-const SECTION_SUBS: Record<Section, string> = {
-  profile: "Who you are on this device",
-  standing: "What you owe, what is owed you",
-  following: "Places and people you follow",
-  selling: "Your offers, quotes and shop",
-  orders: "What you bought, what you sold",
-  network: "Guardians and programs around you",
-  earn: "Your money, the real way",
-  tableBanking: "Shared pots, kept in the open",
-  subscriptions: "Paid plans you have joined",
-  archive: "Records you keep for yourself",
-  how: "How a row becomes trust",
-  language: "One language, said plainly",
-  notifications: "The real bell for this device",
-  privacy: "What this device keeps, and how to clear it"
+const SECTION_TITLES: Record<Section, string> = {
+  profile: "Profile",
+  standing: "Standing",
+  following: "Following",
+  selling: "Selling",
+  orders: "Orders",
+  network: "Your network",
+  earn: "Earn",
+  tableBanking: "Table Banking",
+  subscriptions: "Subscriptions",
+  archive: "Archive",
+  how: "How Trace works",
+  language: "Language",
+  notifications: "Notifications",
+  privacy: "Privacy"
 };
 
 export function YouSurface({
   onOpenEntity,
   onRequireAuth,
-  initialSection
+  initialSection,
+  openSection,
+  onOpenSection
 }: {
   onOpenEntity: (entityId: string) => void;
   onRequireAuth: () => void;
   /** Deep link from the ⓘ on Home: the audit screen is a tab, not a footnote. */
-  initialSection?: Section;
+  initialSection?: Section | null;
+  /** When the shell owns the URL (`#you/<section>`), this is the open overlay. */
+  openSection?: Section | null;
+  onOpenSection?: (section: Section | null) => void;
 }) {
-  const [section, setSection] = useState<Section>(initialSection ?? "profile");
+  const [localSection, setLocalSection] = useState<Section | null>(initialSection ?? null);
+  const section = onOpenSection ? (openSection ?? null) : localSection;
+  const setSection = (next: Section | null) => {
+    if (onOpenSection) onOpenSection(next);
+    else setLocalSection(next);
+  };
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [me, setMe] = useState<AuthedUser | null>(null);
@@ -310,23 +324,20 @@ export function YouSurface({
     );
   }
 
+  const overlay = (id: Section, body: React.ReactNode) => (
+    <OverlayScreen title={SECTION_TITLES[id]} onBack={() => setSection(null)}>
+      {notice && (
+        <p className="text-xs" style={{ color: "var(--color-text-muted)" }} role="status">{notice}</p>
+      )}
+      {body}
+    </OverlayScreen>
+  );
+
   return (
     <section className="max-w-3xl mx-auto" aria-label="You">
-      <div>
-        <span className="text-xs font-black uppercase tracking-widest" style={{ color: "var(--color-primary)" }}>Your account</span>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight mt-1" style={{ color: "var(--color-text)" }}>
-          {me?.displayName ?? me?.handle ?? "You"}
-        </h1>
-        {me?.handle && <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>@{me.handle}</p>}
-      </div>
-
-      {/* Four labelled groups, the same tile in every one of them.
-          Nothing was deleted on the way and nothing was renamed — Subscriptions
-          stays because those rows are real paid plans, and "Archive" stays
-          because a member must be able to find what they closed. The pills
-          became tiles: a title plus the one grey line that says what the
-          section holds, under a small grey uppercase mono header. */}
-      <div className="mt-4 space-y-3">
+      {/* Titles only. The bar already says You; a “Your account” heading and
+          the notes under each tile reprint a door and a screen that now exist. */}
+      <div className="space-y-3">
         {YOU_GROUPS.map((group) => (
           <div key={group.id}>
             <SectionHeader>{group.label}</SectionHeader>
@@ -336,7 +347,6 @@ export function YouSurface({
                   key={item.id}
                   icon={SECTION_ICONS[item.id]}
                   title={item.label}
-                  description={SECTION_SUBS[item.id]}
                   active={section === item.id}
                   testId={item.id}
                   onClick={() => { setSection(item.id); setNotice(""); }}
@@ -347,26 +357,15 @@ export function YouSurface({
         ))}
       </div>
 
-      {notice && (
-        <p className="text-xs mt-3" style={{ color: "var(--color-text-muted)" }} role="status">{notice}</p>
-      )}
+      {section === "profile" && overlay("profile", (
+        <div className="space-y-3">
+          <div>
+            <p className="text-2xl font-black tracking-tight" style={{ color: "var(--color-text)" }}>
+              {me?.displayName ?? me?.handle ?? "You"}
+            </p>
+            {me?.handle && <p className="text-xs mt-1" style={{ color: "var(--color-text-muted)" }}>@{me.handle}</p>}
+          </div>
 
-      {section === "profile" && (
-        <div className="mt-4 space-y-3">
-          {/* POSITION FIRST — the shape of a rating hero, with the rating
-              removed: what is expiring, what is owed, how your spaces read,
-              what you defended. Numbers and rows, never a score. */}
-          <PositionHero
-            position={position}
-            commitments={commitments}
-            reciprocity={reciprocity}
-            spaces={mySpaces}
-            precedent={precedent}
-            denied={positionDenied}
-            onRetry={() => setPositionAttempt((a) => a + 1)}
-          />
-
-          {/* Standing — derived from real rows */}
           {person?.standing && (
             <div
               className="rounded-2xl p-5 grid grid-cols-4 gap-3"
@@ -386,7 +385,6 @@ export function YouSurface({
             </div>
           )}
 
-          {/* Provenance — how you arrived, honest null when none */}
           {provenance && (
             <div className="rounded-2xl p-4" style={{ background: "var(--color-surface-elevated)" }}>
               <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>You came through</p>
@@ -403,10 +401,10 @@ export function YouSurface({
             Sign out
           </button>
         </div>
-      )}
+      ))}
 
-      {section === "following" && (
-        <div className="mt-4">
+      {section === "following" && overlay("following", (
+        <div>
           {follows === null ? (
             <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading your follows…</p>
           ) : follows.total === 0 ? (
@@ -456,10 +454,10 @@ export function YouSurface({
             </MotionList>
           )}
         </div>
-      )}
+      ))}
 
-      {section === "subscriptions" && (
-        <div className="mt-4 space-y-6">
+      {section === "subscriptions" && overlay("subscriptions", (
+        <div className="space-y-6">
           <div>
             <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Plans to join</p>
             {plans === null ? (
@@ -515,7 +513,7 @@ export function YouSurface({
             )}
           </div>
         </div>
-      )}
+      ))}
 
       {/* ── STANDING — where a member defends their position. Every figure is
              derived from their own rows at read time; there is no rank, no
@@ -524,18 +522,18 @@ export function YouSurface({
       {/* ARCHIVE — the filing cabinet at home. Records and receipts you keep
           for yourself, which is why it sits in You and not in a public gallery
           or a business workspace. */}
-      {section === "archive" && (
-        <div className="mt-4 space-y-3">
+      {section === "archive" && overlay("archive", (
+        <div className="space-y-3">
           <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
             Restricted records and drops you hold or have been granted. An archive is read slowly and kept — it is
             not something to browse between posters.
           </p>
           <Vault />
         </div>
-      )}
+      ))}
 
-      {section === "standing" && (
-        <div className="mt-4 space-y-3">
+      {section === "standing" && overlay("standing", (
+        <div className="space-y-3">
           <PositionCard position={position} />
           <CommitmentsCard commitments={commitments} />
           <ReciprocityCard reciprocity={reciprocity} />
@@ -545,38 +543,38 @@ export function YouSurface({
             still exists.
           </p>
         </div>
-      )}
+      ))}
 
       {/* ── ORDERS / SELLING — the personal halves of commerce, moved off the
              browse screen. Same Marketplace rails, same server-authoritative
              money; only the address changed. ── */}
-      {section === "orders" && (
-        <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-          <Marketplace initialSection="orders" />
+      {section === "orders" && overlay("orders", (
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+          <Marketplace initialSection="orders" hideBrowse />
         </div>
-      )}
+      ))}
 
-      {section === "selling" && (
-        <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
-          <Marketplace initialSection="selling" />
+      {section === "selling" && overlay("selling", (
+        <div className="rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
+          <Marketplace initialSection="selling" hideBrowse />
         </div>
-      )}
+      ))}
 
-      {section === "earn" && (
+      {section === "earn" && overlay("earn", (
         <EarnSurface onRequireAuth={onRequireAuth} />
-      )}
+      ))}
 
-      {section === "network" && <GuardianNetwork />}
-      {section === "how" && <HowBriefWorks />}
+      {section === "network" && overlay("network", <GuardianNetwork />)}
+      {section === "how" && overlay("how", <HowBriefWorks />)}
 
-      {section === "tableBanking" && (
+      {section === "tableBanking" && overlay("tableBanking", (
         <TableBankingSurface onRequireAuth={onRequireAuth} />
-      )}
+      ))}
 
       {/* ── SETTINGS — the three controls the drawer's Settings group names.
           Each one answers what it claims; none of them switches nothing. ── */}
-      {section === "language" && (
-        <div className="mt-4 space-y-3">
+      {section === "language" && overlay("language", (
+        <div className="space-y-3">
           <div className="p-4 rounded-2xl" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
             <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>English</p>
             <p className="text-xs mt-1.5 leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
@@ -586,13 +584,13 @@ export function YouSurface({
             </p>
           </div>
         </div>
-      )}
+      ))}
 
-      {section === "notifications" && (
-        <div className="mt-4 space-y-3">
+      {section === "notifications" && overlay("notifications", (
+        <div className="space-y-3">
           <NotificationCenter
             authed={!signedOut}
-            onClose={() => setSection("profile")}
+            onClose={() => setSection(null)}
             /* A tap goes where the notification says. Dests this shell has no
                surface for open nothing, rather than landing on a screen that
                looks like the one that was promised. */
@@ -602,10 +600,10 @@ export function YouSurface({
             }}
           />
         </div>
-      )}
+      ))}
 
-      {section === "privacy" && (
-        <div className="mt-4 space-y-3">
+      {section === "privacy" && overlay("privacy", (
+        <div className="space-y-3">
           <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
             What this device keeps, and how to take it back. Nothing here is a
             toggle that pretends: each row is a real store on this browser, and
@@ -664,7 +662,7 @@ export function YouSurface({
             </div>
           </div>
         </div>
-      )}
+      ))}
     </section>
   );
 }

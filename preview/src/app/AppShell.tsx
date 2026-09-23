@@ -15,7 +15,7 @@ import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
 import { CityFeedView } from '../features/city/CityFeedView';
 import type { DiscoverRoom } from '../features/city/taxonomy';
-import { SpacesLanding } from '../features/spaces/SpacesLanding';
+
 import { PublicSpacePage } from '../features/spaces/PublicSpacePage';
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
 import { PublicOfferModal } from '../features/offers/PublicOfferModal';
@@ -23,7 +23,7 @@ import { JoinRoom } from '../features/city/JoinRoom';
 import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
 import { PartnerDesk } from '../features/partner/PartnerDesk';
-import { YouSurface } from '../features/you/YouSurface';
+import { YouSurface, YOU_SECTION_IDS, type YouSection } from '../features/you/YouSurface';
 import { EntityDetail } from '../features/you/EntityDetail';
 import { FirstRunChecklist } from '../features/you/FirstRunChecklist';
 import { PulseSurface } from '../features/pulse/PulseSurface';
@@ -84,6 +84,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [hostSheetOpen, setHostSheetOpen] = useState<boolean>(false);
   const [groupBuysOpen, setGroupBuysOpen] = useState<boolean>(false);
   const [sellingNonce, setSellingNonce] = useState<number>(0);
+  const [mineSellingNonce, setMineSellingNonce] = useState<number>(0);
   const [errandSignal, setErrandSignal] = useState<{ nonce: number; kind: string | null } | null>(null);
   const [signalCounter, setSignalCounter] = useState<number>(0);
 
@@ -125,7 +126,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
     setYouSection(target.section);
     setActiveTab('you');
-    window.location.hash = 'you';
+    window.location.hash = `you/${target.section}`;
   };
 
   /**
@@ -137,10 +138,9 @@ export const AppShell: React.FC<AppShellProps> = ({
     const nextNonce = signalCounter + 1;
     setSignalCounter(nextNonce);
     if (id === 'offer') {
-      setDiscoverSubTab('all');
-      setSellingNonce(nextNonce);
-      setActiveTab('city');
-      window.location.hash = 'city';
+      setMineSellingNonce(nextNonce);
+      setActiveTab('mine');
+      window.location.hash = 'mine';
     } else if (id === 'event') {
       setHostSheetOpen(true);
     } else if (id === 'run' || id === 'errand') {
@@ -357,13 +357,24 @@ export const AppShell: React.FC<AppShellProps> = ({
       } else if (hash === 'entity' || hash.startsWith('entity/')) {
         const id = decodeURIComponent(hash.slice(7));
         if (id) { setEntityId(id); setActiveTab('you'); }
+      } else if (hash === 'you' || hash.startsWith('you/')) {
+        setJoinCode('');
+        setSearchQuery('');
+        setEntityId(null);
+        setActiveTab('you');
+        tabHashRef.current = hash.startsWith('you/') ? hash : 'you';
+        let rest = '';
+        if (hash.startsWith('you/')) {
+          try { rest = decodeURIComponent(hash.slice(4)); } catch { rest = hash.slice(4); }
+        }
+        setYouSection((YOU_SECTION_IDS as string[]).includes(rest) ? rest : null);
       } else if (hash === '' || (hash && hash !== 'join')) {
         setJoinCode('');
         setSearchQuery('');
         // 'activity' is the old bar's fourth door: its surface now lives in the
         // drawer's check-in, so the legacy hash resolves there. 'mine' and
         // 'pulse' are the new bar's doors and the drawer's check-in.
-        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'pipeline', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'mine', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; }
         else if (!hash) {
           // Empty hash IS home. Mapping it to `initialTab` (once 'city') made
@@ -533,12 +544,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         {/* SPACES with no space open is the STREET: the shopfronts you operate
             and the ones you follow. Circles and vaults are not here — belonging
             and filing are different nouns from operating a business. */}
-        {['pipeline', 'spaces'].includes(activeTab) && !activeSpace && (
-          <SpacesLanding
-            onOpenSpace={openSpace}
-            onOpenPublicSpace={(slug) => { window.location.hash = `space/${encodeURIComponent(slug)}`; }}
-          />
-        )}
+        {/* The street of shops is Mine. Home → Shops and the Mine door are
+            the same shelf, so there is no second SpacesLanding to hunt through
+            for Create space. A shop still opens at #shop/<id>. */}
 
         {/* A shared space link resolves here, and only here does a view row get
             written — so the vendor's view count means page openings. */}
@@ -578,11 +586,11 @@ export const AppShell: React.FC<AppShellProps> = ({
               window.location.hash = 'city';
             }}
             onOpenPulse={() => { setActiveTab('pulse'); window.location.hash = 'pulse'; }}
-            onOpenSpaces={() => { setActiveTab('pipeline'); window.location.hash = 'spaces'; }}
+            onOpenSpaces={() => { setActiveTab('mine'); window.location.hash = 'mine'; }}
             onOpenGroupBuys={() => setGroupBuysOpen(true)}
             onGetPaid={() => setActiveTab('ledger')}
-            onOpenHow={() => { setYouSection('how'); setActiveTab('you'); }}
-            onOpenEarn={() => { setYouSection('earn'); setActiveTab('you'); window.location.hash = 'you'; }}
+            onOpenHow={() => { window.location.hash = 'you/how'; }}
+            onOpenEarn={() => { window.location.hash = 'you/earn'; }}
           />
         ) : (
           <div>
@@ -614,7 +622,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             )}
 
             {/* ── MINE (the bar's second door: your shops, orders, saved) ── */}
-            {activeTab === 'mine' && (
+            {(activeTab === 'mine' || ((activeTab === 'pipeline' || activeTab === 'spaces') && !activeSpace)) && (
               <MineSurface
                 onOpenSpace={openSpace}
                 onOpenCreateSpace={() => {
@@ -623,6 +631,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 }}
                 onOpenEntity={(id) => { setEntityId(id); setActiveTab('you'); window.location.hash = `entity/${id}`; }}
                 onRequireAuth={() => showToast('Sign in to continue.')}
+                sellingSignal={mineSellingNonce}
               />
             )}
 

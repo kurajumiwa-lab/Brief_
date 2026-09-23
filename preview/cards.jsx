@@ -10,8 +10,8 @@
 //     EXACTLY ONE full-width action. No card with two buttons, no card with a
 //     corner badge, no "featured" variant anywhere;
 //   * the banner: one dark-gradient button per screen at most — "What's
-//     moving today →" on Home, "Your shop overview →" on Mine when a shop is
-//     owned. A second gradient on one screen is a second shout;
+//     moving today →" on Home. Mine has none: a second storefront on the
+//     same door was the dual shelf. A second gradient on one screen is a second shout;
 //   * the tile: the drawer's and the You tab's one menu-tile shape (pinned
 //     alongside in appbelt.jsx and yousurface.jsx);
 //   * the shop's Documents section stays the folder pattern: folder, name,
@@ -259,6 +259,8 @@ async function main() {
       ] });
       if (url.includes('/api/auth/me')) return ok({ id: 'me', displayName: 'Test', handle: 'test' });
       if (url.includes('/api/escrows/mine')) return ok({ rows: [], totals: { heldKes: 0, releasedKes: 0, heldCount: 0 }, note: 'Records of funds held between two sides until delivery — Brief moves no money itself.' });
+      if (url.includes('/api/me/follows')) return ok({ groups: {}, total: 0, kindLabels: {} });
+      if (url.includes('/api/shop-brief')) return ok({ brief: { empty: true, reason: 'no_spaces' } });
       if (url.includes('/api/orders')) return ok({ orders: [] });
       if (url.includes('/api/listings')) return ok({ listings: [] });
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
@@ -267,10 +269,10 @@ async function main() {
       onOpenSpace: () => {}, onOpenCreateSpace: () => {}, onOpenEntity: () => {}, onRequireAuth: () => {}
     }));
     await flush(150);
-    // THE BANNER — the member owns shops, so the one loud thing is here.
+    // THE BANNER — gone. A second storefront on Mine was the dual shelf.
     const banners = host.querySelectorAll('[data-testid="gradient-banner"]');
-    assert.equal(banners.length, 1, 'exactly one gradient banner on Mine');
-    assert.ok(text(banners[0]).includes('Your shop overview'), 'and it is the shop overview, not a promise');
+    assert.equal(banners.length, 0, 'no gradient banner on Mine');
+    assert.ok(!text(host).includes('Your shop overview'), 'and no shop-overview shout');
     // THE GRID — the shops as the one card.
     const grid = host.querySelector('[data-testid="mine-shop-grid"]');
     assert.ok(grid && grid.classList.contains('grid-cols-2'), 'the shops are a two-column grid');

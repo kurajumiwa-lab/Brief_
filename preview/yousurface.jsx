@@ -105,7 +105,7 @@ async function main() {
   const { c, root } = mount({ onOpenEntity: () => {}, onRequireAuth: () => {} });
   await flush(60);
 
-  check('greeting uses the session name, not a placeholder', text(c).includes('Amina'));
+  check('You does not greet as a page titled Your account', !/Your account/.test(text(c)));
 
   // The tile grid: every section once, and the one tile shape the refactor
   // holds (bold 15px title, grey 13px description capped at two lines).
@@ -114,11 +114,11 @@ async function main() {
   allTiles.forEach((t) => { const l = tileTitle(t); seen.set(l, (seen.get(l) ?? 0) + 1); });
   check('every section tile appears exactly once',
     Object.keys(SECTION_IDS).every((s) => seen.get(s) === 1) && allTiles.length === Object.keys(SECTION_IDS).length);
-  check('each tile is the one shape: 15px bold title + grey 13px two-line description',
+  check('each tile is the one shape: 15px bold title, no note',
     allTiles.length > 0 && allTiles.every((t) => {
       const title = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[15px]'));
       const desc = Array.from(t.querySelectorAll('span')).find((s) => s.classList.contains('text-[13px]'));
-      return title && title.classList.contains('font-bold') && desc && desc.classList.contains('line-clamp-2');
+      return title && title.classList.contains('font-bold') && !desc;
     }));
   // Group headers are small, grey, uppercase, mono.
   check('section headers are small grey uppercase mono',
@@ -161,8 +161,11 @@ async function main() {
 
   // ── The old sections survive the reorg: profile still leads. ──
   await clickTile('profile');
-  check('profile section still renders under the reorg',
-    /Your account/.test(text(c)));
+  check('profile overlay uses the session name, not a placeholder',
+    text(c).includes('Amina') && /@amina/.test(text(c)));
+  check('profile overlay is a dialog with a way out',
+    Boolean(document.querySelector('[role="dialog"]')) &&
+    Array.from(document.querySelectorAll('button')).some((b) => (b.textContent || '').trim() === 'Back'));
 
   act(() => { root.unmount(); });
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);

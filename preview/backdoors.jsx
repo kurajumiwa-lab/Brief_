@@ -185,10 +185,12 @@ async function main() {
   }
   pass('the following list is a sheet when it is one, and a block when it is embedded');
 
-  // --- 4. Mine embeds it, and does not hand it a dead exit ------------------
+  // --- 4. Mine kept-list is a belt of real follows, not a trapped overlay ---
   {
     const mine = codeLines(srcOf('src/features/mine/MineSurface.tsx'));
-    assert.match(mine, /variant="embedded"/, 'Mine mounts the embedded variant');
+    assert.match(mine, /getMyFollows/, 'Mine reads the follows that exist');
+    assert.match(mine, /follow-belt/, 'and paints them as a belt, not a sheet');
+    assert.ok(!/FollowingSurface/.test(mine), 'the trapped overlay is not mounted here');
     assert.ok(!/onClose=\{\(\) => \{\}\}/.test(mine), 'and no no-op close');
     assert.ok(!/onOpenObject=\{\(\) => \{\}\}/.test(mine),
       'nor a saved-item card wired to an "open" that opens nothing');
@@ -346,7 +348,7 @@ async function main() {
 
     window.location.hash = 'city';
     await flush(); await flush();
-    assert.ok(/happening nearby/i.test(text(host)), 'the board is still a real screen, when asked for');
+    assert.ok(document.querySelector('[aria-label="Browse the board"]'), 'the board is still a real screen, when asked for');
     assert.ok(!host.querySelector('[data-testid="mode-tiles"]'), 'and Home is not sitting under it');
 
     const homeDoor = Array.from(document.querySelectorAll('button')).find((b) => /^Home$/.test(text(b)));

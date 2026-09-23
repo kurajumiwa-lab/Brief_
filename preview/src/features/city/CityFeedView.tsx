@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { DiscoverFeed } from './DiscoverFeed';
-import { DiscoveryHead } from './DiscoveryHead';
 import type { DiscoverRoom } from './taxonomy';
 import { soundEngine } from '../../utils/SoundEngine';
 
@@ -98,14 +97,9 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
 
   return (
     <div className={`space-y-5 max-w-xl mx-auto ${className}`}>
-      <DiscoveryHead
-        eyebrow="Discover"
-        title="What's happening nearby"
-        subtitle="What people are selling, hosting and needing carried"
-        segments={[]}
-        activeSegmentId={room}
-      />
-
+      {/* No Discover heading. The bar already named the door that opened this
+          board; reprinting “What’s happening nearby” is a screen title that
+          duplicates the journey, not a fact. Browse the board is the entry. */}
       <DiscoverFeed
         room={room}
         onRoomChange={(r) => setRoom(r)}

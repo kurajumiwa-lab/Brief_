@@ -67,6 +67,8 @@ async function main() {
   {
     handler = async (url) => {
       if (url.includes('/api/spaces')) return fail(500);
+      if (url.includes('/api/me/follows')) return ok({ groups: {}, total: 0, kindLabels: {} });
+      if (url.includes('/api/shop-brief')) return ok({ brief: { empty: true, reason: 'no_spaces' } });
       if (url.includes('/api/escrows/mine')) return ok({ rows: [], totals: { heldKes: 0, releasedKes: 0, heldCount: 0 }, note: 'x' });
       if (url.includes('/api/auth/me')) return fail(401);
       if (url.includes('/api/orders') || url.includes('/api/listings') || url.includes('/api/disputes')) return ok({ orders: [], listings: [], disputes: [] });
@@ -83,6 +85,8 @@ async function main() {
   {
     handler = async (url) => {
       if (url.includes('/api/spaces')) return ok({ spaces: [] });
+      if (url.includes('/api/me/follows')) return ok({ groups: {}, total: 0, kindLabels: {} });
+      if (url.includes('/api/shop-brief')) return ok({ brief: { empty: true, reason: 'no_spaces' } });
       if (url.includes('/api/escrows/mine')) return ok({ rows: [], totals: { heldKes: 0, releasedKes: 0, heldCount: 0 }, note: 'x' });
       if (url.includes('/api/auth/me')) return ok({ user: { id: 'me', displayName: 'ogallo' } });
       if (url.includes('/api/orders') || url.includes('/api/listings') || url.includes('/api/disputes')) return ok({ orders: [], listings: [], disputes: [] });
@@ -147,6 +151,8 @@ async function main() {
   {
     handler = async (url) => {
       if (url.includes('/api/spaces')) return ok({ spaces: [space('spc_m', { name: 'Nairobi Boda' })] });
+      if (url.includes('/api/me/follows')) return ok({ groups: {}, total: 0, kindLabels: {} });
+      if (url.includes('/api/shop-brief')) return ok({ brief: { empty: true, reason: 'no_spaces' } });
       if (url.includes('/api/escrows/mine')) return ok({ rows: [], totals: { heldKes: 0, releasedKes: 0, heldCount: 0 }, note: 'x' });
       if (url.includes('/api/auth/me')) return ok({ user: { id: 'me', displayName: 'ogallo' } });
       if (url.includes('/api/orders') || url.includes('/api/listings') || url.includes('/api/disputes')) return ok({ orders: [], listings: [], disputes: [] });

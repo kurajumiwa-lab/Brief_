@@ -17,6 +17,8 @@ import { CreateFlowModal } from './CreateFlowModal';
 import { soundEngine } from '../../utils/SoundEngine';
 import { needsAttention } from '../home/spaceSignals';
 import { ShopDocuments, type ShopDocument } from './ShopDocuments';
+import { ImageField } from '../../components/ImageField';
+import { OverlayScreen } from '../../ui/OverlayScreen';
 
 // The document store does not exist yet, so the list this section reads from
 // is empty by design: the folder pattern is in place, and the moment the
@@ -491,6 +493,13 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                 </p>
               </div>
             )}
+            <ImageField
+              label="Shop photo"
+              hint="The cover on this shop. Only a photo you upload — nothing is filled in."
+              value={identity.image}
+              onChange={(url) => setIdentity((v) => ({ ...v, image: url }))}
+              compact
+            />
             <input
               type="text"
               aria-label="Space goal"
@@ -621,15 +630,15 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </button>
       </div>
 
-      {/* ── SURFACE 1: PIPELINE (Primary Landing) ── */}
+      {/* ── SURFACE 1: INBOX — overlay, not a tab you scroll to. ── */}
       {currentTab === 'pipeline' && (
-        <div className="animate-fadeIn">
+        <OverlayScreen title="Inbox" onBack={() => setActiveTab('catalog')}>
           <PipelineView
             space={space}
             onRefresh={loadSpace}
             onShareOffer={(t) => showToast(`Link for "${t}" copied!`)}
           />
-        </div>
+        </OverlayScreen>
       )}
 
       {/* ── SURFACE 2: LEDGER (Financial Truth) ── */}

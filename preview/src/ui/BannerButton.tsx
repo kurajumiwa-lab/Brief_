@@ -3,8 +3,8 @@ import { ArrowRight } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // BANNER BUTTON — the one dark-gradient banner a screen may carry. Home gets
-// one ("What's moving today →"); Mine gets one when the member owns a shop
-// ("Your shop overview →"). Never two on a screen: a second gradient is a
+// one ("What's moving today →"). Mine does not: a second storefront on the
+// same door was the dual shelf. Never two on a screen: a second gradient is a
 // second shout, and the rule of this refactor is that nothing is special,
 // so the ONE banner is the only place on the screen allowed to be loud.
 // ---------------------------------------------------------------------------
