@@ -183,6 +183,10 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
         'Seeded activity, demo crowds, “N buyers waiting”, verified badges nobody verified, counts of people viewing, urgency timers on a link that does not expire, leaderboards, streaks, tiers, badges for using the app, and QR codes for pages that do not resolve.',
         'A trust score out of 100, “Good Standing”, SACCO credit of KES 50,000, “3 Bids” on an errand nobody posted, a countdown on a bid, and a photograph of Unga that is not the seller’s file are mockups. They are not printed. Standing is counts over your rows. An empty errand board is empty.',
         'There is no Trust tab and no Errands tab. The bar is Home · Mine · You · [+]. Wairo is the brand on the band; it does not grow a fourth door.',
+        'Wairo Blue Avenue is a landlord of rails, not a merchant. It does not take stock, does not promise a rider will arrive, and does not lend. Standing is counts over your rows — not a score out of 100, not a SACCO offer.',
+        'KEEP: Home · Mine · You · [+]. Circles stay Circles. Errands stay gated by a real basis. Create stays four verbs. Empty boards stay empty. M-Pesa is a rail we do not pretend to own.',
+        'ENHANCE: the knot and wordmark, Blue Avenue on the band, WhatsApp as the door on a group buy that has a real address.',
+        'NOT BUILT: voice-note listings, USSD *384#, STK escrow, a 2% cut, Wairo Pro, auto-filled speech, a demand line that invents three people in Ruiru. Each is named here so a mockup cannot land as a screen.',
         'Where a reference would have to be invented — a carrier’s phone number, a partner’s volume, a sector average — the field is empty and says why. An honest blank is the product.'
       ]
     }
@@ -193,7 +197,7 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       <div className="space-y-1">
         <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Wairo works</h2>
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
-          Everything the screens deliberately do not say, in one place.
+          The digital street where business gets done. Everything the screens deliberately do not say, in one place.
         </p>
       </div>
       {blocks.map((b) => <Section key={b.id} block={b} />)}

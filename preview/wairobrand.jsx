@@ -64,7 +64,9 @@ async function main() {
     await flush();
     const t = text(host);
     const mark = host.querySelector('[data-testid="wairo-wordmark"]');
+    const avenue = host.querySelector('[data-testid="wairo-avenue"]');
     check('the band wordmark is Wairo', Boolean(mark) && text(mark) === 'Wairo');
+    check('Blue Avenue sits on the band with the wordmark', Boolean(avenue) && text(avenue) === 'Blue Avenue');
     check('the band no longer says Trace as the product name', !/\bTrace\b/.test(t));
     check('the home control is labelled Wairo home',
       Boolean(host.querySelector('[aria-label="Wairo home"]')));

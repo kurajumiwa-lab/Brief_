@@ -124,8 +124,13 @@ export const AppBelt: React.FC<AppBeltProps> = ({
           className="flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
           <WairoMark size={22} title="" />
-          <span data-testid="wairo-wordmark" className="text-[15px] font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
-            Wairo
+          <span className="flex flex-col items-start leading-none">
+            <span data-testid="wairo-wordmark" className="text-[15px] font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
+              Wairo
+            </span>
+            <span data-testid="wairo-avenue" className="text-[11px] font-bold uppercase tracking-[0.12em] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              Blue Avenue
+            </span>
           </span>
         </button>
 

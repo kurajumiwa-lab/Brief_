@@ -259,8 +259,13 @@ export const Navigation: React.FC<NavigationProps> = ({
               <span className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" aria-hidden="true">
                 <WairoMark size={28} title="" />
               </span>
-              <span className="text-xl font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
-                Wairo
+              <span className="flex flex-col items-start leading-none">
+                <span className="text-xl font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
+                  Wairo
+                </span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.12em] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                  Blue Avenue
+                </span>
               </span>
             </div>
             <div className="p-2.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between">

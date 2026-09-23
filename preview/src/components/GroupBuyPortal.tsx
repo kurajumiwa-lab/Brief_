@@ -1,7 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { MessageCircle } from 'lucide-react';
 import { StageStepper } from './StageStepper';
 import * as briefApi from '../api/briefApi';
 import type { GroupBuy } from '../api/briefApi';
+
+/** A wa.me link to this app's group-buys door. No invented shop URL. */
+function groupBuyWhatsApp(title: string): string | null {
+  if (typeof window === 'undefined') return null;
+  const origin = window.location.origin;
+  if (!origin || origin === 'null') return null;
+  const url = `${origin}${window.location.pathname || '/'}#groupbuys`;
+  return `https://wa.me/?text=${encodeURIComponent(`${title} — Wairo Blue Avenue ${url}`)}`;
+}
 
 // ---------------------------------------------------------------------------
 // GROUP BUY PORTAL — the "Circle & Group Buy" financial package.
@@ -219,9 +229,9 @@ export function GroupBuyPortal({ onClose }: { onClose?: () => void } = {}) {
                   onClick={() => { setSelectedId(b.id); setLastReceipt(null); }}
                   className="rounded-lg border px-2.5 py-1 text-[11px] font-extrabold cursor-pointer"
                   style={{
-                    borderColor: b.id === selected?.id ? '#2563EB' : 'var(--brief-line)',
-                    background: b.id === selected?.id ? '#2563EB' : 'var(--color-paper)',
-                    color: b.id === selected?.id ? '#0D1117' : '#0D1117'
+                    borderColor: b.id === selected?.id ? 'var(--wairo-blue)' : 'var(--brief-line)',
+                    background: b.id === selected?.id ? 'var(--wairo-blue)' : 'var(--color-paper)',
+                    color: b.id === selected?.id ? 'var(--accent-ink)' : 'var(--wairo-slate)'
                   }}
                 >
                   {b.title}
@@ -280,6 +290,18 @@ export function GroupBuyPortal({ onClose }: { onClose?: () => void } = {}) {
                     {selected.stages[selected.stageIndex]?.label}
                   </span>
                 </div>
+                {groupBuyWhatsApp(selected.title) ? (
+                  <a
+                    href={groupBuyWhatsApp(selected.title) ?? '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="groupbuy-whatsapp"
+                    className="mb-3 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-black"
+                    style={{ background: 'var(--wairo-green)', color: '#04310F' }}
+                  >
+                    <MessageCircle className="w-4 h-4" /> Share to WhatsApp
+                  </a>
+                ) : null}
                 <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--brief-line)]">
                   <div className="h-full rounded-full bg-[#2563EB] transition-all" style={{ width: `${selected.progressPct}%` }} />
                 </div>
