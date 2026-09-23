@@ -163,9 +163,12 @@ async function main() {
   await clickTile('profile');
   check('profile shelf uses the session name, not a placeholder',
     text(c).includes('Amina') && /@amina/.test(text(c)));
-  check('the Identity · Business · Money shelves stay on You while a section is open',
-    /Identity/.test(text(c)) && /Business/.test(text(c)) && /Money/.test(text(c)) &&
-    Boolean(document.querySelector('[data-testid="you-shelf-profile"]')));
+  check('the Identity · Business · Money groups stay on You while a section is open',
+    /Identity/.test(text(c)) && /Business/.test(text(c)) && /Money/.test(text(c)));
+  check('profile opens as a sheet, not a panel under the grid',
+    Boolean(document.querySelector('[data-testid="sheet"][aria-label="Profile"]')) &&
+    Boolean(document.querySelector('[data-testid="you-shelf-profile"]')) &&
+    !document.querySelector('[data-testid="you-tile-grid"] [data-testid="you-shelf-profile"]'));
 
   act(() => { root.unmount(); });
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);

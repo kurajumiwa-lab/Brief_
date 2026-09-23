@@ -15,6 +15,7 @@ import { FLOW_ORDER, SIDE_ORDER, isFlowRoom, type DiscoverRoom } from './taxonom
 import { NoPhotoPlate } from './NoPhotoPlate';
 import { PHOTO_FILTER, PLASTER, roomSurface, roomPlate, listedAgo } from './room';
 import { GlobysCard } from '../../ui/GlobysCard';
+import { Sheet } from '../../ui/Sheet';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
@@ -199,18 +200,8 @@ export function FeedSheet({ item, onClose, onOpenFull }: {
     : null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex flex-col justify-end"
-      style={{ background: 'rgba(24,19,12,0.62)' }}
-      onClick={onClose}
-    >
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl mx-auto rounded-t-[28px] overflow-auto" style={{ background: 'var(--color-paper)', maxHeight: '88vh', boxShadow: 'var(--lift-4)' }}>
-        <div className="flex justify-center pt-3 pb-1">
-          <span className="w-10 h-1 rounded-full" style={{ background: 'var(--brief-line)' }} />
-        </div>
-        <div className="relative aspect-video" style={{ background: roomPlate(null) }}>
+    <Sheet open title={item.title} onClose={onClose} showTitle={false}>
+        <div className="relative aspect-video -mx-5" style={{ background: roomPlate(null) }}>
           {item.mediaUrl ? (
             <img src={briefApi.mediaFileUrl(item.mediaUrl)} alt={item.title} className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
           ) : (
@@ -227,7 +218,7 @@ export function FeedSheet({ item, onClose, onOpenFull }: {
           </button>
         </div>
 
-        <div className="p-5 space-y-3">
+        <div className="pt-3 space-y-3">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-md text-[11px] font-black uppercase tracking-wider" style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}>
               {item.flow ?? item.kind}
@@ -298,8 +289,7 @@ export function FeedSheet({ item, onClose, onOpenFull }: {
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
 }
 

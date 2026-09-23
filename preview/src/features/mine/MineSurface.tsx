@@ -6,6 +6,7 @@ import type { FollowsGroups } from '../../api/briefApi';
 import { splitSpaces } from '../home/spaceSignals';
 import { NoPhotoPlate } from '../city/NoPhotoPlate';
 import { GlobysCard } from '../../ui/GlobysCard';
+import { Sheet } from '../../ui/Sheet';
 import { Marketplace } from '../../components/Marketplace';
 import { soundEngine } from '../../utils/SoundEngine';
 import { EscrowRecords } from './EscrowRecords';
@@ -114,6 +115,7 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
   const [follows, setFollows] = useState<FollowsGroups | null>(null);
   const [marketSection, setMarketSection] = useState<'orders' | 'selling'>('orders');
   const [marketKey, setMarketKey] = useState(0);
+  const [shopSheet, setShopSheet] = useState<Space | null>(null);
 
   useEffect(() => {
     if (sellingSignal > 0) {
@@ -245,7 +247,7 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
                 mono={s.profileLabels?.where ?? null}
                 actionLabel="View shop →"
                 onAction={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
-                onOpen={() => { soundEngine.play('tap'); onOpenSpace(s.id); }}
+                onOpen={() => { soundEngine.play('tap'); setShopSheet(s); }}
               />
             ))}
           </div>
@@ -256,6 +258,31 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
         <SectionHeading icon={<Package className="w-4 h-4" />} title="Orders" sub="What you bought, what you sell" />
         <Marketplace key={marketKey} initialSection={marketSection} hideBrowse />
       </section>
+
+      <Sheet
+        open={shopSheet !== null}
+        title={shopSheet?.name ?? ''}
+        onClose={() => setShopSheet(null)}
+      >
+        {shopSheet && (
+          <div className="space-y-3" data-testid="mine-shop-sheet-body">
+            {lowestOffer(shopSheet) ? (
+              <p className="text-[16px] font-bold" style={{ color: 'var(--color-text)' }}>{lowestOffer(shopSheet)}</p>
+            ) : null}
+            {shopSheet.profileLabels?.where ? (
+              <p className="text-[12px] font-mono" style={{ color: 'var(--color-text-muted)' }}>{shopSheet.profileLabels.where}</p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => { soundEngine.play('tap'); onOpenSpace(shopSheet.id); }}
+              className="w-full flex items-center justify-center px-3 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer"
+              style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+            >
+              View shop →
+            </button>
+          </div>
+        )}
+      </Sheet>
     </div>
   );
 };

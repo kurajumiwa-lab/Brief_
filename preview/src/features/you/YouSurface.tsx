@@ -4,6 +4,7 @@ import {
   CreditCard, Archive, BookOpen, Globe, Bell, Lock
 } from "lucide-react";
 import { MenuTile, SectionHeader } from "../../ui/MenuTile";
+import { Sheet } from "../../ui/Sheet";
 import * as api from "../../api/briefApi";
 import type { AuthedUser, PersonMe, FollowsGroups, MyCommitments, MyPosition, MyReciprocity, Precedent } from "../../api/briefApi";
 import type { Space } from "../../api/types";
@@ -141,7 +142,7 @@ const SECTION_ICONS: Record<Section, React.ReactNode> = {
   privacy: <Lock className="w-5 h-5" />
 };
 
-const SECTION_TITLES: Record<Section, string> = {
+export const SECTION_TITLES: Record<Section, string> = {
   profile: "Profile",
   standing: "Standing",
   following: "Following",
@@ -169,7 +170,7 @@ export function YouSurface({
   onRequireAuth: () => void;
   /** Deep link from the ⓘ on Home: the audit screen is a tab, not a footnote. */
   initialSection?: Section | null;
-  /** When the shell owns the URL (`#you/<section>`), this is the open overlay. */
+  /** When the shell owns the URL (`#you/<section>`), this is the open sheet. */
   openSection?: Section | null;
   onOpenSection?: (section: Section | null) => void;
 }) {
@@ -324,7 +325,7 @@ export function YouSurface({
   }
 
   const shelf = (id: Section, body: React.ReactNode) => (
-    <div className="mt-4 space-y-3" data-testid={`you-shelf-${id}`}>
+    <div className="space-y-3" data-testid={`you-shelf-${id}`}>
       {notice && (
         <p className="text-xs" style={{ color: "var(--color-text-muted)" }} role="status">{notice}</p>
       )}
@@ -336,7 +337,7 @@ export function YouSurface({
     <section className="max-w-3xl mx-auto" aria-label="You">
       {/* Titles only. The bar already says You; a “Your account” heading and
           the notes under each tile reprint a door and a screen that now exist. */}
-      <div className="space-y-3">
+      <div className="space-y-3" data-testid="you-tile-grid">
         {YOU_GROUPS.map((group) => (
           <div key={group.id}>
             <SectionHeader>{group.label}</SectionHeader>
@@ -356,6 +357,11 @@ export function YouSurface({
         ))}
       </div>
 
+      <Sheet
+        open={section !== null}
+        title={section ? SECTION_TITLES[section] : ""}
+        onClose={() => { setSection(null); setNotice(""); }}
+      >
       {section === "profile" && shelf("profile", (
         <div className="space-y-3">
           <div>
@@ -662,6 +668,7 @@ export function YouSurface({
           </div>
         </div>
       ))}
+      </Sheet>
     </section>
   );
 }
