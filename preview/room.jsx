@@ -571,6 +571,7 @@ async function main() {
       ['belong to no space', 'what a space-scoped number leaves out, and says'],
       ['dash, not 0%', 'why an unmeasurable figure is not a zero'],
       ['never shows', 'the things the product refuses outright'],
+      ['Home does not greet', 'why Home no longer reprints the ledger line'],
       ['Every secondary screen is a URL', 'why the back gesture works on a phone'],
       ['no placeholder frame', 'that an offer carries only pictures the seller supplied'],
       ['needs a group that exists first', 'the row that says so instead of offering a dead tap'],

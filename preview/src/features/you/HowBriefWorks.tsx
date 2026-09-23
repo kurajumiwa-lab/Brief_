@@ -104,6 +104,7 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       id: 'inout',
       title: 'Getting in and getting out',
       lines: [
+        'Home does not greet and does not reprint the ledger. “Hi …”, offers live, waiting on you, and “Nothing pending on your ledger” live on You → your position, derived from the same rows. Home is the board: tiles, the one banner, shelves of real rows.',
         'Every secondary screen is a URL: the drawer is #menu, the create sheet is #create, the event sheet is #host, a space you operate is #shop/<id>. That is not for sharing (though a pasted link does open the screen), it is so the back gesture on a phone is a way out. A screen held only in memory has no exit for a gesture, which is what “the back button doesn’t work” actually means.',
         'Closing a surface puts the URL back on the screen underneath it, not on nothing. Clearing a URL to the root is how an app throws a person to Home and looks, from a phone, like it lost their place.',
         'Where a control has nowhere to go, it is not rendered. A saved item with no detail screen is a row, not a button; a checklist step with no group behind it says “needs a group that exists first” instead of offering a tap that does nothing. The first-run card once carried three buttons wired to an empty function — three promises, none of them kept.',

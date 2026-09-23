@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import type { MyCommitments, MyPosition, MyReciprocity, DiscoverFeedItem, EventListing } from '../../api/briefApi';
+import type { MyPosition, DiscoverFeedItem, EventListing } from '../../api/briefApi';
 import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
 import { FLOW_ACCENT, FeedSheet } from '../city/DiscoverFeed';
 import { NoPhotoPlate } from '../city/NoPhotoPlate';
@@ -30,16 +30,15 @@ import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { PlannedWeather } from './PlannedWeather';
 import { EarnStrip } from './EarnStrip';
-import { StakesLine } from './StakesLine';
 import { NextMoveCard } from './NextMoveCard';
-import { StandingLine } from './StandingLine';
 import { CirclesStrip } from './CirclesStrip';
 
 // ---------------------------------------------------------------------------
 // HOME — the landing, in the pattern the mock it was copied from uses.
 //
-//   1. WHO YOU ARE — the greeting, the stakes line, your standing. Real
-//      name from the session, real counts, one derived read.
+//   1. (removed) WHO YOU ARE — the greeting, stakes line and standing reprint
+//      lived here and the operator asked them off this door. The same reads
+//      still sit on You → your position. Home is the board, not a second ledger.
 //   2. THE MODE TILES — six visual tiles, not chips: Shops, Events, Circles,
 //      Errands, Runs, Group Buys. A tile is a picture with a word under it,
 //      the way that storefront does it — a chip row is for filters, and a
@@ -100,10 +99,8 @@ const timeOf = (iso: string | null) => {
 };
 
 export const HomeSurface: React.FC<HomeSurfaceProps> = ({
-  userName = 'there',
   onOpenSpace,
   onExploreDiscover,
-  onOpenHow,
   onGetPaid,
   onOpenSpaces,
   onOpenGroupBuys,
@@ -122,13 +119,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   // The three derived reads, fetched ONCE here and handed to the cards that
   // render them — one read per screen, so no two surfaces can disagree.
   const [position, setPosition] = useState<MyPosition | null>(null);
-  const [commitments, setCommitments] = useState<MyCommitments | null>(null);
-  const [reciprocity, setReciprocity] = useState<MyReciprocity | null>(null);
   const [circles, setCircles] = useState<Circle[]>([]);
   // A visitor with no session has no ledger to read. That is not an error, so
   // the card stays silent instead of shouting "could not be read".
   const [positionDenied, setPositionDenied] = useState<boolean | undefined>(undefined);
-  const [sessionName, setSessionName] = useState<string | null>(null);
 
   // The three shelves. Each is the top of a REAL list; each is hidden when
   // empty; each "All →" points at the one place the list is.
@@ -164,18 +158,12 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   useEffect(() => {
     let live = true;
     void Promise.all([
-      briefApi.whoAmI(),
       briefApi.getMyPosition(),
-      briefApi.getMyCommitments(),
-      briefApi.getMyReciprocity(),
       briefApi.getCircles()
-    ]).then(([me, pos, cmts, recip, cir]) => {
+    ]).then(([pos, cir]) => {
       if (!live) return;
-      if (me.ok && me.data?.displayName) setSessionName(me.data.displayName);
       setPosition(pos.ok ? pos.data : null);
       setPositionDenied(!pos.ok && (pos as { status?: number }).status === 401);
-      setCommitments(cmts.ok ? cmts.data : null);
-      setReciprocity(recip.ok ? recip.data : null);
       // "From your groups" counts only rows the session is actually a member of
       // — the list is public, so membership is read from the server's viewerRole.
       setCircles(cir.ok ? cir.data : []);
@@ -305,23 +293,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           {toastMsg}
         </div>
       )}
-
-      {/* ── ZONE 0 — WHO YOU ARE. Real name from the session, real counts. ── */}
-      <div className="space-y-1.5">
-        <h1 className="text-2xl sm:text-3xl font-black text-[color:var(--color-text)] tracking-tight">
-          Hi {sessionName || userName}
-        </h1>
-        <StakesLine
-          onOpenHow={onOpenHow}
-          position={position}
-          spaces={spaces}
-          loading={isLoading}
-          failed={position === null && !isLoading}
-          onOpenDiscover={() => onExploreDiscover?.('all')}
-          onPostOffer={() => onOpenSpaces?.()}
-        />
-        <StandingLine position={position} commitments={commitments} reciprocity={reciprocity} />
-      </div>
 
       {/* ── THE MODE TILES — the six doors of the board, as pictures. ── */}
       <section data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-3 gap-2">

@@ -117,8 +117,10 @@ async function runTests() {
   });
 
   const text1 = host1.textContent;
-  // Zone 0: the greeting uses the name the caller has (no invented "Jane").
-  check('renders greeting with user name', text1.includes('Hi Amina'));
+  // Home does not greet and does not reprint the ledger. Those lines live on You.
+  check('Home does not greet', !/Hi Amina/.test(text1) && !/Hi there/.test(text1));
+  check('Home does not reprint offers-live or standing',
+    !/offers live/.test(text1) && !/Nothing pending on your ledger/.test(text1));
   // The three zones the reformation requires, in order.
   // Zone 1 is the banner: one dark-gradient line naming the check-in.
   check('zone 1: what the world is doing (the banner)', text1.includes('What’s moving'));
@@ -129,8 +131,6 @@ async function runTests() {
   check('zone 3: the mode tiles are the doors of the board',
     text1.includes('Shops') && text1.includes('Events') && text1.includes('Circles') && text1.includes('Errands') && text1.includes('Runs') && text1.includes('Group Buys'));
   check('the hero card is the day, named plainly', text1.includes('What’s moving today'));
-  check('standing line reports a real read instead of a rank or sector',
-    text1.includes('Nothing pending on your ledger.') || text1.includes('Your standing'));
   check('no invented standing: no position number, sector, tier or queue',
     !/Position #\d/.test(text1) && !/Sector \d/i.test(text1) && !/tier/i.test(text1));
   // Management is behind a tap, but the honest empty state is still reachable.
@@ -475,7 +475,8 @@ async function runTests() {
   });
 
   const text12 = host12.textContent;
-  check('renders AppShell Home tab by default', text12.includes('Hi '));
+  check('renders AppShell Home tab by default',
+    Boolean(host12.querySelector('[data-testid="mode-tiles"]')) || /What’s moving/.test(text12));
 
   await act(async () => { root12.unmount(); host12.remove(); });
 
