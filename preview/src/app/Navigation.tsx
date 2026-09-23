@@ -1,5 +1,5 @@
 import React from 'react';
-import { TraceMark } from '../components/TraceMark';
+import { WairoMark } from '../components/WairoMark';
 import { Plus } from 'lucide-react';
 import { soundEngine } from '../utils/SoundEngine';
 
@@ -153,7 +153,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   activeTab,
   onSelectTab,
   onOpenCreate,
-  spaceName = 'Your Trace',
+  spaceName = 'Wairo',
   className = ''
 }) => {
   const activeDoor = doorFor(activeTab);
@@ -256,15 +256,11 @@ export const Navigation: React.FC<NavigationProps> = ({
           {/* Brand & active space */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2.5">
-              <span
-                className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
-                aria-hidden="true"
-              >
-                <TraceMark size={20} title="" />
+              <span className="w-9 h-9 rounded-2xl flex items-center justify-center shrink-0" aria-hidden="true">
+                <WairoMark size={28} title="" />
               </span>
-              <span className="text-xl font-black text-[color:var(--color-text)] tracking-tight">
-                Trace
+              <span className="text-xl font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
+                Wairo
               </span>
             </div>
             <div className="p-2.5 rounded-2xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs flex items-center justify-between">

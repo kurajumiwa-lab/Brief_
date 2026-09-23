@@ -92,6 +92,12 @@
   --accent-2: #0891B2;
   --accent-ink: #FFFFFF;  /* text on the accent — white, 5.17:1 */
   --success: #059669;
+  /* Wairo brand card (added, does not replace the room): Electric Royal Blue
+     is already --accent; Chama Green is the second hue on the knot; Slate Dark
+     is wordmark ink; Crisp Light Gray is a sister of the ground, not a reskin. */
+  --wairo-blue: #2563EB;
+  --wairo-green: #10B981;
+  --wairo-slate: #1E293B;
   --warning: #B45309;
   --danger: #DC2626;
 

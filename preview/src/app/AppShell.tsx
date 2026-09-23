@@ -924,7 +924,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         <PublicOfferModal
           isOpen={publicOfferModalOpen}
           offer={activePublicOffer}
-          spaceName={activeSpace?.name ?? 'Trace seller'}
+          spaceName={activeSpace?.name ?? 'Wairo seller'}
           onClose={() => setPublicOfferModalOpen(false)}
           onInquirySent={() => showToast('Inquiry submitted to seller!')}
         />

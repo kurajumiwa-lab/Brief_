@@ -23,7 +23,7 @@
 // ---------------------------------------------------------------------------
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Menu, Search, MapPin } from 'lucide-react';
-import { TraceMark } from '../components/TraceMark';
+import { WairoMark } from '../components/WairoMark';
 import * as briefApi from '../api/briefApi';
 import type { CampaignBanner } from '../api/types';
 import { soundEngine } from '../utils/SoundEngine';
@@ -120,26 +120,24 @@ export const AppBelt: React.FC<AppBeltProps> = ({
         <button
           type="button"
           onClick={() => { soundEngine.play('tap'); onHome(); }}
-          aria-label="Trace home"
+          aria-label="Wairo home"
           className="flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
-          <span className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}>
-            <TraceMark size={14} title="" />
-          </span>
-          <span className="text-[15px] font-black tracking-tight" style={{ color: 'var(--color-text)' }}>
-            Trace
+          <WairoMark size={22} title="" />
+          <span data-testid="wairo-wordmark" className="text-[15px] font-black tracking-tight" style={{ color: 'var(--wairo-slate)' }}>
+            Wairo
           </span>
         </button>
 
         <form onSubmit={submit} role="search" className="flex-1 min-w-0 flex items-center gap-1.5">
-          <label htmlFor="belt-search" className="sr-only">Search Trace</label>
+          <label htmlFor="belt-search" className="sr-only">Search Wairo</label>
           <input
             id="belt-search"
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search listings, vendors, places"
-            aria-label="Search Trace"
+            aria-label="Search Wairo"
             className="min-w-0 flex-1 px-3 py-2 rounded-xl text-[13px] border"
             style={{ background: 'var(--color-bg)', borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
           />

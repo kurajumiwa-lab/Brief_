@@ -181,6 +181,8 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       title: 'What Brief never shows',
       lines: [
         'Seeded activity, demo crowds, “N buyers waiting”, verified badges nobody verified, counts of people viewing, urgency timers on a link that does not expire, leaderboards, streaks, tiers, badges for using the app, and QR codes for pages that do not resolve.',
+        'A trust score out of 100, “Good Standing”, SACCO credit of KES 50,000, “3 Bids” on an errand nobody posted, a countdown on a bid, and a photograph of Unga that is not the seller’s file are mockups. They are not printed. Standing is counts over your rows. An empty errand board is empty.',
+        'There is no Trust tab and no Errands tab. The bar is Home · Mine · You · [+]. Wairo is the brand on the band; it does not grow a fourth door.',
         'Where a reference would have to be invented — a carrier’s phone number, a partner’s volume, a sector average — the field is empty and says why. An honest blank is the product.'
       ]
     }
@@ -189,7 +191,7 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
   return (
     <div className={`space-y-3 max-w-2xl mx-auto ${className}`}>
       <div className="space-y-1">
-        <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Trace works</h2>
+        <h2 className="text-[32px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>How Wairo works</h2>
         <p className="text-[13px] leading-snug" style={{ color: 'var(--color-text-secondary)' }}>
           Everything the screens deliberately do not say, in one place.
         </p>

@@ -14,7 +14,7 @@
 //   YOUR WORK — Requests, Supply, Partners. Real shelves, kept.
 //   YOU, YOUR STANDING, YOUR MONEY — Standing, Earn, Table Banking.
 //   SETTINGS — Language, Notifications, Privacy.
-//   How Trace works · Sign out.
+//   How Wairo works · Sign out.
 //
 // Deliberately absent: counts, badges, "new" tags, unread dots. A nav list
 // with numbers is a nav list that has to keep those numbers true, and every
@@ -107,7 +107,7 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'closing',
     label: '',
     items: [
-      { id: 'how', label: 'How Trace works', sub: 'How a row becomes trust', icon: icon(Search), target: { kind: 'you', section: 'how' } },
+      { id: 'how', label: 'How Wairo works', sub: 'How a row becomes trust', icon: icon(Search), target: { kind: 'you', section: 'how' } },
       { id: 'signout', label: 'Sign out', sub: 'End the session on this device', icon: icon(X), target: { kind: 'signout' } }
     ]
   }

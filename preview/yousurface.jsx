@@ -82,7 +82,7 @@ const SECTION_IDS = {
   Profile: 'profile', Standing: 'standing', Following: 'following',
   Selling: 'selling', Orders: 'orders', 'Your network': 'network',
   Earn: 'earn', 'Table Banking': 'tableBanking', Subscriptions: 'subscriptions', Archive: 'archive',
-  'How Trace works': 'how',
+  'How Wairo works': 'how',
   Language: 'language', Notifications: 'notifications', Privacy: 'privacy'
 };
 const tiles = () => Array.from(document.querySelectorAll('[data-testid^=menu-tile-]'));

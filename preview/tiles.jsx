@@ -110,7 +110,7 @@ const TILES = [
   ['tableBanking', 'Table Banking'],
   ['subscriptions', 'Subscriptions'],
   ['archive', 'Archive'],
-  ['how', 'How Trace works'],
+  ['how', 'How Wairo works'],
   ['language', 'Language'],
   ['notifications', 'Notifications'],
   ['privacy', 'Privacy']
@@ -178,7 +178,7 @@ async function main() {
     drag.root.unmount();
 
     const tall = mount(React.createElement(Sheet, {
-      open: true, title: 'How Trace works', onClose: () => {},
+      open: true, title: 'How Wairo works', onClose: () => {},
       children: React.createElement('div', { 'data-tall': 'true' }, 'x'.repeat(2000))
     }));
     await flush(20);
@@ -242,7 +242,7 @@ async function main() {
     check('Identity · Business · Money stay in the grid while a sheet is open',
       /Identity/.test(text(grid)) && /Business/.test(text(grid)) && /Money/.test(text(grid)));
 
-    // Tall You panel (How Trace works) scrolls inside the sheet.
+    // Tall You panel (How Wairo works) scrolls inside the sheet.
     click(document.querySelector('[data-testid="menu-tile-how"]'));
     await flush(40);
     const howBody = document.querySelector('[data-testid="sheet-body"]');
@@ -250,7 +250,7 @@ async function main() {
     howBody.scrollTop = 80;
     check('a tall You panel scrolls inside the sheet; the page behind does not move',
       scrollY === y && (howBody.scrollTop === 80 || /overflow-y-auto/.test(howBody.className || '')));
-    check('How Trace works is the half detent (content needs it)',
+    check('How Wairo works is the half detent (content needs it)',
       document.querySelector('[data-testid="sheet-panel"]').getAttribute('data-detent') === 'half');
 
     click(document.querySelector('[data-testid="menu-tile-language"]'));

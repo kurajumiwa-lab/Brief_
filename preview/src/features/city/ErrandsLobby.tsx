@@ -221,7 +221,7 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
         <p className="text-[12px] font-black uppercase tracking-[0.2em]" style={{ color: 'var(--color-primary)' }}>
           The lobby
         </p>
-        <h2 className="text-2xl font-black leading-tight" style={{ color: '#241F1A' }}>
+        <h2 className="text-2xl font-black leading-tight" style={{ color: 'var(--wairo-slate)' }}>
           Errands people need carried
         </h2>
         <p className="text-sm" style={{ color: 'rgba(36,31,26,0.66)' }}>

@@ -95,7 +95,7 @@ const YOU_GROUPS: Array<{ id: string; label: string; items: Array<{ id: Section;
   {
     id: "about",
     label: "About",
-    items: [{ id: "how", label: "How Trace works" }]
+    items: [{ id: "how", label: "How Wairo works" }]
   },
   {
     // The drawer's Settings group lands here: three real, small controls —
@@ -153,7 +153,7 @@ export const SECTION_TITLES: Record<Section, string> = {
   tableBanking: "Table Banking",
   subscriptions: "Subscriptions",
   archive: "Archive",
-  how: "How Trace works",
+  how: "How Wairo works",
   language: "Language",
   notifications: "Notifications",
   privacy: "Privacy"

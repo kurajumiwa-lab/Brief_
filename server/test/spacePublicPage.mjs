@@ -527,10 +527,10 @@ await test("the page honours the app's type floor and shadow-not-stroke rule", (
 await test("the page carries one brand, and the rename cannot half-land here", () => {
   const sp = makeSpace({ name: "Brand Check Shop" });
   const html = page.renderPage(page.publicPageView(store.find("spaces", (s) => s.id === sp.id), { nowMs: FRI_10AM_EAT }));
-  assert.match(html, /<title>Brand Check Shop — on Trace<\/title>/, "the share-preview title carries the product name");
-  assert.ok(!/on Brief/.test(html), "no half-renamed string survives on a page a stranger reads");
+  assert.match(html, /<title>Brand Check Shop — on Wairo<\/title>/, "the share-preview title carries the product name");
+  assert.ok(!/on Brief/.test(html) && !/on Trace/.test(html), "no half-renamed string survives on a page a stranger reads");
   const gone = page.renderUnavailable(page.unavailableReason(sp.slug));
-  assert.ok(!/on Brief/.test(gone), "and not on the page that answers when a shop comes down");
+  assert.ok(!/on Brief/.test(gone) && !/on Trace/.test(gone), "and not on the page that answers when a shop comes down");
 });
 
 await test("hours are attributed to a named clock on the page", () => {

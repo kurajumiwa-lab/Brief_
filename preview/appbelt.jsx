@@ -188,7 +188,7 @@ async function main() {
       'Language · Notifications · Privacy, in that order');
     // The closing group: the explanation and the exit, no group label.
     const closing = SHEET_GROUPS.find((g) => g.id === 'closing');
-    assert.deepEqual(closing.items.map((i) => i.label), ['How Trace works', 'Sign out'], 'How Trace works · Sign out, on their own');
+    assert.deepEqual(closing.items.map((i) => i.label), ['How Wairo works', 'Sign out'], 'How Wairo works · Sign out, on their own');
     const sheetLabels = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.label));
     // THE DEDUPE, in its new form: a door the bar owns is not also a row in the
     // sheet. The bar is three destinations + one action, and the sheet must not
