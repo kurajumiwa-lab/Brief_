@@ -17,7 +17,6 @@ import { hrefForDest } from "../../app/surfaces";
 import { GuardianNetwork } from "./GuardianNetwork";
 import { Marketplace } from "../../components/Marketplace";
 import { Vault } from "../../components/vault/Vault";
-import { OverlayScreen } from "../../ui/OverlayScreen";
 import { PositionCard } from "../home/PositionCard";
 import { CommitmentsCard } from "../home/CommitmentsCard";
 import { ReciprocityCard } from "../home/ReciprocityCard";
@@ -324,13 +323,13 @@ export function YouSurface({
     );
   }
 
-  const overlay = (id: Section, body: React.ReactNode) => (
-    <OverlayScreen title={SECTION_TITLES[id]} onBack={() => setSection(null)}>
+  const shelf = (id: Section, body: React.ReactNode) => (
+    <div className="mt-4 space-y-3" data-testid={`you-shelf-${id}`}>
       {notice && (
         <p className="text-xs" style={{ color: "var(--color-text-muted)" }} role="status">{notice}</p>
       )}
       {body}
-    </OverlayScreen>
+    </div>
   );
 
   return (
@@ -357,7 +356,7 @@ export function YouSurface({
         ))}
       </div>
 
-      {section === "profile" && overlay("profile", (
+      {section === "profile" && shelf("profile", (
         <div className="space-y-3">
           <div>
             <p className="text-2xl font-black tracking-tight" style={{ color: "var(--color-text)" }}>
@@ -403,7 +402,7 @@ export function YouSurface({
         </div>
       ))}
 
-      {section === "following" && overlay("following", (
+      {section === "following" && shelf("following", (
         <div>
           {follows === null ? (
             <p className="text-xs" style={{ color: "var(--color-text-muted)" }}>Reading your follows…</p>
@@ -456,7 +455,7 @@ export function YouSurface({
         </div>
       ))}
 
-      {section === "subscriptions" && overlay("subscriptions", (
+      {section === "subscriptions" && shelf("subscriptions", (
         <div className="space-y-6">
           <div>
             <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Plans to join</p>
@@ -522,7 +521,7 @@ export function YouSurface({
       {/* ARCHIVE — the filing cabinet at home. Records and receipts you keep
           for yourself, which is why it sits in You and not in a public gallery
           or a business workspace. */}
-      {section === "archive" && overlay("archive", (
+      {section === "archive" && shelf("archive", (
         <div className="space-y-3">
           <p className="text-[12px]" style={{ color: "var(--color-text-muted)" }}>
             Restricted records and drops you hold or have been granted. An archive is read slowly and kept — it is
@@ -532,7 +531,7 @@ export function YouSurface({
         </div>
       ))}
 
-      {section === "standing" && overlay("standing", (
+      {section === "standing" && shelf("standing", (
         <div className="space-y-3">
           <PositionCard position={position} />
           <CommitmentsCard commitments={commitments} />
@@ -548,32 +547,32 @@ export function YouSurface({
       {/* ── ORDERS / SELLING — the personal halves of commerce, moved off the
              browse screen. Same Marketplace rails, same server-authoritative
              money; only the address changed. ── */}
-      {section === "orders" && overlay("orders", (
+      {section === "orders" && shelf("orders", (
         <div className="rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
           <Marketplace initialSection="orders" hideBrowse />
         </div>
       ))}
 
-      {section === "selling" && overlay("selling", (
+      {section === "selling" && shelf("selling", (
         <div className="rounded-2xl border p-4" style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}>
           <Marketplace initialSection="selling" hideBrowse />
         </div>
       ))}
 
-      {section === "earn" && overlay("earn", (
+      {section === "earn" && shelf("earn", (
         <EarnSurface onRequireAuth={onRequireAuth} />
       ))}
 
-      {section === "network" && overlay("network", <GuardianNetwork />)}
-      {section === "how" && overlay("how", <HowBriefWorks />)}
+      {section === "network" && shelf("network", <GuardianNetwork />)}
+      {section === "how" && shelf("how", <HowBriefWorks />)}
 
-      {section === "tableBanking" && overlay("tableBanking", (
+      {section === "tableBanking" && shelf("tableBanking", (
         <TableBankingSurface onRequireAuth={onRequireAuth} />
       ))}
 
       {/* ── SETTINGS — the three controls the drawer's Settings group names.
           Each one answers what it claims; none of them switches nothing. ── */}
-      {section === "language" && overlay("language", (
+      {section === "language" && shelf("language", (
         <div className="space-y-3">
           <div className="p-4 rounded-2xl" style={{ background: "var(--color-surface)", boxShadow: "inset 0 0 0 1px var(--brief-line)" }}>
             <p className="text-sm font-bold" style={{ color: "var(--color-text)" }}>English</p>
@@ -586,7 +585,7 @@ export function YouSurface({
         </div>
       ))}
 
-      {section === "notifications" && overlay("notifications", (
+      {section === "notifications" && shelf("notifications", (
         <div className="space-y-3">
           <NotificationCenter
             authed={!signedOut}
@@ -602,7 +601,7 @@ export function YouSurface({
         </div>
       ))}
 
-      {section === "privacy" && overlay("privacy", (
+      {section === "privacy" && shelf("privacy", (
         <div className="space-y-3">
           <p className="text-xs leading-relaxed" style={{ color: "var(--color-text-muted)" }}>
             What this device keeps, and how to take it back. Nothing here is a

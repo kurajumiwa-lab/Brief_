@@ -28,6 +28,8 @@ import { EntityDetail } from '../features/you/EntityDetail';
 import { FirstRunChecklist } from '../features/you/FirstRunChecklist';
 import { PulseSurface } from '../features/pulse/PulseSurface';
 import { MineSurface } from '../features/mine/MineSurface';
+import { ShopBrief } from '../features/spaces/ShopBrief';
+import { OverlayScreen } from '../ui/OverlayScreen';
 import { soundEngine } from '../utils/SoundEngine';
 import { SyncStatusDot } from '../ui/SyncStatusDot';
 
@@ -85,6 +87,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   const [groupBuysOpen, setGroupBuysOpen] = useState<boolean>(false);
   const [sellingNonce, setSellingNonce] = useState<number>(0);
   const [mineSellingNonce, setMineSellingNonce] = useState<number>(0);
+  const [briefOpen, setBriefOpen] = useState<boolean>(false);
   const [errandSignal, setErrandSignal] = useState<{ nonce: number; kind: string | null } | null>(null);
   const [signalCounter, setSignalCounter] = useState<number>(0);
 
@@ -368,6 +371,16 @@ export const AppShell: React.FC<AppShellProps> = ({
           try { rest = decodeURIComponent(hash.slice(4)); } catch { rest = hash.slice(4); }
         }
         setYouSection((YOU_SECTION_IDS as string[]).includes(rest) ? rest : null);
+        setBriefOpen(false);
+      } else if (hash === 'spaces' || hash === 'shopbrief') {
+        // The morning brief is a notification, not a Mine shelf. Tapping it
+        // opens the read once; closing returns to Mine.
+        setJoinCode('');
+        setSearchQuery('');
+        setEntityId(null);
+        setActiveTab('mine');
+        tabHashRef.current = 'mine';
+        setBriefOpen(true);
       } else if (hash === '' || (hash && hash !== 'join')) {
         setJoinCode('');
         setSearchQuery('');
@@ -375,7 +388,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         // drawer's check-in, so the legacy hash resolves there. 'mine' and
         // 'pulse' are the new bar's doors and the drawer's check-in.
         const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'mine', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
-        if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; }
+        if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; setBriefOpen(false); }
         else if (!hash) {
           // Empty hash IS home. Mapping it to `initialTab` (once 'city') made
           // the Home door — which writes hash '' — open Discover. A person
@@ -649,8 +662,8 @@ export const AppShell: React.FC<AppShellProps> = ({
                 />
               ) : (
                 <YouSurface
-                  key={youSection ?? 'you'}
-                  initialSection={(youSection ?? 'profile') as any}
+                  openSection={(youSection as YouSection | null) ?? null}
+                  onOpenSection={(s) => { window.location.hash = s ? `you/${s}` : 'you'; }}
                   onOpenEntity={(id) => { setEntityId(id); window.location.hash = `#entity/${id}`; }}
                   onRequireAuth={() => showToast('Sign in to continue.')}
                 />
@@ -874,6 +887,12 @@ export const AppShell: React.FC<AppShellProps> = ({
             />
           </div>
         </div>
+      )}
+
+      {briefOpen && (
+        <OverlayScreen title="The morning brief" onBack={() => { setBriefOpen(false); window.location.hash = 'mine'; }}>
+          <ShopBrief onOpenSpace={(id) => { setBriefOpen(false); openSpace(id); }} />
+        </OverlayScreen>
       )}
 
       {/* Customer-Facing Public Offer View */}

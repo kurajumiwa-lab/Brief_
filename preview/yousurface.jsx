@@ -161,11 +161,11 @@ async function main() {
 
   // ── The old sections survive the reorg: profile still leads. ──
   await clickTile('profile');
-  check('profile overlay uses the session name, not a placeholder',
+  check('profile shelf uses the session name, not a placeholder',
     text(c).includes('Amina') && /@amina/.test(text(c)));
-  check('profile overlay is a dialog with a way out',
-    Boolean(document.querySelector('[role="dialog"]')) &&
-    Array.from(document.querySelectorAll('button')).some((b) => (b.textContent || '').trim() === 'Back'));
+  check('the Identity · Business · Money shelves stay on You while a section is open',
+    /Identity/.test(text(c)) && /Business/.test(text(c)) && /Money/.test(text(c)) &&
+    Boolean(document.querySelector('[data-testid="you-shelf-profile"]')));
 
   act(() => { root.unmount(); });
   console.log(`\nPASSED ${passed} / FAILED ${failed}`);

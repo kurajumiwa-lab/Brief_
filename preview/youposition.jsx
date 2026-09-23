@@ -251,8 +251,9 @@ async function main() {
     click(standing);
     await flush();
     t = text(container);
-    assert.ok(document.querySelector('[role="dialog"]'), 'Standing opens as an overlay');
+    assert.ok(document.querySelector('[data-testid="you-shelf-standing"]'), 'Standing opens as a shelf on You');
     assert.ok(t.includes('Your position'), 'and the position cards live there');
+    assert.ok(/Identity/.test(t) && /Business/.test(t), 'the You groups are not covered over');
     const profile = document.querySelector('[data-testid="menu-tile-profile"]');
     click(profile);
     await flush();

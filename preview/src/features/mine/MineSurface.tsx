@@ -9,7 +9,6 @@ import { GlobysCard } from '../../ui/GlobysCard';
 import { Marketplace } from '../../components/Marketplace';
 import { soundEngine } from '../../utils/SoundEngine';
 import { EscrowRecords } from './EscrowRecords';
-import { ShopBrief } from '../spaces/ShopBrief';
 
 // ---------------------------------------------------------------------------
 // MINE — the second door: what you kept, the shops you operate, orders.
@@ -179,8 +178,6 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
       {follows && <FollowBelt follows={follows} onOpenEntity={onOpenEntity} />}
 
       <EscrowRecords />
-
-      <ShopBrief onOpenSpace={onOpenSpace} />
 
       <section aria-label="Your shops" className="space-y-2.5">
         <SectionHeading
