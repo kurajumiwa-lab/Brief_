@@ -156,19 +156,16 @@ export const AppBelt: React.FC<AppBeltProps> = ({
       </div>
 
       {/* ── the area chip. Only ever what the member typed. ── */}
-      <div className="px-3 pb-1.5 flex items-center gap-2">
+      <div className="px-3 pb-2 flex items-center">
         <button
           type="button"
           onClick={() => { soundEngine.play('tap'); onOpenSheet(); }}
-          className="inline-flex items-center gap-1.5 text-[11px] font-bold cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-[12px] font-bold cursor-pointer"
           style={{ color: 'var(--color-text-muted)' }}
         >
           <MapPin className="w-3.5 h-3.5" />
           {place ? `Your area: ${place}` : 'Set your area'}
         </button>
-        <span className="text-[11px]" style={{ color: 'var(--color-quiet)' }}>
-          {place ? 'A weather line appears on a day you have something planned.' : 'Used for the forecast. Optional.'}
-        </span>
       </div>
 
       {/* ── the message slot. Nothing to say, nothing rendered. ── */}

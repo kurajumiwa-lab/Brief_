@@ -86,14 +86,18 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   }, [sellingSignal]);
 
   // "Start a run" / "Post an errand": the errands board, the caller's kind,
-  // composer open.
+  // composer open. A leftover signal must not steal Events or Circles — that
+  // is how Home's first row of tiles all opened the errands empty state.
   const [composerSig, setComposerSig] = React.useState<{ nonce: number; kind: string | null } | null>(null);
   React.useEffect(() => {
-    if (errandSignal) {
+    setRoom(initialSubTab);
+  }, [initialSubTab]);
+  React.useEffect(() => {
+    if (errandSignal && initialSubTab === 'errands') {
       setComposerSig(errandSignal);
       setRoom('errands');
     }
-  }, [errandSignal]);
+  }, [errandSignal, initialSubTab]);
 
   return (
     <div className={`space-y-5 max-w-xl mx-auto ${className}`}>

@@ -150,7 +150,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       setDiscoverSubTab('errands');
       setErrandSignal({ nonce: nextNonce, kind: id === 'run' ? 'delivery' : null });
       setActiveTab('city');
-      window.location.hash = 'city';
+      window.location.hash = 'city/errands';
     }
   };
 
@@ -235,9 +235,12 @@ export const AppShell: React.FC<AppShellProps> = ({
    */
   const anySurfaceOpen = createOpen || hostSheetOpen || groupBuysOpen
     || sheetOpen || createFlowOpen || manualOrderOpen;
-  const backTo = (anySurfaceOpen || Boolean(activeSpace))
+  // Back is for a second screen. A space held in memory while Home is showing
+  // is not a second screen — that is how a Back toggle appeared on Home.
+  const viewingSpace = Boolean(activeSpace) && (activeTab === 'pipeline' || activeTab === 'spaces');
+  const backTo = (anySurfaceOpen || viewingSpace)
     ? {
-      label: activeSpace && !anySurfaceOpen
+      label: viewingSpace && !anySurfaceOpen
         ? backLabel(spaceFromRef.current || TAB_HASH[activeTab] || '')
         : backLabel(tabHashRef.current || TAB_HASH[activeTab] || ''),
       onBack: () => {
@@ -266,15 +269,14 @@ export const AppShell: React.FC<AppShellProps> = ({
     try {
       const res = await briefApi.listMySpaces();
       if (res.ok && res.data?.spaces && res.data.spaces.length > 0) {
-        // Only auto-open when the URL is not already pointing at a space: a
-        // person who pressed back out of one must not be pulled straight in.
-        if (!shopIdFromHash(window.location.hash) && !activeSpaceIdRef.current) {
-          setActiveSpace(res.data.spaces[0]);
-          activeSpaceIdRef.current = res.data.spaces[0].id;
-        }
+        // Listing the shops is not opening the first one. Auto-opening put a
+        // Back control on Home while the street was still the screen.
+        setSpaceError('');
       } else {
-        activeSpaceIdRef.current = '';
-        setActiveSpace(null);
+        if (!shopIdFromHash(window.location.hash)) {
+          activeSpaceIdRef.current = '';
+          setActiveSpace(null);
+        }
         setSpaceError(res.ok ? '' : res.error);
       }
     } catch {
@@ -381,13 +383,32 @@ export const AppShell: React.FC<AppShellProps> = ({
         setActiveTab('mine');
         tabHashRef.current = 'mine';
         setBriefOpen(true);
+      } else if (hash === 'city' || hash.startsWith('city/') || hash === 'discover' || hash === 'events') {
+        // Events and Circles are rooms of the board, not aliases of Errands.
+        // `#city/events` and `#city/circles` are the hashes Home's tiles write.
+        setJoinCode('');
+        setSearchQuery('');
+        setEntityId(null);
+        setActiveTab('city');
+        const CITY_ROOMS: DiscoverRoom[] = ['all', 'bulk', 'direct', 'niche', 'group', 'events', 'circles', 'errands'];
+        let room: DiscoverRoom = 'all';
+        if (hash.startsWith('city/')) {
+          const rest = hash.slice(5);
+          if ((CITY_ROOMS as string[]).includes(rest)) room = rest as DiscoverRoom;
+        } else if (hash === 'events') {
+          room = 'events';
+        }
+        setDiscoverSubTab(room);
+        if (room !== 'errands') setErrandSignal(null);
+        tabHashRef.current = hash === 'discover' ? 'city' : hash;
+        setBriefOpen(false);
       } else if (hash === '' || (hash && hash !== 'join')) {
         setJoinCode('');
         setSearchQuery('');
         // 'activity' is the old bar's fourth door: its surface now lives in the
         // drawer's check-in, so the legacy hash resolves there. 'mine' and
         // 'pulse' are the new bar's doors and the drawer's check-in.
-        const tabs: Record<string, BriefNavigationTab> = { home: 'home', city: 'city', events: 'city', spaces: 'mine', pipeline: 'pipeline', discover: 'city', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
+        const tabs: Record<string, BriefNavigationTab> = { home: 'home', spaces: 'mine', pipeline: 'pipeline', catalog: 'catalog', activity: 'pulse', mine: 'mine', pulse: 'pulse', ledger: 'ledger', partners: 'partners', you: 'you' };
         if (tabs[hash]) { setEntityId(null); setActiveTab(tabs[hash]); tabHashRef.current = hash; setBriefOpen(false); }
         else if (!hash) {
           // Empty hash IS home. Mapping it to `initialTab` (once 'city') made
@@ -542,7 +563,7 @@ export const AppShell: React.FC<AppShellProps> = ({
       />
 
       {/* Main Content Viewport */}
-      <main className="flex-1 min-w-0 px-4 sm:px-6 py-6 pb-44 md:pb-8 overflow-y-auto min-h-screen">
+      <main className="flex-1 min-w-0 px-4 sm:px-6 pt-0 pb-44 md:pb-8 overflow-y-auto min-h-screen">
         {/* The band: a location, a search that resolves, a hamburger that owns
             the long list, and a message slot. It lives inside the scroll
             column so it behaves the same on a phone and on a desktop. */}
@@ -551,7 +572,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           onOpenSheet={() => setSheetOpen(true)}
           onHome={() => { window.location.hash = 'home'; setActiveTab('home'); }}
           onSearch={(term) => { window.location.hash = `search/${encodeURIComponent(term)}`; }}
-          className="-mx-4 sm:-mx-6 -mt-6 mb-5"
+          className="-mx-4 sm:-mx-6 mb-3"
         />
         {activeTab === 'requests' ? <RequestsWorkspace route={requestRoute} /> : activeTab === 'supply' ? <SupplyWorkspace route={supplyRoute || 'mine'} /> : null}
         {/* SPACES with no space open is the STREET: the shopfronts you operate
@@ -589,14 +610,17 @@ export const AppShell: React.FC<AppShellProps> = ({
             userName="there"
             onOpenSpace={openSpace}
             onExploreDiscover={(sub, startRun) => {
-              if (sub) setDiscoverSubTab(sub);
+              const room = sub ?? 'all';
+              setDiscoverSubTab(room);
               if (startRun) {
                 const nextNonce = signalCounter + 1;
                 setSignalCounter(nextNonce);
                 setErrandSignal({ nonce: nextNonce, kind: 'delivery' });
+              } else if (room !== 'errands') {
+                setErrandSignal(null);
               }
               setActiveTab('city');
-              window.location.hash = 'city';
+              window.location.hash = room === 'all' ? 'city' : `city/${room}`;
             }}
             onOpenPulse={() => { setActiveTab('pulse'); window.location.hash = 'pulse'; }}
             onOpenSpaces={() => { setActiveTab('mine'); window.location.hash = 'mine'; }}
@@ -802,7 +826,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             code={joinCode}
             signedIn={authed}
             onRequireAuth={() => showToast('Sign in or create an account to join a room.')}
-            onOpenCircles={() => { setJoinCode(''); window.location.hash = 'city'; setActiveTab('city'); }}
+            onOpenCircles={() => { setJoinCode(''); setDiscoverSubTab('circles'); window.location.hash = 'city/circles'; setActiveTab('city'); }}
           />
         </div>
       )}
