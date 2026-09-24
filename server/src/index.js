@@ -47,6 +47,8 @@ import { register as connectorsRoutes } from './routes/connectors.js';
 import { register as briefitRoutes } from './routes/briefit.js';
 import { register as objectsRoutes } from './routes/objects.js';
 import { register as notificationsRoutes } from './routes/notifications.js';
+import { register as groupWorkspaceRoutes } from './routes/groupWorkspaces.js';
+import { register as spaceModerationRoutes } from './routes/spaceModeration.js';
 import { register as circlesRoutes } from './routes/circles.js';
 import { register as guardianRoutes } from './routes/guardians.js';
 import { register as triageRoutes } from './routes/triage.js';
@@ -209,7 +211,8 @@ app.use(ops.requestLogger);
 //                           (public location discovery pages like /explore/
 //                           kilimani, related content, nearby) — every payload
 //                           is the public projection of public objects only
-const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|circles\/join|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals|pulse|world|discover\/summary)(\/|$)/;
+// Groups directory is an opt-in metadata-only projection, never a workspace.
+const PUBLIC_WITHOUT_SESSION = /^\/(auth|entities|locations|graph|nearby|collections\/personal|public\/(campaigns|feed|enterprises|capabilities|spaces)|groups\/directory|circles\/join|health|ready|readiness|media\/(file|telegram)|config|release|email-subscriptions|webhooks|telegram\/init|huduma\/webhooks|price-signals|pulse|world|discover\/summary)(\/|$)/;
 app.use('/api', (req, res, next) => {
   if (PUBLIC_WITHOUT_SESSION.test(req.path)) return next();
   const me = callerId(req);
@@ -242,6 +245,8 @@ briefitRoutes(app);
 objectsRoutes(app);
 notificationsRoutes(app);
 circlesRoutes(app);
+spaceModerationRoutes(app);
+groupWorkspaceRoutes(app);
 guardianRoutes(app);
 triageRoutes(app);
 economicRoutes(app);

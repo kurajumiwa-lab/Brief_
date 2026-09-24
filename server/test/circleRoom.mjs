@@ -69,7 +69,7 @@ await test("the landing preview shows the shape of the room, never its contents"
   assert.ok(!json.includes("gate 2"), "task titles stay inside too");
   assert.equal(view.memberCount, 2, "how many people, yes");
   assert.equal(view.openTaskCount, 1, "how many things are waiting to be picked up, yes");
-  assert.equal(view.currentValue, 3000, "money that really settled, yes — it is derived, so it cannot be inflated");
+  assert.equal(view.currentValue, null, "financial progress stays behind membership");
 });
 
 await test("listing is a decision, and it is recorded as one", () => {

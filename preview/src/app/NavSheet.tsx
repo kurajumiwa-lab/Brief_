@@ -25,6 +25,7 @@ import {
   X, Coins, Users, Ticket, Search, ShieldCheck, Activity,
   Globe, Bell, Lock
 } from 'lucide-react';
+import { CategoryArt } from '../ui/CategoryArt';
 import { MenuTile, SectionHeader } from '../ui/MenuTile';
 
 export type SheetTarget =
@@ -36,6 +37,8 @@ export type SheetTarget =
         | 'earn' | 'orders' | 'selling' | 'archive' | 'tableBanking'
         | 'network' | 'how' | 'notifications' | 'privacy' | 'language';
     }
+  | { kind: 'discover'; room: 'all' | 'events' | 'circles' | 'errands' | 'bulk' | 'direct' | 'group' }
+  | { kind: 'moderation' }
   | { kind: 'signout' };
 
 export interface SheetItem {
@@ -72,6 +75,20 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
         icon: icon(Activity, 'ink'),
         target: { kind: 'tab', tab: 'pulse' }
       }
+    ]
+  },
+  {
+    id: 'explore', label: 'Explore & trade', items: [
+      { id: 'shops', label: 'Shops', sub: 'Your shopfronts, follows and team', icon: <CategoryArt kind="shops" className="!w-8 !h-8" />, target: { kind: 'tab', tab: 'mine' } },
+      ...([
+        ['all', 'Offers & marketplace', 'Products, services and sellers'],
+        ['bulk', 'Wholesale', 'Buy in volume for your shop'],
+        ['direct', 'Source direct', 'Buy closer to the producer'],
+        ['group', 'Group buys', 'Pool demand with other buyers'],
+        ['events', 'Events', 'Find published events'],
+        ['circles', 'Groups', 'Find a group or open yours'],
+        ['errands', 'Errands', 'Paid tasks and deliveries']
+      ] as const).map(([room, label, sub]) => ({ id: `explore-${room}`, label, sub, icon: <CategoryArt kind={room} className="!w-8 !h-8" />, target: { kind: 'discover' as const, room } }))
     ]
   },
   {
@@ -114,6 +131,7 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
 ];
 
 export interface NavSheetProps {
+  canModerate?: boolean;
   open: boolean;
   onClose: () => void;
   onGo: (target: SheetTarget) => void;
@@ -122,7 +140,7 @@ export interface NavSheetProps {
   onSetPlace: (place: string) => void;
 }
 
-export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, onSetPlace }) => {
+export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, onSetPlace, canModerate = false }) => {
   const [draft, setDraft] = useState(place);
   useEffect(() => { if (open) setDraft(place); }, [open, place]);
 
@@ -167,6 +185,8 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {canModerate && <MenuTile icon={icon(ShieldCheck)} title="Page moderation" description="Review reports and reinstate hidden pages" testId="page-moderation" onClick={() => { onGo({ kind: 'moderation' }); onClose(); }} />}
 
         {SHEET_GROUPS.map((group) => (
           <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1.5 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">

@@ -132,12 +132,12 @@ export function PublicSpacePage({
   return (
     <div className={`max-w-2xl mx-auto space-y-4 ${className}`} data-public-mirror="true">
       <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
-        <div className="relative h-[152px]" style={{ background: roomSurface() }}>
+        <div className="relative h-[192px]" style={{ background: roomSurface() }}>
           {s.image ? <img src={briefApi.mediaFileUrl(s.image)} alt="" className="w-full h-full object-cover" style={{ filter: PHOTO_FILTER }} /> : (
             <NoPhotoPlate quiet />
           )}
         </div>
-        <div className="p-4 -mt-10">
+        <div className="p-5">
           <div className="flex items-end justify-between gap-3">
             <div className="min-w-0">
               <h1 className="text-[30px] font-extrabold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>{s.name}</h1>

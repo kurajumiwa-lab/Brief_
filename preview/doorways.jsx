@@ -116,9 +116,9 @@ async function main() {
     const tiles = host.querySelector('[data-testid="mode-tiles"]');
     check('Home carries the mode tiles', Boolean(tiles));
     const tileButtons = Array.from(tiles.querySelectorAll('button'));
-    check('six tiles: Shops, Events, Circles, Errands, Runs, Group Buys',
+    check('six tiles: Shops, Events, Groups, Errands, Runs, Group Buys',
       tileButtons.length === 6 &&
-      ['Shops', 'Events', 'Circles', 'Errands', 'Runs', 'Group Buys']
+      ['Shops', 'Events', 'Groups', 'Errands', 'Runs', 'Group Buys']
         .every((l) => tileButtons.some((b) => text(b).includes(l))));
     check('no filter-chips test id anywhere on Home',
       host.querySelector('[data-testid="filter-chips"]') === null &&

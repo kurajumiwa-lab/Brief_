@@ -517,10 +517,10 @@ await test("the page honours the app's type floor and shadow-not-stroke rule", (
   const cardRule = /\.card\{([^}]*)\}/.exec(css)?.[1] ?? '';
   assert.ok(!/border:/.test(cardRule), "a card is lifted by shadow, never outlined");
   assert.ok(/box-shadow:var\(--lift\)/.test(cardRule), "and the lift is the same construction the app uses");
-  // A hairline is still legal where it is genuinely a line: an input's ring.
-  assert.ok(/textarea\{[^}]*border:1px solid var\(--line\)/.test(css), "an input keeps its ring — the rule bans outlining cards, not drawing lines");
+  // Quiet inputs have no decorative borders; keyboard focus stays visible.
+  assert.ok(/textarea:focus-visible\{[^}]*outline:3px solid var\(--accent\)/.test(css), "keyboard users retain a high-contrast focus ring");
   // the room's own steps, not a foreign grey
-  assert.ok(css.includes("--bg:#F7F8FA") && css.includes("--card:#FFFFFF"), "the page wears the room: cool near-white, white card");
+  assert.ok(css.includes("--bg:#edf0f4") && css.includes("--card:#FFFFFF"), "the page wears the room: cool near-white, white card");
   assert.ok(css.includes("--accent:#2563EB"), "one accent, the same blue as the app");
 });
 

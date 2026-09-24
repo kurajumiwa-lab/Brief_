@@ -76,7 +76,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
         className="text-[12px] font-bold cursor-pointer"
         style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}
       >
-        ← Circles
+        ← Groups
       </button>
 
       {state === 'loading' && <div className="brief-skeleton h-40 rounded-3xl" style={{ background: 'var(--color-paper)' }} aria-busy="true" />}
@@ -85,7 +85,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
         <div className="rounded-3xl p-6 text-center space-y-1" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>
           <p className="text-[15px] font-extrabold" style={{ color: 'var(--brief-ink)' }}>This link does not open a room</p>
           <p className="text-[12px]" style={{ color: 'var(--color-text-muted)' }}>
-            Ask whoever sent it for a fresh link, or look for the room in Circles.
+            Ask whoever sent it for a fresh link, or look for the room in Groups.
           </p>
           <button
             type="button"
@@ -129,24 +129,7 @@ export function JoinRoom({ code, signedIn, onRequireAuth, onOpenCircles, classNa
             </div>
           </header>
 
-          {/* The only money figure on this page is money that actually settled
-              through the group's own ledger. No "raised so far", no projection. */}
-          {room.targetValue != null && room.targetValue > 0 && (
-            <div className="rounded-2xl p-3" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}>
-              <div className="flex items-baseline justify-between gap-2">
-                <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>Settled through Brief</span>
-                <span className="text-[14px] font-mono font-black" style={{ color: 'var(--state-live-ink)' }}>
-                  {money(room.currentValue, room.currency)} <span className="text-[11px] font-sans" style={{ color: 'var(--color-text-muted)' }}>of {money(room.targetValue, room.currency)}</span>
-                </span>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--color-well)' }}>
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${Math.min(100, room.targetValue > 0 ? (room.currentValue / room.targetValue) * 100 : 0)}%`, background: 'var(--state-live)' }}
-                />
-              </div>
-            </div>
-          )}
+
 
           {joined ? (
             <div className="rounded-2xl p-4 text-center space-y-1" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-2), inset 0 0 0 1px var(--brief-line)' }}>

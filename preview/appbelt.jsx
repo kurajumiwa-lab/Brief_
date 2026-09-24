@@ -175,7 +175,7 @@ async function main() {
   {
     const ids = SHEET_GROUPS.flatMap((g) => g.items.map((i) => i.id));
     assert.equal(new Set(ids).size, ids.length, 'no destination is listed twice in the sheet');
-    assert.equal(ids.length, 12, 'twelve entries — the check-in, the work, the standing, the settings, the closing');
+    assert.equal(ids.length, 20, 'existing destinations plus eight explicit commerce and group destinations');
     // Pulse leads: the reorg put the check-in at the top of the drawer, because
     // a list that answers "what happened" should start there.
     const firstGroup = SHEET_GROUPS[0];
@@ -219,7 +219,8 @@ async function main() {
     // thin-line icon, a bold 15px title, a grey 13px description capped at two
     // lines; group headers small, grey, uppercase, mono.
     const tiles = inEl(sheet.host, '[data-testid^=menu-tile-]');
-    assert.equal(tiles.length, 12, 'every entry is a menu tile');
+    assert.equal(tiles.length, SHEET_GROUPS.flatMap(g => g.items).length, 'every destination, including trade and groups, is a menu tile');
+    assert.deepEqual(SHEET_GROUPS.find(g => g.id === 'explore').items.map(i => i.label), ['Shops', 'Offers & marketplace', 'Wholesale', 'Source direct', 'Group buys', 'Events', 'Groups', 'Errands']);
     const earnTile = sheet.host.querySelector('[data-testid="menu-tile-earn"]');
     assert.ok(earnTile, 'Earn is one of them');
     const tileIcon = earnTile.querySelector('span.rounded-xl');

@@ -1,3 +1,5 @@
+import { CategoryArt } from '../../ui/CategoryArt';
+import { MyTeamShops } from '../spaces/ShopTeam';
 import React, { useEffect, useState } from 'react';
 import { Store, Package, Plus } from 'lucide-react';
 import type { Space } from '../../api/types';
@@ -177,6 +179,9 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
 
   return (
     <div className={`space-y-6 max-w-2xl mx-auto ${className}`}>
+      <header className="shop-endplate flex items-center justify-between gap-4">
+        <div><p className="!text-xs uppercase tracking-widest mb-2">Your corner of Wairo</p><h1>Make yourself<br />at home.</h1><p className="mt-3">Your shops, your orders.<br />One place to keep things moving.</p></div><CategoryArt kind="shops" />
+      </header>
       {follows && <FollowBelt follows={follows} onOpenEntity={onOpenEntity} />}
 
       <EscrowRecords />
@@ -221,8 +226,9 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
             style={{ borderColor: 'var(--brief-line)', background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1)' }}
           >
             <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>
-              No shop yet.
+              Your next idea has a shopfront.
             </p>
+            <p className="text-sm text-[var(--color-text-muted)]">Start with your name and brand cover. Add products or services when you are ready.</p>
             <button
               type="button"
               onClick={() => { soundEngine.play('heavyTap'); onOpenCreateSpace(); }}
@@ -238,7 +244,7 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
               <GlobysCard
                 key={s.id}
                 testId={`shop-${s.id}`}
-                image={s.image}
+                image={s.image ? briefApi.mediaFileUrl(s.image) : null}
                 imageAlt={s.name}
                 plate={<NoPhotoPlate mark={s.modeLabel ?? 'shop'} icon={<Store className="w-4 h-4" />} />}
                 title={s.name}
@@ -253,6 +259,8 @@ export const MineSurface: React.FC<MineSurfaceProps> = ({
           </div>
         )}
       </section>
+
+      <MyTeamShops />
 
       <section aria-label="Your orders" className="space-y-2.5">
         <SectionHeading icon={<Package className="w-4 h-4" />} title="Orders" sub="What you bought, what you sell" />

@@ -33,7 +33,7 @@ export const FLOW_ORDER: Array<{ key: 'bulk' | 'direct' | 'niche' | 'group'; ico
 export const SIDE_ORDER: Array<{ key: DiscoverRoom; label: string; unit: string; icon: 'feed' | 'calendar' | 'users' | 'bike' }> = [
   { key: 'all', label: 'All', unit: 'everything on the board', icon: 'feed' },
   { key: 'events', label: 'Events', unit: 'published', icon: 'calendar' },
-  { key: 'circles', label: 'Circles', unit: 'you could join', icon: 'users' },
+  { key: 'circles', label: 'Groups', unit: 'you could join', icon: 'users' },
   { key: 'errands', label: 'Errands', unit: 'open runs', icon: 'bike' }
 ];
 

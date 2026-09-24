@@ -1,3 +1,4 @@
+import { ShopTeam } from './ShopTeam';
 import React, { useState, useEffect } from 'react';
 import type { Space, Listing, SpacePublicFace } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
@@ -674,6 +675,7 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
       {/* ── SURFACE 4: TOOLS — hours, pinned offers, templates ── */}
       {currentTab === 'tools' && (
         <div className="animate-fadeIn p-4 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 shadow-2xs">
+          <ShopTeam spaceId={space.id} />
           <SpaceTools
             space={space}
             offers={space.offers ?? []}

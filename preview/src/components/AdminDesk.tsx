@@ -1,6 +1,7 @@
 import React from 'react';
 import * as briefApi from '../api/briefApi';
 import type { AuthedUser, MemberRow, MembersPage, OnboardingFunnel } from '../api/briefApi';
+import { SpaceModerationPanel } from './SpaceModerationPanel';
 import { X } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -390,6 +391,7 @@ function AttentionTab({ tick, can, refresh }: { tick: number; can: (c: string) =
   return (
     <>
       {note && <Empty>{note}</Empty>}
+      {can('moderate') && <Card title="Public page reports"><SpaceModerationPanel /></Card>}
       <Card title="Reports on objects" note="Flag → inspect → decide. Removal hides without deleting; every decision is audited with a reason.">
         {reports === null ? <Empty>loading…</Empty>
           : reports.length === 0 ? <Empty>No open reports.</Empty>

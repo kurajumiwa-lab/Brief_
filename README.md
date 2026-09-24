@@ -34,14 +34,18 @@ success: an unconfigured payment rail returns `503` with a reason, not a fake
 
 ## The product surface
 
-Production serves a **four-tab dock** (see `src/app/Navigation.tsx`):
+Production enters through `preview/src/main.jsx` → `preview/src/app/AppShell.tsx`.
+The current bottom bar has **Home, Mine, You**, plus a **Create** action:
 
-| Tab | What it is |
+| Door | What it is |
 |---|---|
-| **Home** | The owner-scoped home surface (`src/features/home/HomeSurface.tsx`). |
-| **Spaces** | The pipeline — your requests, work and supply (`src/features/spaces/PipelineView.tsx`). |
-| **Discover** | The city feed — what is being sourced and supplied around you (`src/features/city/CityFeedView.tsx`). |
-| **Activity** | Your own real counts: requests, work, payments, procurement (`src/features/activity/ActivitySurface.tsx`). |
+| **Home** | Nearby activity and discovery. |
+| **Mine** | Your shops, orders and saved items. |
+| **You** | Identity, standing, money and settings. |
+| **Create (+)** | Opens the creation sheet; it is not a destination. |
+
+Requests, Supply, Partners and Pulse remain reachable through the drawer.
+See `preview/src/app/Navigation.tsx` and `NavSheet.tsx` for the current routing.
 
 ---
 
@@ -55,7 +59,7 @@ One chain, all derived, all honest:
 4. **Work order** — accepting a quote freezes an agreement and runs a two-party fulfillment state machine (`domain/workOrders.js`).
 5. **Repeat procurement** — completing a work order records a repeatable pattern, so "request again" is one tap (`domain/procurement.js`).
 6. **Trust** — economic history is derived per participant/capability with explainable signals, never a secret score (`domain/participantTrust.js`).
-7. **Payment** — collection via Tuma STK push, disbursement via M-Pesa B2C, each attempt recorded and reconciled (`domain/workPayment.js`).
+7. **Payment** — collection through KCB Buni STK push when configured; payouts remain manual and finance-confirmed. Automated Buni disbursement is blocked pending a verified transfer contract (`domain/workPayment.js`, `connectors/buni.js`).
 
 The **supply layer** (`domain/supply.js`, `supplyVerification.js`) models
 enterprises and their capabilities (production / stock / service / logistics /
@@ -105,8 +109,8 @@ server-authoritative: a client posting `{price: 1}` against a KES 2,500 listing
 gets an order for 2,500. Settlement is refused unless a genuinely settled
 ledger transaction backs it.
 
-- **Collection:** Tuma STK push (`connectors/tuma.js`) — fails closed when unconfigured.
-- **Disbursement:** M-Pesa B2C (`connectors/mpesa.js`) — payouts refuse with `503 provider_unavailable` until credentials are set.
+- **Collection:** KCB Buni STK push (`server/src/connectors/buni.js`) — fails closed when unconfigured. Configuration alone does not verify a working payment.
+- **Disbursement:** manual + finance-confirmed. Buni automated transfers are deliberately refused; adding credentials does not implement payouts. Keep `SETTLEMENT_RAIL=manual`. The separate Daraja connector serves Huduma, not the core commerce payout rail.
 - **Referrals** (`domain/referrals.js`): depth hard-capped at **one level**, no entry fee anywhere, points convert to cash only from a pool backed by a fixed fraction of confirmed service-fee revenue.
 
 ---
@@ -114,24 +118,19 @@ ledger transaction backs it.
 ## Repository layout
 
 ```
-preview/src/main.jsx    The ONLY entry point. Renders src/app/AppShell.tsx for
-                        app routes and PublicCampaignPage for /c/:slug.
-App.tsx                 Root client shell (React + TS).
-src/app/                AppShell + Navigation (the production shell).
-src/features/           Modular surfaces: home, city, spaces, activity,
-                        matching, quotes, requests, supply, work, procurement.
-src/api/                Typed API client — the ONLY place fetch() is called.
-src/model/              Core types, scoring, destinations.
-server/                 Backend: connectors, domain modules, HTTP routes.
-  src/domain/           The domain logic (auth, requests, matching, quotes,
-                        workOrders, procurement, participantTrust, workPayment,
-                        supply, attribution, partner, ledger, settlement, ...).
-  src/routes/           Express route modules, one per domain.
-  src/store.js          File-backed JSON store; EMPTY enumerates every
-                        collection; additive migrations only.
-  test/                 Server suite (run.js + per-domain *.mjs).
-preview/                Vite build + the jsdom client suites.
-tc/                     Strict TypeScript typecheck harness.
+preview/src/main.jsx    Production entry: AppShell, or PublicCampaignPage at /c/:slug.
+preview/src/App.tsx     Legacy feature-test harness, not the production shell.
+preview/src/app/        Production shell and navigation.
+preview/src/features/   Modular product surfaces.
+preview/src/api/        Typed client API and transport.
+preview/src/model/      Client types and derivations.
+server/src/connectors/  External-provider adapters.
+server/src/domain/      Business rules and workflows.
+server/src/routes/      Express HTTP routes.
+server/src/store.js     File-backed JSON store and additive migrations.
+server/test/            Server test suites.
+preview/                Vite build and jsdom client suites.
+tc/                     Typecheck config reading preview/src directly.
 ```
 
 `preview/src/` is the single canonical client source tree — built by Vite and
@@ -145,30 +144,61 @@ it.
 
 ## Running it
 
-### The app
+Use Node 22 LTS for the commands below (the `--env-file` option requires
+Node 20.6+), and npm 9+. Run commands from the repository root.
+
+### Install and start locally
 
 ```bash
-npm run install:all        # installs root + preview + server + tc workspaces
-npm run dev                # Vite dev server (proxies /ingest/* to :8787)
+npm ci                                  # all workspaces, from the root lockfile
+cp server/.env.example server/.env.local # optional connectors; keep secrets local
+node --env-file=server/.env.local server/src/index.js
 ```
 
-### The server
+In a second terminal:
 
 ```bash
-cd server
-cp .env.example .env       # fill in tokens for live connectors
-npm start                  # http://localhost:8787 (binds 0.0.0.0:PORT)
+npm run dev                             # Vite on :5173, API proxy to :8787
 ```
 
-It runs with no credentials. Local domains work immediately; connectors that
-need a token report "not configured" and fail closed — a dead connector never
-breaks the app.
+The server binds `0.0.0.0:8787` by default. Keep `PORT=8787` in the local
+server env file to match Vite's `/ingest/*` proxy. Browser code uses that
+relative proxy path, not a localhost backend URL.
+
+**Environment files are not loaded by `npm start` automatically.** Use the
+explicit `node --env-file=...` command above, or export variables before
+starting. Node 18 users must export variables instead of using `--env-file`.
+The root `.env.example` is a **deployment** template: its `/data` path needs
+a mounted volume and is not the default local setup.
+
+### Run the production build locally
+
+```bash
+npm run build:client
+NODE_ENV=production node --env-file=server/.env.local server/src/index.js
+```
+
+Stop the dev backend first if it is using the same port. With variables already
+exported (as on Railway), `npm start` is the equivalent production command.
+
+No external credentials are needed for local domains. Unconfigured connectors
+fail closed; they do not manufacture a delivery or payment. For optional Buni
+collection, configure `BUNI_CONSUMER_KEY`, `BUNI_CONSUMER_SECRET`,
+`BUNI_WEBHOOK_SECRET`, `BUNI_ENV=uat`, and a real HTTPS `BRIEF_PUBLIC_ORIGIN`.
+Use KCB-issued organization/passkey/till values where applicable. Before
+production, obtain KCB's confirmed host and account enablement. See
+[deployment setup](DEPLOYMENT.md) and the detailed
+[payment integration record](docs/PAYMENTS-INTEGRATION.md).
+
+**Automated payouts are a separate blocked workstream.** Do not set
+`BUNI_ALLOW_UNVERIFIED_TRANSFERS` or switch the settlement rail to an adapter
+that does not exist.
 
 ---
 
 ## Tests
 
-Run from the repo root after `npm run install:all`:
+Run from the repo root after `npm ci`:
 
 ```bash
 npm run build:client       # Vite production build (preview/src is the source)
@@ -177,7 +207,7 @@ cd server && npm test      # server suite (run.js + per-domain files)
 npx tsc -p tc/tsconfig.json  # strict typecheck (expects exit 0)
 ```
 
-**Current state — measured 2026-09-10 from a clean install, not copied forward:**
+**Historical baseline — measured 2026-09-10 (not the current release status):**
 
 | Suite | Result |
 |---|---|
@@ -213,6 +243,8 @@ a payment happened. Keep Brief "not a bank".
 ---
 
 ## Further reading
+
+- `docs/ACTIVE-BACKLOG.md` — current implementation order, acceptance criteria and decision/integration gates. Older audit reports are historical, not the active backlog.
 
 - `PUBLIC-FEED-API.md` — the anonymous, read-only feed contract (`GET /api/public/feed`).
 - `ONBOARDING.md` — the service ladder (progress derived from real rows, never a stored counter).

@@ -1,5 +1,7 @@
+import { canReadWorkspaceSignal } from '../domain/workspaceAccess.js';
 // CIRCLES ROUTES — extracted from index.js (zero behaviour change).
 // Each route keeps its original body verbatim; only its home file changed.
+import * as groups from '../domain/groupDirectory.js';
 import { store } from '../store.js';
 import { callerId, isSelf, isCoordinator, circleHasNoMembers, membershipOf, canOperate } from '../identity.js';
 import * as circles from '../domain/circle.js';
@@ -14,6 +16,9 @@ import { requireFeature } from '../features.js';
 
 export function register(app) {
 app.use('/api/circles', requireFeature('circles'));
+app.use('/api/groups', requireFeature('circles'));
+app.get('/api/groups/eligibility', (req, res) => res.json(groups.creatorEligibility(callerId(req))));
+app.get('/api/groups/directory', (req, res) => res.json(groups.directory(req.query, callerId(req))));
 app.use('/api/blocks', requireFeature('circles'));
 app.use('/api/signals', requireFeature('circles'));
 // ---------------------------------------------------------------------------
@@ -26,7 +31,7 @@ app.get('/api/circles', (req, res) => {
   // An anonymous caller still gets the list (circles are public), but every
   // row reports viewerRole: null -- the list never implies a membership the
   // caller does not have.
-  res.json({ circles: circles.listCircles(callerId(req)) });
+  res.json({ circles: circles.listCircles(callerId(req)).filter(c => c.isMember) });
 });
 
 
@@ -34,6 +39,7 @@ app.get('/api/circles', (req, res) => {
 app.get('/api/circles/:id', (req, res) => {
   const circle = circles.getCircle(req.params.id, callerId(req));
   if (!circle) return res.status(404).json({ error: 'circle not found' });
+  if (!groups.isMember(circle.id, callerId(req))) return res.status(403).json({ error: 'Join this group before opening its private workspace.' });
   res.json({
     circle,
     blocks: blocks.listBlocks(circle.id),
@@ -50,30 +56,25 @@ app.post('/api/circles', (req, res) => {
   const me = requireAuth(req, res);
   if (!me) return;
 
-  const { name, description, goal, targetValue, deadline, completionCriteria, sourceId } = req.body ?? {};
+  const { name, description, goal, targetValue, deadline, completionCriteria, sourceId, hostSpaceId, directory } = req.body ?? {};
   try {
+    const host = groups.requireCreator(me, hostSpaceId);
+    const discovery = groups.cleanDirectory(directory);
     // Deriving from a source keeps the provenance chain intact.
     if (sourceId) {
-      const c = circles.findOrCreateCircleFromSource(sourceId, { name, description });
-      // The creator joins their own circle. Without this the loop broke at the
-      // first step: you could create a circle and then be told you were not a
-      // member of it, with no way in except an invitation from a coordinator
-      // who did not exist.
-      const membership = members.addMember(c.id, me, 'coordinator');
-      signals.emitSignal({ type: 'circle_created', circleId: c.id, sourceId, actorId: me });
-      return res.status(201).json({ circle: circles.getCircle(c.id, me), membership });
+      return res.status(400).json({ error: 'Create a group directly. Source-derived groups are managed through source authorization, not this form.' });
     }
     const c = circles.createTargetCircle({
       name, description, goal,
       targetValue: targetValue === undefined || targetValue === null || targetValue === ''
         ? null : Number(targetValue),
-      deadline, completionCriteria
+      deadline, completionCriteria, hostSpaceId: host, directory: discovery
     });
     const membership = members.addMember(c.id, me, 'coordinator');
     signals.emitSignal({ type: 'circle_created', circleId: c.id, actorId: me });
     res.status(201).json({ circle: circles.getCircle(c.id, me), membership });
   } catch (e) {
-    res.status(400).json({ error: String(e.message ?? e) });
+    res.status(e.status ?? 400).json({ error: String(e.message ?? e) });
   }
 });
 
@@ -82,11 +83,11 @@ app.post('/api/circles', (req, res) => {
 app.patch('/api/circles/:id', (req, res) => {
   // Once a circle has members it belongs to them: only a coordinator may
   // change its terms (name, goal, targetValue, deadline).
-  if (!circleHasNoMembers(store, req.params.id) && !isCoordinator(store, req, req.params.id)) {
+  if (!isCoordinator(store, req, req.params.id)) {
     return res.status(403).json({ error: 'only a coordinator may update this circle' });
   }
   try {
-    const c = circles.updateCircle(req.params.id, req.body ?? {});
+    const c = circles.updateCircle(req.params.id, req.body ?? {}, { actorId: callerId(req), reason: req.body?.reason });
     if (!c) return res.status(404).json({ error: 'circle not found' });
     res.json({ circle: c });
   } catch (e) {
@@ -98,6 +99,7 @@ app.patch('/api/circles/:id', (req, res) => {
 
 app.get('/api/circles/:id/members', (req, res) => {
   if (!circles.getCircle(req.params.id)) return res.status(404).json({ error: 'circle not found' });
+  if (!groups.isMember(req.params.id, callerId(req))) return res.status(403).json({ error: 'Only group members can read the member list.' });
   res.json({ members: members.listMembers(req.params.id) });
 });
 
@@ -287,7 +289,7 @@ app.post('/api/circles/:id/members/:userId/verify', (req, res) => {
 //
 // This is the only circle endpoint that answers without a session, and it answers
 // with the room's SHAPE, never its contents: a name, a purpose, how many people,
-// how much settled money, how many tasks and votes are live. Block text, member
+// how many tasks and votes are live. No financial progress is published. Block text, member
 // names and the ledger detail stay behind membership, because "we found you on
 // WhatsApp and you can browse our private group" is not a trade anyone in a chama
 // agreed to. Listing is also opt-in: the coordinator sets `discoverable`.
@@ -551,6 +553,7 @@ app.get('/api/circles/:id/blocks/:blockId/tally', (req, res) => {
  */
 
 app.get('/api/circles/:id/members/:userId/evidence', (req, res) => {
+  if (!groups.isMember(req.params.id, callerId(req))) return res.status(403).json({ error: 'Only members may read this group.' });
   if (!circles.getCircle(req.params.id)) {
     return res.status(404).json({ error: 'circle not found' });
   }
@@ -563,7 +566,7 @@ app.get('/api/circles/:id/members/:userId/evidence', (req, res) => {
 
 
 app.get('/api/blocks', (req, res) => {
-  res.json({ blocks: blocks.listBlocks(req.query.circleId || null) });
+  res.json({ blocks: blocks.listBlocks(req.query.circleId || null).filter(b => groups.isMember(b.circleId, callerId(req))) });
 });
 
 
@@ -608,7 +611,7 @@ app.get('/api/signals', (req, res) => {
     signals: signals.listSignals({
       circleId: req.query.circleId || null,
       limit: Math.min(Number(req.query.limit) || 50, 200)
-    })
+    }).filter(s => (!s.circleId || groups.isMember(s.circleId, callerId(req))) && canReadWorkspaceSignal(s, callerId(req)))
   });
 });
 

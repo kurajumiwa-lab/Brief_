@@ -91,57 +91,10 @@ export const doorFor = (tab: BriefNavigationTab): 'home' | 'mine' | 'you' | null
   }
 };
 
-// 1. Home Doorway Icon (Open Door)
-const DoorwayIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.9"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M13 4h3a2 2 0 0 1 2 2v14" />
-    <path d="M2 20h20" />
-    <path d="M13 20V4a2 2 0 0 0-2-2L5 5a2 2 0 0 0-1 1.7V20" />
-    <circle cx="10" cy="12" r="0.8" fill="currentColor" />
-  </svg>
-);
-
-// 2. Mine — the storefront with its awning: what is yours, in one mark.
-const MineIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.9"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M4 10l1.2-5h13.6L20 10" />
-    <path d="M4 10a2.4 2.4 0 0 0 4.8 0 2.4 2.4 0 0 0 4.8 0 2.4 2.4 0 0 0 4.8 0" />
-    <path d="M5 12v8h14v-8" />
-    <path d="M9.5 20v-5h5v5" />
-  </svg>
-);
-
-// 3. You Person Icon (profile / account)
-const YouIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5' }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.9"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
-  </svg>
-);
+// Filled navigation marks, distinct from the larger category illustrations.
+const DoorwayIcon = ({ className = 'w-5 h-5' }) => <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 11 12 2l10 9-2 2-1-1v10h-5v-7h-4v7H5V12l-1 1z" /></svg>;
+const MineIcon = ({ className = 'w-5 h-5' }) => <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 3h16l3 7a3 3 0 0 1-5 2 3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-5-2zM4 14v8h7v-6h4v6h5v-8a5 5 0 0 1-5-1 5 5 0 0 1-6 0 5 5 0 0 1-5 1z" /></svg>;
+const YouIcon = ({ className = 'w-5 h-5' }) => <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7" r="5"/><path d="M3 22v-2c0-4 4-7 9-7s9 3 9 7v2z" /></svg>;
 
 const DOOR_ICONS: Record<string, React.ReactNode> = {
   home: <DoorwayIcon className="w-5 h-5" />,

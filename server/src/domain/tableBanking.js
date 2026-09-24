@@ -1,3 +1,4 @@
+import { assertLinkedParticipant } from './workspaceAccess.js';
 // ---------------------------------------------------------------------------
 // TABLE BANKING — the ledger + calculator for EXISTING table-banking groups.
 //
@@ -131,6 +132,7 @@ export function listTableBanking(userId) {
 
 export function joinTableBanking(tableBankingId, userId) {
   const group = getTableBanking(tableBankingId);
+  if (group) assertLinkedParticipant('table_banking', tableBankingId, userId, group.ownerId);
   if (!group) fail('group not found', 404, 'not_found');
   if (memberOf(group, userId)) return group; // idempotent
   const now = new Date().toISOString();

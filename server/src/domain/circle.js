@@ -9,6 +9,7 @@
 // Blocks, and Blocks carry the objectId, so the existing graph stays canonical.
 // ---------------------------------------------------------------------------
 
+import { cleanDirectory } from './groupDirectory.js';
 import crypto from 'node:crypto';
 import { store, newId } from '../store.js';
 import * as history from './circleHistory.js';
@@ -181,7 +182,9 @@ export function createTargetCircle({
   goal = null,
   targetValue = null,
   deadline = null,
-  completionCriteria = null
+  completionCriteria = null,
+  hostSpaceId = null,
+  directory = null
 }) {
   if (!name) throw new Error('name is required');
   if (targetValue !== null && !(Number.isFinite(targetValue) && targetValue > 0)) {
@@ -194,7 +197,9 @@ export function createTargetCircle({
     description,
     type: 'target',
     status: 'forming',
-    visibility: 'invite_only',
+    hostSpaceId,
+    directory: directory ? cleanDirectory(directory) : null,
+    visibility: directory?.listed === true ? 'discoverable' : 'invite_only',
     // Minted at creation, never derived from the name: a name can be reused and
     // renamed, and a link that changes is a link that stops working in the last
     // place you pasted it.
@@ -221,10 +226,11 @@ export function updateCircle(id, patch, { actorId = null, reason = null } = {}) 
   // can rewrite is a link that stops working where it was last shared.
   const allowed = [
     'name', 'description', 'status', 'visibility', 'goal',
-    'targetValue', 'deadline', 'completionCriteria', 'welcome', 'externalLink'
+    'targetValue', 'deadline', 'completionCriteria', 'welcome', 'externalLink', 'directory'
   ];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
+  if ('directory' in clean) clean.directory = cleanDirectory(clean.directory);
   if ('status' in clean && !CIRCLE_STATUS.includes(clean.status)) {
     throw new Error(`status must be one of ${CIRCLE_STATUS.join(', ')}`);
   }
@@ -244,14 +250,14 @@ export function updateCircle(id, patch, { actorId = null, reason = null } = {}) 
   const beforeRow = store.find('circles', (c) => c.id === id);
   if (!beforeRow) return null;
   const before = { ...beforeRow };
-  const changes = Object.entries(clean).filter(([field, after]) => String(before[field] ?? '') !== String(after ?? ''));
+  const changes = Object.entries(clean).filter(([field, after]) => JSON.stringify(before[field] ?? null) !== JSON.stringify(after ?? null));
   if (!changes.length) return withCounts(beforeRow, actorId);
 
   // ORDER IS THE SECURITY. A reason checked after the write lets a refused
   // change take effect anyway — an earlier version of this function did exactly
   // that, so a circle's door would swing open while the coordinator was being
   // told they had not explained themselves. Decide, then write.
-  if (changes.some(([field]) => field === 'visibility') && !String(reason ?? '').trim()) {
+  if (changes.some(([field]) => field === 'visibility' || field === 'directory') && !String(reason ?? '').trim()) {
     throw new Error('listing a private room needs a reason — the members are owed one, in writing');
   }
 
@@ -329,12 +335,9 @@ export function peek(joinCodeOrId) {
     joinCode: circle.joinCode ?? null,
     canJoin: circle.visibility === 'open' || members.length === 0,
     needsInvite: circle.visibility === 'invite_only',
-    // The target progress stays visible only because it is money that really
-    // settled; there is nothing here that could be faked into a bar.
-    targetValue: circle.targetValue ?? null,
-    currentValue: store
-      .filter('ledgerTransactions', (t) => t.circleId === circle.id && t.status === 'settled')
-      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0),
+    // Financial progress belongs to members, not the public join preview.
+    targetValue: null,
+    currentValue: null,
     currency: circle.currency ?? 'KES'
   };
 }

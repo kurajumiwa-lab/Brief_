@@ -125,11 +125,11 @@ async function runTests() {
   // Zone 1 is the banner: one dark-gradient line naming the check-in.
   check('zone 1: what the world is doing (the banner)', text1.includes('What’s moving'));
   check('zone 2: what I should do next (one decision)', text1.includes('Your next step'));
-  // Zone 3 became the landing: the mode tiles (Shops, Events, Circles, Errands,
+  // Zone 3 became the landing: the mode tiles (Shops, Events, Groups, Errands,
   // Runs, Group Buys) and the "What's moving today" hero — the "What's out
   // there" shelf was the browse, and the browse is the board.
   check('zone 3: the mode tiles are the doors of the board',
-    text1.includes('Shops') && text1.includes('Events') && text1.includes('Circles') && text1.includes('Errands') && text1.includes('Runs') && text1.includes('Group Buys'));
+    text1.includes('Shops') && text1.includes('Events') && text1.includes('Groups') && text1.includes('Errands') && text1.includes('Runs') && text1.includes('Group Buys'));
   check('the hero card is the day, named plainly', text1.includes('What’s moving today'));
   check('no invented standing: no position number, sector, tier or queue',
     !/Position #\d/.test(text1) && !/Sector \d/i.test(text1) && !/tier/i.test(text1));

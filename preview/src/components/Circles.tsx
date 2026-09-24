@@ -1,3 +1,5 @@
+import { CategoryArt } from '../ui/CategoryArt';
+import { GroupDirectory } from './GroupDirectory';
 import React from 'react';
 import { Users } from 'lucide-react';
 import * as briefApi from '../api/briefApi';
@@ -42,10 +44,13 @@ const TYPE_LABEL: Record<string, string> = {
   target: 'Target'
 };
 
-type Section = 'overview' | 'tasks' | 'votes' | 'members' | 'activity';
+const GroupWorkspaces = React.lazy(() => import('./GroupWorkspaces').then(m => ({ default: m.GroupWorkspaces })));
+
+type Section = 'workspaces' | 'overview' | 'tasks' | 'votes' | 'members' | 'activity';
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'workspaces', label: 'Workspaces' },
   { id: 'tasks', label: 'Tasks' },
   { id: 'votes', label: 'Votes' },
   { id: 'members', label: 'Members' },
@@ -68,6 +73,14 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
     error: string | null;
   }>({ status: 'idle', data: null, error: null });
 
+  const [directory, setDirectory] = React.useState<briefApi.GroupDirectory | null>(null);
+  const [directoryError, setDirectoryError] = React.useState(false);
+  const [eligibility, setEligibility] = React.useState<briefApi.GroupEligibility | null>(null);
+  const [hostSpaceId, setHostSpaceId] = React.useState('');
+  const [groupLocation, setGroupLocation] = React.useState('');
+  const [groupIndustry, setGroupIndustry] = React.useState('');
+  const [purposes, setPurposes] = React.useState<string[]>(['coordination']);
+  const [listed, setListed] = React.useState(false);
   const [openId, setOpenId] = React.useState<string | null>(null);
   const [section, setSection] = React.useState<Section>('overview');
 
@@ -102,6 +115,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
   const [welcomeDraft, setWelcomeDraft] = React.useState<string | null>(null);
   const [listingRoom, setListingRoom] = React.useState(false);
   const [listReason, setListReason] = React.useState('');
+  const [directoryDraft, setDirectoryDraft] = React.useState({ listed: true, location: '', industry: '', purposes: ['coordination'] });
   const [votedIds, setVotedIds] = React.useState<string[]>([]);
   const [notice, setNotice] = React.useState<string | null>(null);
 
@@ -115,7 +129,11 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
   const load = React.useCallback(async () => {
     setList((p) => ({ ...p, status: 'loading', error: null }));
-    const res = await briefApi.getCircles();
+    const [res, pub, allowed] = await Promise.all([briefApi.getCircles(), briefApi.getGroupDirectory(), briefApi.getGroupEligibility()]);
+    setDirectory(pub.ok ? pub.data : null);
+    setDirectoryError(!pub.ok);
+    setEligibility(allowed.ok ? allowed.data : null);
+    if (allowed.ok) setHostSpaceId(old => old || allowed.data.shops[0]?.id || '');
     setList(
       res.ok
         ? { status: 'ready', data: res.data, error: null }
@@ -252,8 +270,8 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
     if (!reason) return;
     setGovBusy('listing');
     setNotice(null);
-    const nextVisibility = detail.circle?.visibility === 'discoverable' ? 'invite_only' : 'discoverable';
-    const res = await briefApi.setCircleVisibility(openId, nextVisibility, reason);
+    const nextVisibility = directoryDraft.listed ? (detail.circle?.visibility === 'open' ? 'open' : 'discoverable') : 'invite_only';
+    const res = await briefApi.setCircleVisibility(openId, nextVisibility, reason, directoryDraft);
     setGovBusy(null);
     if (!res.ok) { setNotice(res.error); return; }
     setListingRoom(false);
@@ -344,20 +362,25 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
    * were one, and a person who wanted to be one had nothing to press.
    *
    * The server decides whether the join is allowed (an open circle, or one
-   * with nobody in it yet). A refusal is shown verbatim: "this circle is
+   * with nobody in it yet). A refusal is shown verbatim: "this group is
    * invite only" is information, and hiding it would leave somebody wondering
    * whether the button is broken.
    */
   const handleJoin = async (id: string) => {
     setBusyId(id);
     setNotice(null);
+    if (directory?.groups.find(g => g.id === id)?.canRequest) {
+      const request = await briefApi.requestGroupAdmission(id);
+      setBusyId(null); setNotice(request.ok ? 'Membership requested. A coordinator must approve it; workspace and financial participation stay separate.' : request.error);
+      return;
+    }
     const res = await briefApi.joinCircle(id);
     setBusyId(null);
     if (!res.ok) {
-      setNotice(res.error ?? 'could not join this circle');
+      setNotice(res.error ?? 'could not join this group');
       return;
     }
-    setNotice('You have joined this circle.');
+    setNotice('You have joined this group.');
     await load();
     if (openId) await loadDetail(openId);
   };
@@ -372,38 +395,41 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
     const res = await briefApi.leaveCircle(id);
     setBusyId(null);
     if (!res.ok) {
-      setNotice(res.error ?? 'could not leave this circle');
+      setNotice(res.error ?? 'could not leave this group');
       return;
     }
-    setNotice('You have left this circle.');
+    setNotice('You have left this group.');
     await load();
     if (openId === id) setOpenId(null);
     else if (openId) await loadDetail(openId);
   };
 
-  /** Start a circle. The server makes the creator its coordinator. */
+  /** Start a group. The server makes the creator its coordinator. */
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
     const name = newName.trim();
-    if (!name) return;
+    if (!name || !eligibility?.eligible) return;
     setCreating(true);
     setNotice(null);
     const res = await briefApi.createCircle({
       name,
       goal: newGoal.trim() || null,
-      targetValue: newTarget ? Number(newTarget) : null
+      targetValue: newTarget ? Number(newTarget) : null,
+      hostSpaceId,
+      directory: { listed, location: groupLocation.trim(), industry: groupIndustry.trim(), purposes }
     });
     setCreating(false);
     if (!res.ok) {
-      setNotice(res.error ?? 'could not start this circle');
+      setNotice(res.error ?? 'could not start this group');
       return;
     }
     setNewName('');
     setNewGoal('');
     setNewTarget('');
     setShowCreate(false);
-    setNotice('Circle started — you are its coordinator.');
+    setNotice('Group started — you are its coordinator.');
     await load();
+    if (res.data?.id) { setOpenId(res.data.id); setSection(purposes.some(p => p !== 'coordination') ? 'workspaces' : 'overview'); }
   };
 
   const open = detail.circle;
@@ -436,6 +462,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
    */
   const card = (circle: Circle, mode: 'mine' | 'joinable' | 'closed') => {
     const mono = [
+      circle.directory?.location, circle.directory?.industry,
       TYPE_LABEL[circle.type] ?? circle.type,
       circle.status,
       mode === 'closed' ? 'invite only' : null,
@@ -443,13 +470,13 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
     ].filter(Boolean).join(' · ');
     const openRoom = () => {
       setOpenId(circle.id);
-      setSection('overview');
+      setSection(circle.directory?.purposes?.some(p => p !== 'coordination') ? 'workspaces' : 'overview');
       setNotice(null);
     };
     return (
       <GlobysCard
         testId={`circle-${circle.id}`}
-        plate={<NoPhotoPlate mark={TYPE_LABEL[circle.type] ?? circle.type} icon={<Users className="w-4 h-4" />} />}
+        plate={<div className="h-full grid place-items-center bg-[#fff1e1]"><CategoryArt kind="groups" className="!w-28 !h-28" /></div>}
         title={circle.name}
         price={`${circle.memberCount} ${circle.memberCount === 1 ? 'member' : 'members'}`}
         seller={null}
@@ -470,13 +497,14 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
       <section className="space-y-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-lg font-extrabold" style={{ color: 'var(--color-text)' }}>Circles</h2>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1 text-[var(--color-text-muted)]">Do more together</p>
+            <h2 className="text-lg font-extrabold" style={{ color: 'var(--color-text)' }}>Groups</h2>
           </div>
           <button
             onClick={() => setShowCreate((v) => !v)}
             className="shrink-0 px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer"
           >
-            {showCreate ? 'Cancel' : 'Start a circle'}
+            {showCreate ? 'Cancel' : 'Start a group'}
           </button>
         </div>
 
@@ -491,10 +519,15 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             onSubmit={handleCreate}
             className="bg-[color:var(--color-paper)] border border-[var(--brief-line)] rounded-2xl p-4 space-y-2"
           >
+            <p className="text-sm">A verified owner and an active shop are required to host. This does not guarantee a group’s activities or funds.</p>
+            {eligibility?.reason && <p role="status" className="text-sm font-bold">{eligibility.reason}</p>}
+            {!eligibility && <p role="status" className="text-sm">Host eligibility could not be confirmed. Try refreshing before creating.</p>}
+            <label className="block text-sm font-bold">Hosting shop<select aria-label="Hosting shop" value={hostSpaceId} onChange={e => setHostSpaceId(e.target.value)} className="block w-full rounded-xl p-3 mt-1"><option value="">Choose your shop</option>{eligibility?.shops.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
             <input
+              aria-label="Group name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder="Circle name"
+              placeholder="Group name"
               className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
             />
             <input
@@ -510,12 +543,18 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               inputMode="decimal"
               className="w-full rounded-xl border border-[var(--brief-line)] px-3 py-2 text-[13px] text-[var(--brief-ink)]"
             />
+            <div className="grid grid-cols-2 gap-2">
+              <input aria-label="Group location" placeholder="Location (e.g. Kilimani)" value={groupLocation} onChange={e => setGroupLocation(e.target.value)} className="w-full rounded-xl px-3 py-2" />
+              <input aria-label="Group industry" placeholder="Industry (e.g. Hospitality)" value={groupIndustry} onChange={e => setGroupIndustry(e.target.value)} className="w-full rounded-xl px-3 py-2" />
+            </div>
+            <fieldset><legend className="text-sm font-bold mb-2">What will you do together?</legend><div className="grid grid-cols-2 gap-2">{(directory?.purposes ?? [{id:'coordination',label:'Projects & coordination'}, {id:'table_banking',label:'Table banking'}, {id:'group_buy',label:'Group buys'}, {id:'events',label:'Event coordination'}]).map(p => <label key={p.id} className="flex gap-2 items-center text-sm bg-[var(--color-well)] rounded-xl p-3"><input type="checkbox" checked={purposes.includes(p.id)} onChange={e => setPurposes(old => e.target.checked ? [...old,p.id] : old.filter(x => x !== p.id))} />{p.label}</label>)}</div></fieldset>
+            <label className="flex gap-2 items-start text-sm py-2"><input type="checkbox" checked={listed} onChange={e => setListed(e.target.checked)} /><span>List this group in the public directory so people can find it. Joining still requires an invitation. Leave unchecked for invite-only.</span></label>
             <button
               type="submit"
-              disabled={creating || !newName.trim()}
+              disabled={creating || !newName.trim() || !hostSpaceId || !eligibility?.eligible || purposes.length === 0}
               className="px-3 py-2 rounded-xl bg-[#2563EB] text-[var(--accent-ink)] font-extrabold text-[11px] cursor-pointer disabled:opacity-50"
             >
-              {creating ? 'Starting…' : 'Start circle'}
+              {creating ? 'Starting…' : 'Start group'}
             </button>
             <p className="text-[11px] text-[var(--ink-70)]">
               You become its coordinator, so you can add other people.
@@ -523,14 +562,17 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
           </form>
         )}
 
-        {(list.status === 'loading' || list.status === 'idle') && (
+        <a href="/groups" target="_blank" rel="noreferrer" className="block text-sm underline">Open the public Groups directory</a>
+        <GroupDirectory data={directory} error={directoryError} onRetry={load} busyId={busyId} onJoin={handleJoin} onOpen={(id) => { setOpenId(id); setSection(directory?.groups.find(g => g.id === id)?.purposes.some(p => p !== 'coordination') ? 'workspaces' : 'overview'); }} />
+
+        {(list.status === 'loading'  || list.status === 'idle') && (
           <p className="text-xs text-[var(--ink-60)]">Loading...</p>
         )}
 
         {list.status === 'error' && (
           <div className="border border-[var(--brief-line)] bg-[color:var(--color-paper)] rounded-2xl p-4">
             <p className="text-[12px] text-[var(--brief-ink)] leading-snug">
-              Couldn't load circles. {list.error}
+              Couldn't load your groups. {list.error}
             </p>
             <button
               onClick={load}
@@ -544,7 +586,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         {list.status === 'ready' && circles.length === 0 && (
           <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-8 text-center">
             <p className="text-xs text-[var(--ink-60)]">
-              There are no circles here yet.
+              You have not joined a group yet.
             </p>
             <p className="text-[11px] text-[var(--ink-60)] mt-1">
               Start one, or join an open one when somebody starts it.
@@ -555,7 +597,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         {mine.length > 0 && (
           <div>
             <h3 className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-[var(--ink-60)] mb-2">
-              Circles you are in ({mine.length})
+              Your groups ({mine.length})
             </h3>
             <div className="grid grid-cols-2 gap-2.5">
               {mine.map((circle) => (
@@ -568,7 +610,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         {list.status === 'ready' && mine.length === 0 && circles.length > 0 && (
           <div className="border border-dashed border-[var(--brief-line)] rounded-2xl p-6 text-center">
             <p className="text-xs text-[var(--ink-60)]">
-              You are not part of any Circle yet.
+              You have not joined a group yet.
             </p>
             <p className="text-[11px] text-[var(--ink-60)] mt-1">
               The ones below are open — joining takes one press.
@@ -625,7 +667,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
         }}
         className="text-[11px] text-[var(--brief-ink)] cursor-pointer"
       >
-        Back to your circles
+        Back to your groups
       </button>
 
       {detail.status === 'loading' && (
@@ -634,7 +676,7 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
 
       {detail.status === 'error' && (
         <p className="text-[12px] text-[var(--brief-ink)] mt-2">
-          Couldn't load this circle. {detail.error}
+          Couldn't load this group. {detail.error}
         </p>
       )}
 
@@ -788,14 +830,18 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
             {myRole === 'coordinator' && (
               <div className="mt-1 flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => setListingRoom((v) => !v)}
+                  onClick={() => { setDirectoryDraft({ listed: open.visibility !== 'discoverable' && open.visibility !== 'open', location: open.directory?.location ?? '', industry: open.directory?.industry ?? '', purposes: open.directory?.purposes ?? ['coordination'] }); setListingRoom((v) => !v); }}
                   className="text-[11px] font-black cursor-pointer"
                   style={{ color: 'var(--color-primary)', background: 'none', border: 'none', padding: 0 }}
                 >
                   {open.visibility === 'discoverable' ? 'Take it off the list' : 'List it so people can find it'}
                 </button>
                 {listingRoom && (
-                  <span className="flex items-center gap-1.5 w-full">
+                  <div className="grid gap-2 w-full p-3 rounded-2xl bg-[var(--color-well)]">
+                    <label className="text-sm"><input type="checkbox" checked={directoryDraft.listed} onChange={e => setDirectoryDraft(d => ({ ...d, listed: e.target.checked }))} /> List this group publicly (contents stay member-only)</label>
+                    <input aria-label="Group directory location" placeholder="Location, e.g. Kilimani" maxLength={100} value={directoryDraft.location} onChange={e => setDirectoryDraft(d => ({ ...d, location: e.target.value }))} className="p-2 rounded-xl" />
+                    <input aria-label="Group directory industry" placeholder="Industry, e.g. Hospitality" maxLength={100} value={directoryDraft.industry} onChange={e => setDirectoryDraft(d => ({ ...d, industry: e.target.value }))} className="p-2 rounded-xl" />
+                    <fieldset><legend className="text-sm font-bold">Group purposes</legend><div className="flex flex-wrap gap-3">{directory?.purposes.map(p => <label key={p.id} className="text-sm"><input type="checkbox" checked={directoryDraft.purposes.includes(p.id)} onChange={e => setDirectoryDraft(d => ({ ...d, purposes: e.target.checked ? [...d.purposes, p.id] : d.purposes.filter(x => x !== p.id) }))} /> {p.label}</label>)}</div></fieldset>
                     <input
                       value={listReason}
                       onChange={(e) => setListReason(e.target.value)}
@@ -807,13 +853,13 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
                     />
                     <button
                       onClick={handleListRoom}
-                      disabled={govBusy === 'listing' || !listReason.trim()}
+                      disabled={govBusy === 'listing' || !listReason.trim() || !directoryDraft.purposes.length}
                       className="px-3 py-1.5 rounded-xl font-extrabold text-[11px] cursor-pointer disabled:opacity-40"
                       style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)', border: 'none' }}
                     >
-                      {open.visibility === 'discoverable' ? 'Unlist' : 'List it'}
+                      {directoryDraft.listed ? 'List it' : 'Unlist'}
                     </button>
-                  </span>
+                  </div>
                 )}
               </div>
             )}
@@ -842,6 +888,8 @@ export function Circles({ currentUserId = null }: CirclesProps = {}) {
               <p className="text-[11px] text-[var(--brief-ink)] leading-snug">{notice}</p>
             </div>
           )}
+
+          {section === 'workspaces' && openId && <React.Suspense fallback={<p>Opening workspaces…</p>}><GroupWorkspaces groupId={openId} /></React.Suspense>}
 
           {section === 'overview' && (
             <div className="space-y-4">

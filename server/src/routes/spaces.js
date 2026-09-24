@@ -2,6 +2,7 @@
 //
 // Exposes the Space domain over HTTP.
 // Identity is always caller-authoritative; pricing is server-derived.
+import * as shopTeam from '../domain/shopTeam.js';
 import { callerId } from '../identity.js';
 import { store } from '../store.js';
 import * as spaces from '../domain/space.js';
@@ -40,6 +41,12 @@ function requireSpace(slugOrId) {
 }
 
 export function register(app) {
+  const teamCall = (fn) => (req, res) => { try { res.json(fn(req)); } catch (e) { res.status(e.status ?? 400).json({ error: e.message }); } };
+  app.get('/api/shop-teams', requireAuthMw, teamCall(req => ({ shops: shopTeam.myTeams(callerId(req)) })));
+  app.get('/api/spaces/:id/team', requireAuthMw, teamCall(req => shopTeam.view(req.params.id, callerId(req))));
+  app.post('/api/spaces/:id/team/members', requireAuthMw, teamCall(req => shopTeam.setMember(req.params.id, callerId(req), req.body ?? {})));
+  app.patch('/api/spaces/:id/team/brand', requireAuthMw, teamCall(req => shopTeam.editBrand(req.params.id, callerId(req), req.body ?? {})));
+
   // --- THE PUBLIC FACE: a real, server-rendered page per public Space -------
   //
   // Rendered here, not inside the React bundle, for one reason: the sharing
@@ -159,7 +166,10 @@ export function register(app) {
         path: `/s/${raw.slug ?? raw.id}`,
         originDeclared: Boolean(publicOrigin()),
         open: live,
-        reason: !live
+        moderation: raw.publicPageModeration?.hidden ? { hidden: true, hiddenAt: raw.publicPageModeration.hiddenAt } : null,
+        reason: raw.publicPageModeration?.hidden
+          ? 'This public page is hidden following review. Only an authorized reviewer may reinstate it. Selling and existing orders are unchanged.'
+          : !live
           ? raw.status !== 'active'
             ? 'This space is archived, so its page is down.'
             : `This space is ${raw.visibility ?? 'private'}, so it has no public page.`

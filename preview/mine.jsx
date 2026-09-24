@@ -93,7 +93,7 @@ async function main() {
       return fail(404);
     };
     const { t } = await mount(React.createElement(MineSurface, props));
-    assert.ok(t.includes('No shop yet'), t.slice(0, 200));
+    assert.ok(t.includes('Your next idea has a shopfront'), t.slice(0, 200));
     assert.ok(t.includes('Create your first space'), 'and the one action that changes it');
   }
   pass('a true empty shops read is No shop yet');

@@ -2,7 +2,7 @@
 // THE ERRANDS LOBBY — a noticeboard, not a gallery, and not a marketplace of
 // promises. Pinned here:
 //
-//   * Discover is three rooms — Events, Marketplace, Errands. Circles and the
+//   * Discover is three rooms — Events, Marketplace, Errands. Groups and the
 //     vaults left (they have doors, not shelves); WAIRO lives with errands only,
 //     because a rider you push and an errand you post are the same walk.
 //   * Posting is open to anyone signed in. CARRYING needs a real record, and the
@@ -138,7 +138,7 @@ async function main() {
     const tiles = Array.from(picker.querySelectorAll('button')).map((b) => text(b));
     assert.ok(tiles.some((x) => /^Bulk/.test(x)), 'the flows are reachable');
     assert.ok(tiles.some((x) => /^Events/.test(x)), 'Events is in there');
-    assert.ok(tiles.some((x) => /^Circles/.test(x)), 'Circles is in there');
+    assert.ok(tiles.some((x) => /^Groups/.test(x)), 'Groups is in there');
     assert.ok(tiles.some((x) => /^Errands/.test(x)), 'Errands is in there');
     const errandsTile = tiles.map((_, i) => picker.querySelectorAll('button')[i]).find((b) => /^\s*Errands/.test(text(b)));
     click(errandsTile);
@@ -234,18 +234,13 @@ async function main() {
     const { container } = mount(React.createElement(ErrandsLobby, {}));
     await flush();
     const t = text(container);
-    assert.ok(t.includes('Other ways to move a thing'), 'the strip exists');
-    assert.ok(t.includes('Fargo Courier'), 'Fargo is revealed as an option');
-    assert.ok(t.includes('Outside Brief — book them directly'), 'the limit is five words, and it is still the truth');
-    assert.ok(!/How this is derived|>Why</.test(container.innerHTML), 'no disclosure control on the card');
-    assert.ok(!t.includes('Fargo has no integration in Brief'), 'the long reason is not pasted on every card');
-    assert.ok(t.includes('Easy Ride'), 'and carriers people here actually use are counted from rows');
-    // No fabricated contact details anywhere in the strip.
-    const phoneish = t.match(/(\+?254|07\d{2}|0\d{2})[\s-]?\d{3}[\s-]?\d{3}/g);
-    assert.equal(phoneish, null, 'no phone number is invented for a real company');
-    assert.ok(t.includes('no phone number, no price, no promise'), 'and the disclosure says so');
+    assert.ok(!t.includes('Other ways to move a thing'), 'the external directory is removed');
+    assert.ok(!t.includes('Fargo Courier') && !t.includes('Posta Kenya'), 'no non-actionable courier cards');
+    assert.ok(!t.includes('Outside Brief — book them directly'), 'no repeated disclaimer cards');
+    assert.ok(t.includes('Dispatch a shop order'), 'the actionable dispatch surface remains');
+    assert.ok(!t.includes('no phone number, no price, no promise'), 'the obsolete disclosure is gone');
   }
-  pass('Other mailing services are revealed honestly: a name, never invented details');
+  pass('non-actionable courier directory is gone; shop dispatch remains');
 
 
   // --- the eligibility badge is words, with the code kept for audit ---------

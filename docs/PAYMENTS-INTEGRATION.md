@@ -1,5 +1,12 @@
 # Payments: KCB Buni is the rail — what's wired, what's gated, what you must do
 
+> Historical integration record. For current setup commands and variables use
+> [README](../README.md), [DEPLOYMENT](../DEPLOYMENT.md), and the checked-in env
+> templates. Deployment observations below describe the time this record was
+> written, not a current live check. The [active backlog](ACTIVE-BACKLOG.md)
+> keeps automated payouts blocked pending the verified KCB transfer contract.
+
+
 Updated 2026-09-19. Buni is now the only payment rail in Brief. IntaSend, Tuma,
 Paystack and Flutterwave are gone (reasons at the bottom). Pochi la Biashara
 survives — not as a connector, because it has no third-party API, but as the
@@ -148,7 +155,7 @@ reference — nothing else changes.
   `404 "Application not found"` from Railway's edge on every path including
   `/api/health`, across four pushes. That is consistent with your new
   account/deployment: the old service is gone or stopped, and I have no token for
-  the new one. **Send me the new Railway URL** (or a token + service id) and I'll
+  the new one. **Provide the new public Railway URL** (never a token or credential in chat) and I'll
   verify the deploy the way I did before: bundle-hash change **and** uptime reset,
   plus string greps in the served JS/CSS. Nothing here is untested — I booted the
   exact commit locally with the production start command and the API answered
