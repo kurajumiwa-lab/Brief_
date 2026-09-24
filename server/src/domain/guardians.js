@@ -86,7 +86,8 @@ function fail(message, status = 400, code = 'validation_error') {
 /**
  * The status a link has RIGHT NOW, derived on read. `flagged` and `suspended`
  * are never stored: they are what the current count of signed-in reports means,
- * so a report handled yesterday stops costing the guardian today.
+ * Public-page moderation preserves a report's existing effect until separate
+ * guardian policy decides it; handledAt alone is not financial authorization.
  */
 export function effectiveStatus(link, { nowMs = Date.now(), reports = null } = {}) {
   if (!link) return null;
@@ -98,19 +99,19 @@ export function effectiveStatus(link, { nowMs = Date.now(), reports = null } = {
   }
   const n = reports ?? reportCount(link.spaceId);
   if (n >= SUSPEND_AFTER_REPORTS) {
-    return { status: 'suspended', reason: `${n} signed-in reports on this shop are open`, reports: n };
+    return { status: 'suspended', reason: `${n} signed-in reports on this shop still count toward guardian restrictions`, reports: n };
   }
   if (n >= FLAG_AFTER_REPORTS) {
-    return { status: 'flagged', reason: `${n} signed-in reports on this shop are open`, reports: n };
+    return { status: 'flagged', reason: `${n} signed-in reports on this shop still count toward guardian restrictions`, reports: n };
   }
   return { status: 'active', reason: null, reports: n };
 }
 
-/** Report rows that can affect a guardian: signed-in, one per person, open. */
+/** Signed-in reports, one per person: open or explicitly policy-pending. */
 export function reportCount(spaceId) {
   const seen = new Set();
   let n = 0;
-  for (const r of store.filter('spaceAbuseReports', (x) => x.spaceId === spaceId && !x.handledAt)) {
+  for (const r of store.filter('spaceAbuseReports', (x) => x.spaceId === spaceId && (!x.handledAt || x.guardianEffectPending === true))) {
     if (!r.reporterId) continue;              // an anonymous form row is read, not counted
     if (seen.has(r.reporterId)) continue;     // one person, one open report
     seen.add(r.reporterId);

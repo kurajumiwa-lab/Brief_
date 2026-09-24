@@ -61,6 +61,9 @@ const EMPTY = {
   errors: [],
   // Feature schema: durable group containers and their contents.
   circles: [],
+  groupJoinRequests: [], // Private directory admission requests.
+  groupWorkspaces: [], // Context links; native domains own operations and lifecycle.
+  workspaceParticipants: [], // Explicit requests/admissions, never group membership.
   members: [],
   blocks: [],
   // One row per ballot cast, keyed by (blockId, voterId). Vote tallies are

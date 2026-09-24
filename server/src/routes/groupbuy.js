@@ -1,3 +1,4 @@
+import { linkedWorkspace } from '../domain/workspaceAccess.js';
 // GROUP BUY ROUTES — the Table Banking & Group Buy package over the engine layer.
 // The 3-field intake, the ledger stepper, and the stage controls. Tier
 // guardrails (active-buy caps) are enforced server-side at creation.
@@ -11,6 +12,14 @@ import { guardrailFor } from '../domain/engine/tiers.js';
 export function register(app) {
   app.use('/api/engine/group-buys', requireFeature('engine'));
 
+  app.use('/api/engine/group-buys/:id', (req, res, next) => {
+    const w = linkedWorkspace('group_buy', req.params.id);
+    if (!w) return next();
+    const me = requireAuth(req, res); if (!me) return;
+    if (w.ownerId !== me) return res.status(403).json({ error: 'Use the workspace participation view; organizer finances are separate.' });
+    if (req.method !== 'GET') return res.status(409).json({ error: 'Operate this linked buy through its group workspace so participation and lifecycle rules apply.' });
+    next();
+  });
   app.get('/api/engine/group-buys', (req, res) => {
     const me = requireAuth(req, res);
     if (!me) return;

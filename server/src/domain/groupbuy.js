@@ -1,3 +1,4 @@
+import { linkedWorkspace, assertLinkedParticipant } from './workspaceAccess.js';
 // ---------------------------------------------------------------------------
 // GROUP BUY ENGINE — the "Table Banking & Group Buy" financial package.
 //
@@ -36,6 +37,10 @@ export const GROUP_BUY_STAGES = [
   { id: 'delivered', label: 'Individual Delivery', blurb: 'Every member has their share.' }
 ];
 
+const WORKSPACE_STAGES = [
+  { id: 'funding', label: 'Recording contributions' }, { id: 'target_met', label: 'Recorded target met' },
+  { id: 'ordered', label: 'Order recorded' }, { id: 'dispatched', label: 'Dispatch recorded' }, { id: 'delivered', label: 'Delivery recorded' }
+];
 const STAGE_IDS = GROUP_BUY_STAGES.map((s) => s.id);
 
 // The only legal forward moves. TARGET_MET also happens automatically when a
@@ -121,8 +126,8 @@ function viewOf(b) {
     .sort((a, b2) => String(b2.createdAt).localeCompare(String(a.createdAt)));
   return {
     ...b,
-    stages: GROUP_BUY_STAGES,
-    stageIndex: stageIndex(b.stage),
+    stages: linkedWorkspace('group_buy', b.id) ? WORKSPACE_STAGES : GROUP_BUY_STAGES,
+    stageIndex: linkedWorkspace('group_buy', b.id) ? WORKSPACE_STAGES.findIndex(s => s.id === b.stage) : stageIndex(b.stage),
     total,
     remaining: Math.max(0, b.targetAmount - total),
     progressPct: b.targetAmount > 0 ? Math.min(100, Math.round((total / b.targetAmount) * 100)) : 0,
@@ -156,6 +161,8 @@ export function receiptHash(contribution) {
  */
 export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa', actorId = null }) {
   const buy = store.find('groupBuys', (b) => b.id === groupBuyId);
+  if (buy) assertLinkedParticipant('group_buy', groupBuyId, actorId, buy.ownerId);
+  if (buy && linkedWorkspace('group_buy', buy.id) && !['funding', 'target_met'].includes(buy.stage)) throw new Error('Contribution recording is closed.');
   if (!buy || buy.status === 'closed') throw new Error('group buy not found');
   if (!memberRef || !String(memberRef).trim()) throw new Error('member reference is required');
   if (!PAYMENT_SOURCES.includes(source)) {
@@ -237,9 +244,16 @@ export function contribute({ groupBuyId, memberRef, amount, source = 'mpesa', ac
 }
 
 /** Drive an explicit stage change (owner/organiser act). */
-export function advanceStage({ groupBuyId, to, actorId = null }) {
+export function advanceStage({ groupBuyId, to, actorId = null, note = null }) {
   const buy = store.find('groupBuys', (b) => b.id === groupBuyId);
   if (!buy || buy.status === 'closed') throw new Error('group buy not found');
+  if (linkedWorkspace('group_buy', groupBuyId)) {
+    if (buy.ownerId !== actorId) throw new Error('Only the buy owner may record procurement progress.');
+    const next = { target_met: 'ordered', ordered: 'dispatched', dispatched: 'delivered' }[buy.stage];
+    if (!next || next !== to) throw new Error('Complete the current procurement step first. Escrow is not provided.');
+    if (typeof note !== 'string' || !note.trim()) throw new Error('Record the order, dispatch or delivery reference.');
+    return viewOf(applyStage(buy, to, note.trim()));
+  }
   if (!STAGE_IDS.includes(to)) throw new Error(`stage must be one of ${STAGE_IDS.join(', ')}`);
   const allowed = STAGE_TRANSITIONS[buy.stage] ?? [];
   if (!allowed.includes(to)) {

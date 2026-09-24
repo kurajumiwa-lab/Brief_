@@ -115,6 +115,10 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
   featured,
   className = ''
 }) => {
+  const [category, setCategory] = useState('all');
+  const [search, setSearch] = useState('');
+  const categories = [...new Set(offers.map(o => o.type).filter((t): t is Listing['type'] => typeof t === 'string' && t.length > 0))];
+  const shownOffers = offers.filter(o => (category === 'all' || o.type === category) && (!search.trim() || `${o.title} ${o.description ?? ''}`.toLowerCase().includes(search.trim().toLowerCase())));
   const [copiedId, setCopiedId] = useState<string | null>(null);
   /** The link the last share produced, per offer — shown when a clipboard refuses. */
   const [shareUrl, setShareUrl] = useState<Record<string, string>>({});
@@ -236,13 +240,18 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
             soundEngine.play('heavyTap');
             onAddOffer();
           }}
-          className="px-3.5 py-1.5 rounded-full bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
+          className="px-3.5 py-1.5 rounded-full bg-[color:var(--color-text)] hover:bg-black text-white font-bold text-xs flex items-center space-x-1.5 transition-all cursor-pointer shadow-xs"
         >
           <Plus className="w-3.5 h-3.5" />
           <span>+ Add Offer</span>
         </button>
       </div>
 
+      {offers.length > 0 && <div className="space-y-2">
+        <input aria-label="Search shop catalog" placeholder="Search this shop" value={search} onChange={e => setSearch(e.target.value)} className="w-full p-3 rounded-2xl" />
+        <div className="shop-category-row" aria-label="Catalog categories">{['all', ...categories].map(c => <button key={c} type="button" aria-pressed={category === c} onClick={() => setCategory(c)}>{c === 'all' ? 'All offers' : c.charAt(0).toUpperCase() + c.slice(1) + 's'}</button>)}</div>
+        {shownOffers.length === 0 && <p className="text-sm p-4 bg-white rounded-xl">No offers match this search.</p>}
+      </div>}
       {offers.length === 0 ? (
         <div className="p-8 rounded-3xl bg-[color:var(--color-paper)] border border-black/5 text-center space-y-3 shadow-sm">
           <ShoppingBag className="w-8 h-8 text-[color:var(--color-text-muted)] mx-auto opacity-40" />
@@ -253,14 +262,14 @@ export const CatalogView: React.FC<CatalogViewProps> = ({
           <button
             type="button"
             onClick={onAddOffer}
-            className="px-4 py-2 rounded-full bg-[color:var(--color-text)] text-[color:var(--color-primary)] text-xs font-bold shadow-xs cursor-pointer"
+            className="px-4 py-2 rounded-full bg-[color:var(--color-text)] text-white text-xs font-bold shadow-xs cursor-pointer"
           >
             Create First Offer
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {offers.map((offer) => {
+          {shownOffers.map((offer) => {
             // Status is read from the row the server returned — never from a
             // local optimistic flip, which is how a control ends up lying.
             const currentStat = offer.status;

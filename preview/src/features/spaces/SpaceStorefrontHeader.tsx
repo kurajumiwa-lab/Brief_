@@ -1,3 +1,5 @@
+import { CategoryArt } from '../../ui/CategoryArt';
+import { mediaFileUrl } from '../../api/briefApi';
 import React from 'react';
 import { Bell, BellOff, Lock, MessageCircle, Pencil, Plus, Share2 } from 'lucide-react';
 import type { Space } from '../../api/types';
@@ -83,37 +85,10 @@ export function SpaceStorefrontHeader({
   const liveOffers = offers.length;
 
   return (
-    <header className="rounded-3xl overflow-hidden brief-lift-2" style={{ background: 'var(--color-paper)' }}>
-      {/* The cover is the shop window, not wallpaper. A photo wins; failing that,
-          the ONE offer the vendor pinned is what a buyer should meet first — a
-          blank 168px band was the most expensive emptiness in the app. Failing
-          both, the plate carries the name and says a cover is outstanding. */}
-      <div className="relative h-[168px] w-full" style={{ background: space.image ? 'var(--color-well)' : roomSurface() }}>
-        {space.image ? (
-          <img src={space.image} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
-        ) : pinned ? (
-          <div className="absolute inset-0 flex flex-col justify-end p-4">
-            <span className="text-[11px] font-black uppercase tracking-[0.16em]" style={{ color: 'var(--brief-muted)' }}>
-              {isPinned ? 'Pinned by the vendor' : 'Newest live offer'}
-            </span>
-            <p className="mt-1 text-[30px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
-              {pinned.title}
-            </p>
-            <p className="mt-0.5 text-[13px] font-mono font-bold" style={{ color: 'var(--brief-ink)' }}>
-              {pinned.price === 0 ? 'Free' : `KES ${Number(pinned.price).toLocaleString('en-KE')}`}
-              {pinned.unitLabel ? ` / ${pinned.unitLabel}` : ''}
-              {pinned.minOrderQuantity ? ` · min ${pinned.minOrderQuantity}` : ''}
-            </p>
-          </div>
-        ) : (
-          <div className="absolute inset-0 flex flex-col justify-end p-4">
-            <p className="text-[32px] font-extrabold leading-tight line-clamp-2" style={{ color: 'var(--brief-ink)' }}>
-              {space.name}
-            </p>
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--brief-muted)' }}>
-              No cover photo yet · {liveOffers} live offer{liveOffers === 1 ? '' : 's'}
-            </p>
-          </div>
+    <header className="shop-identity-header" style={{ background: 'var(--color-paper)' }}>
+      <div className="shop-brand-cover">
+        {space.image ? <img src={mediaFileUrl(space.image)} alt={`${space.name} brand cover`} /> : (
+          <div className="brand-empty"><CategoryArt kind="shops" /><div><strong>{space.name}</strong><p>No brand cover yet</p>{isOwner && <button type="button" onClick={onEdit} className="mt-2 bg-white text-slate-900 px-3 py-2 rounded-xl text-xs font-bold">Add shop cover</button>}</div></div>
         )}
         <div className="absolute top-3 right-3 flex items-center gap-1.5">
           <span
@@ -126,7 +101,7 @@ export function SpaceStorefrontHeader({
       </div>
 
       <div className="px-4 pb-4">
-        <div className="flex items-end gap-3 -mt-8">
+        <div className="flex items-end gap-3 pt-5">
           <span
             className="w-16 h-16 rounded-full grid place-items-center text-lg font-black shrink-0 border-4"
             style={{ background: 'var(--color-paper)', borderColor: 'var(--color-paper)', color: 'var(--color-primary)', boxShadow: 'var(--lift-2)' }}

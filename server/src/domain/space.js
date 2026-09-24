@@ -246,6 +246,9 @@ export function updateSpace(spaceId, updates = {}, { callerId }) {
     if (!SPACE_VISIBILITY.includes(updates.visibility)) {
       throw new Error(`visibility must be one of ${SPACE_VISIBILITY.join(', ')}`);
     }
+    if (space.publicPageModeration?.hidden && updates.visibility !== 'private') {
+      throw Object.assign(new Error('This page is hidden by moderation. Only an authorized reviewer may reinstate it.'), { status: 409 });
+    }
     patch.visibility = updates.visibility;
   }
 

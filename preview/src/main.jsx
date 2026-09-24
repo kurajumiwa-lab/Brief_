@@ -1,12 +1,12 @@
 import './index.css';
 import './ui/theme.css';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-// The campaign page and its slug helper live in model/core — the legacy App.tsx
-// shell is NOT part of the production entry. (App.tsx remains only as the test
-// harness for the legacy feature suites.)
-import { PublicCampaignPage, campaignSlugFromPath } from './model/core';
-import { AppShell } from './app/AppShell.tsx';
+// Independent public entry points do not mount private shell effects.
+// The legacy App.tsx remains a test harness, not the production shell.
+const PublicCampaignPage = lazy(() => import('./model/core').then(m => ({ default: m.PublicCampaignPage })));
+const AppShell = lazy(() => import('./app/AppShell.tsx').then(m => ({ default: m.AppShell })));
+const PublicGroupsPage = lazy(() => import('./components/PublicGroupsPage').then(m => ({ default: m.PublicGroupsPage })));
 import { flushOfflineQueue } from './api/briefApi.ts';
 import { captureAcquisitionFromUrl } from './api/acquisition.ts';
 
@@ -15,9 +15,9 @@ import { captureAcquisitionFromUrl } from './api/acquisition.ts';
 // attributed at sign-up (first-touch-wins on the server).
 captureAcquisitionFromUrl();
 
-// A shared campaign link opens the public page. Everything else goes straight
-// into the app — there is no interstitial landing page.
-const slug = campaignSlugFromPath(window.location.pathname);
+// /groups is the anonymous directory; /c/:slug is a deliberately public event.
+// Other paths enter the authenticated-capable application shell.
+const slug = /^\/c\/([A-Za-z0-9_-]+)\/?$/.exec(window.location.pathname)?.[1] ?? null;
 
 // OFFLINE QUEUE RECONNECT TRIGGER.
 //
@@ -52,12 +52,13 @@ function installOfflineFlush() {
 installOfflineFlush();
 
 function Root() {
+  if (/^\/groups\/?$/.test(window.location.pathname)) return <PublicGroupsPage />;
   if (slug) return <PublicCampaignPage slug={slug} />;
   return <AppShell />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Root />
+    <Suspense fallback={<p role="status">Opening Wairo…</p>}><Root /></Suspense>
   </React.StrictMode>
 );

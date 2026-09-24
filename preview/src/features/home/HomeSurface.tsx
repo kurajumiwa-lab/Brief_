@@ -1,3 +1,4 @@
+import { CategoryArt } from '../../ui/CategoryArt';
 import React, { useState, useEffect } from 'react';
 import {
   Plus,
@@ -19,7 +20,7 @@ import {
 import type { Space, Circle } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import type { MyPosition, DiscoverFeedItem, EventListing } from '../../api/briefApi';
-import { CreateSpaceModal } from '../spaces/CreateSpaceModal';
+import { CreateFlowModal } from '../spaces/CreateFlowModal';
 import { FLOW_ACCENT, FeedSheet } from '../city/DiscoverFeed';
 import { NoPhotoPlate } from '../city/NoPhotoPlate';
 import { categoryAccent } from '../city/categoryPalette';
@@ -266,7 +267,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   const MODES: Array<{ id: string; label: string; icon: React.ReactNode; act: () => void }> = [
     { id: 'shops', label: 'Shops', icon: <Store className="w-5 h-5" />, act: () => onOpenSpaces?.() },
     { id: 'events', label: 'Events', icon: <CalendarDays className="w-5 h-5" />, act: () => onExploreDiscover?.('events') },
-    { id: 'circles', label: 'Circles', icon: <Users className="w-5 h-5" />, act: () => onExploreDiscover?.('circles') },
+    { id: 'circles', label: 'Groups', icon: <Users className="w-5 h-5" />, act: () => onExploreDiscover?.('circles') },
     { id: 'errands', label: 'Errands', icon: <Bike className="w-5 h-5" />, act: () => onExploreDiscover?.('errands') },
     { id: 'runs', label: 'Runs', icon: <Truck className="w-5 h-5" />, act: () => onExploreDiscover?.('errands', true) },
     { id: 'groupBuys', label: 'Group Buys', icon: <Package className="w-5 h-5" />, act: () => onOpenGroupBuys?.() }
@@ -301,15 +302,9 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             key={m.id}
             type="button"
             onClick={() => { soundEngine.play('tap'); m.act(); }}
-            className="flex flex-col items-center gap-1.5 rounded-2xl py-3.5 cursor-pointer transition-all"
-            style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), var(--lift-1), inset 0 0 0 1px var(--brief-line)' }}
+            className="category-door"
           >
-            <span
-              className="w-10 h-10 rounded-2xl grid place-items-center"
-              style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)' }}
-            >
-              {m.icon}
-            </span>
+            <CategoryArt kind={m.id} />
             <span className="text-[12px] font-bold" style={{ color: 'var(--color-text)' }}>{m.label}</span>
           </button>
         ))}
@@ -681,10 +676,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
 
       {/* Create Space Modal */}
       {createSpaceOpen && (
-        <CreateSpaceModal
+        <CreateFlowModal
           isOpen={createSpaceOpen}
           onClose={() => setCreateSpaceOpen(false)}
-          onSpaceCreated={handleSpaceCreated}
+          onCompleted={handleSpaceCreated}
         />
       )}
     </div>

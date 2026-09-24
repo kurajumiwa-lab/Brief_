@@ -1,3 +1,4 @@
+import '../ui/storefront.css';
 import React, { useState, useEffect } from 'react';
 import type { Space, Listing } from '../api/types';
 import * as briefApi from '../api/briefApi';
@@ -7,27 +8,28 @@ import { NavSheet, type SheetTarget } from './NavSheet';
 import { TAB_HASH, backLabel, shopHref, shopIdFromHash, surfaceFromHash } from './surfaces';
 import { CreateSheet, type CreateActionId } from './CreateSheet';
 import { HostEventSheet } from '../features/city/HostEventSheet';
-import { GroupBuyPortal } from '../components/GroupBuyPortal';
-import { SearchResults } from '../components/SearchResults';
-import { HomeSurface } from '../features/home/HomeSurface';
-import { SpaceShell } from '../features/spaces/SpaceShell';
+const GroupBuyPortal = React.lazy(() => import('../components/GroupBuyPortal').then(m => ({ default: m.GroupBuyPortal })));
+const SpaceModerationPanel = React.lazy(() => import('../components/SpaceModerationPanel').then(m => ({ default: m.SpaceModerationPanel })));
+const SearchResults = React.lazy(() => import('../components/SearchResults').then(m => ({ default: m.SearchResults })));
+const HomeSurface = React.lazy(() => import('../features/home/HomeSurface').then(m => ({ default: m.HomeSurface })));
+const SpaceShell = React.lazy(() => import('../features/spaces/SpaceShell').then(m => ({ default: m.SpaceShell })));
 import { SpaceMoney } from '../features/spaces/SpaceMoney';
 import { CatalogView } from '../features/spaces/CatalogView';
-import { CityFeedView } from '../features/city/CityFeedView';
+const CityFeedView = React.lazy(() => import('../features/city/CityFeedView').then(m => ({ default: m.CityFeedView })));
 import type { DiscoverRoom } from '../features/city/taxonomy';
 
-import { PublicSpacePage } from '../features/spaces/PublicSpacePage';
+const PublicSpacePage = React.lazy(() => import('../features/spaces/PublicSpacePage').then(m => ({ default: m.PublicSpacePage })));
 import { CreateFlowModal } from '../features/spaces/CreateFlowModal';
-import { PublicOfferModal } from '../features/offers/PublicOfferModal';
+const PublicOfferModal = React.lazy(() => import('../features/offers/PublicOfferModal').then(m => ({ default: m.PublicOfferModal })));
 import { JoinRoom } from '../features/city/JoinRoom';
-import { SupplyWorkspace } from '../features/supply/SupplyWorkspace';
+const SupplyWorkspace = React.lazy(() => import('../features/supply/SupplyWorkspace').then(m => ({ default: m.SupplyWorkspace })));
 import { RequestsWorkspace, requestPath } from '../features/requests/RequestsWorkspace';
-import { PartnerDesk } from '../features/partner/PartnerDesk';
+const PartnerDesk = React.lazy(() => import('../features/partner/PartnerDesk').then(m => ({ default: m.PartnerDesk })));
 import { YouSurface, YOU_SECTION_IDS, type YouSection } from '../features/you/YouSurface';
 import { EntityDetail } from '../features/you/EntityDetail';
 import { FirstRunChecklist } from '../features/you/FirstRunChecklist';
-import { PulseSurface } from '../features/pulse/PulseSurface';
-import { MineSurface } from '../features/mine/MineSurface';
+const PulseSurface = React.lazy(() => import('../features/pulse/PulseSurface').then(m => ({ default: m.PulseSurface })));
+const MineSurface = React.lazy(() => import('../features/mine/MineSurface').then(m => ({ default: m.MineSurface })));
 import { ShopBrief } from '../features/spaces/ShopBrief';
 import { OverlayScreen } from '../ui/OverlayScreen';
 import { soundEngine } from '../utils/SoundEngine';
@@ -46,6 +48,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   onNavigateLegacyTab,
   className = ''
 }) => {
+  const [canModerate, setCanModerate] = useState(false);
+  const [moderationOpen, setModerationOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<BriefNavigationTab>(initialTab);
   const [supplyRoute, setSupplyRoute] = useState(() => window.location.hash.replace(/^#\/?supply\/?/, ''));
   const [requestRoute, setRequestRoute] = useState('');
@@ -111,10 +115,13 @@ export const AppShell: React.FC<AppShellProps> = ({
    * opened nothing is worse than no nav item.
    */
   const goSheetTarget = (target: SheetTarget) => {
+    if (target.kind === 'moderation') { window.location.hash = 'moderation'; setModerationOpen(true); return; }
     if (target.kind === 'signout') {
       void (async () => {
         await briefApi.logout();
         setAuthed(false);
+        setCanModerate(false);
+        setModerationOpen(false);
         setYouSection(null);
         setActiveTab('home');
         window.location.hash = '';
@@ -125,6 +132,12 @@ export const AppShell: React.FC<AppShellProps> = ({
     if (target.kind === 'tab') {
       setActiveTab(target.tab);
       window.location.hash = target.tab;
+      return;
+    }
+    if (target.kind === 'discover') {
+      setDiscoverSubTab(target.room);
+      setActiveTab('city');
+      window.location.hash = `city/${target.room}`;
       return;
     }
     setYouSection(target.section);
@@ -293,6 +306,7 @@ export const AppShell: React.FC<AppShellProps> = ({
     loadSpaces();
     briefApi.whoAmI().then(async (res) => {
       setAuthed(res.ok);
+      setCanModerate(res.ok && Boolean(res.data?.capabilities?.includes('moderate')));
       // First-run onboarding: a signed-in member with NO table-banking group
       // yet gets a guided checklist instead of a passive dashboard. Derived
       // from real rows (getMyTableBanking), dismissible once, never re-shown
@@ -306,6 +320,8 @@ export const AppShell: React.FC<AppShellProps> = ({
 
     const navigate = () => {
       const hash = window.location.hash.slice(1);
+      setModerationOpen(hash === 'moderation');
+      if (hash === 'moderation') return;
       // An overlay's own hash: exactly the named one is open. This is the branch
       // the back gesture lands on, and it is the only place an overlay closes.
       const surface = surfaceFromHash(hash);
@@ -540,7 +556,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   }
 
   return (
-    <div className={`min-h-screen w-full bg-[color:var(--color-bg)] text-[color:var(--color-text)] font-sans flex ${className}`}>
+    <React.Suspense fallback={<p role="status">Opening workspace…</p>}>
+    <div className={`storefront-room min-h-screen w-full bg-[color:var(--color-bg)] text-[color:var(--color-text)] font-sans flex ${className}`}>
       {/* Toast */}
       {toastMsg && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-2xl bg-[color:var(--color-text)] text-white text-xs font-bold shadow-2xl animate-fadeIn border border-white/10">
@@ -857,7 +874,10 @@ export const AppShell: React.FC<AppShellProps> = ({
 
       {/* The long list of destinations, held in one place so the band above
           stays short and the screens below stay uncluttered. */}
+      {moderationOpen && <OverlayScreen title="Page moderation" onBack={() => { setModerationOpen(false); window.location.hash = activeTab; }}>{canModerate ? <SpaceModerationPanel /> : <p>This page requires the moderate capability. Sign in as an authorized reviewer.</p>}</OverlayScreen>}
+
       <NavSheet
+        canModerate={canModerate}
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         place={place}
@@ -930,6 +950,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
       )}
     </div>
+    </React.Suspense>
   );
 };
 

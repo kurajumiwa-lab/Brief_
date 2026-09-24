@@ -363,14 +363,14 @@ async function main() {
   }
   pass('tapping Home opens Home, not a phantom Discover');
 
-  // --- 11. Events and Circles are rooms of the board, not Errands ----------
+  // --- 11. Events and Groups are rooms of the board, not Errands ----------
   {
     const shell = codeLines(srcOf('src/app/AppShell.tsx'));
     assert.ok(!/setActiveSpace\(res\.data\.spaces\[0\]\)/.test(shell),
       'listing shops is not opening the first one — that put Back on Home');
     const city = codeLines(srcOf('src/features/city/CityFeedView.tsx'));
     assert.match(city, /initialSubTab === 'errands'/,
-      'a leftover run signal cannot steal Events or Circles');
+      'a leftover run signal cannot steal Events or Groups');
 
     const { AppShell } = require('./src/app/AppShell.tsx');
     window.location.hash = '#home';
@@ -379,8 +379,8 @@ async function main() {
     const tiles = host.querySelector('[data-testid="mode-tiles"]');
     assert.ok(tiles, 'Home still has the six doors');
     const events = Array.from(tiles.querySelectorAll('button')).find((b) => /Events/.test(text(b)));
-    const circles = Array.from(tiles.querySelectorAll('button')).find((b) => /Circles/.test(text(b)));
-    assert.ok(events && circles, 'Events and Circles are tiles');
+    const circles = Array.from(tiles.querySelectorAll('button')).find((b) => /Groups/.test(text(b)));
+    assert.ok(events && circles, 'Events and Groups are tiles');
 
     await click(events);
     await flush(); await flush();
@@ -393,14 +393,14 @@ async function main() {
     window.location.hash = '#home';
     await flush(); await flush();
     const tiles2 = document.querySelector('[data-testid="mode-tiles"]');
-    const circles2 = Array.from(tiles2.querySelectorAll('button')).find((b) => /Circles/.test(text(b)));
+    const circles2 = Array.from(tiles2.querySelectorAll('button')).find((b) => /Groups/.test(text(b)));
     await click(circles2);
     await flush(); await flush();
-    assert.equal(window.location.hash, '#city/circles', 'Circles writes its own room');
+    assert.equal(window.location.hash, '#city/circles', 'Groups writes its own room');
     assert.ok(!/You cannot take errands yet/.test(text(document.body)),
-      'Circles did not land on the errands empty state');
+      'Groups did not land on the errands empty state');
   }
-  pass('Events and Circles open their own rooms; Home has no Back');
+  pass('Events and Groups open their own rooms; Home has no Back');
 
   console.log('\nPASS ' + count);
   process.exit(0);

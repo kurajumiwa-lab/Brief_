@@ -63,7 +63,7 @@ export function deriveChecklist(
     {
       id: "group",
       label: "Start your group",
-      hint: "Give your circle a name and a contribution amount.",
+      hint: "Give your group a name and a contribution amount.",
       done: hasGroup,
       action: typeof actions.onStartGroup === 'function' ? actions.onStartGroup : undefined,
       icon: <Plus className="w-4 h-4" />
@@ -119,7 +119,7 @@ export function FirstRunChecklist({
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-black" style={{ color: "var(--color-text)" }}>
-            {compact ? "Get your circle running" : "Welcome — let's set up your circle"}
+            {compact ? "Get your group running" : "Welcome — let's set up your group"}
           </p>
           <p className="text-xs mt-0.5" style={{ color: "var(--color-text-muted)" }}>
             {done} of {steps.length} done

@@ -175,7 +175,7 @@ async function main() {
     act(() => { browse.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     const picker2 = c.querySelector('[role="dialog"][aria-label="Browse the board"]');
-    const tiles = Array.from(picker2.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Circles|Errands)/.test(text(b)));
+    const tiles = Array.from(picker2.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Groups|Errands)/.test(text(b)));
     assert.equal(tiles.length, 8, 'four flows, four side views, all reachable from it');
     assert.ok(tiles.some((b) => /^All/.test(b.textContent.trim())), 'the mixed view is a row, not a tab strip');
     assert.ok(/^Bulk/.test(tiles[0].textContent.trim()), 'the flows lead the list');
@@ -225,7 +225,7 @@ async function main() {
     // gallery, not the sub-tabs themselves: in their own room they are correct.
     assert.ok(!/Community Marketplace & Second-Hand Drops/i.test(t), 'no orphaned heading under the gallery');
     assert.ok(t.includes('Browse') || t.includes('My orders'), 'the market sub-tabs live in the market room');
-    assert.ok(!/Community Circles & Mutual Aid/.test(t), 'circles are not browsed like posters');
+    assert.ok(!/Community Groups & Mutual Aid/.test(t), 'circles are not browsed like posters');
     assert.ok(!/Vault & Special Drops/.test(t), 'vaults are not either');
     // and the tiles navigate instead of stacking: the Events room holds no market
     act(() => { c.querySelector('button[aria-label="Browse the board"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
@@ -264,20 +264,20 @@ async function main() {
 
   // --- 6. where each noun actually lives ---------------------------------
   {
-    // Belonging is exploration: Circles is a Discover room, under its own name.
+    // Belonging is exploration: Groups is a Discover room, under its own name.
     const c = mount(React.createElement(CityFeedView, { onOpenSpace: () => {} }));
     await flush();
     act(() => { c.querySelector('button[aria-label="Browse the board"]').dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    const circleTile = Array.from(c.querySelectorAll('[role="dialog"][aria-label="Browse the board"] button')).find((b) => /^Circles/.test(text(b)));
-    assert.ok(circleTile, 'Circles is reachable from the grid');
+    const circleTile = Array.from(c.querySelectorAll('[role="dialog"][aria-label="Browse the board"] button')).find((b) => /^Groups/.test(text(b)));
+    assert.ok(circleTile, 'Groups is reachable from the grid');
     act(() => { circleTile.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
-    assert.ok(/Circles/.test(text(c)) && !/Communities/.test(text(c)), 'the room keeps Brief\u2019s own noun');
+    assert.ok(/Groups/.test(text(c)) && !/Communities/.test(text(c)), 'the room keeps Brief\u2019s own noun');
     // the definition left the room: the circle list is the explanation, and the
     // sentence about "a door" and "not a poster" now lives on How Brief works.
     assert.ok(!/Groups with a door|not a poster to walk past/.test(text(c)), 'no defining paragraph sits above the list');
-    const heads = Array.from(c.querySelectorAll('h1,h2,h3,h4')).filter((el) => (el.textContent || '').trim() === 'Circles');
+    const heads = Array.from(c.querySelectorAll('h1,h2,h3,h4')).filter((el) => (el.textContent || '').trim() === 'Groups');
     assert.equal(heads.length, 1, 'and the heading is printed once, not a heading above a heading');
 
     // Filing is personal: the Archive lives in You, not in a gallery or a shop.
@@ -288,7 +288,7 @@ async function main() {
     await flush();
     const t2 = text(c2);
     assert.ok(t2.includes('Your shopfronts'), 'Spaces is shops only');
-    assert.ok(!/Vaults/.test(t2) && !/Circles/.test(t2), 'with no cabinet and no neighbourhood inside it');
+    assert.ok(!/Vaults/.test(t2) && !/Groups/.test(t2), 'with no cabinet and no neighbourhood inside it');
   }
   pass('Belonging went to Discover, filing went to You, Spaces kept only shops');
 

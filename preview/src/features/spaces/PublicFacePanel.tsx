@@ -156,6 +156,12 @@ export function PublicFacePanel({ space, face, busy = false, onPublish, onEditSp
               </p>
             )}
           </>
+        ) : face?.moderation?.hidden ? (
+          <div className="mt-2.5 space-y-2" role="status">
+            <p className="text-sm font-bold">{face.reason}</p>
+            <p className="text-sm">{face.reports.note}</p>
+            {onEditSpace && <button type="button" onClick={onEditSpace} className="text-sm font-bold underline">Edit page content</button>}
+          </div>
         ) : confirming ? (
           <div className="mt-2.5 rounded-2xl px-3 py-3" style={{ background: 'var(--color-well)' }}>
             <p className="text-[13px] leading-snug" style={{ color: 'var(--brief-ink)' }}>

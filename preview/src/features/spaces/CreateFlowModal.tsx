@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { CategoryArt } from '../../ui/CategoryArt';
+import React, { useEffect, useState } from 'react';
 import type { Space, SpaceType } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { X, Sparkles, Store, Briefcase, Tag, Users, ArrowRight, Check } from 'lucide-react';
@@ -14,10 +15,9 @@ export interface CreateFlowModalProps {
 }
 
 const SPACE_OPTIONS: Array<{ id: SpaceType; title: string; desc: string; icon: any }> = [
-  { id: 'business', title: 'Business', desc: 'Bakery, shop, catering, physical store', icon: Store },
-  { id: 'side_hustle', title: 'Side Hustle', desc: 'Home-based selling, WhatsApp commerce', icon: Briefcase },
-  { id: 'creator', title: 'Creator Work', desc: 'Bespoke crafts, services, content', icon: Tag },
-  { id: 'community', title: 'Community & Co-op', desc: 'Circle, group projects, circular funds', icon: Users }
+  { id: 'business', title: 'Physical shop', desc: 'A store, restaurant, hotel or workshop customers visit', icon: Store },
+  { id: 'side_hustle', title: 'Online / home shop', desc: 'Your brand, without a walk-in shopfront', icon: Briefcase },
+  { id: 'creator', title: 'Services & studio', desc: 'Skills, appointments and work you deliver', icon: Tag },
 ];
 
 export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
@@ -31,6 +31,10 @@ export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
 
   // Step 1: Space details
   const [name, setName] = useState('');
+  const [mode, setMode] = useState('');
+  const [modes, setModes] = useState<Array<{id: string; label: string; blurb: string}>>([]);
+  useEffect(() => { let live = true; briefApi.getSpaceModes().then(r => { if (live && r.ok) setModes(r.data); }); return () => { live = false; }; }, []);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const [type, setType] = useState<SpaceType>('side_hustle');
   // Blank. This used to open as "Get my first 20 customers", which is a sentence
 // this app prints on the space's own page — so a seller who tabbed past it
@@ -57,67 +61,60 @@ const [goal, setGoal] = useState('')
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [savedSpace, setSavedSpace] = useState<Space | null>(null);
+  const [pendingOfferId, setPendingOfferId] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleFinish = async () => {
+  const handleFinish = async (onlyShell = false) => {
+    if (!existingSpaceId && !name.trim()) { setErrorMsg('Give your shop a name.'); return; }
+    if (!onlyShell && (!offerTitle.trim() || !offerPrice.trim() || !Number.isFinite(Number(offerPrice)) || Number(offerPrice) < 0)) {
+      setErrorMsg('Add an offer title and a valid price. Zero means free.'); return;
+    }
     setSubmitting(true);
     setErrorMsg(null);
-    soundEngine.play('reward');
+    soundEngine.play('tap');
 
     try {
+      let space = savedSpace;
+      let offerId = pendingOfferId;
       if (existingSpaceId) {
-        // Just adding offer to existing space
-        const offerRes = await briefApi.createSpaceOffer(existingSpaceId, {
-          title: offerTitle.trim(),
-          price: Number(offerPrice) || 0,
-          description: offerDescription.trim(),
-          type: offerType,
-          currency: 'KES',
-          images: offerImages
-        });
-
-        if (offerRes.ok && offerRes.data?.offer) {
-          // Publish offer
-          await briefApi.publishSpaceOffer(existingSpaceId, offerRes.data.offer.id);
-          const spaceRes = await briefApi.getSpace(existingSpaceId);
-          if (spaceRes.ok && spaceRes.data?.space) {
-            onCompleted(spaceRes.data.space);
-            onClose();
-          }
+        if (!offerId) {
+          const r = await briefApi.createSpaceOffer(existingSpaceId, {
+            title: offerTitle.trim(), price: Number(offerPrice), description: offerDescription.trim(),
+            type: offerType, currency: 'KES', images: offerImages
+          });
+          if (!r.ok || !r.data?.offer) throw new Error(r.ok ? 'The offer could not be read.' : r.error);
+          offerId = r.data.offer.id;
+          setPendingOfferId(offerId);
         }
-      } else {
-        // Create Space + First Offer combined
-        const res = await briefApi.createSpace({
-          name: name.trim(),
-          type,
-          goal: goal.trim(),
-          initialOffer: {
-            title: offerTitle.trim(),
-            description: offerDescription.trim(),
-            price: Number(offerPrice),
-            currency: 'KES',
-            type: offerType,
-            images: offerImages
+      } else if (!space) {
+        const r = await briefApi.createSpace({
+          name: name.trim(), type, image: coverImage, mode: mode || null, goal: goal.trim(),
+          initialOffer: onlyShell ? undefined : {
+            title: offerTitle.trim(), description: offerDescription.trim(), price: Number(offerPrice),
+            currency: 'KES', type: offerType, images: offerImages
           }
         });
-
-        if (res.ok && res.data?.space) {
-          const createdSpace = res.data.space;
-          // Publish the specific initial offer the server created. Do NOT
-          // guess `offers[0]` — a space shares the owner's vendor, so the
-          // first offer in the list may be a pre-existing listing.
-          const offerId = (createdSpace as any).initialOfferId
-            ?? createdSpace.offers?.[0]?.id;
-          if (offerId) {
-            await briefApi.publishSpaceOffer(createdSpace.id, offerId);
-          }
-          onCompleted(createdSpace);
-          onClose();
-        } else {
-          setErrorMsg((res as any).error || 'Failed to create space');
-        }
+        if (!r.ok || !r.data?.space) throw new Error(r.ok ? 'The shop could not be read.' : r.error);
+        space = r.data.space;
+        setSavedSpace(space);
+        // Never infer an initial offer from the vendor's shared catalog.
+        offerId = (space as Space & { initialOfferId?: string }).initialOfferId ?? null;
+        setPendingOfferId(offerId);
       }
+      const spaceId = existingSpaceId ?? space!.id;
+      if (offerId) {
+        const published = await briefApi.publishSpaceOffer(spaceId, offerId);
+        if (!published.ok) throw new Error(`Your draft is saved, but publishing failed: ${published.error}. Retry publishes the same draft.`);
+      }
+      if (!space) {
+        const r = await briefApi.getSpace(spaceId);
+        if (!r.ok || !r.data?.space) throw new Error(r.ok ? 'The shop could not be read.' : r.error);
+        space = r.data.space;
+      }
+      onCompleted(space);
+      onClose();
     } catch (err: any) {
       setErrorMsg(err?.message || 'Something went wrong');
     } finally {
@@ -141,11 +138,11 @@ const [goal, setGoal] = useState('')
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-[color:var(--color-primary)]">
-                Step {step} of 3
+                {step === 1 ? 'Shop setup' : `Optional offer · ${step - 1} of 2`}
               </span>
             </div>
             <h3 className="text-base font-black text-[color:var(--color-text)]">
-              {step === 1 && 'What are you building?'}
+              {step === 1 && 'Make it your shop'}
               {step === 2 && 'Add your first Offer'}
               {step === 3 && 'Ready to Publish'}
             </h3>
@@ -153,6 +150,7 @@ const [goal, setGoal] = useState('')
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close shop setup"
             className="p-1.5 rounded-full text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
@@ -167,6 +165,10 @@ const [goal, setGoal] = useState('')
             </div>
           )}
 
+          {!existingSpaceId && <div className="shop-brand-preview" data-testid="shop-brand-preview">
+            <div className="brand-cover">{coverImage ? <img src={briefApi.mediaFileUrl(coverImage)} alt="Your shop brand cover preview" /> : <span>Your brand cover goes here</span>}</div>
+            <div className="brand-copy"><h3>{name.trim() || 'Your shop name'}</h3><p>{goal.trim() || 'Your shopfront, ready to make your own.'}</p></div>
+          </div>}
           {/* STEP 1: SPACE TYPE & NAME */}
           {step === 1 && (
             <div className="space-y-4 animate-fadeIn">
@@ -188,7 +190,7 @@ const [goal, setGoal] = useState('')
                           : 'bg-[color:var(--color-surface)] border-black/5 hover:bg-black/5'
                       }`}
                     >
-                      <Icon className={`w-5 h-5 mb-1.5 ${isSelected ? 'text-[color:var(--color-primary)]' : 'text-[color:var(--color-text-muted)]'}`} />
+                      <CategoryArt kind={opt.id} className="!w-14 !h-12" />
                       <p className="text-xs font-bold text-[color:var(--color-text)]">{opt.title}</p>
                       <p className="text-[11px] text-[color:var(--color-text-muted)] leading-tight mt-0.5">{opt.desc}</p>
                     </button>
@@ -207,11 +209,13 @@ const [goal, setGoal] = useState('')
                 />
               </div>
 
+              {modes.length > 0 && <label className="block text-sm font-bold">Shop category<select aria-label="Shop category" value={mode} onChange={e => setMode(e.target.value)} className="block w-full p-3 rounded-xl mt-1"><option value="">Choose a category (optional)</option>{modes.map(m => <option key={m.id} value={m.id}>{m.label} — {m.blurb}</option>)}</select></label>}
+              <ImageField label="Shop brand cover" hint="Your storefront, logo artwork or brand banner — not a product photo. You can replace it later." value={coverImage} onChange={setCoverImage} />
               <div className="space-y-1">
-                <label className="text-[12px] font-bold text-[color:var(--color-text)]">Primary Goal</label>
+                <label className="text-[12px] font-bold text-[color:var(--color-text)]">About your shop</label>
                 <input
                   type="text"
-                  placeholder="e.g. Get my first 20 customers, Reach KES 100k revenue"
+                  placeholder="What do customers come to your shop for?"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[color:var(--color-surface)] text-xs border border-black/5 focus:outline-none focus:ring-1 focus:ring-[color:var(--color-primary)]"
@@ -224,11 +228,13 @@ const [goal, setGoal] = useState('')
                   soundEngine.play('tap');
                   setStep(2);
                 }}
-                className="w-full py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                className="w-full py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-white text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
               >
                 <span>Continue to First Offer</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+              <button type="button" disabled={submitting || !name.trim()} onClick={() => handleFinish(true)} className="w-full py-3 rounded-xl bg-[#2563EB] text-white text-sm font-bold disabled:opacity-40">{submitting ? 'Creating…' : 'Create shop — add offers later'}</button>
+              <p className="text-xs text-[var(--color-text-muted)]">Your shop starts private. Add your cover and offers, then choose when to make it public.</p>
             </div>
           )}
 
@@ -329,7 +335,7 @@ const [goal, setGoal] = useState('')
                     soundEngine.play('tap');
                     setStep(3);
                   }}
-                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
+                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-white text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1"
                 >
                   <span>Preview & Publish</span>
                   <ArrowRight className="w-4 h-4" />
@@ -369,9 +375,9 @@ const [goal, setGoal] = useState('')
                 </button>
                 <button
                   type="button"
-                  onClick={handleFinish}
+                  onClick={() => handleFinish()}
                   disabled={submitting}
-                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-[color:var(--color-primary)] text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md"
+                  className="flex-1 py-2.5 rounded-2xl bg-[color:var(--color-text)] hover:bg-black text-white text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5 shadow-md"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{submitting ? 'Launching...' : 'Publish Space & Offer'}</span>

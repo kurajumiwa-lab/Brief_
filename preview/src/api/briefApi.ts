@@ -282,6 +282,16 @@ export function offlineQueueDepth(): number {
 // CIRCLES
 // ---------------------------------------------------------------------------
 
+export interface GroupEligibility { eligible: boolean; identityVerified: boolean; shops: Array<{ id: string; name: string }>; reason: string | null; }
+export interface GroupDirectoryRow { id: string; name: string; description: string; location: string; industry: string; purposes: string[]; memberCount?: number; isMember: boolean; canJoin: boolean; canRequest?: boolean; hostName: string | null; }
+export interface GroupDirectory { groups: GroupDirectoryRow[]; locations: string[]; industries: string[]; purposes: Array<{ id: string; label: string }>; }
+export function getGroupEligibility(): Promise<ApiResult<GroupEligibility>> {
+  return request('/api/groups/eligibility', undefined, r => r && typeof r.eligible === 'boolean' && Array.isArray(r.shops) ? r : undefined);
+}
+export function getGroupDirectory(): Promise<ApiResult<GroupDirectory>> {
+  return request('/api/groups/directory', undefined, r => r && Array.isArray(r.groups) && Array.isArray(r.purposes) ? r : undefined);
+}
+
 export function getCircles(): Promise<ApiResult<Circle[]>> {
   return request('/api/circles', undefined, (r) => areCircles(r?.circles));
 }
@@ -594,8 +604,8 @@ export function transferCoordinator(circleId: string, userId: string, reason?: s
     (r) => (r?.to ? (r as { to: Member; from: Member; coordinators: number }) : undefined));
 }
 /** Listing a private room needs a reason — the members are owed one. */
-export function setCircleVisibility(circleId: string, visibility: 'invite_only' | 'discoverable' | 'open', reason: string): Promise<ApiResult<Circle>> {
-  return request<Circle>(`/api/circles/${encodeURIComponent(circleId)}`, { method: 'PATCH', body: JSON.stringify({ visibility, reason }) },
+export function setCircleVisibility(circleId: string, visibility: 'invite_only' | 'discoverable' | 'open', reason: string, directory?: Circle['directory']): Promise<ApiResult<Circle>> {
+  return request<Circle>(`/api/circles/${encodeURIComponent(circleId)}`, { method: 'PATCH', body: JSON.stringify({ visibility, reason, ...(directory ? { directory } : {}) }) },
     (r) => (r?.circle ? (r.circle as Circle) : undefined));
 }
 export interface JoinPreview {
@@ -613,7 +623,7 @@ export interface JoinPreview {
   canJoin: boolean;
   needsInvite: boolean;
   targetValue: number | null;
-  currentValue: number;
+  currentValue: number | null;
   currency: string;
 }
 /** What a stranger may see through a shared link, before signing up. */
@@ -5971,4 +5981,80 @@ export function setShopBriefPrefs(input: { enabled: boolean; hour?: number | nul
     method: 'PUT',
     body: JSON.stringify(input)
   }, (r) => (r && r.prefs ? (r.prefs as ShopBriefPrefs) : undefined));
+}
+
+export interface ShopTeamView {
+  permissions?: { readCatalog: boolean; editBrand: boolean; manageTeam: boolean; manageMoney: boolean };
+  shop: { id: string; name: string; goal: string; image: string | null };
+  role: 'owner' | 'manager' | 'staff';
+  roster: Array<{ userId: string; name: string; handle: string | null; role: string }>;
+  offers: Array<{ id: string; title: string; price: number; currency: string; status: string }>;
+}
+export function getMyShopTeams(): Promise<ApiResult<{ shops: Array<{ id: string; name: string; image: string | null; role: string }> }>> {
+  return request('/api/shop-teams', undefined, r => r && Array.isArray(r.shops) ? r : undefined);
+}
+export function getShopTeam(id: string): Promise<ApiResult<ShopTeamView>> {
+  return request(`/api/spaces/${encodeURIComponent(id)}/team`, undefined, r => r && r.shop && Array.isArray(r.roster) ? r : undefined);
+}
+export function setShopTeamMember(id: string, handle: string, role: string): Promise<ApiResult<ShopTeamView>> {
+  return request(`/api/spaces/${encodeURIComponent(id)}/team/members`, {method:'POST',body:JSON.stringify({handle,role})}, r => r && r.shop && Array.isArray(r.roster) ? r : undefined);
+}
+export function editShopTeamBrand(id: string, patch: {name: string; goal: string; image: string | null}): Promise<ApiResult<ShopTeamView>> {
+  return request(`/api/spaces/${encodeURIComponent(id)}/team/brand`, {method:'PATCH',body:JSON.stringify(patch)}, r => r && r.shop && Array.isArray(r.roster) ? r : undefined);
+}
+
+export function getSpaceModes(): Promise<ApiResult<SpaceMode[]>> {
+  return request('/api/public/spaces?limit=1', undefined, r => Array.isArray(r?.modes) ? r.modes : undefined);
+}
+
+// Public-page moderation is separate from object/source trust reports.
+export interface SpaceModerationQueue {
+  reports: Array<{ id: string; spaceId: string; spaceName: string; slug: string | null; reason: string; createdAt: string; outcome: 'pending' | 'upheld' | 'dismissed'; handledAt: string | null; handledBy: string | null; moderationReason: string | null; canReview: boolean }>;
+  hiddenPages: Array<{ id: string; name: string; slug: string; status: string; holdId: string; hiddenAt: string; canReinstate: boolean }>;
+}
+export interface SpaceModerationResult {
+  actionId: string; spaceId: string; visibility: string; replayed: boolean;
+  outcome?: 'upheld' | 'dismissed'; handledAt?: string; reinstatedAt?: string;
+}
+export function getSpaceModerationQueue(): Promise<ApiResult<SpaceModerationQueue>> {
+  return request('/api/ops/space-reports', undefined, r => Array.isArray(r?.reports) && Array.isArray(r?.hiddenPages) ? r as SpaceModerationQueue : undefined);
+}
+export function reviewSpaceReport(id: string, outcome: 'upheld' | 'dismissed', reason: string, key: string): Promise<ApiResult<SpaceModerationResult>> {
+  return request(`/api/ops/space-reports/${encodeURIComponent(id)}/review`, { method: 'POST', headers: { 'Idempotency-Key': key }, body: JSON.stringify({ outcome, reason }) }, r => typeof r?.actionId === 'string' ? r as SpaceModerationResult : undefined);
+}
+export function reinstateSpacePage(id: string, holdId: string, reason: string, key: string): Promise<ApiResult<SpaceModerationResult>> {
+  return request(`/api/ops/spaces/${encodeURIComponent(id)}/reinstate-page`, { method: 'POST', headers: { 'Idempotency-Key': key }, body: JSON.stringify({ holdId, reason }) }, r => typeof r?.actionId === 'string' ? r as SpaceModerationResult : undefined);
+}
+
+export interface PurposeWorkspace {
+  id: string; groupId: string; purpose: 'table_banking' | 'group_buy' | 'events'; name: string; state: string;
+  owner: boolean; participation: string; resourceId: string | null; nativeState: string | null;
+  config: Record<string, string | number> | null; lifecycle: string[];
+  requests: Array<{id: string; userId: string; handle: string}>;
+  event?: { title: string; description: string; startsAt: string; endsAt: string; location: string; price: number; publicSlug: string | null } | null;
+  buy?: { title: string; stage: string; targetAmount: number; total: number | null; contributions: Array<{id: string; memberRef: string; amount: number; receiptHash: string}>; history: Array<{stage: string; at: string; note: string}> };
+  registration?: {id: string; status: string; ticketCode: string} | null;
+  registrations?: Array<{id: string; name: string; status: string; ticketCode: string}>;
+}
+export function getGroupWorkspaces(id: string): Promise<ApiResult<{ purposes: string[]; canCreate: boolean; workspaces: PurposeWorkspace[] }>> {
+  return request(`/api/groups/${encodeURIComponent(id)}/workspaces`, undefined, r => Array.isArray(r?.workspaces) ? r : undefined);
+}
+export function createGroupWorkspace(id: string, body: {purpose: string; name: string; requestId: string}): Promise<ApiResult<PurposeWorkspace>> {
+  return request(`/api/groups/${encodeURIComponent(id)}/workspaces`, { method: 'POST', body: JSON.stringify(body) }, r => r?.workspace?.id ? r.workspace : undefined);
+}
+export function getPurposeWorkspace(id: string): Promise<ApiResult<PurposeWorkspace>> {
+  return request(`/api/group-workspaces/${encodeURIComponent(id)}`, undefined, r => r?.workspace?.id ? r.workspace : undefined);
+}
+export function workspaceCommand(id: string, command: 'setup' | 'activate' | 'participation' | 'participation/decide' | 'actions', body: Record<string, unknown> = {}): Promise<ApiResult<PurposeWorkspace>> {
+  return request(`/api/group-workspaces/${encodeURIComponent(id)}/${command}`, { method: command === 'setup' ? 'PATCH' : 'POST', body: JSON.stringify(body) }, r => r?.workspace?.id ? r.workspace : undefined);
+}
+
+export function requestGroupAdmission(id: string): Promise<ApiResult<{ requested: boolean }>> {
+  return request(`/api/groups/${encodeURIComponent(id)}/admission`, { method: 'POST', body: '{}' }, r => r?.requested === true ? r : undefined);
+}
+export function groupAdmissions(id: string): Promise<ApiResult<Array<{ id: string; handle: string; createdAt: string }>>> {
+  return request(`/api/groups/${encodeURIComponent(id)}/admission`, undefined, r => Array.isArray(r?.requests) ? r.requests : undefined);
+}
+export function decideGroupAdmission(groupId: string, id: string, approve: boolean, reason: string): Promise<ApiResult<unknown>> {
+  return request(`/api/groups/${encodeURIComponent(groupId)}/admission/decide`, { method: 'POST', body: JSON.stringify({ id, approve, reason }) });
 }

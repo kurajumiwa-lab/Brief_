@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ArrowRight, Plus, Radio, Users } from 'lucide-react';
 import type { PublicSpace, Space } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
-import { CreateSpaceModal } from './CreateSpaceModal';
+import { CreateFlowModal } from './CreateFlowModal';
 import { ShopBrief } from './ShopBrief';
 import { splitSpaces } from '../home/spaceSignals';
 import { StateDot, dotForMaintenance } from '../../ui/StateDot';
@@ -189,10 +189,10 @@ export function SpacesLanding({
       </section>
 
       {createOpen && (
-        <CreateSpaceModal
+        <CreateFlowModal
           isOpen={createOpen}
           onClose={() => setCreateOpen(false)}
-          onSpaceCreated={(s) => { setCreateOpen(false); load(); onOpenSpace(s.id); }}
+          onCompleted={(s) => { setCreateOpen(false); load(); onOpenSpace(s.id); }}
         />
       )}
     </div>

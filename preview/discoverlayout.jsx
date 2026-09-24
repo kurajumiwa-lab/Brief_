@@ -103,7 +103,7 @@ const SUMMARY = {
   tiles: [
     { key: 'marketplace', label: 'Marketplace', count: 2, unit: 'live offer' },
     { key: 'events', label: 'Events', count: 1, unit: 'published' },
-    { key: 'circles', label: 'Circles', count: 0, unit: 'you could join' },
+    { key: 'circles', label: 'Groups', count: 0, unit: 'you could join' },
     { key: 'errands', label: 'Errands', count: 0, unit: 'open' }
   ],
   feed: FEED,
@@ -196,13 +196,13 @@ async function main() {
     assert.ok(picker, 'the entry opens a picker');
     const pt = text(picker);
     for (const f of ['Bulk', 'Direct', 'Niche', 'Group']) assert.ok(pt.includes(f), `${f} is still reachable`);
-    for (const r of ['All', 'Events', 'Circles', 'Errands']) assert.ok(pt.includes(r), `and so is ${r}`);
+    for (const r of ['All', 'Events', 'Groups', 'Errands']) assert.ok(pt.includes(r), `and so is ${r}`);
     assert.ok(/none here/i.test(pt), 'an empty flow says so, in two words');
     assert.ok(/Post one|Tag one/.test(pt), 'and offers the one step that could change it');
     // (The digits are set in mono right after the label, so the assertion looks
     // per entry rather than scanning the whole run of text for a lone 0.)
     const entries = Array.from(picker.querySelectorAll('button')).filter((b) =>
-      ['Bulk', 'Direct', 'Niche', 'Group', 'All', 'Events', 'Circles', 'Errands'].some((n) => text(b).startsWith(n)));
+      ['Bulk', 'Direct', 'Niche', 'Group', 'All', 'Events', 'Groups', 'Errands'].some((n) => text(b).startsWith(n)));
     assert.equal(entries.length, 8, 'eight entries: four flows, four rooms');
     assert.ok(entries.every((b) => /\d/.test(text(b))), 'each one carries a count, so none of them is decoration');
     const directBtn = entries.find((b) => text(b).startsWith('Direct'));

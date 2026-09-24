@@ -24,7 +24,7 @@ import { FirstRunChecklist, deriveChecklist } from "./FirstRunChecklist";
 // no "browse groups" (Brief is not a listing).
 // ---------------------------------------------------------------------------
 
-export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => void }) {
+export function TableBankingSurface({ onRequireAuth, workspaceId, workspaceOwner = false }: { onRequireAuth: () => void; workspaceId?: string; workspaceOwner?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [signedOut, setSignedOut] = useState(false);
   const [groups, setGroups] = useState<TableBankingGroup[] | null>(null);
@@ -83,6 +83,13 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
 
   const load = async () => {
     setLoading(true);
+    if (workspaceId) {
+      const result = await api.getTableBanking(workspaceId);
+      setLoading(false); setSignedOut(!result.ok && result.status === 401);
+      if (result.ok) { setGroups([{ ...result.data.group, summary: result.data.summary }]); setDetail({ [workspaceId]: result.data }); setOpenId(workspaceId); void openGroup(workspaceId, true); }
+      else { setGroups(null); setNotice(result.error); }
+      return;
+    }
     const res = await api.getMyTableBanking();
     setLoading(false);
     if (!res.ok && res.status === 401) { setSignedOut(true); return; }
@@ -90,10 +97,10 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
     setGroups(res.ok ? res.data : null);
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, [workspaceId]);
 
-  const openGroup = async (id: string) => {
-    if (openId === id) { setOpenId(null); return; }
+  const openGroup = async (id: string, force = false) => {
+    if (!force && openId === id) { setOpenId(null); return; }
     setOpenId(id);
     if (detail[id] === undefined) {
       const res = await api.getTableBanking(id);
@@ -111,7 +118,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       const res = await api.getTableBankingMinutes(id);
       setMinutes((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
-    if (invites[id] === undefined) {
+    if ((!workspaceId || workspaceOwner) && invites[id] === undefined) {
       const res = await api.listTableBankingInvites(id);
       setInvites((prev) => ({ ...prev, [id]: res.ok ? res.data : null }));
     }
@@ -278,6 +285,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
       </div>
     );
   }
+  if (workspaceId && (!groups || groups.length === 0)) return <p role="alert">{notice || "This ledger could not be read."}</p>;
   if (!groups || groups.length === 0) {
     return (
       <div className="mt-6 space-y-3">
@@ -296,7 +304,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
   return (
     <div className="mt-4 space-y-3">
       {notice && <p className="text-xs" role="status" style={{ color: "var(--color-text-muted)" }}>{notice}</p>}
-      {!checklistDismissed && groups.length > 0 && deriveChecklist(groups, { onStartGroup: openCreate }).some((s) => !s.done) && (
+      {!workspaceId && !checklistDismissed && groups.length > 0 && deriveChecklist(groups, { onStartGroup: openCreate }).some((s) => !s.done) && (
         <FirstRunChecklist
           compact
           groups={groups}
@@ -308,8 +316,8 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
         />
       )}
       <div className="flex items-center justify-between">
-        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>Your Circles</p>
-        <button type="button" onClick={openCreate} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>
+        <p className="text-xs font-black uppercase tracking-wider" style={{ color: "var(--color-text-muted)" }}>{workspaceId ? "Workspace ledger" : "Your Circles"}</p>
+        <button hidden={Boolean(workspaceId)} type="button" onClick={openCreate} className="rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-primary)", color: "var(--accent-ink)" }}>Start a group</button>
       </div>
       {createOpen && startGroupForm}
       <MotionList className="space-y-3" stagger={40}>
@@ -346,7 +354,7 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
               {d && s && (
                 <div className="mt-3 space-y-3">
                   {/* Treasurer dashboard — the owner's derived view. */}
-                  <button type="button" onClick={() => toggleTreasurer(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                  <button hidden={Boolean(workspaceId) && !workspaceOwner} type="button" onClick={() => toggleTreasurer(c)} className="w-full rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
                     {treasurerOpen[c.id] ? "Hide treasurer dashboard" : "Treasurer dashboard"}
                   </button>
                   {treasurerOpen[c.id] && (treasurer[c.id] === undefined ? (
@@ -611,8 +619,8 @@ export function TableBankingSurface({ onRequireAuth }: { onRequireAuth: () => vo
                         "{lastInvite[c.id]!.message}" — {lastInvite[c.id]!.delivery}
                       </p>
                     )}
-                    <button type="button" onClick={() => setInviteOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
-                      {inviteOpen[c.id] ? "Cancel" : "Invite a member"}
+                    <button disabled={Boolean(workspaceId)} type="button" onClick={() => setInviteOpen((p) => ({ ...p, [c.id]: !p[c.id] }))} className="mt-2 rounded-full px-3 py-1.5 text-xs font-bold" style={{ background: "var(--color-surface)", color: "var(--color-text)", border: "1px solid var(--color-border)" }}>
+                      {workspaceId ? "Use participation requests above" : inviteOpen[c.id] ? "Cancel" : "Invite a member"}
                     </button>
                     {inviteOpen[c.id] && (
                       <div className="mt-2 space-y-1.5">

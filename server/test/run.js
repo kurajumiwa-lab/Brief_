@@ -12,6 +12,7 @@
 // ---------------------------------------------------------------------------
 
 import './test-env.mjs';
+import { qualifyGroupCreator } from './group-fixtures.mjs';
 import { store } from '../src/store.js';
 import path from 'node:path';
 import { extractFields, extractVendors, extractProducts, isObjectWorthy } from '../src/pipeline/extract.js';
@@ -1114,7 +1115,9 @@ const call = async (path, method = 'GET', body) => {
     let r = await call(`/api/circles/${c.id}/members`, 'POST', { userId: 'attacker_victim' });
     check('cannot create membership for another user', r.status === 403, `got ${r.status}`);
     check('refusal names the missing authority', /coordinator/.test(r.body?.error ?? ''));
-    const rows = (await call(`/api/circles/${c.id}/members`)).body.members;
+    const privateRoster = await call(`/api/circles/${c.id}/members`);
+    check('a stranger cannot read the roster', privateRoster.status === 403);
+    const rows = store.filter('members', m => m.circleId === c.id);
     check('forged request created no membership row', rows.length === 0, `${rows.length} rows`);
 
     // --- legitimate self-join ----------------------------------------------
@@ -1326,6 +1329,7 @@ console.log('\n=== CAMPAIGNS ===');
     check('check-in derived from records', an.checkedIn === 1, `got ${an.checkedIn}`);
 
     // 15 + 16: circle link and the target invariant
+    qualifyGroupCreator('usr_me');
     const circle = (await call2('/api/circles', 'POST', { name: 'Popup Fund', targetValue: 1000 })).body.circle;
     const camp2 = (await call2('/api/campaigns', 'POST',
       { title: 'Linked', type: 'session', circleId: circle.id, price: 0 })).body.campaign;
@@ -1887,6 +1891,7 @@ console.log('\n=== CAMPAIGNS ===');
         { amount: 0, type: 'sale', campaignId: rail3.id })).status === 400);
     check('ATTACK: negative money never reached campaign revenue',
       (await call2(`/api/campaigns/${rail3.id}`)).body.campaign.metrics.revenueSettled === 500);
+    qualifyGroupCreator('usr_me');
     const negCircle = (await call2('/api/circles', 'POST',
       { name: 'Neg', goal: 'g', targetValue: 1000 })).body.circle;
     check('ATTACK: negative money cannot drive a target backwards',
@@ -2101,6 +2106,7 @@ console.log('\n=== CIRCLE OPERATIONS: BLOCKS (spec F5) ===');
 
   try {
     // --- setup: a circle the caller coordinates, and a foreign one ----------
+    qualifyGroupCreator('usr_me');
     const circle = (await call('/api/circles', 'POST', { name: 'Kilimani Ops', targetValue: 5000 })).body.circle;
     await call(`/api/circles/${circle.id}/members`, 'POST', { role: 'coordinator' });
     const foreign = (await call('/api/circles', 'POST', { name: 'Other Circle' })).body.circle;
@@ -2560,6 +2566,7 @@ console.log('\n=== COMMERCE: VENDORS, LISTINGS, ORDERS (Batch 3) ===');
 
     // --- vendor verification comes from real recorded checks ---------------
     {
+    qualifyGroupCreator('usr_me');
       const c = (await call('/api/circles', 'POST', { name: 'Traders' })).body.circle;
       await call(`/api/circles/${c.id}/members`, 'POST', { role: 'coordinator' });
       // Recorded through the domain because the route (correctly) refuses
@@ -6707,6 +6714,7 @@ console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
     const TA = A.body.token, TB = B.body.token, idA = A.body.user.id, idB = B.body.user.id;
 
     // --- the loop starts: creating a circle puts you IN it -------------------
+    qualifyGroupCreator(idA); qualifyGroupCreator(idB);
     let r = await call('/api/circles', 'POST', { name: 'Ngong Trail Crew' }, TA);
     check('creating a circle succeeds', r.status === 201, JSON.stringify(r.body).slice(0, 120));
     const created = r.body.circle;
@@ -6720,8 +6728,8 @@ console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
     const mineRow = list.find((c) => c.id === created.id);
     const notMine = list.find((c) => c.id === other.id);
     check('a circle I am in reports my role', mineRow.viewerRole === 'coordinator' && mineRow.isMember === true);
-    check('a circle I am NOT in says so', notMine.viewerRole === null && notMine.isMember === false);
-    check('and says whether I may join it', typeof notMine.canJoin === 'boolean', `${notMine.canJoin}`);
+    check('private non-member groups are absent from my groups', notMine === undefined);
+    check('private group workspace is protected', (await call(`/api/circles/${other.id}`, 'GET', undefined, TA)).status === 403);
 
     // --- joining an open circle ----------------------------------------------
     store.update('circles', other.id, { visibility: 'open' });
@@ -6767,7 +6775,7 @@ console.log('\n=== THE CIRCLE LOOP: JOIN AND LEAVE ===');
     check('and the leave is in the history',
       store.filter('circleRevisions', (x) => x.circleId === other.id && x.kind === 'member_left').length >= 1);
     list = (await call('/api/circles', 'GET', undefined, TA)).body.circles;
-    check('the list stops claiming I am a member', list.find((c) => c.id === other.id).isMember === false);
+    check('the list stops claiming I am a member', !list.some((c) => c.id === other.id));
 
     r = await call(`/api/circles/${other.id}/members/me`, 'DELETE', undefined, TA);
     check('leaving twice is reported, not invented', r.status === 404, `got ${r.status}`);
@@ -7469,6 +7477,7 @@ console.log('\n=== MSHIKANO: the cooperation network (post -> match -> confirm -
         || (r.body.people.every((p) => /poultry|business|bungoma/i.test(p.title)) && r.body.counts.groups === 0));
 
     // Groups answer from REAL circles, with their real member count.
+    qualifyGroupCreator(B.user.id);
     r = await call('/api/circles', 'POST', { name: 'Bungoma Poultry Circle', description: 'members who help each other keep poultry in Bungoma' }, B.token);
     check('a member starts a real circle', r.status === 201, JSON.stringify(r.body).slice(0, 120));
     r = await call('/api/mshikano/who-can-help?q=who+can+help+me+start+a+poultry+business+in+Bungoma', 'GET', undefined, A.token);

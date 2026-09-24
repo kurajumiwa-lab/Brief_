@@ -8,7 +8,7 @@
 // screen could quietly lie:
 //
 //   * what the page shows: the shape of the room (name, purpose, how many people,
-//     what is live, money that actually settled) and NOT what is said inside it;
+//     what is live, never financial progress) and NOT what is said inside it;
 //   * the organiser's outside link: shown verbatim, labelled as theirs and
 //     unverified — never prettied, never paraphrased, never presented as Brief's;
 //   * governance in the room: a role change and a removal are offered only with a
@@ -121,7 +121,7 @@ async function main() {
     assert.ok(t.includes('20L drums, split by flat'), 'and what it is about, in the organiser’s words');
     assert.ok(t.includes('11 members'), 'how many people, so the room has weight');
     assert.ok(t.includes('3 jobs waiting'), 'and what is live right now');
-    assert.ok(t.includes('KES 12,000') && t.includes('KES 30,000'), 'the settled money and the target, both derived');
+    assert.ok(!t.includes('KES 12,000') && !t.includes('KES 30,000'), 'financial progress stays private even if a legacy response contains it');
     assert.ok(/A private room|A private/.test(t) === false, 'the landing does not claim privacy it cannot see');
     // the two doors
     assert.ok(btn('Sign in to join'), 'a signed-out visitor is not offered a fake join');

@@ -1,3 +1,5 @@
+import { store } from '../store.js';
+import { linkedWorkspace, workspaceParticipant } from '../domain/workspaceAccess.js';
 // TABLE BANKING ROUTES — the table-banking ledger + calculator. A group is a TOOL an
 // existing group applies to itself; Brief is not the group and not the lender.
 import * as tableBanking from '../domain/tableBanking.js';
@@ -12,6 +14,26 @@ import { callerId } from '../identity.js';
 export function register(app) {
   app.use('/api/table-banking', requireFeature('table_banking'));
   app.use('/api/me/table-banking', requireFeature('table_banking'));
+
+  // Context links must not make legacy ID-based routes a back door into a ledger.
+  // Native membership remains authoritative, including retained financial history.
+  const linkedBankGuard = (kind) => (req, res, next) => {
+    const resource = kind === 'bank' ? null : store.lookup(kind === 'loan' ? 'tableBankingLoans' : 'tableBankingPayouts', req.params.id);
+    const id = kind === 'bank' ? req.params.id : resource?.tableBankingId;
+    const w = linkedWorkspace('table_banking', id);
+    if (!w) return next();
+    const me = requireAuth(req, res); if (!me) return;
+    const bank = tableBanking.getTableBanking(id);
+    const member = bank?.members.some(m => m.userId === me);
+    if (bank?.status === 'archived' && req.method !== 'GET' && req.path !== '/archive') return res.status(409).json({ error: 'This ledger is archived and read-only.' });
+    if (!member && !(kind === 'bank' && req.path === '/join' && workspaceParticipant(w.id, me))) return res.status(403).json({ error: 'Separate table-banking membership is required.' });
+    if (kind === 'bank' && req.path.startsWith('/invites') && bank.ownerId !== me) return res.status(403).json({ error: 'Only the ledger owner can manage invitations.' });
+    if (kind === 'bank' && req.path === '/skip' && req.body?.memberId && req.body.memberId !== me && bank.ownerId !== me) return res.status(403).json({ error: 'You may only skip your own turn.' });
+    next();
+  };
+  app.use('/api/table-banking/:id', linkedBankGuard('bank'));
+  app.use('/api/table-banking-loans/:id', linkedBankGuard('loan'));
+  app.use('/api/table-banking-payouts/:id', linkedBankGuard('payout'));
 
   // The member's own groups.
   app.get('/api/me/table-banking', (req, res) => {

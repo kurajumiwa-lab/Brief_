@@ -23,7 +23,10 @@ export type CircleVisibility = 'open' | 'invite_only' | 'discoverable';
  * Fields the server persists. Note the ABSENCE of `currentValue` -- progress is
  * never stored, only derived. See CircleDerived below.
  */
+export interface GroupDiscovery { listed: boolean; location: string; industry: string; purposes: string[]; }
 export interface CircleStored {
+  hostSpaceId?: string | null;
+  directory?: GroupDiscovery | null;
   id: string;
   name: string;
   description: string;
@@ -106,6 +109,8 @@ export interface CircleUpdate {
 }
 
 export interface CircleCreate {
+  hostSpaceId?: string;
+  directory?: GroupDiscovery;
   name: string;
   description?: string;
   goal?: string | null;
@@ -2139,6 +2144,7 @@ export interface SpacePublicPageView {
 
 /** The owner's read of their own public face: the link, and any reports. */
 export interface SpacePublicFace {
+  moderation?: { hidden: boolean; hiddenAt: string } | null;
   view: SpacePublicPageView | null;
   path: string;
   originDeclared: boolean;

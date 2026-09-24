@@ -298,6 +298,7 @@ export function unavailableReason(slug) {
   if (space.status !== 'active') {
     return { status: 404, kind: 'archived', heading: `${space.name} has closed on Wairo.`, line: 'The owner archived this space, so its page is down.' };
   }
+  if (space.publicPageModeration?.hidden) return { status: 404, kind: 'moderated', heading: 'This page is unavailable.', line: 'The page is hidden following review. An authorized reviewer must reinstate it.' };
   const visibility = space.visibility ?? 'private';
   if (visibility === 'public') {
     // Race or a caller asking about a public space by id — the full page is
@@ -322,15 +323,15 @@ export function unavailableReason(slug) {
 // ---------------------------------------------------------------------------
 
 const ROOM_CSS = `
-:root{--bg:#F7F8FA;--card:#FFFFFF;--well:#EEF1F5;--ink:#0A0E14;--muted:#5A6472;--faint:#6B7684;--line:#DCE1E8;--accent:#2563EB;--live:#047857;--quiet:#B45309;--plaster:linear-gradient(rgba(37,99,235,0.07),rgba(37,99,235,0.07)),linear-gradient(158deg,#FBFCFE 0%,#EDF1F6 100%);--lift:0 6px 20px rgba(10,14,20,0.06),inset 0 1px 0 rgba(255,255,255,0.9)}
+:root{--bg:#edf0f4;--card:#FFFFFF;--well:#EEF1F5;--ink:#0A0E14;--muted:#5A6472;--faint:#6B7684;--line:transparent;--accent:#2563EB;--live:#047857;--quiet:#B45309;--plaster:linear-gradient(rgba(37,99,235,0.07),rgba(37,99,235,0.07)),linear-gradient(158deg,#FBFCFE 0%,#EDF1F6 100%);--lift:0 6px 20px rgba(10,14,20,0.06),inset 0 1px 0 rgba(255,255,255,0.9)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-text-size-adjust:100%}
 a{color:var(--accent)}
 .wrap{max-width:640px;margin:0 auto;padding:16px 14px 44px}
 .card{background:var(--card);border-radius:22px;overflow:hidden;box-shadow:var(--lift)}
-.cover{position:relative;height:168px;background:var(--plaster)}
-.cover img{width:100%;height:168px;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.02)}
-.id{padding:0 16px 18px;margin-top:-34px}
+.cover{position:relative;height:192px;background:var(--plaster)}
+.cover img{width:100%;height:192px;object-fit:cover;display:block;filter:saturate(1.05) contrast(1.02)}
+.id{padding:18px 20px 22px;margin-top:0}
 .avatar{width:64px;height:64px;border-radius:50%;background:var(--card);box-shadow:var(--lift);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);font-size:22px}
 h1{font-size:26px;margin:10px 0 2px;line-height:1.2}
 .tag{margin:0;color:var(--muted);font-size:15px}
@@ -341,7 +342,7 @@ h1{font-size:26px;margin:10px 0 2px;line-height:1.2}
 .cta{display:block;text-align:center;text-decoration:none;background:var(--accent);color:#fff;font-weight:800;font-size:15px;padding:14px 16px;border-radius:999px;margin-top:14px;box-shadow:var(--lift)}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
 section{padding:16px}
-section+section{border-top:1px solid var(--line)}
+section+section{border-top:0;margin-top:12px}
 .offer{background:var(--well);border-radius:16px;padding:12px 13px;margin-bottom:8px}
 .offer:last-child{margin-bottom:0}
 .offer .t{font-weight:700;font-size:15px;margin:0}
@@ -359,7 +360,8 @@ section+section{border-top:1px solid var(--line)}
 .offer img{width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0}
 .foot a{font-size:12px}
 form{margin-top:10px}
-textarea{width:100%;min-height:56px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;padding:8px}
+textarea{width:100%;min-height:56px;border:0;border-radius:12px;background:var(--card);color:var(--ink);font:inherit;padding:8px}
+a:focus-visible,button:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 button{background:var(--well);color:var(--ink);border:0;border-radius:999px;padding:11px 16px;font-weight:800;font-size:14px}
 `;
 
@@ -651,9 +653,7 @@ export function reportSpace(slug, { reason, reporterId = null, referrer = null }
     referrer: referrer ? String(referrer).slice(0, 200) : null,
     createdAt: new Date().toISOString(),
     handledAt: null,
-    // Deliberately no severity, no category taxonomy, no "resolved" wording:
-    // nobody is triaging these yet, and a field nobody fills is a lie with a
-    // schema.
+    // Pending until an authorized reviewer explicitly upholds or dismisses.
     outcome: null
   });
   return { reported: true, id: row.id, note: 'Recorded. It does not take the page down — Brief has no automated review, and no one has promised one.' };
@@ -662,11 +662,16 @@ export function reportSpace(slug, { reason, reporterId = null, referrer = null }
 /** What an owner sees about reports on their own space. A count of real rows. */
 export function reportsForSpace(spaceId) {
   const rows = store.filter('spaceAbuseReports', (r) => r.spaceId === spaceId).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  const pending = rows.filter(r => !r.handledAt).length;
+  const upheld = rows.filter(r => r.outcome === 'upheld').length;
+  const dismissed = rows.filter(r => r.outcome === 'dismissed').length;
   return {
-    count: rows.length,
-    latest: rows[0] ? { reason: rows[0].reason, at: rows[0].createdAt, handled: Boolean(rows[0].handledAt) } : null,
+    count: rows.length, pending, upheld, dismissed,
+    latest: rows[0] ? { reason: rows[0].reason, at: rows[0].createdAt, handled: Boolean(rows[0].handledAt), outcome: rows[0].outcome ?? 'pending' } : null,
     note: rows.length
-      ? `${rows.length} report${rows.length === 1 ? '' : 's'} filed. Brief has not reviewed them, so nothing has changed about your page.`
+      ? upheld || dismissed
+        ? `${rows.length} reports filed: ${pending} pending, ${upheld} upheld, ${dismissed} dismissed. Page decisions do not change orders or guardian reward restrictions.`
+        : `${rows.length} report${rows.length === 1 ? '' : 's'} filed. Brief has not reviewed them, so nothing has changed about your page.`
       : 'No reports have been filed against this space.'
   };
 }

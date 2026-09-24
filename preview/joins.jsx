@@ -115,6 +115,8 @@ global.fetch = async (url, init) => {
     return err(state.refuse.status, state.refuse.message);
   }
 
+  if (u.includes('/api/groups/eligibility')) return ok({ eligible: true, identityVerified: true, shops: [{id:'shop_1',name:'Host shop'}], reason:null });
+  if (u.includes('/api/groups/directory')) return ok({ groups: state.circles.filter(c => c.visibility === 'open').map(c => ({id:c.id,name:c.name,description:'',location:'',industry:'',purposes:['coordination'],memberCount:c.memberCount,isMember:c.isMember,canJoin:true,hostName:'Host shop'})), locations:[],industries:[],purposes:[{id:'coordination',label:'Coordination'}] });
   // ---- the waiting-on-you queue -------------------------------------------
   if (u.includes('/api/triage')) {
     if (state.queueFails) return err(503, 'the queue could not be read');
@@ -175,7 +177,7 @@ global.fetch = async (url, init) => {
     const c = state.circles.find((x) => x.id === u.split('/').pop());
     return ok({ circle: c ?? state.circles[0], blocks: [], signals: [] });
   }
-  if (u.includes('/api/circles')) return ok({ circles: state.circles });
+  if (u.includes('/api/circles')) return ok({ circles: state.circles.filter(c => c.isMember) });
 
   // ---- subscriptions: the follower's half ---------------------------------
   const subJoin = u.match(/\/api\/subscriptions\/([^/]+)\/subscribe$/);
@@ -249,13 +251,13 @@ async function main() {
   await mount(Circles);
   let b = body();
   check('a circle you are in is listed as yours',
-    /Circles you are in \(1\)/.test(b) && /Kilimani Traders/.test(b), b.slice(0, 160));
+    /Your groups \(1\)/.test(b) && /Kilimani Traders/.test(b), b.slice(0, 160));
   check('a circle you are NOT in is not listed as yours',
-    /Open to join \(1\)/.test(b) && /Invite only \(1\)/.test(b), b.slice(0, 200));
+    /Ngong Trail Crew/.test(b) && !/Closed Crew/.test(b), b.slice(0, 200));
   check('the old blanket claim is gone', !/Communities you are part of/.test(b));
   check('an open circle offers a way in', !!btn('Join'));
   check('an invite-only circle offers no join button',
-    /Invite only \(1\)/.test(b) && !/Invite only — a coordinator has to add you[\s\S]*?Join/.test(b));
+    !/Closed Crew/.test(b));
 
   console.log('\n=== 2. JOINING ===');
   state.calls = [];
@@ -264,10 +266,10 @@ async function main() {
   check('joining posts to the membership route',
     state.calls.some((c) => c === 'POST /api/circles/circ_open/members'), state.calls.join(' | '));
   check('the joined circle moves into the list you are in',
-    /Circles you are in \(2\)/.test(b), b.slice(0, 200));
+    /Your groups \(2\)/.test(b), b.slice(0, 200));
   check('it is no longer offered as something to join',
     !/Open to join \(1\)/.test(b), b.slice(0, 200));
-  check('joining is reported', /You have joined this circle/.test(b));
+  check('joining is reported', /You have joined this group/.test(b));
 
   console.log('\n=== 3. A REFUSED JOIN IS SHOWN, NOT SWALLOWED ===');
   reset();
@@ -278,7 +280,7 @@ async function main() {
   b = body();
   check('the server\'s reason is displayed', /this circle is invite only/.test(b), b.slice(0, 200));
   check('the circle did not move into the list you are in',
-    /Circles you are in \(1\)/.test(b), b.slice(0, 200));
+    /Your groups \(1\)/.test(b), b.slice(0, 200));
   state.refuse = null;
 
   console.log('\n=== 4. LEAVING ===');
@@ -293,19 +295,19 @@ async function main() {
   b = body();
   check('leaving calls the leave route',
     state.calls.some((c) => c === 'DELETE /api/circles/circ_mine/members/me'), state.calls.join(' | '));
-  check('the circle leaves the list you are in', !/Circles you are in/.test(b), b.slice(0, 200));
-  check('leaving is reported', /You have left this circle/.test(b));
+  check('the circle leaves the list you are in', !/Your groups/.test(b), b.slice(0, 200));
+  check('leaving is reported', /You have left this group/.test(b));
   check('with nothing joined, the surface says so',
-    /You are not part of any Circle yet/.test(b), b.slice(0, 240));
+    /You have not joined a group yet/.test(b), b.slice(0, 240));
 
   console.log('\n=== 5. STARTING A CIRCLE IS PART OF THE SAME LOOP ===');
   reset();
   await mount(Circles);
-  check('there is a way to start one', !!btn('Start a circle'));
-  await click(btn('Start a circle'));
+  check('there is a way to start one', !!btn('Start a group'));
+  await click(btn('Start a group'));
   const placeholders = () => Array.from(document.querySelectorAll('input')).map((i) => i.placeholder);
   check('and it asks only for what it needs',
-    placeholders().includes('Circle name') && placeholders().includes('What is it for? (optional)'),
+    placeholders().includes('Group name') && placeholders().includes('What is it for? (optional)'),
     placeholders().join(' | '));
 
   // =========================================================================

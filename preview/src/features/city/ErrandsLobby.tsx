@@ -73,7 +73,6 @@ export interface ErrandsLobbyComposerSignal {
 
 export function ErrandsLobby({ className = '', composerSignal }: { className?: string; composerSignal?: ErrandsLobbyComposerSignal | null }) {
   const [board, setBoard] = useState<ErrandBoard | null>(null);
-  const [providers, setProviders] = useState<ErrandProviders | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [errors, setErrors] = useState<Errors>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -100,7 +99,6 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
 
   useEffect(() => {
     void load();
-    void briefApi.getErrandProviders().then((r) => { if (r.ok) setProviders(r.data); });
   }, [load]);
 
   // A "Start a run" from Home (or the bar's [+]) arrives as a nonce: open the
@@ -421,60 +419,12 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
       )}
 
       {/* ── How to move it another way ──────────────────────────────────── */}
-      <section className="space-y-2">
-        <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: '#241F1A' }}>
-          Other ways to move a thing
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {(providers?.integrated ?? []).map((p) => (
-            <div key={p.key} className="brief-lobby-card p-3">
-              <p className="text-[14px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
-                <Bike className="w-4 h-4" style={{ color: 'var(--color-primary)' }} /> {p.name}
-              </p>
-              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
-              <p className="text-[12px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-                {p.agentsOnRecord ?? 0} agent{p.agentsOnRecord === 1 ? '' : 's'} on record · {p.deliveredPickups ?? 0} delivered
-              </p>
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
-            </div>
-          ))}
-          {(providers?.usedHere ?? []).map((p) => (
-            <div key={p.key} className="brief-lobby-card p-3" data-urgency="quiet">
-              <p className="text-[14px] font-bold inline-flex items-center gap-1.5" style={{ color: '#241F1A' }}>
-                <Truck className="w-4 h-4" /> {p.name}
-              </p>
-              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>{p.what}</p>
-              <p className="text-[12px] font-mono mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-                {p.dispatchesRecorded} dispatch{p.dispatchesRecorded === 1 ? '' : 'es'} posted here · {p.waybillsCaptured} waybill
-                {p.waybillsCaptured === 1 ? '' : 's'} recorded
-              </p>
-              <p className="text-[11px] mt-1" style={{ color: 'rgba(36,31,26,0.6)' }}>{p.note}</p>
-            </div>
-          ))}
-          {(providers?.external ?? []).map((p) => (
-            <div key={p.key} className="brief-lobby-card p-3" data-urgency="quiet">
-              <p className="text-[14px] font-bold" style={{ color: '#241F1A' }}>{p.name}</p>
-              {/* One clause on the card, the reason a tap away: three cards each
-                  carrying the same disclaimer is what made this screen read as
-                  paperwork. Nothing is deleted — the sentence moves. */}
-              <p className="text-[12px] mt-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-                Outside Brief — book them directly.
-              </p>
-            </div>
-          ))}
-        </div>
-        {providers && (
-          <p className="text-[11px] leading-snug" style={{ color: 'rgba(36,31,26,0.55)' }}>{providers.disclosure}</p>
-        )}
-      </section>
-
       {/* ── Push for a bike, from the same room ─────────────────────────── */}
       <section className="space-y-2">
         <h3 className="text-xs font-black uppercase tracking-wider" style={{ color: '#241F1A' }}>
-          Push for a bike (WAIRO dispatch)
+          Dispatch a shop order
         </h3>
-        <p className="text-[12px] mb-1" style={{ color: 'rgba(36,31,26,0.66)' }}>
-        </p>
+        <p className="text-[12px] mb-1" style={{ color: 'rgba(36,31,26,0.66)' }}>Already sold something? Arrange collection from a shop here. For a new job, post an errand above.</p>
         <WairoDispatchPanel />
       </section>
     </div>

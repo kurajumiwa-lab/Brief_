@@ -41,7 +41,7 @@ export function CirclesStrip({
       <Users className="w-4 h-4 shrink-0" style={{ color: 'var(--color-primary)' }} />
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--color-text-muted)' }}>
-          Your spaces &amp; circles
+          Your spaces &amp; groups
         </p>
         <p className="text-sm font-bold truncate" style={{ color: 'var(--color-text)' }}>
           {nothing ? 'You are not in anything yet.' : parts.join(' · ')}
