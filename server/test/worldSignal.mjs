@@ -220,7 +220,11 @@ await test("API: /api/world is public, says what it is, and never 500s on an out
     const r = await realFetch(`http://127.0.0.1:${port}${p}`);
     return { status: r.status, body: await r.json().catch(() => null) };
   };
+  // The HTTP route uses Date.now(), unlike the domain tests' explicit `now`.
+  // Keep it on the fixture's clock rather than expiring the fixture every week.
+  const realNow = Date.now;
   try {
+    Date.now = () => now;
     mod.__clearWorldCache(); stubProvider();
     const anon = await call("/api/world?place=Kisii");
     assert.equal(anon.status, 200, "a signed-out visitor gets the same read — it is public data");
@@ -229,6 +233,16 @@ await test("API: /api/world is public, says what it is, and never 500s on an out
     assert.ok(Array.isArray(anon.body.facts) && anon.body.facts.length > 0);
     assert.equal(anon.body.prices.status, "not_configured", "and the gaps ride along");
 
+    // Moving past the fixture must still suppress historical forecasts. Do not
+    // "fix" the test by weakening the production freshness rule.
+    Date.now = () => now + 7 * 86400000;
+    mod.__clearWorldCache();
+    const expired = await call("/api/world?place=Kisii");
+    assert.equal(expired.status, 200);
+    assert.equal(expired.body.available, true, "the provider answered, even though its dates are past");
+    assert.deepEqual(expired.body.facts, [], "past forecast dates are never shown as current facts");
+
+    Date.now = () => now;
     stubProvider({ failForecast: true });
     mod.__clearWorldCache();
     const down = await call("/api/world");
@@ -236,7 +250,10 @@ await test("API: /api/world is public, says what it is, and never 500s on an out
     assert.equal(down.body.available, false);
     assert.ok(down.body.error, "with the reason");
   } finally {
-    srv.close();
+    Date.now = realNow;
+    global.fetch = realFetch;
+    mod.__clearWorldCache();
+    await new Promise((resolve) => srv.close(resolve));
   }
 });
 
