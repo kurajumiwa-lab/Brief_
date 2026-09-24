@@ -4,8 +4,8 @@
 
 - **Build:** `npm run build:client` (Vite → `preview/dist`), registered in
   `railway.json` as `buildCommand`.
-- **Start:** `npm start` → `cd server && npm start` → `node src/index.js`.
-- **Port:** `PORT` (Railway sets 8080). Express serves the API and, in
+- **Start:** `npm start` → `NODE_ENV=production node server/src/index.js`.
+- **Port:** `PORT` supplied by Railway (the code defaults to 8787). Express serves the API and, in
   production, the compiled frontend + SPA fallback (see `DEPLOYMENT-FIX-REPORT.md`).
 
 ## Data durability (the one thing to get right)
@@ -42,11 +42,50 @@ fresh deploy.
 |---|---|---|
 | `PORT` | Listen port (Railway sets it) | yes |
 | `BRIEF_DATA_DIR` | Data dir (point at the volume) | for durability |
-| `BRIEF_PUBLIC_ORIGIN` | Canonical origin for share links + Tuma callback | for distribution/payments |
+| `BRIEF_PUBLIC_ORIGIN` | Canonical HTTPS origin for share links + Buni callback | for distribution/payments |
 | `BRIEF_BACKUP_INTERVAL_MS` | Snapshot cadence (default 900000) | no |
-| `TUMA_EMAIL` / `TUMA_API_KEY` / `TUMA_WEBHOOK_SECRET` | Payment collection (server-side only) | for live payments |
+| `BUNI_CONSUMER_KEY` / `BUNI_CONSUMER_SECRET` / `BUNI_WEBHOOK_SECRET` | Buni collection credentials and callback secret; server-side only | for collection |
+| `BUNI_ENV` | `uat` (default) or `production` | choose explicitly for payments |
+| `BUNI_BASE_URL` | Host confirmed by KCB; UAT has a code default | for production payments |
+| `BUNI_ORG_SHORT_CODE` / `BUNI_ORG_PASS_KEY` / `BUNI_TILL_NO` | Account-specific values from KCB; UAT shortcode defaults to 522522 | as required by KCB |
+| `SETTLEMENT_RAIL` | Keep `manual`; automated Buni payouts are not implemented | defaults to manual |
+| `BRIEF_UPLOAD_DIR` | Uploaded files; defaults to the data directory's `uploads/` | mount persistently |
 | `HANDOFF_SECRET` | Signs vault handoff/entry tokens | for Vault |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_WEBHOOK_SECRET` / `WHATSAPP_APP_SECRET` / `WHATSAPP_VERIFY_TOKEN` | Ingestion connectors | per connector |
+
+## Payment enablement is not a deployment smoke test
+
+The commerce provider registry is **KCB Buni**, not Tuma. The separate Daraja
+connector is for Huduma. Configure secrets in Railway's variable manager; do
+not commit them or put them in browser-visible `VITE_*` variables.
+
+1. Start in `BUNI_ENV=uat` with KCB-issued sandbox credentials and account values.
+2. Set `BRIEF_PUBLIC_ORIGIN` to your reachable HTTPS origin; callbacks use
+   `/api/webhooks/buni/:secret`.
+3. Inspect `/api/capabilities`, but do not treat `configured: true` as proof that
+   a transaction works. The connector reports `documented_not_exercised`.
+4. Plan an explicitly approved provider exercise, verifying the intent,
+   reference, amount, callback and reconciliation. Deploy/build checks do not
+   authorize a real charge.
+5. Before production, obtain KCB's confirmed host and account enablement. Set
+   `BUNI_ENV=production` and `BUNI_BASE_URL` to that confirmed host.
+
+**Payouts remain manual + finance-confirmed.** Credentials or
+`BUNI_ALLOW_UNVERIFIED_TRANSFERS=1` cannot implement a transfer payload. Do not
+use that switch. Automated payouts stay outside the active implementation
+queue until the verified KCB contract is available.
+
+`npm start` reads the process environment, not `.env` files. Railway supplies
+variables directly. For local env-file commands see [README.md](README.md).
+The checked-in templates are `.env.example` (deployment) and
+`server/.env.example` (local development).
+
+## Release verification
+
+Run `/api/health` and `/api/ready`, verify the served production asset changes,
+and verify records and uploads survive a redeploy on the mounted volume.
+Do not infer deployment health or provider readiness from a local test pass.
+See [the active backlog](docs/ACTIVE-BACKLOG.md) for the pending release gates.
 
 ## Demo content
 
