@@ -50,3 +50,10 @@
 .group-purpose-pills span { padding: 5px 9px; border-radius: 8px; font-size: 11px; font-weight: 750; background: #eaf1f7; color: #263b4e; }
 @media (min-width: 640px) { .category-art { width: 88px; height: 80px; } .category-door { padding: 16px 8px; } }
 @media (prefers-reduced-motion: reduce) { .category-door { transition: none; } }
+/* The mode rail: the same six doors as one horizontal row, compact. Radius
+   16 matches the card system — the 24px bubble was the toy look. */
+.mode-rail { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.mode-rail::-webkit-scrollbar { display: none; }
+.mode-rail .category-door { flex: 0 0 auto; width: 78px; padding: 10px 4px 8px; border-radius: 16px; }
+.mode-rail .category-door .category-art { width: 52px; height: 48px; }
+@media (min-width: 640px) { .mode-rail .category-door { width: 92px; } .mode-rail .category-door .category-art { width: 60px; height: 55px; } }

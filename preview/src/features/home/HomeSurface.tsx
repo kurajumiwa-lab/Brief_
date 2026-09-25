@@ -27,6 +27,7 @@ import { categoryAccent } from '../city/categoryPalette';
 import { listedAgo } from '../city/room';
 import { GlobysCard } from '../../ui/GlobysCard';
 import { BannerButton } from '../../ui/BannerButton';
+import { CardSkeleton } from '../../components/ui/Skeleton';
 import { soundEngine } from '../../utils/SoundEngine';
 import { attentionQueue, needsAttention, splitSpaces } from './spaceSignals';
 import { PlannedWeather } from './PlannedWeather';
@@ -128,6 +129,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   // The three shelves. Each is the top of a REAL list; each is hidden when
   // empty; each "All →" points at the one place the list is.
   const [feed, setFeed] = useState<DiscoverFeedItem[]>([]);
+  const [feedLoaded, setFeedLoaded] = useState(false);
   const [todayEvents, setTodayEvents] = useState<EventListing[]>([]);
   // The one detail sheet this screen shares with the board: a card's body tap
   // opens it, and the card's single action takes its own real target.
@@ -179,7 +181,9 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   useEffect(() => {
     let live = true;
     void briefApi.getDiscoverSummary().then((res) => {
-      if (live && res.ok) setFeed(res.data.feed.slice(0, 8));
+      if (!live) return;
+      if (res.ok) setFeed(res.data.feed.slice(0, 8));
+      setFeedLoaded(true);
     });
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -296,7 +300,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       )}
 
       {/* ── THE MODE TILES — the six doors of the board, as pictures. ── */}
-      <section data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-3 gap-2">
+      <section data-testid="mode-tiles" aria-label="Ways in" className="mode-rail no-scrollbar">
         {MODES.map((m) => (
           <button
             key={m.id}
@@ -324,7 +328,15 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
              shape. Hidden when empty. Each card: 1:1 photo or plate, title,
              bold price, the seller's name, the real where in mono, and the
              one action the row really supports. ── */}
-      {feed.length > 0 && (
+      {!feedLoaded ? (
+        <section aria-label="Open now" className="space-y-2.5">
+          <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
+          <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        </section>
+      ) : feed.length > 0 && (
         <section aria-label="Open now" className="space-y-2.5">
           <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
           <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
