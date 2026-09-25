@@ -1,4 +1,5 @@
 import * as supply from "../domain/supply.js";
+import * as vendorLeads from "../domain/vendorLeads.js";
 import * as verification from "../domain/supplyVerification.js";
 import * as links from "../domain/requestParticipants.js";
 import { RequestError } from "../domain/requests.js";
@@ -60,6 +61,40 @@ export function register(app) {
     handle((me, r) => ({ enterprise: supply.createEnterprise(me, r.body) }), {
       status: 201,
     }),
+  );
+  // Vendor leads: the digitized manual entry of shops. No cap on how many an
+  // account captures; each lead is validated only against a real row.
+  app.get(
+    "/api/supply/vendor-leads",
+    handle((me) => ({ leads: vendorLeads.listLeads(me) })),
+  );
+  app.post(
+    "/api/supply/vendor-leads",
+    handle((me, r) => vendorLeads.createLead(me, r.body ?? {}), {
+      status: 201,
+    }),
+  );
+  app.get(
+    "/api/supply/vendor-leads/:id",
+    handle((me, r) => ({ lead: vendorLeads.getLead(me, r.params.id) })),
+  );
+  app.post(
+    "/api/supply/vendor-leads/:id/validate",
+    handle((me, r) => ({
+      lead: vendorLeads.validateLead(me, r.params.id, r.body ?? {}),
+    })),
+  );
+  app.post(
+    "/api/supply/vendor-leads/:id/exposure-terms",
+    handle((me, r) => ({
+      lead: vendorLeads.setExposureTerms(me, r.params.id, r.body ?? {}),
+    })),
+  );
+  app.post(
+    "/api/supply/vendor-leads/:id/drop",
+    handle((me, r) => ({
+      lead: vendorLeads.dropLead(me, r.params.id, r.body ?? {}),
+    })),
   );
   app.get(
     "/api/enterprises/:id",

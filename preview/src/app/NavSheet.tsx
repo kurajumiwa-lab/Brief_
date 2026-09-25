@@ -8,24 +8,33 @@
 // back into each other: a destination the sheet owns does not also get a door
 // in the bar, and `doorways.jsx` asserts the overlap is zero.
 //
+// A second rule, from the operator: the sheet does not repeat the primary
+// shelves either. Shops, Events, Groups, Errands and Group Buys already sit
+// on Home's mode tiles, so they are NOT listed again here. What stays is
+// board rooms with no tile of their own: the full marketplace, wholesale,
+// and source-direct.
+//
 // The groups, top to bottom:
 //   PULSE — the check-in surface. It used to be a fourth door; a place you
 //           visit to see what happened is a shelf, not a room of its own.
+//   BOARD ROOMS — marketplace, wholesale, source-direct. Rooms, not shelves.
 //   YOUR WORK — Requests, Supply, Partners. Real shelves, kept.
 //   YOU, YOUR STANDING, YOUR MONEY — Standing, Earn, Table Banking.
 //   SETTINGS — Language, Notifications, Privacy.
 //   How Wairo works · Sign out.
+//
+// Icons are ShelfIcon marks: a filled gradient squircle per shelf theme, so
+// the eye can tell which room a row belongs to before reading a word. No
+// thin line icons in this drawer.
 //
 // Deliberately absent: counts, badges, "new" tags, unread dots. A nav list
 // with numbers is a nav list that has to keep those numbers true, and every
 // one of them would arrive before the member has rows to fill it.
 // ---------------------------------------------------------------------------
 import React, { useEffect, useState } from 'react';
-import {
-  X, Coins, Users, Ticket, Search, ShieldCheck, Activity,
-  Globe, Bell, Lock
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { CategoryArt } from '../ui/CategoryArt';
+import { ShelfIcon } from '../ui/ShelfIcon';
 import { MenuTile, SectionHeader } from '../ui/MenuTile';
 
 export type SheetTarget =
@@ -51,13 +60,6 @@ export interface SheetItem {
   target: SheetTarget;
 }
 
-const icon = (Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>, tone: 'ink' | 'muted' = 'muted') => (
-  <Icon
-    className="w-4 h-4"
-    style={{ color: tone === 'ink' ? 'var(--color-text)' : 'var(--color-text-muted)' }}
-  />
-);
-
 /**
  * The sheet, as data. `doorways.jsx` asserts every `id` is unique, that Pulse
  * is in the first group, that the settings group is Language / Notifications /
@@ -72,22 +74,17 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
         id: 'pulse',
         label: 'Pulse',
         sub: 'What’s moving today',
-        icon: icon(Activity, 'ink'),
+        icon: <ShelfIcon glyph="bolt" theme="pulse" />,
         target: { kind: 'tab', tab: 'pulse' }
       }
     ]
   },
   {
-    id: 'explore', label: 'Explore & trade', items: [
-      { id: 'shops', label: 'Shops', sub: 'Your shopfronts, follows and team', icon: <CategoryArt kind="shops" className="!w-8 !h-8" />, target: { kind: 'tab', tab: 'mine' } },
+    id: 'explore', label: 'Board rooms', items: [
       ...([
         ['all', 'Offers & marketplace', 'Products, services and sellers'],
         ['bulk', 'Wholesale', 'Buy in volume for your shop'],
         ['direct', 'Source direct', 'Buy closer to the producer'],
-        ['group', 'Group buys', 'Pool demand with other buyers'],
-        ['events', 'Events', 'Find published events'],
-        ['circles', 'Groups', 'Find a group or open yours'],
-        ['errands', 'Errands', 'Paid tasks and deliveries']
       ] as const).map(([room, label, sub]) => ({ id: `explore-${room}`, label, sub, icon: <CategoryArt kind={room} className="!w-8 !h-8" />, target: { kind: 'discover' as const, room } }))
     ]
   },
@@ -95,27 +92,27 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'work',
     label: 'Your work',
     items: [
-      { id: 'requests', label: 'Requests', sub: 'Asks on the board that need a seller', icon: icon(Ticket), target: { kind: 'tab', tab: 'requests' } },
-      { id: 'supply', label: 'Supply', sub: 'Sellers and what they move', icon: icon(Users), target: { kind: 'tab', tab: 'supply' } },
-      { id: 'partners', label: 'Partners', sub: 'Programs and networks behind the rows', icon: icon(ShieldCheck), target: { kind: 'tab', tab: 'partners' } }
+      { id: 'requests', label: 'Requests', sub: 'Asks on the board that need a seller', icon: <ShelfIcon glyph="ticket" theme="work" />, target: { kind: 'tab', tab: 'requests' } },
+      { id: 'supply', label: 'Supply', sub: 'Sellers and what they move', icon: <ShelfIcon glyph="users" theme="work" />, target: { kind: 'tab', tab: 'supply' } },
+      { id: 'partners', label: 'Partners', sub: 'Programs and networks behind the rows', icon: <ShelfIcon glyph="shield" theme="work" />, target: { kind: 'tab', tab: 'partners' } }
     ]
   },
   {
     id: 'you',
     label: 'You, your standing, your money',
     items: [
-      { id: 'standing', label: 'Standing', sub: 'What you owe, what is owed you', icon: icon(ShieldCheck), target: { kind: 'you', section: 'standing' } },
-      { id: 'earn', label: 'Earn', sub: 'Your money, the real way', icon: icon(Coins, 'ink'), target: { kind: 'you', section: 'earn' } },
-      { id: 'tableBanking', label: 'Table Banking', sub: 'Shared pots, kept in the open', icon: icon(Coins), target: { kind: 'you', section: 'tableBanking' } }
+      { id: 'standing', label: 'Standing', sub: 'What you owe, what is owed you', icon: <ShelfIcon glyph="shield" theme="money" />, target: { kind: 'you', section: 'standing' } },
+      { id: 'earn', label: 'Earn', sub: 'Your money, the real way', icon: <ShelfIcon glyph="coins" theme="money" />, target: { kind: 'you', section: 'earn' } },
+      { id: 'tableBanking', label: 'Table Banking', sub: 'Shared pots, kept in the open', icon: <ShelfIcon glyph="pot" theme="money" />, target: { kind: 'you', section: 'tableBanking' } }
     ]
   },
   {
     id: 'settings',
     label: 'Settings',
     items: [
-      { id: 'language', label: 'Language', sub: 'One language, said plainly', icon: icon(Globe), target: { kind: 'you', section: 'language' } },
-      { id: 'notifications', label: 'Notifications', sub: 'The real bell for this device', icon: icon(Bell), target: { kind: 'you', section: 'notifications' } },
-      { id: 'privacy', label: 'Privacy', sub: 'What this device keeps, and how to clear it', icon: icon(Lock), target: { kind: 'you', section: 'privacy' } }
+      { id: 'language', label: 'Language', sub: 'One language, said plainly', icon: <ShelfIcon glyph="globe" theme="system" />, target: { kind: 'you', section: 'language' } },
+      { id: 'notifications', label: 'Notifications', sub: 'The real bell for this device', icon: <ShelfIcon glyph="bell" theme="system" />, target: { kind: 'you', section: 'notifications' } },
+      { id: 'privacy', label: 'Privacy', sub: 'What this device keeps, and how to clear it', icon: <ShelfIcon glyph="lock" theme="system" />, target: { kind: 'you', section: 'privacy' } }
     ]
   },
   {
@@ -124,8 +121,8 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'closing',
     label: '',
     items: [
-      { id: 'how', label: 'How Wairo works', sub: 'How a row becomes trust', icon: icon(Search), target: { kind: 'you', section: 'how' } },
-      { id: 'signout', label: 'Sign out', sub: 'End the session on this device', icon: icon(X), target: { kind: 'signout' } }
+      { id: 'how', label: 'How Wairo works', sub: 'How a row becomes trust', icon: <ShelfIcon glyph="search" theme="system" />, target: { kind: 'you', section: 'how' } },
+      { id: 'signout', label: 'Sign out', sub: 'End the session on this device', icon: <ShelfIcon glyph="cross" theme="danger" />, target: { kind: 'signout' } }
     ]
   }
 ];
@@ -186,13 +183,13 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
           </button>
         </div>
 
-        {canModerate && <MenuTile icon={icon(ShieldCheck)} title="Page moderation" description="Review reports and reinstate hidden pages" testId="page-moderation" onClick={() => { onGo({ kind: 'moderation' }); onClose(); }} />}
+        {canModerate && <MenuTile icon={<ShelfIcon glyph="shield" theme="system" />} title="Page moderation" description="Review reports and reinstate hidden pages" testId="page-moderation" onClick={() => { onGo({ kind: 'moderation' }); onClose(); }} />}
 
         {SHEET_GROUPS.map((group) => (
           <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1.5 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">
             {group.label ? <SectionHeader>{group.label}</SectionHeader> : null}
-            {/* The ONE tile shape: 12px-radius tinted square, thin icon,
-                bold 15px title, grey 13px description. */}
+            {/* The ONE tile shape: a themed mark, bold 15px title, grey 13px
+                description. */}
             {group.items.map((item) => (
               <MenuTile
                 key={item.id}

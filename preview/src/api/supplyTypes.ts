@@ -221,3 +221,47 @@ export type {
   RequestResponseFoundation,
   SupplyRelationship,
 } from "./requestTypes";
+
+// Vendor leads: a shop somebody met on the street. Captured by a scout, with
+// no cap on how many one account captures. A lead is not a shop and cannot
+// take orders until produce is confirmed by linking a real row.
+export type VendorLeadStatus = "captured" | "validated" | "claimed" | "dropped";
+export type VendorLeadCauseKind = "capability" | "request" | "workOrder";
+export type ExposurePeriod = "once" | "weekly" | "monthly";
+export interface VendorLeadProduce {
+  kind: VendorLeadCauseKind;
+  id: string;
+  at: string;
+  by: string;
+}
+export interface VendorLeadExposureTerms {
+  amountKes: number;
+  period: ExposurePeriod;
+  note: string;
+  setBy: string;
+  setAt: string;
+}
+export interface VendorLeadInput {
+  name: string;
+  contact: string;
+  category: string;
+  photo?: string | null;
+  siteUrl?: string | null;
+  note?: string;
+  idempotencyKey?: string;
+}
+export interface VendorLead {
+  id: string;
+  scoutId: string;
+  name: string;
+  contact: string;
+  category: string;
+  photo: string | null;
+  siteUrl: string | null;
+  note: string;
+  status: VendorLeadStatus;
+  produce: VendorLeadProduce | null;
+  exposureTerms: VendorLeadExposureTerms | null;
+  createdAt: string;
+  updatedAt: string;
+}

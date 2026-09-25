@@ -4333,7 +4333,7 @@ export function changeRequestStatus(id: string, status: RequestStatus, revision:
 }
 
 // Supply uses the same API transport, session and error contract as Requests.
-import type { Enterprise, EnterpriseInput, Capability, CapabilityInput, SourcingInput, CapabilitySearch, SupplyVerification, VerificationKind as SupplyVerificationKind, SupplyEvidence, PotentialParticipant } from './supplyTypes';
+import type { Enterprise, EnterpriseInput, Capability, CapabilityInput, SourcingInput, CapabilitySearch, SupplyVerification, VerificationKind as SupplyVerificationKind, SupplyEvidence, PotentialParticipant, VendorLead, VendorLeadInput } from './supplyTypes';
 const enterpriseOf = (r: any): Enterprise | undefined => typeof r?.id === 'string' && Array.isArray(r?.capabilities) && r.verification ? r : undefined;
 const capabilityOf = (r: any): Capability | undefined => typeof r?.id === 'string' && typeof r?.participantId === 'string' && Number.isSafeInteger(r?.revision) ? r : undefined;
 export function getMyEnterprise(): Promise<ApiResult<{enterprise: Enterprise | null}>> { return request('/api/me/enterprise',undefined,r=>r?.enterprise===null?{enterprise:null}:enterpriseOf(r?.enterprise)?{enterprise:r.enterprise}:undefined); }
@@ -4350,6 +4350,12 @@ export function submitSupplyVerification(id:string,body:{kind:SupplyVerification
 export function supplyReviewQueue(): Promise<ApiResult<SupplyVerification[]>> {return request('/api/ops/supply-verification',undefined,r=>Array.isArray(r?.records)?r.records:undefined);}
 export function reviewSupplyVerification(id:string,body:{status:string;revision:number;reason:string;expiresAt?:string}): Promise<ApiResult<SupplyVerification>> {return request(`/api/ops/supply-verification/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify(body)},r=>r?.record?.id?r.record:undefined);}
 export function getPotentialParticipants(id:string): Promise<ApiResult<PotentialParticipant[]>> {return request(`/api/requests/${encodeURIComponent(id)}/participants`,undefined,r=>Array.isArray(r?.participants)?r.participants:undefined);}
+export function listVendorLeads(): Promise<ApiResult<{leads: VendorLead[]}>> {return request('/api/supply/vendor-leads',undefined,r=>Array.isArray(r?.leads)?{leads:r.leads}:undefined);}
+export function createVendorLead(body: VendorLeadInput): Promise<ApiResult<{lead: VendorLead; replayed: boolean}>> {return request('/api/supply/vendor-leads',{method:'POST',body:JSON.stringify(body)},r=>r?.lead?.id?{lead:r.lead,replayed:r.replayed===true}:undefined);}
+export function getVendorLead(id:string): Promise<ApiResult<VendorLead>> {return request(`/api/supply/vendor-leads/${encodeURIComponent(id)}`,undefined,r=>r?.lead?.id?r.lead:undefined);}
+export function validateVendorLead(id:string,body:{causeType:string;causeId:string}): Promise<ApiResult<VendorLead>> {return request(`/api/supply/vendor-leads/${encodeURIComponent(id)}/validate`,{method:'POST',body:JSON.stringify(body)},r=>r?.lead?.id?r.lead:undefined);}
+export function setVendorLeadExposureTerms(id:string,body:{amountKes:number;period:string;note?:string}): Promise<ApiResult<VendorLead>> {return request(`/api/supply/vendor-leads/${encodeURIComponent(id)}/exposure-terms`,{method:'POST',body:JSON.stringify(body)},r=>r?.lead?.id?r.lead:undefined);}
+export function dropVendorLead(id:string,body?:{reason?:string}): Promise<ApiResult<VendorLead>> {return request(`/api/supply/vendor-leads/${encodeURIComponent(id)}/drop`,{method:'POST',body:JSON.stringify(body??{})},r=>r?.lead?.id?r.lead:undefined);}
 export function addPotentialParticipant(id:string,capabilityId:string): Promise<ApiResult<PotentialParticipant>> {return request(`/api/requests/${encodeURIComponent(id)}/participants`,{method:'POST',body:JSON.stringify({capabilityId})},r=>r?.participant?.id?r.participant:undefined);}
 export function removePotentialParticipant(requestId:string,id:string,revision:number): Promise<ApiResult<{removed:boolean}>> {return request(`/api/requests/${encodeURIComponent(requestId)}/participants/${encodeURIComponent(id)}`,{method:'DELETE',body:JSON.stringify({revision})},r=>r?.removed?{removed:true}:undefined);}
 /** Private image bytes use an authenticated fetch, never a token in a URL. */

@@ -9,6 +9,7 @@ import { SourcingEditor } from "./SourcingEditor";
 import { SupplyProfile } from "./SupplyProfile";
 import { CapabilitySearch } from "./CapabilitySearch";
 import { VerificationPanel, ReviewQueue } from "./VerificationPanel";
+import { VendorLeadCapture } from "./VendorLeadCapture";
 import "../requests/requests.css";
 import "./supply.css";
 export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
@@ -38,7 +39,7 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
     setEditing(null);
     setEnterprise(null);
     setAuth(false);
-    if (section === "search" || section === "review") {
+    if (section === "search" || section === "review" || section === "leads") {
       setLoading(false);
       return;
     }
@@ -84,6 +85,9 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
           <button onClick={() => supplyPath("search")}>
             Explore capabilities
           </button>
+          <button onClick={() => supplyPath("leads")}>
+            Vendor leads
+          </button>
           {reviewer && (
             <button onClick={() => supplyPath("review")}>
               Review submissions
@@ -102,6 +106,8 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
         <CapabilitySearch requestId={id} />
       ) : section === "review" ? (
         <ReviewQueue />
+      ) : section === "leads" ? (
+        <VendorLeadCapture />
       ) : loading ? (
         <p role="status">Loading enterprise…</p>
       ) : auth ? (

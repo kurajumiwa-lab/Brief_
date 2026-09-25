@@ -28,6 +28,7 @@ const EMPTY = {
   requestQuotes: [], // Drafts plus immutable submitted offer versions; no ledger link.
   matches: [], // Revision-bound demand-to-capability relationships.
   capabilities: [], // Capability records reference the existing vendor identity.
+  vendorLeads: [], // Scout-captured shops: photo + contact + category. See domain/vendorLeads.js.
   // ROLE-ON-SCOPE AUTHORITY (additive, revocable) — a person holds a role
   // bounded to a scope (org/program/cohort/circle). Attribution (who brought
   // them) is separate and immutable. See domain/roles.js.
