@@ -139,18 +139,18 @@ export function HowBriefWorks({ className = '' }: { className?: string }) {
       lines: [
         'A dispatch is a parcel you assign to a named rider and Brief tracks through the stages you record. An errand is a need you post, which any eligible carrier in the network can accept. Both live on the same screen because both are one thing: moving an object between two people.',
         'Only accounts with a real basis can carry: a field-agent or partner role, an active shop claim, or a pickup already assigned to that person. The badge says which one it was, in words, with the code kept on the element for an audit.',
-        'Other mailing and cargo services are listed by name and nothing else. No phone number, no price, no promise, and no rating — Brief has no integration with them, cannot quote for them and must not borrow a contact from somewhere else to look complete.',
+        'Other mailing and cargo services are not listed on Errands at all. A name with no phone number, no price and no promise is not an offer, and Brief has no integration with them, so there is no strip to tap. Arrange and pay them directly.',
         'One rating per delivery, left by each side about the other, listed as it was said. No average, no score, no reputation index, and nothing that turns a star into a rank. A rating changes nothing about who sees your errand.'
       ]
     },
     {
       id: 'groups',
-      title: 'Circles, chamas and the operator read',
+      title: 'Groups, chamas and the operator read',
       lines: [
         'A group’s pool is derived from recorded contributions, payouts, loans and repayments every time it is read. Brief holds none of that money. Payouts need a maker and a checker, and a payout is not complete until both exist.',
         'The operator read shows what the group itself did: the requests it placed and what they became, the money that settled through Brief, and — to the group owner only — each member’s public shopfront: that it exists, how many live offers, how current its answers are.',
         'What it will not produce: a member’s turnover outside the group, the share of a member’s sales “brought by the group” (there is no attribution row), staff hours or attendance, a ranking of members by contribution or reliability, and any cross-group benchmark. Each is listed on the payload as an absent figure with the reason, so the gap is a decision rather than an oversight.',
-        'There is no Hubs tab. A lounge is a Circle; a pool is a group buy; a boda or errand is a Run. Counts of “14 hubs” or a Circle 001 with a pledged total are not printed because those rows do not exist.'
+        'There is no Hubs tab. A lounge is a Group; a pool is a group buy; a boda or errand is a Run. Counts of “14 hubs” or a Circle 001 with a pledged total are not printed because those rows do not exist.'
       ]
     },
     {

@@ -18,6 +18,7 @@ const SPACE_OPTIONS: Array<{ id: SpaceType; title: string; desc: string; icon: a
   { id: 'business', title: 'Physical shop', desc: 'A store, restaurant, hotel or workshop customers visit', icon: Store },
   { id: 'side_hustle', title: 'Online / home shop', desc: 'Your brand, without a walk-in shopfront', icon: Briefcase },
   { id: 'creator', title: 'Services & studio', desc: 'Skills, appointments and work you deliver', icon: Tag },
+  { id: 'community', title: 'Team / network', desc: 'Hierarchy, not a storefront — groups, desks', icon: Users },
 ];
 
 export const CreateFlowModal: React.FC<CreateFlowModalProps> = ({
