@@ -19,7 +19,7 @@
 // than quietly sorting them by keyword.
 // ---------------------------------------------------------------------------
 
-export type DiscoverRoom = 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'all';
+export type DiscoverRoom = 'bulk' | 'direct' | 'niche' | 'group' | 'events' | 'circles' | 'errands' | 'shops' | 'all';
 
 /** The four flows, in the order the grid draws them (2 x 2, thumb-first). */
 export const FLOW_ORDER: Array<{ key: 'bulk' | 'direct' | 'niche' | 'group'; icon: 'box' | 'leaf' | 'sparkle' | 'users' }> = [
@@ -32,6 +32,7 @@ export const FLOW_ORDER: Array<{ key: 'bulk' | 'direct' | 'niche' | 'group'; ico
 /** The second row: the mixed view plus the rooms that are not supply flows. */
 export const SIDE_ORDER: Array<{ key: DiscoverRoom; label: string; unit: string; icon: 'feed' | 'calendar' | 'users' | 'bike' }> = [
   { key: 'all', label: 'All', unit: 'everything on the board', icon: 'feed' },
+  { key: 'shops', label: 'Shops', unit: 'public storefronts', icon: 'feed' },
   { key: 'events', label: 'Events', unit: 'published', icon: 'calendar' },
   { key: 'circles', label: 'Groups', unit: 'you could join', icon: 'users' },
   { key: 'errands', label: 'Errands', unit: 'open runs', icon: 'bike' }

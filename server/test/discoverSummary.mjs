@@ -38,8 +38,8 @@ const buyer = auth.createUser({ handle: "ds_buyer", password: "a good passphrase
 await test("an empty network is reported as empty, and nothing is written to look busy", () => {
   const before = { listings: store.all("listings").length, orders: store.all("orders").length, campaigns: store.all("campaigns").length };
   const s = discoverSummary({});
-  assert.deepEqual(s.counts, { listings: 0, events: 0, circles: 0, errands: 0 }, "zeros, not dashes and not seeds");
-  assert.equal(s.tiles.length, 4);
+  assert.deepEqual(s.counts, { listings: 0, shops: 0, events: 0, circles: 0, errands: 0 }, "zeros, not dashes and not seeds");
+  assert.equal(s.tiles.length, 5);
   assert.equal(s.tiles.find((t) => t.key === 'marketplace').count, 0, "Marketplace leads and says zero");
   assert.equal(s.featured, null, "no featured item exists, so none is invented");
   assert.equal(s.asOf, null, "no rows, so no timestamp is claimed");
@@ -182,7 +182,7 @@ await test("API: the summary is public, is a read, and reflects a new listing im
   try {
     const anon = await call("/api/discover/summary");
     assert.equal(anon.status, 200, "a signed-out visitor sees the same shape — it is a browse read");
-    assert.ok(Array.isArray(anon.body.tiles) && anon.body.tiles.length === 4);
+    assert.ok(Array.isArray(anon.body.tiles) && anon.body.tiles.length === 5);
     assert.equal(anon.body.tiles[0].key, "marketplace", "Marketplace leads the grid by server order, not client luck");
     assert.equal(typeof anon.body.note, "string", "and the read carries its own caveat");
 
@@ -202,7 +202,7 @@ await test("API: the summary is public, is a read, and reflects a new listing im
 
 await test("a feed row carries its own timestamp and nothing else about time", () => {
   const s = discoverSummary({});
-  assert.equal(s.tiles.length, 4, "four tiles, from one key, not a duplicated literal");
+  assert.equal(s.tiles.length, 5, "five tiles, from one key, not a duplicated literal");
   assert.deepEqual(Object.keys(s).filter((k) => k === "tiles").length, 1, "the payload declares `tiles` exactly once");
   const listing = s.feed.find((f) => f.kind === "listing");
   assert.ok(listing, "a listing is on the feed");

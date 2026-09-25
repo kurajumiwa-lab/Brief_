@@ -3,6 +3,7 @@ import { X, Sparkles, ArrowRight, ArrowLeft, Check } from 'lucide-react';
 import type { Space, SpaceType, SpaceFieldStatus } from '../../api/types';
 import * as briefApi from '../../api/briefApi';
 import { SpaceFieldInputs, type FieldValues } from './SpaceFieldInputs';
+import { ImageField } from '../../components/ImageField';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
@@ -55,10 +56,10 @@ export interface CreateSpaceModalProps {
 }
 
 const SPACE_OPTIONS: Array<{ type: SpaceType; label: string; desc: string; emoji: string }> = [
-  { type: 'business', label: 'Business', desc: 'Shop, bakery, service, or company', emoji: '🍰' },
+  { type: 'business', label: 'Shop', desc: 'A physical till — brand cover, catalog, hours', emoji: '🏪' },
   { type: 'side_hustle', label: 'Side Hustle', desc: 'Selling products or weekend gigs', emoji: '🌱' },
   { type: 'creator', label: 'Creator Work', desc: 'Music, photography, crafts, or art', emoji: '🎨' },
-  { type: 'community', label: 'Community / Circle', desc: 'Savings circle, clan group, or PTA', emoji: '🌸' },
+  { type: 'community', label: 'Team / network', desc: 'Hierarchy, not a storefront — groups, desks', emoji: '👥' },
   { type: 'event', label: 'Event / Gathering', desc: 'Market, tournament, or celebration', emoji: '🎉' },
   { type: 'project', label: 'Project', desc: 'Campaign, build, or initiative', emoji: '🚀' }
 ];
@@ -82,6 +83,7 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
   const [schemaFields, setSchemaFields] = useState<SpaceFieldStatus[]>([]);
   const [schemaError, setSchemaError] = useState<string | null>(null);
   const [genesis, setGenesis] = useState<FieldValues>({});
+  const [cover, setCover] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -118,7 +120,8 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
         targetValueKes: parseInt(targetValueKes, 10) || 0,
         // The genesis answers travel as structured data; the server validates
         // each one and stamps its own timestamp.
-        profile: answeredOnly(genesis)
+        profile: answeredOnly(genesis),
+        image: cover
       });
 
       if (res.ok && res.data?.space) {
@@ -249,6 +252,14 @@ export const CreateSpaceModal: React.FC<CreateSpaceModalProps> = ({
                 className="w-full px-4 py-3 rounded-xl bg-[color:var(--color-paper)] border border-black/10 text-sm font-bold text-[color:var(--color-text)] focus:outline-hidden focus:border-[color:var(--color-primary)]"
               />
             </div>
+
+            <ImageField
+              label="Shop brand photo"
+              hint="The cover on this shop — the brand, not a product. Only a photo you upload."
+              value={cover}
+              onChange={(url) => setCover(url)}
+              compact
+            />
 
             <div className="flex items-center space-x-2 pt-2">
               <button

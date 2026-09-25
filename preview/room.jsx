@@ -265,8 +265,8 @@ async function main() {
     act(() => face.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })));
     await flush();
     const picker = container.querySelector('[role="dialog"][aria-label="Browse the board"]');
-    const tiles = Array.from(picker.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Circles|Errands)/.test(text(b)));
-    assert.equal(tiles.length, 8, 'the eight views are still the navigation');
+    const tiles = Array.from(picker.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group(?!s)|All|Shops|Events|Groups|Errands)/.test(text(b)));
+    assert.equal(tiles.length, 9, 'the four flows and five side views are still the navigation');
     const lifted = tiles.filter((t) => /box-shadow|--lift|brief-lift/.test(styleOf(t) + ' ' + (t.getAttribute('class') || '')));
     assert.equal(lifted.length, tiles.length, 'every entry is lifted by light');
     const active = tiles.find((t) => t.getAttribute('aria-pressed') === 'true');

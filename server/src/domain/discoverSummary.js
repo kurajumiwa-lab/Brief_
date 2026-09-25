@@ -32,6 +32,7 @@ import { listListings, canonicalMediaUrl } from './listing.js';
 import { browseEvents } from './events.js';
 import { flowSummary, routesFor, unmappedDemand } from './flows.js';
 import { listCircles } from './circle.js';
+import { listPublicSpaces } from './space.js';
 
 const HOUR = 3600000;
 
@@ -211,10 +212,13 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
     featuredFrom = 'soonest';
   }
 
+  const publicSpaces = listPublicSpaces(100);
+
   const tiles = [
     { key: 'marketplace', label: 'Marketplace', count: listings.length, unit: 'live offer' },
+    { key: 'shops', label: 'Shops', count: publicSpaces.length, unit: 'public storefront' },
     { key: 'events', label: 'Events', count: (events.total ?? events.events?.length) ?? 0, unit: 'published' },
-    { key: 'circles', label: 'Circles', count: joinable, unit: 'you could join' },
+    { key: 'circles', label: 'Groups', count: joinable, unit: 'you could join' },
     { key: 'errands', label: 'Errands', count: openErrands, unit: 'open' }
   ];
 
@@ -244,6 +248,7 @@ export function discoverSummary({ viewerId = null, now = Date.now() } = {}) {
     featuredFrom,
     counts: {
       listings: listings.length,
+      shops: publicSpaces.length,
       events: events.total ?? (events.events ?? []).length,
       circles: joinable,
       errands: openErrands

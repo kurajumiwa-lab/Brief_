@@ -160,8 +160,8 @@ async function runTests() {
 
   const text2 = host2.textContent;
   check('renders Step 1: What are you building?', text2.includes('What are you building?'));
-  check('shows simple space options: Business, Side Hustle, Creator, Community',
-    text2.includes('Business') && text2.includes('Side Hustle') && text2.includes('Creator Work'));
+  check('shows space options: Shop, Side Hustle, Creator, Team',
+    text2.includes('Shop') && text2.includes('Side Hustle') && text2.includes('Creator Work') && text2.includes('Team / network'));
 
   await act(async () => { root2.unmount(); host2.remove(); });
 

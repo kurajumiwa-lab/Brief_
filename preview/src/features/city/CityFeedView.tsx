@@ -62,6 +62,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
   initialSubTab = 'all',
   sellingSignal = 0,
   errandSignal = null,
+  onOpenSpace,
   className = ''
 }) => {
   const [room, setRoom] = useState<DiscoverRoom>(initialSubTab);
@@ -111,6 +112,7 @@ export const CityFeedView: React.FC<CityFeedViewProps> = ({
         counterSection={counterSection}
         counterKey={counterKey}
         composerSignal={composerSig}
+        onOpenSpace={onOpenSpace}
       />
     </div>
   );

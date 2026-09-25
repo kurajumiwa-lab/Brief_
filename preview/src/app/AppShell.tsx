@@ -406,11 +406,12 @@ export const AppShell: React.FC<AppShellProps> = ({
         setSearchQuery('');
         setEntityId(null);
         setActiveTab('city');
-        const CITY_ROOMS: DiscoverRoom[] = ['all', 'bulk', 'direct', 'niche', 'group', 'events', 'circles', 'errands'];
+        const CITY_ROOMS: DiscoverRoom[] = ['all', 'bulk', 'direct', 'niche', 'group', 'events', 'circles', 'errands', 'shops'];
         let room: DiscoverRoom = 'all';
         if (hash.startsWith('city/')) {
           const rest = hash.slice(5);
-          if ((CITY_ROOMS as string[]).includes(rest)) room = rest as DiscoverRoom;
+          if (rest === 'groups') room = 'circles';
+          else if ((CITY_ROOMS as string[]).includes(rest)) room = rest as DiscoverRoom;
         } else if (hash === 'events') {
           room = 'events';
         }
@@ -655,7 +656,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 initialSubTab={discoverSubTab}
                 sellingSignal={sellingNonce}
                 errandSignal={errandSignal}
-                onOpenSpace={(id) => setActiveTab('pipeline')}
+                onOpenSpace={(id) => openSpace(id)}
               />
             )}
 

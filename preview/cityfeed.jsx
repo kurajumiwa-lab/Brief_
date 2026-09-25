@@ -175,8 +175,8 @@ async function main() {
     act(() => { browse.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
     await flush();
     const picker2 = c.querySelector('[role="dialog"][aria-label="Browse the board"]');
-    const tiles = Array.from(picker2.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group|All|Events|Groups|Errands)/.test(text(b)));
-    assert.equal(tiles.length, 8, 'four flows, four side views, all reachable from it');
+    const tiles = Array.from(picker2.querySelectorAll('button')).filter((b) => /^(Bulk|Direct|Niche|Group(?!s)|All|Shops|Events|Groups|Errands)/.test(text(b)));
+    assert.equal(tiles.length, 9, 'four flows, five side views, all reachable from it');
     assert.ok(tiles.some((b) => /^All/.test(b.textContent.trim())), 'the mixed view is a row, not a tab strip');
     assert.ok(/^Bulk/.test(tiles[0].textContent.trim()), 'the flows lead the list');
     const selected = tiles.filter((b) => b.getAttribute('aria-pressed') === 'true');

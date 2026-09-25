@@ -4911,7 +4911,7 @@ export function getMyPickupFeeSettlements(): Promise<ApiResult<PickupFeeSettleme
 // that picked it.
 // ---------------------------------------------------------------------------
 export interface DiscoverTile {
-  key: 'marketplace' | 'events' | 'circles' | 'errands';
+  key: 'marketplace' | 'shops' | 'events' | 'circles' | 'errands';
   label: string;
   count: number;
   unit: string;

@@ -139,6 +139,7 @@ async function main() {
     assert.ok(tiles.some((x) => /^Bulk/.test(x)), 'the flows are reachable');
     assert.ok(tiles.some((x) => /^Events/.test(x)), 'Events is in there');
     assert.ok(tiles.some((x) => /^Groups/.test(x)), 'Groups is in there');
+    assert.ok(tiles.some((x) => /^Shops/.test(x)), 'Shops is in there');
     assert.ok(tiles.some((x) => /^Errands/.test(x)), 'Errands is in there');
     const errandsTile = tiles.map((_, i) => picker.querySelectorAll('button')[i]).find((b) => /^\s*Errands/.test(text(b)));
     click(errandsTile);

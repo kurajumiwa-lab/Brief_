@@ -196,14 +196,14 @@ async function main() {
     assert.ok(picker, 'the entry opens a picker');
     const pt = text(picker);
     for (const f of ['Bulk', 'Direct', 'Niche', 'Group']) assert.ok(pt.includes(f), `${f} is still reachable`);
-    for (const r of ['All', 'Events', 'Groups', 'Errands']) assert.ok(pt.includes(r), `and so is ${r}`);
+    for (const r of ['All', 'Shops', 'Events', 'Groups', 'Errands']) assert.ok(pt.includes(r), `and so is ${r}`);
     assert.ok(/none here/i.test(pt), 'an empty flow says so, in two words');
     assert.ok(/Post one|Tag one/.test(pt), 'and offers the one step that could change it');
     // (The digits are set in mono right after the label, so the assertion looks
     // per entry rather than scanning the whole run of text for a lone 0.)
     const entries = Array.from(picker.querySelectorAll('button')).filter((b) =>
-      ['Bulk', 'Direct', 'Niche', 'Group', 'All', 'Events', 'Groups', 'Errands'].some((n) => text(b).startsWith(n)));
-    assert.equal(entries.length, 8, 'eight entries: four flows, four rooms');
+      ['Bulk', 'Direct', 'Niche', 'Group', 'All', 'Shops', 'Events', 'Groups', 'Errands'].some((n) => text(b).startsWith(n)));
+    assert.equal(entries.length, 9, 'nine entries: four flows, five rooms');
     assert.ok(entries.every((b) => /\d/.test(text(b))), 'each one carries a count, so none of them is decoration');
     const directBtn = entries.find((b) => text(b).startsWith('Direct'));
     assert.ok(/0/.test(text(directBtn)), 'an empty flow prints its zero — a true count, just not a billboard');

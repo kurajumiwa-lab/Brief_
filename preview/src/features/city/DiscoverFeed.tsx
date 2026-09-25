@@ -11,6 +11,7 @@ import { Marketplace } from '../../components/Marketplace';
 import { Circles } from '../../components/Circles';
 import { ErrandsLobby } from './ErrandsLobby';
 import { TransportRail } from './TransportRail';
+import { PublicSpaces } from './PublicSpaces';
 import { FLOW_ORDER, SIDE_ORDER, isFlowRoom, type DiscoverRoom } from './taxonomy';
 import { NoPhotoPlate } from './NoPhotoPlate';
 import { PHOTO_FILTER, PLASTER, roomSurface, roomPlate, listedAgo } from './room';
@@ -308,11 +309,13 @@ export interface DiscoverFeedProps {
   /** "Start a run" from Home / the bar's [+] — opens the errand composer with
       the delivery kind chosen, once per nonce. */
   composerSignal?: { nonce: number; kind: string | null } | null;
+  /** Public storefronts in the Shops room. Absent means the room still opens, empty of a tap. */
+  onOpenSpace?: (spaceId: string) => void;
   className?: string;
 }
 
 export function DiscoverFeed({
-  room = 'all', onRoomChange, onPostListing, counterSection = 'browse', counterKey = 0, composerSignal = null, className = ''
+  room = 'all', onRoomChange, onPostListing, counterSection = 'browse', counterKey = 0, composerSignal = null, onOpenSpace, className = ''
 }: DiscoverFeedProps) {
   const [summary, setSummary] = useState<DiscoverSummary | null>(null);
   const [open, setOpen] = useState<DiscoverFeedItem | null>(null);
@@ -374,6 +377,7 @@ export function DiscoverFeed({
     if (key === 'errands') return tiles.find((t) => t.key === 'errands')?.count ?? 0;
     if (key === 'events') return tiles.find((t) => t.key === 'events')?.count ?? 0;
     if (key === 'circles') return tiles.find((t) => t.key === 'circles')?.count ?? 0;
+    if (key === 'shops') return tiles.find((t) => t.key === 'shops')?.count ?? 0;
     return flows.find((f) => f.key === key)?.listings ?? 0;
   };
   const unitFor = (key: string) =>
@@ -668,6 +672,13 @@ export function DiscoverFeed({
         <section className="space-y-2">
           <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>What's on — published events</h3>
           <MuseumGallery />
+        </section>
+      )}
+
+      {room === 'shops' && (
+        <section className="space-y-2">
+          <h3 className="text-[12px] font-black uppercase tracking-wider" style={{ color: 'var(--brief-ink)' }}>Shops</h3>
+          <PublicSpaces onOpenSpace={onOpenSpace ?? ((id) => { window.location.hash = `shop/${encodeURIComponent(id)}`; })} />
         </section>
       )}
 
