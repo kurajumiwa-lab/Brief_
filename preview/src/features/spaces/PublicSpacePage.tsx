@@ -5,6 +5,7 @@ import type { SpacePublicPageView } from '../../api/types';
 import { soundEngine } from '../../utils/SoundEngine';
 import { roomSurface, PHOTO_FILTER } from '../city/room';
 import { NoPhotoPlate } from '../city/NoPhotoPlate';
+import { ListingRow } from '../../ui/ListingRow';
 
 // ---------------------------------------------------------------------------
 // PUBLIC SPACE PAGE — the in-app rendering of the same mirror the server paints
@@ -197,10 +198,10 @@ export function PublicSpacePage({
             <button
               type="button"
               onClick={() => void share()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[14px] font-bold cursor-pointer"
-              style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}
+              className="inline-flex items-center gap-1 text-[14px] font-bold cursor-pointer"
+              style={{ color: 'var(--color-primary)' }}
             >
-              <Copy className="w-4 h-4" /> Share
+              Share
             </button>
           </div>
 
@@ -255,44 +256,23 @@ export function PublicSpacePage({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2.5">
+          <div>
             {offers.map((o) => (
-              <button
+              <ListingRow
                 key={o.id ?? o.title}
-                type="button"
-                onClick={() => o.id && onOpenOffer?.(o.id)}
-                disabled={!o.id}
-                className="text-left rounded-2xl bg-[color:var(--color-paper)] cursor-pointer disabled:cursor-default brief-lift-1 overflow-hidden"
-              >
-                {o.image ? (
-                  <img src={briefApi.mediaFileUrl(o.image)} alt="" className="w-full h-24 object-cover" />
-                ) : null}
-                <div className="p-3">
-                {o.featured && (
-                  <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
-                    Pinned
-                  </span>
-                )}
-                <p className="text-[14px] font-bold leading-snug" style={{ color: 'var(--brief-ink)' }}>{o.title}</p>
-                {o.blurb && (
-                  <p className="text-[12px] leading-snug mt-1" style={{ color: 'var(--brief-muted)' }}>{o.blurb}</p>
-                )}
-                <p className="text-[14px] font-mono mt-1" style={{ color: 'var(--brief-ink)' }}>
-                  {o.priceLabel ?? 'Price not listed'}
-                  {o.unit ? ` / ${o.unit}` : ''}
-                </p>
-                {o.minimum ? <p className="text-[11px] mt-0.5" style={{ color: 'var(--brief-muted)' }}>min {o.minimum}</p> : null}
-                {/* Stock is a number the owner chose to track. Untracked is not 0. */}
-                {o.stock !== null && o.stock !== undefined && (
-                  <p className="text-[11px] mt-0.5" style={{ color: o.stock > 0 ? 'var(--state-live-ink)' : 'var(--state-stale-ink)' }}>
-                    {o.stock > 0 ? `${o.stock} in hand` : 'sold out for now'}
-                  </p>
-                )}
-                {o.id && <p className="text-[11px] mt-1 inline-flex items-center gap-1" style={{ color: 'var(--color-primary)' }}>
-                  <MessageCircle className="w-3 h-3" /> ask about this
-                </p>}
-                </div>
-              </button>
+                testId={o.id ? `offer-${o.id}` : undefined}
+                image={o.image ? briefApi.mediaFileUrl(o.image) : null}
+                imageAlt={o.title}
+                title={o.title}
+                meta={`${o.featured ? 'Pinned · ' : ''}${o.priceLabel ?? 'Price not listed'}${o.unit ? ` / ${o.unit}` : ''}`}
+                sub={[
+                  o.blurb ?? null,
+                  o.minimum ? `min ${o.minimum}` : null,
+                  o.stock !== null && o.stock !== undefined ? (o.stock > 0 ? `${o.stock} in hand` : 'sold out for now') : null,
+                  o.id ? 'ask about this' : null
+                ].filter(Boolean).join(' · ') || null}
+                onOpen={o.id ? () => onOpenOffer?.(o.id!) : undefined}
+              />
             ))}
           </div>
         )}

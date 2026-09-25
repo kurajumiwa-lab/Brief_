@@ -360,7 +360,7 @@ export function YouSurface({
           ) : null}
         </span>
         <span className="text-[13px] font-bold shrink-0" style={{ color: 'var(--color-primary)' }}>
-          View profile →
+          View profile
         </span>
       </button>
       <div className="space-y-5 mt-2" data-testid="you-tile-grid">
@@ -380,7 +380,6 @@ export function YouSurface({
                   <span className="text-[15px] font-semibold" style={{ color: section === item.id ? 'var(--color-primary)' : 'var(--brief-ink)' }}>
                     {item.label}
                   </span>
-                  <span className="text-[15px] shrink-0" style={{ color: 'var(--muted-ink)' }} aria-hidden="true">→</span>
                 </button>
               ))}
             </div>

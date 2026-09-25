@@ -131,6 +131,10 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
   // empty; each "All →" points at the one place the list is.
   const [feed, setFeed] = useState<DiscoverFeedItem[]>([]);
   const [feedLoaded, setFeedLoaded] = useState(false);
+  // Rows are the primary view; the picture grid is one tap away and sticks.
+  const [openView, setOpenView] = useState<'rows' | 'grid'>(() => {
+    try { return localStorage.getItem('brief.home.openView') === 'grid' ? 'grid' : 'rows'; } catch { return 'rows'; }
+  });
   const [todayEvents, setTodayEvents] = useState<EventListing[]>([]);
   // The one detail sheet this screen shares with the board: a card's body tap
   // opens it, and the card's single action takes its own real target.
@@ -278,17 +282,20 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
     { id: 'groupBuys', label: 'Group Buys', icon: <Package className="w-5 h-5" />, act: () => onOpenGroupBuys?.() }
   ];
 
-  const ShelfHead: React.FC<{ title: string; onAll: () => void }> = ({ title, onAll }) => (
+  const ShelfHead: React.FC<{ title: string; onAll: () => void; aside?: React.ReactNode }> = ({ title, onAll, aside }) => (
     <div className="flex items-center justify-between pb-2.5">
       <h2 className="text-[15px] font-extrabold tracking-tight" style={{ color: 'var(--color-text)' }}>{title}</h2>
-      <button
-        type="button"
-        onClick={() => { soundEngine.play('tap'); onAll(); }}
-        className="text-[12px] font-bold inline-flex items-center gap-0.5 cursor-pointer"
-        style={{ color: 'var(--color-primary)' }}
-      >
-        All <ArrowRight className="w-3 h-3" />
-      </button>
+      <span className="inline-flex items-center gap-3">
+        {aside ?? null}
+        <button
+          type="button"
+          onClick={() => { soundEngine.play('tap'); onAll(); }}
+          className="text-[12px] font-bold cursor-pointer"
+          style={{ color: 'var(--color-primary)' }}
+        >
+          All
+        </button>
+      </span>
     </div>
   );
 
@@ -300,24 +307,19 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         </div>
       )}
 
-      {/* ── EXPLORE — the six doors of the board as a magazine index: words
-             with arrows, no pictures. Same six buttons, same order, same
-             test id: `doorways.jsx` still finds exactly these six. ── */}
+      {/* ── EXPLORE — the six doors as a top category scroll: one horizontal
+             row of pills. Same six buttons, same order, same test id. ── */}
       <section aria-label="Explore">
-        <p className="text-[11px] font-black uppercase tracking-[0.14em] pb-1" style={{ color: 'var(--muted-ink)' }}>
-          Explore
-        </p>
-        <div data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-2 gap-x-5">
+        <div data-testid="mode-tiles" aria-label="Ways in" className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {MODES.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => { soundEngine.play('tap'); m.act(); }}
-              className="flex items-center justify-between py-2.5 text-left cursor-pointer"
-              style={{ borderBottom: '1px solid var(--divider)' }}
+              className="shrink-0 px-4 py-2 rounded-full text-[13px] font-bold cursor-pointer"
+              style={{ background: 'var(--color-well)', color: 'var(--brief-ink)' }}
             >
-              <span className="text-[15px] font-semibold" style={{ color: 'var(--brief-ink)' }}>{m.label}</span>
-              <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-ink)' }} />
+              {m.label}
             </button>
           ))}
         </div>
@@ -337,7 +339,6 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
           style={{ color: 'var(--brief-ink)' }}
         >
           See what&apos;s happening nearby
-          <ArrowRight className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
         </button>
         {feed.length > 0 && (() => {
           const f = feed[0];
@@ -398,7 +399,62 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         </section>
       ) : feed.slice(1, 4).length > 0 && (
         <section aria-label="Open now" className="space-y-2.5">
-          <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
+          <ShelfHead
+            title="Open now"
+            onAll={() => onExploreDiscover?.('all')}
+            aside={
+              <span className="inline-flex items-center gap-2 text-[12px] font-bold" role="group" aria-label="Listing style">
+                <button type="button" onClick={() => { try { localStorage.setItem('brief.home.openView', 'rows'); } catch {} setOpenView('rows'); }} className="cursor-pointer" style={{ color: openView === 'rows' ? 'var(--brief-ink)' : 'var(--muted-ink)' }}>Rows</button>
+                <button type="button" onClick={() => { try { localStorage.setItem('brief.home.openView', 'grid'); } catch {} setOpenView('grid'); }} className="cursor-pointer" style={{ color: openView === 'grid' ? 'var(--brief-ink)' : 'var(--muted-ink)' }}>Grid</button>
+              </span>
+            }
+          />
+          {openView === 'grid' ? (
+            <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
+              {feed.slice(1, 4).map((f) => {
+                const wa = waHref(f);
+                return (
+                  <GlobysCard
+                    key={f.id}
+                    testId={`open-${f.id}`}
+                    image={f.mediaUrl ? briefApi.mediaFileUrl(f.mediaUrl) : null}
+                    imageAlt={f.title}
+                    plate={
+                      <NoPhotoPlate
+                        seller={f.seller}
+                        mark={f.flow ?? f.kind}
+                        icon={plateIcon(f.flow, f.kind)}
+                        stamp={f.kind === 'listing' ? listedAgo(f.listedAt) : null}
+                        accent={(f.flow && FLOW_ACCENT[f.flow]) || null}
+                      />
+                    }
+                    title={f.title}
+                    price={f.priceLabel}
+                    seller={f.seller}
+                    mono={
+                      f.origin && f.destination
+                        ? `${f.origin} → ${f.destination}`
+                        : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))
+                    }
+                    actionLabel={
+                      f.kind === 'event' ? 'View event →'
+                        : wa ? 'Chat on WhatsApp →'
+                          : f.orderable ? 'Order →'
+                            : 'Enquire →'
+                    }
+                    actionHref={f.kind === 'event' ? null : wa}
+                    onAction={() => {
+                      soundEngine.play('tap');
+                      if (f.kind === 'event') openFull(f);
+                      else if (f.orderable && !wa) openFull(f);
+                      else setOpenItem(f);
+                    }}
+                    onOpen={() => { soundEngine.play('tap'); setOpenItem(f); }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
           <div data-testid="open-now-grid">
             {feed.slice(1, 4).map((f) => (
               <ListingRow
@@ -418,6 +474,7 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
               />
             ))}
           </div>
+          )}
         </section>
       )}
 
@@ -425,23 +482,50 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
              card shape: the member count is the row's real key figure, the
              mono line is the type, and the one action is what your
              membership really allows (the server says). ── */}
-      {myCircles.length > 0 && (
+      {(myCircles.length > 0 || circles.some((c) => !c.viewerRole && c.canJoin)) && (
         <section aria-label="From your groups" className="space-y-2.5">
           <ShelfHead title="From your groups" onAll={() => onExploreDiscover?.('circles')} />
-          <div data-testid="groups-grid">
-            {myCircles.slice(0, 4).map((c) => (
-              <ListingRow
+          <div data-testid="groups-grid" className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+            {myCircles.slice(0, 8).map((c) => (
+              <button
                 key={c.id}
-                testId={`group-${c.id}`}
-                title={c.name}
-                meta={`${c.memberCount} ${c.memberCount === 1 ? 'member' : 'members'}`}
-                sub={[CIRCLE_TYPE_LABEL[c.type] ?? null, c.viewerRole ? `you are ${c.viewerRole}` : null, !c.isMember && !c.canJoin ? 'Invite only' : null].filter(Boolean).join(' · ')}
-                onOpen={() => {
-                  soundEngine.play('tap');
-                  if (!c.isMember && c.canJoin) void joinCircle(c);
-                  else onExploreDiscover?.('circles');
-                }}
-              />
+                type="button"
+                data-testid={`globys-card-group-${c.id}`}
+                onClick={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
+                className="shrink-0 w-16 flex flex-col items-center gap-1 cursor-pointer"
+              >
+                <span
+                  className="w-14 h-14 rounded-full grid place-items-center text-[18px] font-black"
+                  style={{ background: 'var(--navy)', color: '#FFFFFF' }}
+                  aria-hidden="true"
+                >
+                  {(c.name || '?').trim().charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[11px] font-bold truncate w-16 text-center" style={{ color: 'var(--brief-ink)' }}>
+                  {c.name}
+                </span>
+              </button>
+            ))}
+            {circles.filter((c) => !c.viewerRole && c.canJoin).slice(0, 8).map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                data-testid={`globys-card-group-${c.id}`}
+                onClick={() => { soundEngine.play('tap'); void joinCircle(c); }}
+                className="shrink-0 w-16 flex flex-col items-center gap-1 cursor-pointer"
+                aria-label={`Join ${c.name}`}
+              >
+                <span
+                  className="w-14 h-14 rounded-full grid place-items-center text-[18px] font-black"
+                  style={{ background: 'var(--color-well)', color: 'var(--brief-ink)', border: '1px dashed var(--muted-ink)' }}
+                  aria-hidden="true"
+                >
+                  {(c.name || '?').trim().charAt(0).toUpperCase()}
+                </span>
+                <span className="text-[11px] font-bold truncate w-16 text-center" style={{ color: 'var(--muted-ink)' }}>
+                  {c.name}
+                </span>
+              </button>
             ))}
           </div>
         </section>

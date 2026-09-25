@@ -51,7 +51,6 @@ export const ListingRow: React.FC<{
         </span>
       ) : null}
     </span>
-    <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-ink)' }} />
   </button>
 );
 

@@ -131,7 +131,6 @@ const Row: React.FC<{ testId: string; label: string; onClick: () => void }> = ({
     style={{ borderBottom: '1px solid var(--divider)' }}
   >
     <span className="text-[15px] font-semibold" style={{ color: 'var(--brief-ink)' }}>{label}</span>
-    <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-ink)' }} />
   </button>
 );
 
