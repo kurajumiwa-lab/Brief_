@@ -1,5 +1,6 @@
 import React from 'react';
 import { BadgeCheck } from 'lucide-react';
+import { PHOTO_FILTER } from '../features/city/room';
 
 // ---------------------------------------------------------------------------
 // GLOBCARD — the ONE card shape for every list surface (Home, Discover,
@@ -70,7 +71,7 @@ export const GlobysCard: React.FC<GlobysCardProps> = ({
       {/* THE 1:1 SLOT — the row's own photo, or the plate that waits for one. */}
       <div className="relative w-full aspect-square overflow-hidden" style={{ background: 'var(--color-well)' }}>
         {image ? (
-          <img src={image} alt={imageAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          <img src={image} alt={imageAlt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" style={{ filter: PHOTO_FILTER }} />
         ) : (
           plate
         )}
@@ -101,6 +102,9 @@ export const GlobysCard: React.FC<GlobysCardProps> = ({
 
         {/* THE ONE ACTION — full width. A card with two buttons is two
             decisions; this is the one this row exists to make. */}
+        {/* THE ACTION — a text link, not a button on every card. Blue is spent
+            on true primaries (create, order, post, confirm); a card's action
+            is a sentence with an arrow. Same testids, same behaviour. */}
         {actionHref && !disabled ? (
           <a
             href={actionHref}
@@ -108,8 +112,8 @@ export const GlobysCard: React.FC<GlobysCardProps> = ({
             rel="noopener noreferrer"
             onClick={stop}
             data-testid={testId ? `card-action-${testId}` : 'card-action'}
-            className="mt-2 w-full flex items-center justify-center px-3 py-2.5 rounded-xl text-[13px] font-bold"
-            style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+            className="mt-1.5 inline-flex items-center gap-1 text-[13px] font-bold"
+            style={{ color: 'var(--color-primary)' }}
           >
             {actionLabel}
           </a>
@@ -119,8 +123,8 @@ export const GlobysCard: React.FC<GlobysCardProps> = ({
             onClick={(e) => { stop(e); onAction?.(); }}
             disabled={disabled}
             data-testid={testId ? `card-action-${testId}` : 'card-action'}
-            className="mt-2 w-full flex items-center justify-center px-3 py-2.5 rounded-xl text-[13px] font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default"
-            style={{ background: disabled ? 'var(--color-well)' : 'var(--color-primary)', color: disabled ? 'var(--color-text-muted)' : 'var(--accent-ink)' }}
+            className="mt-1.5 inline-flex items-center gap-1 text-[13px] font-bold cursor-pointer disabled:cursor-default"
+            style={{ color: disabled ? 'var(--color-text-muted)' : 'var(--color-primary)' }}
           >
             {actionLabel}
           </button>

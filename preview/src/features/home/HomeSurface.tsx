@@ -26,6 +26,7 @@ import { NoPhotoPlate } from '../city/NoPhotoPlate';
 import { categoryAccent } from '../city/categoryPalette';
 import { listedAgo } from '../city/room';
 import { GlobysCard } from '../../ui/GlobysCard';
+import { ListingRow } from '../../ui/ListingRow';
 import { BannerButton } from '../../ui/BannerButton';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 import { soundEngine } from '../../utils/SoundEngine';
@@ -299,29 +300,88 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
         </div>
       )}
 
-      {/* ── THE MODE TILES — the six doors of the board, as pictures. ── */}
-      <section data-testid="mode-tiles" aria-label="Ways in" className="mode-rail no-scrollbar">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            onClick={() => { soundEngine.play('tap'); m.act(); }}
-            className="category-door"
-          >
-            <CategoryArt kind={m.id} />
-            <span className="text-[12px] font-bold" style={{ color: 'var(--color-text)' }}>{m.label}</span>
-          </button>
-        ))}
+      {/* ── EXPLORE — the six doors of the board as a magazine index: words
+             with arrows, no pictures. Same six buttons, same order, same
+             test id: `doorways.jsx` still finds exactly these six. ── */}
+      <section aria-label="Explore">
+        <p className="text-[11px] font-black uppercase tracking-[0.14em] pb-1" style={{ color: 'var(--muted-ink)' }}>
+          Explore
+        </p>
+        <div data-testid="mode-tiles" aria-label="Ways in" className="grid grid-cols-2 gap-x-5">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => { soundEngine.play('tap'); m.act(); }}
+              className="flex items-center justify-between py-2.5 text-left cursor-pointer"
+              style={{ borderBottom: '1px solid var(--divider)' }}
+            >
+              <span className="text-[15px] font-semibold" style={{ color: 'var(--brief-ink)' }}>{m.label}</span>
+              <ArrowRight className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-ink)' }} />
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* ── THE BANNER — the one loud thing on the screen: dark gradient,
              white bold, arrow on the right. Never two. The pulse ledger is
              where the facts stand; this is the door to it. ── */}
-      <section aria-label="What's moving today">
-        <BannerButton
-          label="What’s moving today"
+      <section aria-label="What's moving today" className="space-y-2">
+        <p className="text-[11px] font-black uppercase tracking-[0.14em]" style={{ color: 'var(--muted-ink)' }}>
+          What&apos;s moving
+        </p>
+        <button
+          type="button"
           onClick={() => { soundEngine.play('tap'); onOpenPulse?.(); }}
-        />
+          className="text-[17px] font-bold inline-flex items-center gap-1.5 cursor-pointer"
+          style={{ color: 'var(--brief-ink)' }}
+        >
+          See what&apos;s happening nearby
+          <ArrowRight className="w-4 h-4" style={{ color: 'var(--color-primary)' }} />
+        </button>
+        {feed.length > 0 && (() => {
+          const f = feed[0];
+          const wa = waHref(f);
+          return (
+            <GlobysCard
+              key={f.id}
+              testId={`featured-${f.id}`}
+              image={f.mediaUrl ? briefApi.mediaFileUrl(f.mediaUrl) : null}
+              imageAlt={f.title}
+              plate={
+                <NoPhotoPlate
+                  seller={f.seller}
+                  mark={f.flow ?? f.kind}
+                  icon={plateIcon(f.flow, f.kind)}
+                  stamp={f.kind === 'listing' ? listedAgo(f.listedAt) : null}
+                  accent={(f.flow && FLOW_ACCENT[f.flow]) || null}
+                />
+              }
+              title={f.title}
+              price={f.priceLabel}
+              seller={f.seller}
+              mono={
+                f.origin && f.destination
+                  ? `${f.origin} → ${f.destination}`
+                  : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))
+              }
+              actionLabel={
+                f.kind === 'event' ? 'View event →'
+                  : wa ? 'Chat on WhatsApp →'
+                    : f.orderable ? 'Order →'
+                      : 'Enquire →'
+              }
+              actionHref={f.kind === 'event' ? null : wa}
+              onAction={() => {
+                soundEngine.play('tap');
+                if (f.kind === 'event') openFull(f);
+                else if (f.orderable && !wa) openFull(f);
+                else setOpenItem(f);
+              }}
+              onOpen={() => { soundEngine.play('tap'); setOpenItem(f); }}
+            />
+          );
+        })()}
       </section>
 
       {/* ── OPEN NOW — the board's top, as a two-column grid of the one card
@@ -336,52 +396,27 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
             <CardSkeleton />
           </div>
         </section>
-      ) : feed.length > 0 && (
+      ) : feed.slice(1, 4).length > 0 && (
         <section aria-label="Open now" className="space-y-2.5">
           <ShelfHead title="Open now" onAll={() => onExploreDiscover?.('all')} />
-          <div className="grid grid-cols-2 gap-2.5" data-testid="open-now-grid">
-            {feed.slice(0, 4).map((f) => {
-              const wa = waHref(f);
-              return (
-                <GlobysCard
-                  key={f.id}
-                  testId={`open-${f.id}`}
-                  image={f.mediaUrl ? briefApi.mediaFileUrl(f.mediaUrl) : null}
-                  imageAlt={f.title}
-                  plate={
-                    <NoPhotoPlate
-                      seller={f.seller}
-                      mark={f.flow ?? f.kind}
-                      icon={plateIcon(f.flow, f.kind)}
-                      stamp={f.kind === 'listing' ? listedAgo(f.listedAt) : null}
-                      accent={(f.flow && FLOW_ACCENT[f.flow]) || null}
-                    />
-                  }
-                  title={f.title}
-                  price={f.priceLabel}
-                  seller={f.seller}
-                  mono={
-                    f.origin && f.destination
-                      ? `${f.origin} → ${f.destination}`
-                      : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))
-                  }
-                  actionLabel={
-                    f.kind === 'event' ? 'View event →'
-                      : wa ? 'Chat on WhatsApp →'
-                        : f.orderable ? 'Order →'
-                          : 'Enquire →'
-                  }
-                  actionHref={f.kind === 'event' ? null : wa}
-                  onAction={() => {
-                    soundEngine.play('tap');
-                    if (f.kind === 'event') openFull(f);
-                    else if (f.orderable && !wa) openFull(f);
-                    else setOpenItem(f);
-                  }}
-                  onOpen={() => { soundEngine.play('tap'); setOpenItem(f); }}
-                />
-              );
-            })}
+          <div data-testid="open-now-grid">
+            {feed.slice(1, 4).map((f) => (
+              <ListingRow
+                key={f.id}
+                testId={`open-${f.id}`}
+                image={f.mediaUrl ? briefApi.mediaFileUrl(f.mediaUrl) : null}
+                imageAlt={f.title}
+                title={f.title}
+                meta={f.priceLabel ?? null}
+                sub={[f.seller, f.origin && f.destination ? `${f.origin} → ${f.destination}` : (f.location ?? (f.kind === 'event' ? f.dateLabel ?? null : null))].filter(Boolean).join(' · ')}
+                onOpen={() => {
+                  soundEngine.play('tap');
+                  if (f.kind === 'event') openFull(f);
+                  else if (f.orderable && !waHref(f)) openFull(f);
+                  else setOpenItem(f);
+                }}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -393,24 +428,19 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {myCircles.length > 0 && (
         <section aria-label="From your groups" className="space-y-2.5">
           <ShelfHead title="From your groups" onAll={() => onExploreDiscover?.('circles')} />
-          <div className="grid grid-cols-2 gap-2.5" data-testid="groups-grid">
+          <div data-testid="groups-grid">
             {myCircles.slice(0, 4).map((c) => (
-              <GlobysCard
+              <ListingRow
                 key={c.id}
                 testId={`group-${c.id}`}
-                plate={<NoPhotoPlate mark={CIRCLE_TYPE_LABEL[c.type] ?? c.type} icon={<Users className="w-4 h-4" />} />}
                 title={c.name}
-                price={`${c.memberCount} ${c.memberCount === 1 ? 'member' : 'members'}`}
-                seller={null}
-                mono={[CIRCLE_TYPE_LABEL[c.type] ?? null, c.viewerRole ? `you are ${c.viewerRole}` : null].filter(Boolean).join(' · ')}
-                actionLabel={c.isMember ? 'Open →' : c.canJoin ? 'Join →' : 'Invite only'}
-                disabled={!c.isMember && !c.canJoin}
-                onAction={() => {
+                meta={`${c.memberCount} ${c.memberCount === 1 ? 'member' : 'members'}`}
+                sub={[CIRCLE_TYPE_LABEL[c.type] ?? null, c.viewerRole ? `you are ${c.viewerRole}` : null, !c.isMember && !c.canJoin ? 'Invite only' : null].filter(Boolean).join(' · ')}
+                onOpen={() => {
                   soundEngine.play('tap');
-                  if (c.isMember) onExploreDiscover?.('circles');
-                  else if (c.canJoin) void joinCircle(c);
+                  if (!c.isMember && c.canJoin) void joinCircle(c);
+                  else onExploreDiscover?.('circles');
                 }}
-                onOpen={() => { soundEngine.play('tap'); onExploreDiscover?.('circles'); }}
               />
             ))}
           </div>
@@ -423,20 +453,16 @@ export const HomeSurface: React.FC<HomeSurfaceProps> = ({
       {todayEvents.length > 0 && (
         <section aria-label="Happening today" className="space-y-2.5">
           <ShelfHead title="Happening today" onAll={() => onExploreDiscover?.('events')} />
-          <div className="grid grid-cols-2 gap-2.5" data-testid="today-grid">
+          <div data-testid="today-grid">
             {todayEvents.slice(0, 4).map((e) => (
-              <GlobysCard
+              <ListingRow
                 key={e.slug}
                 testId={`event-${e.slug}`}
-                image={e.coverImageUrl}
+                image={e.coverImageUrl ?? null}
                 imageAlt={e.title}
-                plate={<NoPhotoPlate mark={e.categoryLabel ?? null} icon={<CalendarDays className="w-4 h-4" />} accent={categoryAccent(e.category)} />}
                 title={e.title}
-                price={e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : money(e.price, e.currency ?? 'KES'))}
-                seller={null}
-                mono={[timeOf(e.startsAt), e.location].filter(Boolean).join(' · ')}
-                actionLabel="View event →"
-                onAction={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
+                meta={e.goalAmount != null ? 'Contribution pot' : (e.price === 0 ? 'Free' : money(e.price, e.currency ?? 'KES'))}
+                sub={[timeOf(e.startsAt), e.location].filter(Boolean).join(' · ')}
                 onOpen={() => { soundEngine.play('tap'); window.open(`/c/${e.slug}`, '_self'); }}
               />
             ))}

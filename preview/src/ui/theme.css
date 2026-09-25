@@ -98,6 +98,15 @@
   --wairo-blue: #2563EB;
   --wairo-green: #10B981;
   --wairo-slate: #1E293B;
+  /* Editorial tokens: the calm marketplace palette. Navy carries heroes,
+     paper carries screens, blue is the primary action only, green is
+     commerce, dividers are hairlines — never card outlines. */
+  --navy: #0E1B2A;
+  --paper: #F6F7F4;
+  --commerce: #2F8F68;
+  --muted-ink: #667085;
+  --divider: #E4E7EC;
+  --warm: #F2E9D8;
   --warning: #B45309;
   --danger: #DC2626;
 

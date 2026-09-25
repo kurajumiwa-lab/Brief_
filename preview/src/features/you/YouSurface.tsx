@@ -335,22 +335,53 @@ export function YouSurface({
 
   return (
     <section className="max-w-3xl mx-auto" aria-label="You">
-      {/* Titles only. The bar already says You; a “Your account” heading and
-          the notes under each tile reprint a door and a screen that now exist. */}
-      <div className="space-y-3" data-testid="you-tile-grid">
+      {/* Profile first: who you are, then where to go. The groups below are
+          quiet rows — typography and spacing, not tiles. Same groups, same
+          sections, same test ids; only the shape changed. */}
+      <button
+        type="button"
+        data-testid="you-profile-head"
+        onClick={() => { setSection("profile"); setNotice(""); }}
+        className="w-full flex items-center gap-3 py-2 text-left cursor-pointer"
+      >
+        <span
+          className="w-12 h-12 rounded-full grid place-items-center text-[18px] font-black shrink-0"
+          style={{ background: 'var(--navy)', color: '#FFFFFF' }}
+          aria-hidden="true"
+        >
+          {(me?.displayName ?? "Y").trim().charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[17px] font-bold leading-tight truncate" style={{ color: 'var(--brief-ink)' }}>
+            {me?.displayName ?? "You"}
+          </span>
+          {me?.handle ? (
+            <span className="block text-[12px]" style={{ color: 'var(--muted-ink)' }}>@{me.handle}</span>
+          ) : null}
+        </span>
+        <span className="text-[13px] font-bold shrink-0" style={{ color: 'var(--color-primary)' }}>
+          View profile →
+        </span>
+      </button>
+      <div className="space-y-5 mt-2" data-testid="you-tile-grid">
         {YOU_GROUPS.map((group) => (
           <div key={group.id}>
             <SectionHeader>{group.label}</SectionHeader>
-            <div className="mt-1.5 grid grid-cols-2 gap-2">
+            <div>
               {group.items.map((item) => (
-                <MenuTile
+                <button
                   key={item.id}
-                  icon={SECTION_ICONS[item.id]}
-                  title={item.label}
-                  active={section === item.id}
-                  testId={item.id}
+                  type="button"
+                  data-testid={item.id}
                   onClick={() => { setSection(item.id); setNotice(""); }}
-                />
+                  className="w-full flex items-center justify-between py-2.5 text-left cursor-pointer"
+                  style={{ borderBottom: '1px solid var(--divider)' }}
+                >
+                  <span className="text-[15px] font-semibold" style={{ color: section === item.id ? 'var(--color-primary)' : 'var(--brief-ink)' }}>
+                    {item.label}
+                  </span>
+                  <span className="text-[15px] shrink-0" style={{ color: 'var(--muted-ink)' }} aria-hidden="true">→</span>
+                </button>
               ))}
             </div>
           </div>

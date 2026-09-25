@@ -10,32 +10,21 @@
 //
 // A second rule, from the operator: the sheet does not repeat the primary
 // shelves either. Shops, Events, Groups, Errands and Group Buys already sit
-// on Home's mode tiles, so they are NOT listed again here. What stays is
-// board rooms with no tile of their own: the full marketplace, wholesale,
-// and source-direct.
+// on Home, so they are NOT listed again here. What stays is rooms with no
+// home of their own: the full marketplace, wholesale, and source-direct.
 //
-// The groups, top to bottom:
-//   PULSE — the check-in surface. It used to be a fourth door; a place you
-//           visit to see what happened is a shelf, not a room of its own.
-//   BOARD ROOMS — marketplace, wholesale, source-direct. Rooms, not shelves.
-//   YOUR WORK — Requests, Supply, Partners. Real shelves, kept.
-//   YOU, YOUR STANDING, YOUR MONEY — Standing, Earn, Table Banking.
-//   SETTINGS — Language, Notifications, Privacy.
-//   How Wairo works · Sign out.
-//
-// Icons are ShelfIcon marks: a filled gradient squircle per shelf theme, so
-// the eye can tell which room a row belongs to before reading a word. No
-// thin line icons in this drawer.
+// The rows are quiet on purpose: a group label, then text rows with a
+// chevron and a hairline. No icon per row, no card per row, no description
+// per row — typography and spacing carry the hierarchy. Test ids, targets,
+// Pulse-first and the settings trio are unchanged.
 //
 // Deliberately absent: counts, badges, "new" tags, unread dots. A nav list
 // with numbers is a nav list that has to keep those numbers true, and every
 // one of them would arrive before the member has rows to fill it.
 // ---------------------------------------------------------------------------
 import React, { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { CategoryArt } from '../ui/CategoryArt';
-import { ShelfIcon } from '../ui/ShelfIcon';
-import { MenuTile, SectionHeader } from '../ui/MenuTile';
+import { ChevronRight, X } from 'lucide-react';
+import { SectionHeader } from '../ui/MenuTile';
 
 export type SheetTarget =
   | { kind: 'tab'; tab: 'requests' | 'supply' | 'partners' | 'pulse' | 'mine' }
@@ -53,10 +42,9 @@ export type SheetTarget =
 export interface SheetItem {
   id: string;
   label: string;
-  /** A second, quieter line under the label — what the shelf holds, in the
-      app's own words. */
+  /** What the shelf holds, in the app's own words. Kept in the data for
+      readers and suites; the rows themselves stay quiet. */
   sub?: string;
-  icon: React.ReactNode;
   target: SheetTarget;
 }
 
@@ -74,45 +62,42 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
         id: 'pulse',
         label: 'Pulse',
         sub: 'What’s moving today',
-        icon: <ShelfIcon glyph="bolt" theme="pulse" />,
         target: { kind: 'tab', tab: 'pulse' }
       }
     ]
   },
   {
-    id: 'explore', label: 'Board rooms', items: [
-      ...([
-        ['all', 'Offers & marketplace', 'Products, services and sellers'],
-        ['bulk', 'Wholesale', 'Buy in volume for your shop'],
-        ['direct', 'Source direct', 'Buy closer to the producer'],
-      ] as const).map(([room, label, sub]) => ({ id: `explore-${room}`, label, sub, icon: <CategoryArt kind={room} className="!w-8 !h-8" />, target: { kind: 'discover' as const, room } }))
+    id: 'explore', label: 'Market', items: [
+      { id: 'explore-all', label: 'Offers & marketplace', sub: 'Products, services and sellers', target: { kind: 'discover', room: 'all' } },
+      { id: 'explore-bulk', label: 'Wholesale', sub: 'Buy in volume for your shop', target: { kind: 'discover', room: 'bulk' } },
+      { id: 'explore-direct', label: 'Source direct', sub: 'Buy closer to the producer', target: { kind: 'discover', room: 'direct' } },
     ]
   },
   {
     id: 'work',
     label: 'Your work',
     items: [
-      { id: 'requests', label: 'Requests', sub: 'Asks on the board that need a seller', icon: <ShelfIcon glyph="ticket" theme="work" />, target: { kind: 'tab', tab: 'requests' } },
-      { id: 'supply', label: 'Supply', sub: 'Sellers and what they move', icon: <ShelfIcon glyph="users" theme="work" />, target: { kind: 'tab', tab: 'supply' } },
-      { id: 'partners', label: 'Partners', sub: 'Programs and networks behind the rows', icon: <ShelfIcon glyph="shield" theme="work" />, target: { kind: 'tab', tab: 'partners' } }
+      { id: 'requests', label: 'Requests', sub: 'Asks on the board that need a seller', target: { kind: 'tab', tab: 'requests' } },
+      { id: 'supply', label: 'Supply', sub: 'Sellers and what they move', target: { kind: 'tab', tab: 'supply' } },
+      { id: 'partners', label: 'Partners', sub: 'Programs and networks behind the rows', target: { kind: 'tab', tab: 'partners' } }
     ]
   },
   {
     id: 'you',
     label: 'You, your standing, your money',
     items: [
-      { id: 'standing', label: 'Standing', sub: 'What you owe, what is owed you', icon: <ShelfIcon glyph="shield" theme="money" />, target: { kind: 'you', section: 'standing' } },
-      { id: 'earn', label: 'Earn', sub: 'Your money, the real way', icon: <ShelfIcon glyph="coins" theme="money" />, target: { kind: 'you', section: 'earn' } },
-      { id: 'tableBanking', label: 'Table Banking', sub: 'Shared pots, kept in the open', icon: <ShelfIcon glyph="pot" theme="money" />, target: { kind: 'you', section: 'tableBanking' } }
+      { id: 'standing', label: 'Standing', sub: 'What you owe, what is owed you', target: { kind: 'you', section: 'standing' } },
+      { id: 'earn', label: 'Earn', sub: 'Your money, the real way', target: { kind: 'you', section: 'earn' } },
+      { id: 'tableBanking', label: 'Table Banking', sub: 'Shared pots, kept in the open', target: { kind: 'you', section: 'tableBanking' } }
     ]
   },
   {
     id: 'settings',
     label: 'Settings',
     items: [
-      { id: 'language', label: 'Language', sub: 'One language, said plainly', icon: <ShelfIcon glyph="globe" theme="system" />, target: { kind: 'you', section: 'language' } },
-      { id: 'notifications', label: 'Notifications', sub: 'The real bell for this device', icon: <ShelfIcon glyph="bell" theme="system" />, target: { kind: 'you', section: 'notifications' } },
-      { id: 'privacy', label: 'Privacy', sub: 'What this device keeps, and how to clear it', icon: <ShelfIcon glyph="lock" theme="system" />, target: { kind: 'you', section: 'privacy' } }
+      { id: 'language', label: 'Language', sub: 'One language, said plainly', target: { kind: 'you', section: 'language' } },
+      { id: 'notifications', label: 'Notifications', sub: 'The real bell for this device', target: { kind: 'you', section: 'notifications' } },
+      { id: 'privacy', label: 'Privacy', sub: 'What this device keeps, and how to clear it', target: { kind: 'you', section: 'privacy' } }
     ]
   },
   {
@@ -121,8 +106,8 @@ export const SHEET_GROUPS: Array<{ id: string; label: string; items: SheetItem[]
     id: 'closing',
     label: '',
     items: [
-      { id: 'how', label: 'How Wairo works', sub: 'How a row becomes trust', icon: <ShelfIcon glyph="search" theme="system" />, target: { kind: 'you', section: 'how' } },
-      { id: 'signout', label: 'Sign out', sub: 'End the session on this device', icon: <ShelfIcon glyph="cross" theme="danger" />, target: { kind: 'signout' } }
+      { id: 'how', label: 'How Wairo works', sub: 'How a row becomes trust', target: { kind: 'you', section: 'how' } },
+      { id: 'signout', label: 'Sign out', sub: 'End the session on this device', target: { kind: 'signout' } }
     ]
   }
 ];
@@ -136,6 +121,19 @@ export interface NavSheetProps {
   place: string;
   onSetPlace: (place: string) => void;
 }
+
+const Row: React.FC<{ testId: string; label: string; onClick: () => void }> = ({ testId, label, onClick }) => (
+  <button
+    type="button"
+    data-testid={testId}
+    onClick={onClick}
+    className="w-full flex items-center justify-between py-2.5 text-left cursor-pointer"
+    style={{ borderBottom: '1px solid var(--divider)' }}
+  >
+    <span className="text-[15px] font-semibold" style={{ color: 'var(--brief-ink)' }}>{label}</span>
+    <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--muted-ink)' }} />
+  </button>
+);
 
 export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, onSetPlace, canModerate = false }) => {
   const [draft, setDraft] = useState(place);
@@ -183,20 +181,20 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
           </button>
         </div>
 
-        {canModerate && <MenuTile icon={<ShelfIcon glyph="shield" theme="system" />} title="Page moderation" description="Review reports and reinstate hidden pages" testId="page-moderation" onClick={() => { onGo({ kind: 'moderation' }); onClose(); }} />}
+        {canModerate && (
+          <nav aria-label="Moderation">
+            <Row testId="page-moderation" label="Page moderation" onClick={() => { onGo({ kind: 'moderation' }); onClose(); }} />
+          </nav>
+        )}
 
         {SHEET_GROUPS.map((group) => (
-          <nav key={group.id} aria-label={group.label || 'More'} className="space-y-1.5 pt-3 border-t border-black/5 first:pt-0 first:border-t-0">
+          <nav key={group.id} aria-label={group.label || 'More'}>
             {group.label ? <SectionHeader>{group.label}</SectionHeader> : null}
-            {/* The ONE tile shape: a themed mark, bold 15px title, grey 13px
-                description. */}
             {group.items.map((item) => (
-              <MenuTile
+              <Row
                 key={item.id}
-                icon={item.icon}
-                title={item.label}
-                description={item.sub}
                 testId={item.id}
+                label={item.label}
                 onClick={() => { onGo(item.target); onClose(); }}
               />
             ))}
@@ -206,7 +204,7 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
         {/* The area, set once and used by the only weather line this app shows.
             An empty field stays described as unset rather than defaulted to a
             city the member may not be in. */}
-        <div className="rounded-2xl p-3 space-y-2" style={{ background: 'var(--color-paper)', boxShadow: 'var(--room-light), inset 0 0 0 1px var(--brief-line)' }}>
+        <div className="pt-3 space-y-2" style={{ borderTop: '1px solid var(--divider)' }}>
           <label htmlFor="belt-place" className="block text-[11px] font-black uppercase tracking-wider" style={{ color: 'var(--color-text-muted)' }}>
             Your area
           </label>
@@ -216,14 +214,14 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             placeholder="e.g. Kisii"
-            className="w-full px-3 py-2 rounded-xl text-[13px] border"
-            style={{ background: 'var(--color-bg)', borderColor: 'var(--brief-line)', color: 'var(--color-text)' }}
+            className="w-full px-3 py-2 rounded-xl text-[13px]"
+            style={{ background: 'var(--color-paper)', color: 'var(--color-text)' }}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => { onSetPlace(draft.trim()); onClose(); }}
-              className="px-3 py-1.5 rounded-full text-[12px] font-black cursor-pointer"
+              className="px-4 py-1.5 rounded-full text-[12px] font-black cursor-pointer"
               style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
             >
               Save
@@ -231,8 +229,8 @@ export const NavSheet: React.FC<NavSheetProps> = ({ open, onClose, onGo, place, 
             <button
               type="button"
               onClick={() => { onSetPlace(''); onClose(); }}
-              className="px-3 py-1.5 rounded-full text-[12px] font-bold cursor-pointer border"
-              style={{ borderColor: 'var(--brief-line)', color: 'var(--color-text-muted)' }}
+              className="text-[12px] font-bold cursor-pointer"
+              style={{ color: 'var(--color-text-muted)' }}
             >
               Clear it
             </button>
