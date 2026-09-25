@@ -29,6 +29,8 @@ const EMPTY = {
   matches: [], // Revision-bound demand-to-capability relationships.
   capabilities: [], // Capability records reference the existing vendor identity.
   vendorLeads: [], // Scout-captured shops: photo + contact + category. See domain/vendorLeads.js.
+  externalPlaceSnapshots: [], // Cached business-directory answers: source + point-in-time. See domain/externalPlaces.js.
+  placePriceClaims: [], // Receipt-backed price claims on external places. Photo mandatory, always unverified.
   // ROLE-ON-SCOPE AUTHORITY (additive, revocable) — a person holds a role
   // bounded to a scope (org/program/cohort/circle). Attribution (who brought
   // them) is separate and immutable. See domain/roles.js.

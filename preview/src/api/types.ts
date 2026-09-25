@@ -2477,3 +2477,57 @@ export interface ShopBriefPrefs {
   note: string;
   timeZone: string;
 }
+
+// External places: map listings from the business directory (OpenStreetMap
+// via BizData). Never registered shops, never verified, never priced —
+// prices exist only as receipt-backed claims. Empty strings mean the
+// directory had nothing, and are shown as "Not listed", never filled in.
+export interface ExternalPlace {
+  name: string;
+  category: string;
+  address: string;
+  phone: string;
+  website: string;
+  email: string;
+  lat: number | null;
+  lon: number | null;
+  openingHours: string;
+  osmId: string | null;
+}
+export interface PlaceSnapshot {
+  key: string;
+  location: string;
+  category: string;
+  limit: number;
+  source: string;
+  attribution: string;
+  fetchedAt: string;
+  stale: boolean;
+  total: number | null;
+  locationResolved: string;
+  dataQuality: Record<string, unknown> | null;
+  businesses: ExternalPlace[];
+}
+export interface PlacePriceClaim {
+  id: string;
+  placeKey: string;
+  placeName: string;
+  location: string;
+  category: string;
+  item: string;
+  amountKes: number;
+  receiptPhoto: string;
+  claimedBy: string;
+  status: string;
+  createdAt: string;
+}
+export interface PlacePriceClaimInput {
+  placeKey: string;
+  placeName: string;
+  location: string;
+  category: string;
+  item: string;
+  amountKes: number;
+  receiptPhoto: string;
+  idempotencyKey?: string;
+}

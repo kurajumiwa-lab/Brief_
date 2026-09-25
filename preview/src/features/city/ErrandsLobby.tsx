@@ -3,6 +3,7 @@ import { Bike, Check, HeartHandshake, Package, Plus, Shapes, Star, Truck, Users,
 import * as briefApi from '../../api/briefApi';
 import type { Errand, ErrandBoard, ErrandProviders } from '../../api/briefApi';
 import { WairoDispatchPanel } from './WairoDispatchPanel';
+import { ExternalPlaces } from './ExternalPlaces';
 import { soundEngine } from '../../utils/SoundEngine';
 
 // ---------------------------------------------------------------------------
@@ -86,6 +87,9 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
   // labels what you are about to post and filters what you can see, which is the
   // only reason the grid is on the screen at all.
   const [kind, setKind] = useState<string | null>(null);
+  // The map finder fills one address field, then closes: a picked point is a
+  // map listing (name + coordinates), never a registered shop.
+  const [findingFor, setFindingFor] = useState<'pickup' | 'dropoff' | null>(null);
 
   const load = useCallback(async () => {
     const res = await briefApi.getErrandBoard();
@@ -277,6 +281,24 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
             <input className="brief-lobby-input" aria-label="Dropped at" placeholder="Dropped at (e.g. Westlands, Section 108)"
               value={draft.dropoff} onChange={(e) => setDraft((d) => ({ ...d, dropoff: e.target.value }))} />
           </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="brief-lobby-btn brief-lobby-btn--quiet" onClick={() => setFindingFor((f) => (f === 'pickup' ? null : 'pickup'))}>
+              {findingFor === 'pickup' ? 'Close the map' : 'Find a pickup point'}
+            </button>
+            <button type="button" className="brief-lobby-btn brief-lobby-btn--quiet" onClick={() => setFindingFor((f) => (f === 'dropoff' ? null : 'dropoff'))}>
+              {findingFor === 'dropoff' ? 'Close the map' : 'Find a drop-off point'}
+            </button>
+          </div>
+          {findingFor && (
+            <ExternalPlaces
+              onSelectPlace={(label) => {
+                const field = findingFor;
+                setDraft((d) => (field === 'pickup' ? { ...d, pickup: label } : { ...d, dropoff: label }));
+                setFindingFor(null);
+                setNotice('Point set from the map. It is a map listing, not a registered shop.');
+              }}
+            />
+          )}
           <div className="grid grid-cols-3 gap-2">
             <input className="brief-lobby-input" aria-label="Size or weight" placeholder="Size / weight"
               value={draft.sizeOrWeight} onChange={(e) => setDraft((d) => ({ ...d, sizeOrWeight: e.target.value }))} />
