@@ -83,7 +83,7 @@ const { SpaceMoney } = require('./src/features/spaces/SpaceMoney.tsx');
 const { SpaceDispatches } = require('./src/features/spaces/SpaceDispatches.tsx');
 const { CreateDispatchModal } = require('./src/features/spaces/CreateDispatchModal.tsx');
 const { SpaceConversationThread } = require('./src/features/spaces/SpaceConversationThread.tsx');
-const { CreateSpaceModal } = require('./src/features/spaces/CreateSpaceModal.tsx');
+const { CreateFlowModal } = require('./src/features/spaces/CreateFlowModal.tsx');
 const { CreateOfferModal } = require('./src/features/spaces/CreateOfferModal.tsx');
 const { PublicOfferModal } = require('./src/features/offers/PublicOfferModal.tsx');
 const { AppShell } = require('./src/app/AppShell.tsx');
@@ -145,23 +145,24 @@ async function runTests() {
 
   await act(async () => { root1.unmount(); host1.remove(); });
 
-  // --- 2. CreateSpaceModal ---
-  console.log('\n--- 2. CreateSpaceModal (4-Step Simple Wizard) ---');
+  // --- 2. CreateFlowModal ---
+  console.log('\n--- 2. CreateFlowModal (the live create flow) ---');
   const host2 = document.createElement('div');
   document.body.appendChild(host2);
   const root2 = createRoot(host2);
   await act(async () => {
-    root2.render(React.createElement(CreateSpaceModal, {
+    root2.render(React.createElement(CreateFlowModal, {
       isOpen: true,
       onClose: () => {},
-      onSpaceCreated: () => {}
+      onCompleted: () => {}
     }));
   });
 
   const text2 = host2.textContent;
-  check('renders Step 1: What are you building?', text2.includes('What are you building?'));
-  check('shows space options: Shop, Side Hustle, Creator, Team',
-    text2.includes('Shop') && text2.includes('Side Hustle') && text2.includes('Creator Work') && text2.includes('Team / network'));
+  check('renders Step 1: Make it your shop', text2.includes('Make it your shop'));
+  check('shows space options: Physical shop, Online/home shop, Services, Team',
+    text2.includes('Physical shop') && text2.includes('Online / home shop') && text2.includes('Services & studio') && text2.includes('Team / network'));
+  check('asks for a brand cover, not a product photo', text2.includes('Shop brand cover') && text2.includes('not a product photo'));
 
   await act(async () => { root2.unmount(); host2.remove(); });
 

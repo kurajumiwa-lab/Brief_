@@ -12,8 +12,8 @@
 //   * every action goes to a real place (a request, the inbox, the offers
 //     tab), and a declared NEED becomes a DRAFT the vendor owns — not an
 //     automatically published gap;
-//   * the wizard stores the genesis answers as structured data, and skipping is
-//     allowed and reported as unanswered later.
+//   * the live create flow posts the typed name, the chosen type and the brand
+//     cover — and a shell-only create sends no invented first offer.
 // ---------------------------------------------------------------------------
 const assert = require('assert').strict;
 const { JSDOM } = require('jsdom');
@@ -36,7 +36,7 @@ const { createRoot } = require('react-dom/client');
 const { act } = require('react-dom/test-utils');
 const { SpaceOperatingPanel } = require('./src/features/spaces/SpaceOperatingPanel.tsx');
 const { SpaceShell } = require('./src/features/spaces/SpaceShell.tsx');
-const { CreateSpaceModal } = require('./src/features/spaces/CreateSpaceModal.tsx');
+const { CreateFlowModal } = require('./src/features/spaces/CreateFlowModal.tsx');
 
 let count = 0;
 const pass = (n) => { count++; console.log('PASS ' + n); };
@@ -234,52 +234,40 @@ async function main() {
   }
   pass('SpaceShell mounts the space file with a derived open-item badge');
 
-  // --- The wizard asks the operational questions and stores them ----------
+  // --- The live create flow posts name, type and cover, nothing invented ----
   {
-    const SCHEMA = { fields: VIEW.fields.map((f) => ({ key: f.key, question: f.question, kind: f.kind, cadenceHours: f.cadenceHours, help: f.help })) };
     let posted = null;
     fetchHandler = async (url, init) => {
       const ok = (b) => ({ ok: true, status: 200, text: async () => JSON.stringify(b) });
-      if (url.includes('/profile-schema')) return ok(SCHEMA);
       if (url.endsWith('/api/spaces') && init?.method === 'POST') {
         posted = JSON.parse(String(init.body));
-        return ok({ space: { id: 'spc_new', name: 'Tilapia', type: 'business', offers: [], recentActivities: [], recentConversations: [], metrics: {} } });
+        return ok({ space: { id: 'spc_new', name: "Amina's Fish", type: 'community', offers: [], recentActivities: [], recentConversations: [], metrics: {} } });
       }
       return { ok: false, status: 404, text: async () => JSON.stringify({}) };
     };
-    const { container } = mount(React.createElement(CreateSpaceModal, { isOpen: true, onClose: () => {}, onSpaceCreated: () => {} }));
+    let completed = null;
+    const { container } = mount(React.createElement(CreateFlowModal, { isOpen: true, onClose: () => {}, onCompleted: (s) => { completed = s; } }));
     await flush();
-    click(btn('Continue'));                       // 1 -> 2 (type chosen by default)
-    const nameInput = document.querySelector('input[aria-label], input');
+    assert.ok(text(container).includes('Make it your shop'), 'step 1 renders');
+    assert.ok(text(container).includes('Team / network'), 'the Team split is in the live flow');
+    assert.ok(text(container).includes('Shop brand cover'), 'the brand cover field is in the live flow');
+    click(btn('Team / network'));                 // a physical shop is not the only uniform
+    const nameInput = document.querySelector('input[placeholder^="e.g."]');
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
       setter.call(nameInput, "Amina's Fish");
       nameInput.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
     });
-    click(btn('Continue'));                       // 2 -> 3
-    click(btn('Continue'));                       // 3 -> 4 (genesis)
-    await flush();
-    const g = text(container);
-    assert.ok(g.includes('What can you actually do?'), 'the genesis step renders');
-    assert.ok(g.includes('What do you actually sell or provide?'), 'with the server-owned questions');
-    assert.ok(g.includes('Skip for now'), 'and skipping is offered, not hidden');
-
-    // Answer two, leave the rest, create.
-    const what = document.getElementById('genesis-what');
-    act(() => {
-      const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set;
-      setter.call(what, 'Fresh tilapia, whole');
-      what.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
-    });
-    click(btn('Continue'));                       // 4 -> 5
-    click(btn('Create Space'));
+    click(btn('Create shop — add offers later')); // shell only: no first offer invented
     await flush();
     assert.ok(posted, 'the create call goes out');
-    assert.ok(posted.profile?.what, 'the answered field is sent as structured data');
-    assert.equal(posted.profile.what.text, 'Fresh tilapia, whole');
-    assert.equal(posted.profile.capacity, undefined, 'unanswered fields are omitted, not zero-filled');
+    assert.equal(posted.name, "Amina's Fish");
+    assert.equal(posted.type, 'community', 'the chosen Team type is what is stored');
+    assert.equal(posted.image, null, 'no cover chosen yet means null, not a placeholder');
+    assert.equal(posted.initialOffer, undefined, 'a shell-only create sends no first offer');
+    assert.ok(completed && completed.id === 'spc_new', 'completion hands back the created space');
   }
-  pass('The wizard stores genesis answers as structured data and leaves blanks absent');
+  pass('The live create flow posts name, type and cover with no invented offer');
 
   console.log('\nPASS ' + count);
   process.exit(0);

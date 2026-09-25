@@ -72,8 +72,6 @@ export { HomeSurface } from '../../features/home/HomeSurface';
 export type { HomeSurfaceProps } from '../../features/home/HomeSurface';
 export { SpaceShell } from '../../features/spaces/SpaceShell';
 export type { SpaceShellProps } from '../../features/spaces/SpaceShell';
-export { CreateSpaceModal } from '../../features/spaces/CreateSpaceModal';
-export type { CreateSpaceModalProps } from '../../features/spaces/CreateSpaceModal';
 export { CreateOfferModal } from '../../features/spaces/CreateOfferModal';
 export type { CreateOfferModalProps } from '../../features/spaces/CreateOfferModal';
 export { PublicOfferModal } from '../../features/offers/PublicOfferModal';
