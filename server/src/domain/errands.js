@@ -294,8 +294,42 @@ export function markPicked(id, { actorId } = {}) {
   return advance(id, actorId, 'picked_up', 'errand_picked_up');
 }
 
-export function markDelivered(id, { actorId } = {}) {
-  return advance(id, actorId, 'delivered', 'errand_delivered');
+export function markDelivered(id, { actorId, photo } = {}) {
+  const pod = cleanPodPhoto(photo);
+  if (pod?.error) return pod;
+  const r = advance(id, actorId, 'delivered', 'errand_delivered');
+  if (r.error || !pod) return r;
+  return attachPod(id, { actorId, photo: pod });
+}
+
+/** A delivery photo reference: a stored media id, never a pasted URL. */
+function cleanPodPhoto(photo) {
+  if (photo === undefined || photo === null || String(photo).trim() === '') return null;
+  const s = String(photo).trim();
+  if (s.length > 300) return err('the delivery photo reference is too long', 422);
+  return s;
+}
+
+/**
+ * Proof of delivery, attached at handoff or later (a courier at the door
+ * with no signal photographs first and attaches when back online). Either
+ * party may attach; the `by` name records who, so nothing masquerades.
+ */
+export function attachPod(id, { actorId, photo } = {}) {
+  const e = rawErrand(id);
+  if (!e) return err('errand not found', 404);
+  const pod = cleanPodPhoto(photo);
+  if (pod?.error) return pod;
+  if (!pod) return err('a delivery photo is required — without it there is nothing to attach', 422);
+  if (e.status !== 'delivered') return err('proof of delivery belongs to a delivered errand', 409);
+  const parties = [e.posterId, e.acceptedBy].filter(Boolean);
+  if (!parties.includes(actorId)) return err('only the poster or the carrier can attach delivery proof', 403);
+  const at = now();
+  const updated = store.update('errands', id, {
+    pod: { photo: pod, by: actorId, at },
+    history: [...e.history, event(actorId, 'errand_pod_attached', {})]
+  });
+  return { errand: updated };
 }
 
 function advance(id, actorId, next, action) {
@@ -493,6 +527,7 @@ export function errandView(row, viewerId = null) {
       ? { ...row.settlement, confirmedNames: (row.settlement.confirmedBy ?? []).map(nameOf) }
       : null,
     cancelReason: row.cancelReason,
+    pod: row.pod ? { photo: row.pod.photo, by: nameOf(row.pod.by), at: row.pod.at } : null,
     isMine: viewerId ? parties.includes(viewerId) : false,
     iAmTheCarrier: viewerId ? row.acceptedBy === viewerId : false,
     iAmThePoster: viewerId ? row.posterId === viewerId : false,

@@ -5,6 +5,7 @@ import type { Errand, ErrandBoard, ErrandProviders } from '../../api/briefApi';
 import { WairoDispatchPanel } from './WairoDispatchPanel';
 import { ExternalPlaces } from './ExternalPlaces';
 import { soundEngine } from '../../utils/SoundEngine';
+import { ImageField } from '../../components/ImageField';
 
 // ---------------------------------------------------------------------------
 // ERRANDS LOBBY — the noticeboard in the waiting area, not a gallery case.
@@ -127,10 +128,10 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
     return () => window.removeEventListener('focus', onVisible);
   }, [load]);
 
-  const act = async (id: string, action: 'accept' | 'picked' | 'delivered' | 'cancel' | 'settle') => {
+  const act = async (id: string, action: 'accept' | 'picked' | 'delivered' | 'cancel' | 'settle', body: Record<string, unknown> = {}) => {
     setBusy(`${id}:${action}`);
     setErrors((e) => ({ ...e, [id]: '' }));
-    const res = await briefApi.errandAction(id, action, action === 'cancel' ? { reason: draft.note || 'Cancelled by the poster.' } : {});
+    const res = await briefApi.errandAction(id, action, action === 'cancel' ? { reason: draft.note || 'Cancelled by the poster.' } : body);
     setBusy(null);
     if (!res.ok) {
       // A refused accept carries the eligibility answer, so it is shown, not
@@ -430,7 +431,7 @@ export function ErrandsLobby({ className = '', composerSignal }: { className?: s
                   busy={busy}
                   error={errors[e.id] ?? ''}
                   onAccept={() => void act(e.id, 'accept')}
-                  onAdvance={(a) => void act(e.id, a)}
+                  onAdvance={(a, body) => void act(e.id, a, body)}
                   onRate={(stars) => void rate(e.id, stars)}
                   onCancel={() => void act(e.id, 'cancel')}
                 />
@@ -473,13 +474,35 @@ function ErrandCard({
   busy: string | null;
   error: string;
   onAccept: () => void;
-  onAdvance?: (a: 'picked' | 'delivered' | 'settle') => void;
+  onAdvance?: (a: 'picked' | 'delivered' | 'settle', body?: Record<string, unknown>) => void;
   onRate?: (stars: number) => void;
   onCancel?: () => void;
 }) {
   const [stars, setStars] = useState(0);
+  const [podOpen, setPodOpen] = useState(false);
+  const [podPhoto, setPodPhoto] = useState<string | null>(null);
+  const [podBusy, setPodBusy] = useState(false);
+  const [podMsg, setPodMsg] = useState('');
+  const [pod, setPod] = useState(e.pod);
   const urgency = e.whenNeeded && Date.parse(e.whenNeeded) - Date.now() < 2 * 86400000 ? 'now' : 'quiet';
   const settledNames = e.settlement?.confirmedNames ?? [];
+  // Attach-later: the photo the doorstep moment deserved, added once the
+  // carrier is back online. The card shows the returned row, not a guess.
+  const savePod = async () => {
+    if (!podPhoto || podBusy) return;
+    setPodBusy(true);
+    setPodMsg('');
+    soundEngine.play('tap');
+    const res = await briefApi.attachErrandPod(e.id, { photo: podPhoto });
+    setPodBusy(false);
+    if (!res.ok) {
+      setPodMsg(res.error ?? 'That photo did not attach.');
+      return;
+    }
+    setPod(res.data.errand.pod ?? null);
+    setPodPhoto(null);
+    setPodOpen(false);
+  };
 
   return (
     <article className="brief-lobby-card p-4 space-y-2.5" data-urgency={urgency}>
@@ -553,10 +576,33 @@ function ErrandCard({
           </button>
         )}
         {e.iAmTheCarrier && e.status === 'picked_up' && onAdvance && (
-          <button type="button" disabled={busy === `${e.id}:delivered`} onClick={() => onAdvance('delivered')}
-            className="brief-lobby-btn brief-lobby-btn--primary disabled:opacity-50">
-            It is delivered
-          </button>
+          podOpen ? (
+            <div className="w-full space-y-2">
+              <ImageField
+                label="Delivery photo"
+                hint="The item at the door, or the signed receipt. No signal now? Confirm without it and attach it later."
+                value={podPhoto}
+                onChange={setPodPhoto}
+                compact
+              />
+              <div className="flex flex-wrap gap-2">
+                <button type="button" disabled={busy === `${e.id}:delivered`}
+                  onClick={() => { soundEngine.play('tap'); onAdvance('delivered', podPhoto ? { photo: podPhoto } : {}); }}
+                  className="brief-lobby-btn brief-lobby-btn--primary disabled:opacity-50">
+                  Confirm delivered
+                </button>
+                <button type="button" onClick={() => { setPodOpen(false); setPodPhoto(null); }}
+                  className="brief-lobby-btn brief-lobby-btn--quiet">
+                  Back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button type="button" disabled={busy === `${e.id}:delivered`} onClick={() => { soundEngine.play('tap'); setPodOpen(true); }}
+              className="brief-lobby-btn brief-lobby-btn--primary disabled:opacity-50">
+              It is delivered
+            </button>
+          )
         )}
         {e.canConfirmFee && onAdvance && (
           <button type="button" disabled={busy === `${e.id}:settle`} onClick={() => onAdvance('settle')}
@@ -570,6 +616,50 @@ function ErrandCard({
           </button>
         )}
       </div>
+
+      {/* Proof of delivery: the photo, who attached it, when — or the honest
+          absence of one. Either party can attach it after the fact. */}
+      {e.status === 'delivered' && (pod ? (
+        <div className="flex items-center gap-2.5 pt-1">
+          <img src={briefApi.mediaFileUrl(pod.photo)} alt="Delivery proof" className="w-14 h-14 rounded-xl object-cover shrink-0" />
+          <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.66)' }}>
+            Delivery photo · {pod.by} · {ago(pod.at) ?? '—'}
+          </p>
+        </div>
+      ) : (
+        <div className="pt-1">
+          <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.55)' }}>No delivery photo.</p>
+          {(e.iAmTheCarrier || e.iAmThePoster) && (
+            podOpen ? (
+              <div className="space-y-2 pt-2">
+                <ImageField
+                  label="Delivery photo"
+                  hint="The item at the door, or the signed receipt."
+                  value={podPhoto}
+                  onChange={setPodPhoto}
+                  compact
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={!podPhoto || podBusy} onClick={() => void savePod()}
+                    className="brief-lobby-btn brief-lobby-btn--primary disabled:opacity-50">
+                    {podBusy ? 'Attaching…' : 'Attach photo'}
+                  </button>
+                  <button type="button" onClick={() => { setPodOpen(false); setPodPhoto(null); setPodMsg(''); }}
+                    className="brief-lobby-btn brief-lobby-btn--quiet">
+                    Cancel
+                  </button>
+                </div>
+                {podMsg && <p className="text-[12px] font-bold" role="alert" style={{ color: 'var(--color-danger)' }}>{podMsg}</p>}
+              </div>
+            ) : (
+              <button type="button" onClick={() => { soundEngine.play('tap'); setPodOpen(true); }}
+                className="brief-lobby-btn brief-lobby-btn--quiet mt-1.5">
+                Add delivery photo
+              </button>
+            )
+          )}
+        </div>
+      ))}
 
       {/* Ratings, listed exactly as said. */}
       {e.ratings.length > 0 && (

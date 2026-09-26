@@ -5202,6 +5202,8 @@ export interface Errand {
   carrierBasis: string[];
   settlement: { amountKes: number | null; currency: string; confirmedBy: string[]; confirmedNames: string[]; at: string | null; movedBy: null } | null;
   cancelReason: string | null;
+  /** Delivery proof: a photo the carrier or poster attached, or null. */
+  pod: { photo: string; by: string; at: string } | null;
   isMine: boolean;
   iAmTheCarrier: boolean;
   iAmThePoster: boolean;
@@ -5248,6 +5250,10 @@ export function errandAction(
   body: Record<string, unknown> = {}
 ): Promise<ApiResult<{ errand: Errand; settled?: boolean; note?: string; eligibility?: ErrandEligibility }>> {
   return request(`/api/errands/${encodeURIComponent(id)}/${action}`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.errand ? r : undefined);
+}
+export function attachErrandPod(id: string, body: { photo: string }): Promise<ApiResult<{ errand: Errand }>> {
+  return request(`/api/errands/${encodeURIComponent(id)}/pod`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
     r?.errand ? r : undefined);
 }
 export function rateErrand(id: string, stars: number, note?: string): Promise<ApiResult<{ rating: ErrandRating }>> {
