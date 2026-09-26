@@ -302,6 +302,35 @@ export function markDelivered(id, { actorId, photo } = {}) {
   return attachPod(id, { actorId, photo: pod });
 }
 
+/**
+ * Live courier position: the carrier's phone reports where it is, but only
+ * while the delivery is active (accepted → delivered). Parties-only on read,
+ * and every pin carries its timestamp — a stale pin reads as stale, never
+ * live. No trail is kept: the row holds the latest report, nothing more.
+ */
+export function sharePosition(id, { actorId, lat, lon, accuracy = null } = {}) {
+  const e = rawErrand(id);
+  if (!e) return err('errand not found', 404);
+  if (actorId !== e.acceptedBy) return err('only the carrier on this errand shares its position', 403);
+  if (!['accepted', 'picked_up'].includes(e.status))
+    return err('position sharing is only for an active delivery', 403);
+  if (typeof lat !== 'number' || typeof lon !== 'number' || !Number.isFinite(lat) || !Number.isFinite(lon))
+    return err('lat and lon come as a pair of numbers', 422);
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180)
+    return err('those coordinates are nowhere on earth', 422);
+  const at = now();
+  // A pinging client is throttled, not punished: repeat reports inside the
+  // window get the current row back with no new write.
+  if (e.carrierPosition?.at && Date.parse(at) - Date.parse(e.carrierPosition.at) < 10000) {
+    return { errand: errandView(e, actorId) };
+  }
+  const acc = accuracy === undefined || accuracy === null ? null : Number(accuracy);
+  const updated = store.update('errands', id, {
+    carrierPosition: { lat, lon, accuracy: Number.isFinite(acc) ? acc : null, at }
+  });
+  return { errand: updated };
+}
+
 /** A delivery photo reference: a stored media id, never a pasted URL. */
 function cleanPodPhoto(photo) {
   if (photo === undefined || photo === null || String(photo).trim() === '') return null;
@@ -528,6 +557,12 @@ export function errandView(row, viewerId = null) {
       : null,
     cancelReason: row.cancelReason,
     pod: row.pod ? { photo: row.pod.photo, by: nameOf(row.pod.by), at: row.pod.at } : null,
+    // Courier GPS is parties-only: the poster and the carrier see it, the
+    // open board never does. Always with its timestamp, so age is readable.
+    carrierPosition:
+      viewerId && [row.posterId, row.acceptedBy].filter(Boolean).includes(viewerId) && row.carrierPosition
+        ? { ...row.carrierPosition }
+        : null,
     isMine: viewerId ? parties.includes(viewerId) : false,
     iAmTheCarrier: viewerId ? row.acceptedBy === viewerId : false,
     iAmThePoster: viewerId ? row.posterId === viewerId : false,

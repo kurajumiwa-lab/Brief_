@@ -92,6 +92,7 @@ export function register(app) {
   advance('/api/errands/:id/picked', (id, me) => errands.markPicked(id, { actorId: me }));
   advance('/api/errands/:id/delivered', (id, me, body) => errands.markDelivered(id, { actorId: me, photo: body.photo }));
   advance('/api/errands/:id/pod', (id, me, body) => errands.attachPod(id, { actorId: me, photo: body.photo }));
+  advance('/api/errands/:id/position', (id, me, body) => errands.sharePosition(id, { actorId: me, lat: body.lat, lon: body.lon, accuracy: body.accuracy }));
   advance('/api/errands/:id/cancel', (id, me, body) => errands.cancelErrand(id, { actorId: me, reason: body.reason }));
   advance('/api/errands/:id/settle', (id, me) => errands.confirmSettled(id, { actorId: me }));
   advance('/api/errands/:id/rate', (id, me, body) => errands.rateErrand(id, { actorId: me, stars: body.stars, note: body.note }));

@@ -6,6 +6,7 @@ import { WairoDispatchPanel } from './WairoDispatchPanel';
 import { ExternalPlaces } from './ExternalPlaces';
 import { soundEngine } from '../../utils/SoundEngine';
 import { ImageField } from '../../components/ImageField';
+import { supplyPath } from '../supply/shared';
 
 // ---------------------------------------------------------------------------
 // ERRANDS LOBBY — the noticeboard in the waiting area, not a gallery case.
@@ -484,6 +485,11 @@ function ErrandCard({
   const [podBusy, setPodBusy] = useState(false);
   const [podMsg, setPodMsg] = useState('');
   const [pod, setPod] = useState(e.pod);
+  const [sharing, setSharing] = useState(false);
+  const [shareMsg, setShareMsg] = useState('');
+  const [lastSentAt, setLastSentAt] = useState<string | null>(null);
+  const watchId = React.useRef<number | null>(null);
+  const lastPost = React.useRef(0);
   const urgency = e.whenNeeded && Date.parse(e.whenNeeded) - Date.now() < 2 * 86400000 ? 'now' : 'quiet';
   const settledNames = e.settlement?.confirmedNames ?? [];
   // Attach-later: the photo the doorstep moment deserved, added once the
@@ -502,6 +508,54 @@ function ErrandCard({
     setPod(res.data.errand.pod ?? null);
     setPodPhoto(null);
     setPodOpen(false);
+  };
+  // Live sharing: explicit toggle, off on every load, dead the moment the
+  // delivery ends. Pings are throttled to one per 15 seconds — a courier's
+  // battery is not the platform's to spend.
+  const stopSharing = React.useCallback(() => {
+    if (watchId.current !== null && "geolocation" in navigator) {
+      try { navigator.geolocation.clearWatch(watchId.current); } catch { /* already gone */ }
+    }
+    watchId.current = null;
+    setSharing(false);
+  }, []);
+  React.useEffect(() => () => {
+    if (watchId.current !== null && "geolocation" in navigator) {
+      try { navigator.geolocation.clearWatch(watchId.current); } catch { /* already gone */ }
+    }
+  }, []);
+  React.useEffect(() => {
+    if (sharing && (e.status === "delivered" || e.status === "cancelled")) stopSharing();
+  });
+  const startSharing = () => {
+    if (!("geolocation" in navigator)) {
+      setShareMsg("This device has no GPS to share.");
+      return;
+    }
+    setShareMsg("");
+    setSharing(true);
+    soundEngine.play("tap");
+    watchId.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (Date.now() - lastPost.current < 15000) return;
+        lastPost.current = Date.now();
+        void briefApi
+          .shareErrandPosition(e.id, {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            accuracy: pos.coords.accuracy ?? null,
+          })
+          .then((r) => {
+            if (r.ok) setLastSentAt(new Date().toISOString());
+            else setShareMsg(r.error ?? "The position did not send.");
+          });
+      },
+      () => {
+        setShareMsg("GPS refused — sharing stopped.");
+        stopSharing();
+      },
+      { enableHighAccuracy: false, maximumAge: 15000, timeout: 20000 },
+    );
   };
 
   return (
@@ -543,6 +597,21 @@ function ErrandCard({
         <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.66)' }}>
           Carried by <strong>{e.carrierName}</strong>
           {e.carrierBasis.length > 0 ? ` (${e.carrierBasis.join(', ')})` : ''}
+        </p>
+      )}
+      {e.carrierPosition && (e.iAmThePoster || e.iAmTheCarrier) && (
+        <p className="text-[12px]" style={{ color: 'rgba(36,31,26,0.66)' }}>
+          Carrier last seen {ago(e.carrierPosition.at) ?? '—'}
+          {typeof e.carrierPosition.accuracy === 'number' ? ` (±${Math.round(e.carrierPosition.accuracy)} m)` : ''}
+          {' · '}
+          <button
+            type="button"
+            onClick={() => supplyPath('map')}
+            className="font-bold underline underline-offset-2 cursor-pointer"
+            style={{ color: 'var(--color-primary)' }}
+          >
+            View on map
+          </button>
         </p>
       )}
       {e.settlement && (
@@ -604,6 +673,20 @@ function ErrandCard({
             </button>
           )
         )}
+        {e.iAmTheCarrier && (e.status === 'accepted' || e.status === 'picked_up') && (
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.play('tap');
+              if (sharing) stopSharing();
+              else startSharing();
+            }}
+            className="brief-lobby-btn brief-lobby-btn--quiet"
+          >
+            {sharing ? `Sharing location${lastSentAt ? ` · sent ${ago(lastSentAt) ?? ''}` : ''} — tap to stop` : 'Share live location'}
+          </button>
+        )}
+        {shareMsg && <p className="text-[12px] font-bold w-full" role="alert" style={{ color: 'var(--color-danger)' }}>{shareMsg}</p>}
         {e.canConfirmFee && onAdvance && (
           <button type="button" disabled={busy === `${e.id}:settle`} onClick={() => onAdvance('settle')}
             className="brief-lobby-btn brief-lobby-btn--quiet">

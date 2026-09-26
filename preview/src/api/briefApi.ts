@@ -5205,6 +5205,8 @@ export interface Errand {
   cancelReason: string | null;
   /** Delivery proof: a photo the carrier or poster attached, or null. */
   pod: { photo: string; by: string; at: string } | null;
+  /** Carrier's last reported position, parties-only, with its timestamp. */
+  carrierPosition: { lat: number; lon: number; accuracy: number | null; at: string } | null;
   isMine: boolean;
   iAmTheCarrier: boolean;
   iAmThePoster: boolean;
@@ -5255,6 +5257,10 @@ export function errandAction(
 }
 export function attachErrandPod(id: string, body: { photo: string }): Promise<ApiResult<{ errand: Errand }>> {
   return request(`/api/errands/${encodeURIComponent(id)}/pod`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
+    r?.errand ? r : undefined);
+}
+export function shareErrandPosition(id: string, body: { lat: number; lon: number; accuracy?: number | null }): Promise<ApiResult<{ errand: Errand }>> {
+  return request(`/api/errands/${encodeURIComponent(id)}/position`, { method: 'POST', body: JSON.stringify(body) }, (r) =>
     r?.errand ? r : undefined);
 }
 export function rateErrand(id: string, stars: number, note?: string): Promise<ApiResult<{ rating: ErrandRating }>> {
