@@ -65,6 +65,6 @@ function Root() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Suspense fallback={<div style={{ background: '#0a0a0a', minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><p role="status" style={{ color: '#ffda00', fontWeight: 800 }}>Opening Wairo…</p></div>}><Root /></Suspense>
+    <Suspense fallback={<div style={{ background: '#0a0a0a', minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><p role="status" style={{ color: '#EAB308', fontWeight: 800 }}>Opening Wairo…</p></div>}><Root /></Suspense>
   </React.StrictMode>
 );
