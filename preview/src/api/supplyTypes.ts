@@ -249,6 +249,8 @@ export interface VendorLeadInput {
   siteUrl?: string | null;
   note?: string;
   idempotencyKey?: string;
+  /** How the lead was captured: typed by hand, or picked from a pasted note. */
+  source?: string;
 }
 export interface VendorLead {
   id: string;
@@ -262,6 +264,8 @@ export interface VendorLead {
   status: VendorLeadStatus;
   produce: VendorLeadProduce | null;
   exposureTerms: VendorLeadExposureTerms | null;
+  /** 'manual' or 'scrape-note'. Absent on leads captured before the tray. */
+  source?: string;
   createdAt: string;
   updatedAt: string;
 }

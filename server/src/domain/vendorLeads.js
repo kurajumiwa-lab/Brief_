@@ -53,6 +53,7 @@ const LEAD_FIELDS = [
   "siteUrl",
   "note",
   "idempotencyKey",
+  "source",
 ];
 
 function optText(value, max, name) {
@@ -86,11 +87,15 @@ export function createLead(actorId, input = {}) {
   const note =
     input.note === undefined || input.note === null
       ? ""
-      : v.text(String(input.note), 1000, "note");
+      : v.text(String(input.note), 4000, "note");
   const key =
     input.idempotencyKey === undefined || input.idempotencyKey === null
       ? null
       : v.text(String(input.idempotencyKey), 120, "idempotencyKey");
+  const source =
+    input.source === undefined || input.source === null
+      ? "manual"
+      : v.choice(String(input.source), ["manual", "scrape-note"], "source");
   if (key) {
     const dupe = store.find(
       "vendorLeads",
@@ -118,6 +123,7 @@ export function createLead(actorId, input = {}) {
     scoutId: actorId,
     ...m,
     note,
+    source,
     status: "captured",
     produce: null,
     exposureTerms: null,

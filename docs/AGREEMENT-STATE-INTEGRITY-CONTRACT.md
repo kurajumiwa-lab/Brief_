@@ -107,3 +107,7 @@ against this contract, and the pattern to copy:
   no inferred prices anywhere.
 - Reads (`listLeads`, `getLead`) create nothing.
 - Every transition appends a history event (actor → action → changed fields).
+- The scrape tray parses pasted notes client-side only (labeled lines +
+  Kenyan phone patterns). It prefills the form for a human to check; a bare
+  handle is never upgraded into a link, and the raw note is stored verbatim
+  as the lead's note with `source: 'scrape-note'`.

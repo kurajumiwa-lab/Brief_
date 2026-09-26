@@ -5,6 +5,7 @@ import type { SpaceMode } from "../../api/types";
 import { ImageField } from "../../components/ImageField";
 import { SessionSignIn } from "../../components/SessionSignIn";
 import { supplyPath } from "./shared";
+import { parseScrapeNote, type ScrapePick } from "./parseScrapeNote";
 
 // ---------------------------------------------------------------------------
 // VENDOR LEAD CAPTURE — the digitized manual entry of shops.
@@ -14,6 +15,12 @@ import { supplyPath } from "./shared";
 // never see it as one. It becomes useful only when produce (or a real order)
 // is linked to it by an explicit validation command — see
 // docs/AGREEMENT-STATE-INTEGRITY-CONTRACT.md.
+//
+// Two ways in: type it by hand, or drop a scrape note (pasted from TikTok, an
+// AI summary, anywhere) in the tray. The tray reads labeled lines and phone
+// numbers into the form — nothing saves until the scout checks it and taps
+// Save. A bare handle is never upgraded into a link; the raw note is kept
+// verbatim so the picks stay auditable.
 //
 // No cap: one account captures as many leads as it walks past. Exposure
 // terms (the money for showing the shop) exist only when an operator types
@@ -87,6 +94,11 @@ function LeadCard({
           <p style={{ margin: "4px 0 0", fontSize: 12, fontWeight: 800 }}>
             {STATUS_WORD[lead.status]}
           </p>
+          {lead.source === "scrape-note" && (
+            <p className="request-hint" style={{ margin: "2px 0 0" }}>
+              From a pasted note — fields were picked, not typed.
+            </p>
+          )}
         </div>
       </div>
 
@@ -222,9 +234,14 @@ export function VendorLeadCapture() {
   const [contact, setContact] = useState("");
   const [category, setCategory] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
+  const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [formMsg, setFormMsg] = useState("");
   const [justSaved, setJustSaved] = useState<VendorLead | null>(null);
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [trayRaw, setTrayRaw] = useState("");
+  const [trayReport, setTrayReport] = useState<ScrapePick | null>(null);
+  const [fromTray, setFromTray] = useState(false);
   const keyRef = useRef("");
   if (!keyRef.current)
     keyRef.current = `lead-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
@@ -251,6 +268,18 @@ export function VendorLeadCapture() {
     return () => { live = false; };
   }, []);
 
+  const pick = () => {
+    const p = parseScrapeNote(trayRaw);
+    setTrayReport(p);
+    if (trayRaw.trim().length === 0) return;
+    if (p.name) setName(p.name);
+    if (p.contact) setContact(p.contact);
+    if (p.category) setCategory(p.category);
+    if (p.siteUrl) setSiteUrl(p.siteUrl);
+    if (p.note) setNote(p.note);
+    setFromTray(true);
+  };
+
   const save = async () => {
     setFormMsg("");
     if (name.trim().length < 2) { setFormMsg("Give the shop a name — at least 2 characters."); return; }
@@ -263,7 +292,9 @@ export function VendorLeadCapture() {
       category: category.trim(),
       photo,
       siteUrl: siteUrl.trim() === "" ? null : siteUrl.trim(),
+      note: note.trim() === "" ? undefined : note.trim(),
       idempotencyKey: keyRef.current,
+      source: fromTray ? "scrape-note" : "manual",
     });
     setBusy(false);
     if (!r.ok) { setFormMsg(r.error ?? "That did not go through."); return; }
@@ -273,6 +304,10 @@ export function VendorLeadCapture() {
     setContact("");
     setCategory("");
     setSiteUrl("");
+    setNote("");
+    setTrayRaw("");
+    setTrayReport(null);
+    setFromTray(false);
     setJustSaved(r.data.lead);
     setLeads((prev) => (prev ? [r.data.lead, ...prev.filter((l) => l.id !== r.data.lead.id)] : [r.data.lead]));
   };
@@ -290,6 +325,47 @@ export function VendorLeadCapture() {
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
+      <section className="request-panel" style={{ textAlign: "left" }}>
+        <button
+          type="button"
+          onClick={() => setTrayOpen((o) => !o)}
+          aria-expanded={trayOpen}
+          style={{ fontSize: 15, fontWeight: 800, padding: 0 }}
+        >
+          {trayOpen ? "Hide the scrape tray" : "Drop a scrape note"}
+        </button>
+        {trayOpen && (
+          <div style={{ display: "grid", gap: 10, marginTop: 10 }}>
+            <p style={{ fontSize: 13, margin: 0 }}>
+              Pasted from TikTok, an AI summary, anywhere. The tray reads labeled
+              lines and phone numbers into the form below — nothing saves until
+              you check it and tap Save this lead. A bare handle is never turned
+              into a link.
+            </p>
+            <textarea
+              value={trayRaw}
+              onChange={(e) => setTrayRaw(e.target.value)}
+              rows={6}
+              placeholder="Paste the note here…"
+              style={{ width: "100%", padding: 10, borderRadius: 10, fontSize: 13 }}
+            />
+            <div>
+              <button type="button" onClick={pick}>Pick out the fields</button>
+            </div>
+            {trayReport && (
+              <div style={{ display: "grid", gap: 4 }}>
+                {trayReport.found.map((f) => (
+                  <p key={f} className="request-hint" style={{ margin: 0 }}>Picked: {f}</p>
+                ))}
+                {trayReport.missing.map((f) => (
+                  <p key={f} className="request-hint" style={{ margin: 0 }}>Missing: {f}</p>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       <section className="request-panel" style={{ textAlign: "left" }}>
         <span className="request-eyebrow">Brief / Supply network / Vendor leads</span>
         <h2>Onboard a shop you met</h2>
@@ -325,23 +401,15 @@ export function VendorLeadCapture() {
           </label>
           <label style={{ fontSize: 13, fontWeight: 700 }}>
             Shop category
-            {modes.length > 0 ? (
-              <select
-                value={category} onChange={(e) => setCategory(e.target.value)}
-                style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10 }}
-              >
-                <option value="">Choose a category</option>
-                {modes.map((m) => (
-                  <option key={m.id} value={m.label}>{m.label} — {m.blurb}</option>
-                ))}
-              </select>
-            ) : (
-              <input
-                value={category} onChange={(e) => setCategory(e.target.value)}
-                placeholder="Type the category — the list would not load"
-                style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10 }}
-              />
-            )}
+            <input
+              value={category} onChange={(e) => setCategory(e.target.value)}
+              list="lead-category-list"
+              placeholder="Start typing, or pick a suggestion"
+              style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10 }}
+            />
+            <datalist id="lead-category-list">
+              {modes.map((m) => <option key={m.id} value={m.label} />)}
+            </datalist>
           </label>
           <label style={{ fontSize: 13, fontWeight: 700 }}>
             Their site, if they have one (optional)
@@ -350,6 +418,15 @@ export function VendorLeadCapture() {
               placeholder="A full link, or leave it empty"
               inputMode="url"
               style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10 }}
+            />
+          </label>
+          <label style={{ fontSize: 13, fontWeight: 700 }}>
+            Note (optional)
+            <textarea
+              value={note} onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              placeholder="Anything the next person should know"
+              style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10, fontSize: 13 }}
             />
           </label>
           <div>
