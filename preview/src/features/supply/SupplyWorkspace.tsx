@@ -12,6 +12,8 @@ import { VerificationPanel, ReviewQueue } from "./VerificationPanel";
 import { VendorLeadCapture } from "./VendorLeadCapture";
 import "../requests/requests.css";
 import "./supply.css";
+// Lazy: the map engine is heavy and only the map section pays for it.
+const VendorLeadMap = React.lazy(() => import("./VendorLeadMap"));
 export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
   const [section, id] = route.split("/");
   const isPublic = section === "profile";
@@ -39,7 +41,7 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
     setEditing(null);
     setEnterprise(null);
     setAuth(false);
-    if (section === "search" || section === "review" || section === "leads") {
+    if (section === "search" || section === "review" || section === "leads" || section === "map") {
       setLoading(false);
       return;
     }
@@ -88,6 +90,9 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
           <button onClick={() => supplyPath("leads")}>
             Vendor leads
           </button>
+          <button onClick={() => supplyPath("map")}>
+            Map
+          </button>
           {reviewer && (
             <button onClick={() => supplyPath("review")}>
               Review submissions
@@ -108,6 +113,10 @@ export function SupplyWorkspace({ route = "mine" }: { route?: string }) {
         <ReviewQueue />
       ) : section === "leads" ? (
         <VendorLeadCapture />
+      ) : section === "map" ? (
+        <React.Suspense fallback={<p role="status">Loading the map…</p>}>
+          <VendorLeadMap />
+        </React.Suspense>
       ) : loading ? (
         <p role="status">Loading enterprise…</p>
       ) : auth ? (

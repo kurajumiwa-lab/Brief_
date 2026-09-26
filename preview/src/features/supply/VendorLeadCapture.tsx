@@ -22,6 +22,9 @@ import { parseScrapeNote, type ScrapePick } from "./parseScrapeNote";
 // Save. A bare handle is never upgraded into a link; the raw note is kept
 // verbatim so the picks stay auditable.
 //
+// An optional GPS pin drops the shop where the scout stands, so it appears
+// on the map. No pin, no plot — the list works fully without coordinates.
+//
 // No cap: one account captures as many leads as it walks past. Exposure
 // terms (the money for showing the shop) exist only when an operator types
 // them, per lead. Nothing here invents a product, a price, or a promise.
@@ -91,6 +94,11 @@ function LeadCard({
           <p className="request-hint" style={{ margin: "2px 0 0" }}>
             {lead.category} · {lead.contact}
           </p>
+          {typeof lead.lat === "number" && typeof lead.lon === "number" && (
+            <p className="request-hint" style={{ margin: "2px 0 0" }}>
+              Pinned at {lead.lat.toFixed(4)}, {lead.lon.toFixed(4)}
+            </p>
+          )}
           <p style={{ margin: "4px 0 0", fontSize: 12, fontWeight: 800 }}>
             {STATUS_WORD[lead.status]}
           </p>
@@ -235,6 +243,8 @@ export function VendorLeadCapture() {
   const [category, setCategory] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [note, setNote] = useState("");
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null);
+  const [geoMsg, setGeoMsg] = useState("");
   const [busy, setBusy] = useState(false);
   const [formMsg, setFormMsg] = useState("");
   const [justSaved, setJustSaved] = useState<VendorLead | null>(null);
@@ -268,6 +278,22 @@ export function VendorLeadCapture() {
     return () => { live = false; };
   }, []);
 
+  const grabGps = () => {
+    if (!("geolocation" in navigator)) {
+      setGeoMsg("This device has no GPS to read.");
+      return;
+    }
+    setGeoMsg("Reading GPS…");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setGeoMsg("");
+      },
+      () => setGeoMsg("GPS refused — the lead saves fine without coordinates."),
+      { timeout: 15000 },
+    );
+  };
+
   const pick = () => {
     const p = parseScrapeNote(trayRaw);
     setTrayReport(p);
@@ -295,6 +321,7 @@ export function VendorLeadCapture() {
       note: note.trim() === "" ? undefined : note.trim(),
       idempotencyKey: keyRef.current,
       source: fromTray ? "scrape-note" : "manual",
+      ...(coords ? { lat: coords.lat, lon: coords.lon } : {}),
     });
     setBusy(false);
     if (!r.ok) { setFormMsg(r.error ?? "That did not go through."); return; }
@@ -305,6 +332,8 @@ export function VendorLeadCapture() {
     setCategory("");
     setSiteUrl("");
     setNote("");
+    setCoords(null);
+    setGeoMsg("");
     setTrayRaw("");
     setTrayReport(null);
     setFromTray(false);
@@ -420,6 +449,15 @@ export function VendorLeadCapture() {
               style={{ display: "block", width: "100%", marginTop: 4, padding: 10, borderRadius: 10 }}
             />
           </label>
+          <div>
+            <button type="button" onClick={grabGps} style={{ fontSize: 13, fontWeight: 700 }}>
+              {coords ? `Pinned at ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)} — retake` : "Drop a pin here (GPS)"}
+            </button>
+            {geoMsg && <p className="request-hint" style={{ margin: "4px 0 0" }}>{geoMsg}</p>}
+            <p className="request-hint" style={{ margin: "4px 0 0" }}>
+              Optional. Pins the shop where you stand so it appears on the map.
+            </p>
+          </div>
           <label style={{ fontSize: 13, fontWeight: 700 }}>
             Note (optional)
             <textarea

@@ -251,6 +251,9 @@ export interface VendorLeadInput {
   idempotencyKey?: string;
   /** How the lead was captured: typed by hand, or picked from a pasted note. */
   source?: string;
+  /** Scout GPS at capture. A pair or absent — never half a pin. */
+  lat?: number | null;
+  lon?: number | null;
 }
 export interface VendorLead {
   id: string;
@@ -266,6 +269,9 @@ export interface VendorLead {
   exposureTerms: VendorLeadExposureTerms | null;
   /** 'manual' or 'scrape-note'. Absent on leads captured before the tray. */
   source?: string;
+  /** Scout GPS at capture. Absent on leads captured without a pin. */
+  lat?: number | null;
+  lon?: number | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -54,6 +54,8 @@ const LEAD_FIELDS = [
   "note",
   "idempotencyKey",
   "source",
+  "lat",
+  "lon",
 ];
 
 function optText(value, max, name) {
@@ -96,6 +98,16 @@ export function createLead(actorId, input = {}) {
     input.source === undefined || input.source === null
       ? "manual"
       : v.choice(String(input.source), ["manual", "scrape-note"], "source");
+  // Coordinates arrive as a pair from the scout's GPS, or not at all. A
+  // half pin is refused rather than stored lopsided.
+  let lat = null;
+  let lon = null;
+  if (input.lat !== undefined || input.lon !== undefined) {
+    if (typeof input.lat !== "number" || typeof input.lon !== "number")
+      v.fail("lat and lon come as a pair of numbers.", 422, "bad_coords");
+    lat = v.num(input.lat, "lat", -90, 90);
+    lon = v.num(input.lon, "lon", -180, 180);
+  }
   if (key) {
     const dupe = store.find(
       "vendorLeads",
@@ -124,6 +136,8 @@ export function createLead(actorId, input = {}) {
     ...m,
     note,
     source,
+    lat,
+    lon,
     status: "captured",
     produce: null,
     exposureTerms: null,

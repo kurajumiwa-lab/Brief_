@@ -220,6 +220,37 @@ export function claimPlacePrice(actorId, input = {}) {
   };
 }
 
+/**
+ * Everything cached that carries coordinates, deduplicated, with a real
+ * claimed-price count each. The map's honest dataset: no zones, no totals
+ * beyond what is counted here, no rows invented for empty areas.
+ */
+export function listMapPlaces(actorId) {
+  v.actor(actorId);
+  const seen = new Map();
+  for (const snap of store.all("externalPlaceSnapshots")) {
+    for (const b of snap.businesses ?? []) {
+      if (typeof b.lat !== "number" || typeof b.lon !== "number") continue;
+      const key = b.osmId ?? `${b.name}|${b.lat},${b.lon}`;
+      if (!seen.has(key)) {
+        seen.set(key, {
+          key,
+          name: b.name,
+          category: b.category,
+          lat: b.lat,
+          lon: b.lon,
+          fetchedAt: snap.fetchedAt,
+        });
+      }
+    }
+  }
+  const out = [...seen.values()];
+  for (const p of out) {
+    p.claimCount = store.filter("placePriceClaims", (c) => c.placeKey === p.key).length;
+  }
+  return out;
+}
+
 export function listPlacePriceClaims(actorId, placeKey) {
   v.actor(actorId);
   const key = v.text(placeKey, 60, "placeKey", 1).trim();

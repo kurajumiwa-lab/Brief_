@@ -30,6 +30,17 @@ export function register(app) {
     }
   });
 
+  app.get("/api/places/map", (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const me = requireAuth(req, res);
+    if (!me || !req.auth?.userId) return;
+    try {
+      return res.status(200).json({ places: places.listMapPlaces(me) });
+    } catch (e) {
+      return fail(res, e);
+    }
+  });
+
   app.get("/api/places/price-claims", (req, res) => {
     res.setHeader("Cache-Control", "no-store");
     const me = requireAuth(req, res);

@@ -2531,3 +2531,14 @@ export interface PlacePriceClaimInput {
   receiptPhoto: string;
   idempotencyKey?: string;
 }
+// One mappable directory place: cached coordinates plus a real count of the
+// receipt-backed price claims attached to it. No zones, no densities.
+export interface MapPlace {
+  key: string;
+  name: string;
+  category: string;
+  lat: number;
+  lon: number;
+  fetchedAt: string;
+  claimCount: number;
+}
