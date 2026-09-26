@@ -52,6 +52,12 @@ function installOfflineFlush() {
 installOfflineFlush();
 
 function Root() {
+  React.useEffect(() => {
+    // Boot-splash handoff: React has committed, so the brand moment is over.
+    // The Suspense fallback below keeps the screen black until the first
+    // lazy chunk lands, so the handoff never flashes light mid-load.
+    document.getElementById('boot-splash')?.remove();
+  }, []);
   if (/^\/groups\/?$/.test(window.location.pathname)) return <PublicGroupsPage />;
   if (slug) return <PublicCampaignPage slug={slug} />;
   return <AppShell />;
@@ -59,6 +65,6 @@ function Root() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Suspense fallback={<p role="status">Opening Wairo…</p>}><Root /></Suspense>
+    <Suspense fallback={<div style={{ background: '#0a0a0a', minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><p role="status" style={{ color: '#ffda00', fontWeight: 800 }}>Opening Wairo…</p></div>}><Root /></Suspense>
   </React.StrictMode>
 );

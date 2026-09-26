@@ -387,6 +387,15 @@ if (servingFrontend) {
     }
   }));
 
+  // The rebrand intro page: a static build living at preview/public/intro,
+  // copied to dist/intro/ by the client build. Explicit route because
+  // `index: false` plus the SPA fallback below would otherwise resolve
+  // /intro/ to the app shell instead of the intro.
+  app.get(['/intro', '/intro/'], (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.sendFile(path.join(FRONTEND_DIST, 'intro', 'index.html'));
+  });
+
   // SPA fallback: any GET that is neither the API nor a real asset resolves to
   // index.html, so client-side routes (e.g. /marketplace) do not 404.
   app.get('*', (req, res, next) => {
