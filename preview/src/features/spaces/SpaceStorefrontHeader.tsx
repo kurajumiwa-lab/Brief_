@@ -132,9 +132,10 @@ export function SpaceStorefrontHeader({
           </div>
         </div>
 
-        {/* CTAs. The owner gets the doing-buttons; a visitor gets follow/message,
-            and follow only exists on a public, active space. */}
-        <div className="flex flex-wrap gap-2 mt-3.5">
+        {/* CTAs. One primary (the doing-button), the rest quiet links. The owner
+            gets Add offer as the button; a visitor gets follow/message, and
+            follow only exists on a public, active space. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3.5">
           {isOwner ? (
             <>
               <button
@@ -149,8 +150,8 @@ export function SpaceStorefrontHeader({
               <button
                 type="button"
                 onClick={onOpenInbox}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
-                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
+                className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer"
+                style={{ color: 'var(--color-primary)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Inbox
                 {openInquiries > 0 && <span className="font-mono">· {openInquiries}</span>}
@@ -159,8 +160,8 @@ export function SpaceStorefrontHeader({
                 <button
                   type="button"
                   onClick={onCreateOrder}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
-                  style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
+                  className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer"
+                  style={{ color: 'var(--color-primary)' }}
                   title="Record who walked in, what they wanted, and what you quoted"
                 >
                   <Plus className="w-4 h-4" /> Walk-in enquiry
@@ -170,8 +171,8 @@ export function SpaceStorefrontHeader({
                 type="button"
                 onClick={onEdit}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer disabled:opacity-50"
-                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
+                className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer disabled:opacity-50"
+                style={{ color: 'var(--color-primary)' }}
               >
                 <Pencil className="w-4 h-4" /> Edit space
               </button>
@@ -179,23 +180,33 @@ export function SpaceStorefrontHeader({
           ) : (
             <>
               {audience?.followable && (
-                <button
-                  type="button"
-                  onClick={onFollow}
-                  disabled={busy}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-black cursor-pointer disabled:opacity-50"
-                  style={space.iAmFollowing || audience.iAmFollowing
-                    ? { background: 'var(--color-paper)', color: 'var(--brief-ink)', border: '1px solid var(--brief-line)' }
-                    : { background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
-                >
-                  {space.iAmFollowing || audience.iAmFollowing ? <><BellOff className="w-4 h-4" /> Following</> : <><Bell className="w-4 h-4" /> Follow</>}
-                </button>
+                space.iAmFollowing || audience.iAmFollowing ? (
+                  <button
+                    type="button"
+                    onClick={onFollow}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer disabled:opacity-50"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    <BellOff className="w-4 h-4" /> Following
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={onFollow}
+                    disabled={busy}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[14px] font-black cursor-pointer disabled:opacity-50"
+                    style={{ background: 'var(--color-primary)', color: 'var(--accent-ink)' }}
+                  >
+                    <Bell className="w-4 h-4" /> Follow
+                  </button>
+                )
               )}
               <button
                 type="button"
                 onClick={onMessage}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
-                style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
+                className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer"
+                style={{ color: 'var(--color-primary)' }}
               >
                 <MessageCircle className="w-4 h-4" /> Message
               </button>
@@ -204,8 +215,8 @@ export function SpaceStorefrontHeader({
           <button
             type="button"
             onClick={onShare}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[14px] font-bold border cursor-pointer"
-            style={{ borderColor: 'var(--brief-line)', color: 'var(--brief-ink)', background: 'var(--color-paper)' }}
+            className="inline-flex items-center gap-1.5 text-[14px] font-bold cursor-pointer"
+            style={{ color: 'var(--color-primary)' }}
           >
             <Share2 className="w-4 h-4" /> Share
           </button>

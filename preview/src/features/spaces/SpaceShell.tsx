@@ -448,7 +448,8 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('pipeline')}
-                className="px-3 py-1.5 rounded-full bg-[color:var(--color-paper)] text-[color:var(--color-text)] text-xs font-bold border border-black/10 cursor-pointer"
+                className="px-3 py-1.5 text-xs font-bold cursor-pointer"
+                style={{ color: 'var(--color-primary)' }}
               >
                 Open inbox
               </button>
@@ -597,9 +598,9 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
         </div>
       )}
 
-      {/* Surface Navigation Selector */}
-      <div className="flex items-center justify-between pb-1 border-b border-black/5">
-        <div className="flex items-center space-x-1.5">
+      {/* Surface Navigation Selector: quiet underline tabs, not pills. */}
+      <div className="flex items-center justify-between border-b" style={{ borderColor: 'var(--divider)' }}>
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => {
             const isSelected = currentTab === tab.id;
             return (
@@ -610,11 +611,10 @@ export const SpaceShell: React.FC<SpaceShellProps> = ({
                   soundEngine.play('tap');
                   setActiveTab(tab.id);
                 }}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  isSelected
-                    ? 'bg-[color:var(--color-text)] text-white shadow-xs'
-                    : 'text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-black/5'
-                }`}
+                className="py-2 text-[13px] font-bold whitespace-nowrap cursor-pointer"
+                style={isSelected
+                  ? { color: 'var(--brief-ink)', borderBottom: '2px solid var(--color-primary)' }
+                  : { color: 'var(--muted-ink)', borderBottom: '2px solid transparent' }}
               >
                 {tab.label}
               </button>
